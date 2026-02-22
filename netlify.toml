@@ -11,7 +11,7 @@
 [build.environment]
   # Forzamos instalación de devDependencies
   NODE_ENV = "development"
-  NODE_VERSION = "18"
+  NODE_VERSION = "22"
 
 ## ================================
 ## Redirects SPA (Angular Router)
