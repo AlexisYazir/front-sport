@@ -13,25 +13,23 @@
         "build": {
           "builder": "@angular/build:application",
           "options": {
-            "browser": "src/main.ts",
-            "polyfills": [
-              "zone.js"
-            ],
-            "tsConfig": "tsconfig.app.json",
-            "assets": [
-              {
-                "glob": "**/*",
-                "input": "src/assets",
-                "output": "/assets"
-              }
-            ],
-            "styles": [
-               "node_modules/primeng/resources/themes/lara-light-blue/theme.css",
-              "node_modules/primeng/resources/primeng.min.css",
-              "node_modules/primeicons/primeicons.css",
-              "src/styles.css"
-            ]
-          },
+  "browser": "src/main.ts",
+  "polyfills": [
+    "zone.js"
+  ],
+  "tsConfig": "tsconfig.app.json",
+  "assets": [
+    {
+      "glob": "**/*",
+      "input": "src/assets",
+      "output": "/assets"
+    }
+  ],
+  "styles": [
+    "node_modules/primeicons/primeicons.css",
+    "src/styles.css"
+  ]
+},
           "configurations": {
             "production": {
               "budgets": [
