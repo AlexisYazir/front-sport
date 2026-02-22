@@ -1,29 +1,33 @@
 ## Netlify Configuration File
-## Configuraci¢n para despliegue del frontend en Netlify
+## Configuración para despliegue Angular en Netlify
 
 [build]
-  # Comando de compilaci¢n
+  # Comando de compilación
   command = "npm run build:prod"
-  
-  # Directorio donde est n los archivos compilados
+
+  # Directorio generado por Angular
   publish = "dist/ecommerce-app/browser"
-  
-  # Node version (importante para consistencia)
+
+[build.environment]
+  # Forzamos instalación de devDependencies
+  NODE_ENV = "development"
   NODE_VERSION = "18"
 
-## Redirects y Rewrites para SPA (Single Page Application)
-## Esto es CRÖTICO para que Angular routing funcione correctamente
+## ================================
+## Redirects SPA (Angular Router)
+## ================================
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
-  force = false
 
-## Headers de seguridad y cache
+## ================================
+## Headers Globales
+## ================================
 [[headers]]
   for = "/*"
   [headers.values]
-    # Content Security Policy - Adaptado para Angular
+
     Content-Security-Policy = """
       default-src 'self';
       script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com https://apis.google.com;
@@ -38,36 +42,34 @@
       form-action 'self';
       upgrade-insecure-requests;
     """
-    
-    # Permissions Policy
+
     Permissions-Policy = """
-      accelerometer=(), 
-      camera=(), 
-      geolocation=(), 
-      gyroscope=(), 
-      magnetometer=(), 
-      microphone=(), 
-      payment=(), 
-      usb=(), 
+      accelerometer=(),
+      camera=(),
+      geolocation=(),
+      gyroscope=(),
+      magnetometer=(),
+      microphone=(),
+      payment=(),
+      usb=(),
       interest-cohort=()
     """
-    
-    # Security Headers
+
     X-Content-Type-Options = "nosniff"
     X-Frame-Options = "DENY"
     X-XSS-Protection = "1; mode=block"
     Referrer-Policy = "strict-origin-when-cross-origin"
     Strict-Transport-Security = "max-age=63072000; includeSubDomains; preload"
-    
-    # Cross-Origin Policies
+
     Cross-Origin-Embedder-Policy = "unsafe-none"
     Cross-Origin-Opener-Policy = "same-origin-allow-popups"
     Cross-Origin-Resource-Policy = "cross-origin"
-    
-    # Cache para assets
+
     Cache-Control = "public, max-age=3600"
 
-## Cache agresivo para archivos est ticos con hash
+## ================================
+## Cache fuerte para assets
+## ================================
 [[headers]]
   for = "/assets/*"
   [headers.values]
@@ -83,12 +85,10 @@
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
-## NO cachear index.html para evitar problemas con actualizaciones
+## ================================
+## No cachear index.html
+## ================================
 [[headers]]
   for = "/index.html"
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
-
-## Environment variables (opcional, mejor configurar en Netlify UI)
-# [build.environment]
-#   NODE_ENV = "production"
