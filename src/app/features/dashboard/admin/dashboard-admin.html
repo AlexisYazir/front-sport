@@ -1,0 +1,225 @@
+<div class="min-h-screen bg-gradient-to-br from-[#F2F2F2] via-[#F8F9FA] to-[#E9ECEF]">
+  <!-- Contenedor principal con sidebar y contenido -->
+  <div class="flex">
+    <!-- Sidebar - Scroll independiente -->
+    <aside [class.w-64]="sidebarOpen()" 
+           [class.w-20]="!sidebarOpen()"
+           class="bg-white shadow-xl border-r border-gray-200 h-screen fixed left-0 top-16 transition-all duration-300 z-20 overflow-hidden">
+      
+      <!-- Versión alternativa más minimalista y elegante -->
+      <div class="relative flex items-center justify-between px-4 py-4 border-b border-gray-100">
+        <!-- Título con diseño minimalista -->
+        <div *ngIf="sidebarOpen()" class="flex items-center gap-2">
+          <div class="w-1 h-5 bg-[#0367A6] rounded-full"></div>
+          <span class="font-semibold text-[#202020] text-sm uppercase tracking-[0.2em]">Menú</span>
+        </div>
+        
+        <!-- Botón con efecto glassmorphism -->
+        <button (click)="toggleSidebar()" 
+                class="relative group">
+          <!-- Fondo con blur -->
+          <div class="absolute inset-0 bg-white/80 backdrop-blur-sm rounded-xl opacity-0 group-hover:opacity-100 transition-all duration-300 scale-90 group-hover:scale-100 border border-gray-200"></div>
+          
+          <!-- Icono -->
+          <div class="relative z-10 p-2 text-[#666666] group-hover:text-[#0367A6] transition-all duration-300">
+            <span class="material-symbols-outlined text-2xl group-hover:scale-110 transition-transform duration-300 block">
+              {{ sidebarOpen() ? 'chevron_left' : 'chevron_right' }}
+            </span>
+          </div>
+
+          <!-- Efecto de sombra al hacer hover -->
+          <div class="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 shadow-lg transition-opacity duration-300"></div>
+        </button>
+      </div>
+      
+      <!-- Menú con scroll propio -->
+      <nav class="h-full flex flex-col top-16">
+        <div class="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+          <ul class="py-1 px-2 space-y-0.5">
+            <li *ngFor="let item of menuItems">
+              <a [routerLink]="item.route"
+                 routerLinkActive="bg-gradient-to-r from-[#0367A6] to-[#035A91] text-white shadow-md"
+                 [routerLinkActiveOptions]="{exact: item.route === '/dashboard/admin'}"
+                 class="flex items-center gap-3 px-3 py-2 rounded-xl cursor-pointer transition-all duration-200 text-sm text-[#666666] hover:bg-[#0367A6] hover:text-white">
+                <span class="material-symbols-outlined text-xl font-variation-settings-wght-400">
+                  {{ item.icon }}
+                </span>
+                <span [class.hidden]="!sidebarOpen()" class="font-medium whitespace-nowrap">
+                  {{ item.label }}
+                </span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- Main Content - Con margen izquierdo dinámico -->
+    <main [class.ml-64]="sidebarOpen()" 
+          [class.ml-20]="!sidebarOpen()"
+          class="flex-1 p-2 transition-all duration-300 overflow-y-auto h-screen">
+      
+      <!-- Verificamos si estamos en la ruta principal del dashboard -->
+      <ng-container *ngIf="router.url === '/dashboard/admin' || router.url === '/dashboard/admin/'">
+        <!-- Stats Cards -->
+     <!-- Stats Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        
+        <!-- Total Usuarios -->
+        <div class="bg-white rounded-xl shadow-md border border-gray-100 p-6 hover:shadow-lg transition-shadow duration-200">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-[#666666] text-sm font-medium mb-1">Total Usuarios</p>
+              <p class="text-3xl font-bold text-[#202020]">{{ stats.totalUsuarios }}</p>
+              <div class="flex gap-2 mt-2 text-xs">
+                <span class="text-green-600">{{ stats.usuariosActivos }} activos</span>
+                <span class="text-gray-300">|</span>
+                <span class="text-purple-600">{{ stats.administradores }} admins</span>
+              </div>
+            </div>
+            <div class="bg-[#0367A6]/10 p-3 rounded-lg">
+              <span class="material-symbols-outlined text-[#0367A6] text-3xl">group</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Total Productos -->
+        <div class="bg-white rounded-xl shadow-md border border-gray-100 p-6 hover:shadow-lg transition-shadow duration-200">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-[#666666] text-sm font-medium mb-1">Total Productos</p>
+              <p class="text-3xl font-bold text-[#202020]">{{ stats.totalProductos }}</p>
+              <div class="flex gap-2 mt-2 text-xs">
+                <span class="text-green-600">{{ getProductosCompletos() }} completos</span>
+                <span class="text-gray-300">|</span>
+                <span class="text-yellow-600">{{ stats.productosIncompletos }} incompletos</span>
+              </div>
+            </div>
+            <div class="bg-green-100 p-3 rounded-lg">
+              <span class="material-symbols-outlined text-green-600 text-3xl">inventory_2</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stock y Alertas -->
+        <div class="bg-white rounded-xl shadow-md border border-gray-100 p-6 hover:shadow-lg transition-shadow duration-200">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-[#666666] text-sm font-medium mb-1">Stock y Alertas</p>
+              <p class="text-3xl font-bold text-[#202020]">{{ stats.stockBajo }}</p>
+              <div class="flex gap-2 mt-2 text-xs">
+                <span class="text-red-600">{{ stats.productosAgotados }} agotados</span>
+                <span class="text-gray-300">|</span>
+                <span class="text-yellow-600">{{ stats.stockBajo }} stock bajo</span>
+              </div>
+            </div>
+            <div class="bg-red-100 p-3 rounded-lg">
+              <span class="material-symbols-outlined text-red-600 text-3xl">warning</span>
+            </div>
+          </div>
+          <!-- Barra de progreso de stock bajo -->
+          <div class="mt-3">
+            <div class="w-full bg-gray-200 rounded-full h-1.5">
+              <div class="bg-yellow-500 h-1.5 rounded-full" 
+                  [style.width.%]="getStockBajoPercentage()"></div>
+            </div>
+            <p class="text-xs text-gray-500 mt-1">{{ getStockBajoPercentage() }}% del inventario tiene stock bajo</p>
+          </div>
+        </div>
+
+        <!-- Categorías y Marcas -->
+        <div class="bg-white rounded-xl shadow-md border border-gray-100 p-6 hover:shadow-lg transition-shadow duration-200">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-[#666666] text-sm font-medium mb-1">Catálogo</p>
+              <div class="flex items-baseline gap-4">
+                <div>
+                  <span class="text-2xl font-bold text-[#202020]">{{ stats.categorias }}</span>
+                  <span class="text-xs text-gray-500 ml-1">categ</span>
+                </div>
+                <div>
+                  <span class="text-2xl font-bold text-[#202020]">{{ stats.marcas }}</span>
+                  <span class="text-xs text-gray-500 ml-1">marcas</span>
+                </div>
+              </div>
+            </div>
+            <div class="bg-purple-100 p-3 rounded-lg">
+              <span class="material-symbols-outlined text-purple-600 text-3xl">category</span>
+            </div>
+          </div>
+        </div>
+      </div>
+<!-- er -->
+        <!-- Tabla rápida de usuarios (AHORA CON DATOS REALES) ---->
+        <div class="mt-8 bg-white rounded-xl shadow-md border border-gray-100 p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-bold text-[#202020]">Últimos Usuarios Registrados</h2>
+            <a routerLink="/dashboard/admin/users" class="text-sm text-[#0367A6] hover:underline flex items-center gap-1">
+              Ver todos
+              <span class="material-symbols-outlined text-base">arrow_forward</span>
+            </a>
+          </div>
+          
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead class="bg-[#F8F9FA] border-b-2 border-gray-200">
+                <tr>
+                  <th class="text-left py-3 px-4 text-sm font-semibold text-[#202020]">Usuario</th>
+                  <th class="text-left py-3 px-4 text-sm font-semibold text-[#202020]">Email</th>
+                  <th class="text-left py-3 px-4 text-sm font-semibold text-[#202020]">Rol</th>
+                  <th class="text-left py-3 px-4 text-sm font-semibold text-[#202020]">Fecha Registro</th>
+                  <th class="text-center py-3 px-4 text-sm font-semibold text-[#202020]">Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let user of recentUsers | slice:0:5" class="border-b border-gray-100 hover:bg-[#F8F9FA] transition-colors">
+                  <td class="py-3 px-4">
+                    <div class="flex items-center gap-2">
+                      <div class="bg-[#0367A6]/10 p-1.5 rounded-lg">
+                        <span class="material-symbols-outlined text-[#0367A6] text-sm">person</span>
+                      </div>
+                      <span class="font-medium text-[#202020]">{{ user.nombre }}</span>
+                    </div>
+                  </td>
+                  <td class="py-3 px-4 text-sm text-[#666666]">{{ user.email }}</td>
+                  <td class="py-3 px-4">
+                    <span [class]="getRolClass(user.rol) + ' px-2 py-0.5 rounded-full text-xs font-semibold'">
+                      {{ getRoleNameFromValue(user.rol) }}
+                    </span>
+                  </td>
+                  <td class="py-3 px-4 text-sm text-[#666666]">
+                    <div class="flex items-center gap-1">
+                      <span class="material-symbols-outlined text-xs text-[#666666]">calendar_today</span>
+                      {{ formatDate(user.fecha_creacion) }}
+                    </div>
+                  </td>
+                  <td class="py-3 px-4 text-center">
+                    <span [class]="getStatusClass(user.activo) + ' px-2 py-0.5 rounded-full text-xs font-semibold'">
+                      {{ getStatusText(user.activo) }}
+                    </span>
+                  </td>
+                </tr>
+                
+                <!-- Fila vacía cuando no hay usuarios -->
+                <tr *ngIf="recentUsers.length === 0">
+                  <td colspan="5" class="text-center py-8">
+                    <div class="flex flex-col items-center gap-2">
+                      <span class="material-symbols-outlined text-4xl text-gray-300">group_off</span>
+                      <p class="text-[#666666]">No hay usuarios registrados recientemente</p>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- Para cualquier otra ruta, mostramos el componente hijo -->
+      <ng-container *ngIf="router.url !== '/dashboard/admin' && router.url !== '/dashboard/admin/'">
+        <router-outlet></router-outlet>
+      </ng-container>
+      
+    </main>
+  </div>
+</div>

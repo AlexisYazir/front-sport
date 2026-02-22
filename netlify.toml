@@ -1,0 +1,94 @@
+## Netlify Configuration File
+## Configuraci¢n para despliegue del frontend en Netlify
+
+[build]
+  # Comando de compilaci¢n
+  command = "npm run build:prod"
+  
+  # Directorio donde est n los archivos compilados
+  publish = "dist/ecommerce-app/browser"
+  
+  # Node version (importante para consistencia)
+  NODE_VERSION = "18"
+
+## Redirects y Rewrites para SPA (Single Page Application)
+## Esto es CRÖTICO para que Angular routing funcione correctamente
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  force = false
+
+## Headers de seguridad y cache
+[[headers]]
+  for = "/*"
+  [headers.values]
+    # Content Security Policy - Adaptado para Angular
+    Content-Security-Policy = """
+      default-src 'self';
+      script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com https://apis.google.com;
+      script-src-elem 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com https://apis.google.com;
+      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+      font-src 'self' https://fonts.gstatic.com data:;
+      img-src 'self' data: https: blob:;
+      connect-src 'self' https://back-sport.vercel.app https://accounts.google.com https://www.googleapis.com https://oauthaccountmanager.googleapis.com;
+      frame-src 'self' https://accounts.google.com;
+      object-src 'none';
+      base-uri 'self';
+      form-action 'self';
+      upgrade-insecure-requests;
+    """
+    
+    # Permissions Policy
+    Permissions-Policy = """
+      accelerometer=(), 
+      camera=(), 
+      geolocation=(), 
+      gyroscope=(), 
+      magnetometer=(), 
+      microphone=(), 
+      payment=(), 
+      usb=(), 
+      interest-cohort=()
+    """
+    
+    # Security Headers
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Strict-Transport-Security = "max-age=63072000; includeSubDomains; preload"
+    
+    # Cross-Origin Policies
+    Cross-Origin-Embedder-Policy = "unsafe-none"
+    Cross-Origin-Opener-Policy = "same-origin-allow-popups"
+    Cross-Origin-Resource-Policy = "cross-origin"
+    
+    # Cache para assets
+    Cache-Control = "public, max-age=3600"
+
+## Cache agresivo para archivos est ticos con hash
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.css"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+## NO cachear index.html para evitar problemas con actualizaciones
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+## Environment variables (opcional, mejor configurar en Netlify UI)
+# [build.environment]
+#   NODE_ENV = "production"

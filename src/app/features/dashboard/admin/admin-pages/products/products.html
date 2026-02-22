@@ -1,0 +1,652 @@
+<div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+  <!-- Toolbar con diseño mejorado -->
+  <div class="mb-6 p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="bg-[#0367A6]/10 p-3 rounded-xl">
+        <span class="material-symbols-outlined text-[#0367A6] text-2xl">inventory_2</span>
+      </div>
+      <div>
+        <h2 class="text-2xl font-bold text-[#202020]">Gestión de Productos</h2>
+        <p class="text-sm text-[#666666] mt-0.5">Administra tu catálogo de productos</p>
+      </div>
+    </div>
+    <div class="flex gap-3">
+        <a routerLink="/dashboard/admin/new-products" 
+         class="relative px-4 py-2 border border-gray-300 rounded-lg text-[#666666] hover:bg-gray-50 transition-all flex items-center gap-2 text-sm font-medium group">
+        <span class="material-symbols-outlined text-base group-hover:text-[#0367A6] transition-colors">fiber_new</span>
+        <span class="group-hover:text-[#0367A6] transition-colors">Productos Nuevos</span>
+        <!-- Burbuja con contador y animación -->
+        <span *ngIf="newProductsCount > 0" 
+              class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full min-w-[20px] h-5 flex items-center justify-center px-1 shadow-lg animate-pulse">
+          {{ newProductsCount > 99 ? '99+' : newProductsCount }}
+        </span>
+      </a>
+     <button class="px-4 py-2 bg-[#0367A6] hover:bg-[#035A91] text-white rounded-lg"
+        (click)="openCreateModal()">
+        <i class="pi pi-plus"></i>
+        Nuevo Producto
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading()" class="flex flex-col items-center justify-center py-16">
+    <div class="relative">
+      <div class="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-[#0367A6]"></div>
+      <div class="absolute inset-0 flex items-center justify-center">
+        <span class="material-symbols-outlined text-[#0367A6] text-xl">inventory_2</span>
+      </div>
+    </div>
+    <p class="text-[#666666] mt-4">Cargando productos...</p>
+  </div>
+
+  <!-- Contenido principal (cuando no está cargando) -->
+  <ng-container *ngIf="!isLoading()">
+    <!-- Barra de búsqueda y filtros mejorada -->
+<div class="flex flex-col gap-4 mb-6">
+  <!-- Primera fila: Búsqueda y estadísticas -->
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div class="relative w-full sm:w-96">
+      <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#666666]">
+        <i class="pi pi-search text-lg"></i>
+      </span>
+      <input type="text" 
+             (input)="onSearch($event)" 
+             [ngModel]="searchValue"
+             placeholder="Buscar por ID, nombre, marca o categoría..." 
+             class="w-full pl-10 pr-10 py-3 border-2 border-gray-200 rounded-xl focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 transition-all outline-none text-sm"/>
+      <button *ngIf="searchValue" 
+              (click)="clearSearch()"
+              class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#0367A6] transition-colors">
+        <i class="pi pi-times-circle text-lg"></i>
+      </button>
+    </div>
+    
+    <div class="flex items-center gap-4">
+      <div class="bg-blue-50 px-4 py-2 rounded-xl border border-blue-100">
+        <span class="text-[#0367A6] font-semibold text-lg">{{ totalRecords }}</span>
+        <span class="text-[#666666] text-sm ml-2">productos</span>
+      </div>
+      <button class="w-10 h-10 rounded-full border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all flex items-center justify-center"
+              (click)="refreshData()"
+              title="Actualizar datos">
+        <i class="pi pi-refresh text-lg"></i>
+      </button>
+    </div>
+  </div>
+
+</div>
+
+    <!-- Tabla de productos -->
+    <div class="overflow-x-auto rounded-xl border border-gray-200">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 border-b-2 border-gray-200">
+          <tr>
+            <th class="px-4 py-4 text-left font-semibold text-[#202020]">ID</th>
+            <th class="px-4 py-4 text-left font-semibold text-[#202020]">Imagen</th>
+            <th class="px-4 py-4 text-left font-semibold text-[#202020]">Nombre</th>
+            <th class="px-4 py-4 text-left font-semibold text-[#202020]">Marca</th>
+            <th class="px-4 py-4 text-left font-semibold text-[#202020]">Categoría</th>
+            <th class="px-4 py-4 text-left font-semibold text-[#202020]">Estado</th>
+            <th class="px-4 py-4 text-center font-semibold text-[#202020]">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let product of paginatedProducts" class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+            <td class="px-4 py-4 font-mono font-medium text-[#0367A6]">#{{ product.id }}</td>
+            <td class="px-4 py-4">
+              <div class="relative group">
+                <img [src]="getProductImage(product)" 
+                     [alt]="product.nombre" 
+                     class="w-14 h-14 object-cover rounded-lg shadow-sm border-2 border-gray-100 group-hover:border-[#0367A6] transition-all"
+                     onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/a/a3/Image-not-found.png'"/>
+              </div>
+            </td>
+            <td class="px-4 py-4">
+              <div class="font-semibold text-[#202020]">{{ product.nombre }}</div>
+              <div class="text-xs text-[#666666] mt-0.5 truncate max-w-[200px]">{{ product.descripcion | slice:0:50 }}...</div>
+            </td>
+            <td class="px-4 py-4 font-medium text-[#202020]">{{ product.marca || 'N/A' }}</td>
+            <td class="px-4 py-4">
+              <span class="bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700 px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm border border-blue-200">
+                {{ product.categoria }}
+              </span>
+            </td>
+            <td class="px-4 py-4">
+              <span [class]="product.activo ? 'bg-green-100 text-green-700 border-green-200' : 'bg-red-100 text-red-700 border-red-200'"
+                    class="px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm border inline-flex items-center gap-1">
+                <i [class]="product.activo ? 'pi pi-check' : 'pi pi-times'"></i>
+                {{ product.activo ? 'Activo' : 'Inactivo' }}
+              </span>
+            </td>
+            <td class="px-4 py-4">
+              <div class="flex gap-2 justify-center">
+                <button class="w-9 h-9 rounded-full border-2 border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white transition-all flex items-center justify-center"
+                        (click)="viewProduct(product)"
+                        title="Ver detalles">
+                  <i class="pi pi-eye"></i>
+                </button>
+                <button class="w-9 h-9 rounded-full border-2 border-green-500 text-green-500 hover:bg-green-500 hover:text-white transition-all flex items-center justify-center"
+                        (click)="editProduct(product)"
+                        title="Editar">
+                  <i class="pi pi-pencil"></i>
+                </button>
+                
+              </div>
+            </td>
+          </tr>
+          
+          <!-- Fila vacía cuando no hay resultados -->
+          <tr *ngIf="filteredProducts.length === 0">
+            <td colspan="8" class="text-center py-12">
+              <div class="flex flex-col items-center gap-3">
+                <i class="pi pi-search text-5xl text-gray-300"></i>
+                <span class="text-[#666666] text-lg font-medium">No se encontraron productos</span>
+                <span class="text-sm text-gray-400">Intenta con otros términos de búsqueda</span>
+                <button class="px-4 py-2 border border-gray-300 rounded-lg text-[#666666] hover:bg-gray-50 transition-all text-sm font-medium mt-2"
+                        (click)="clearSearch()">
+                  <i class="pi pi-times mr-2"></i>
+                  Limpiar búsqueda
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Paginación y selector de resultados por página -->
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
+      <!-- Selector de resultados por página -->
+      <div class="flex items-center gap-3">
+        <span class="text-sm text-[#666666]">Mostrar</span>
+        <select class="px-3 py-2 border border-gray-300 rounded-lg text-sm text-[#202020] focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none"
+                [(ngModel)]="rowsPerPage"
+                (change)="onRowsPerPageChange()">
+          <option *ngFor="let option of rowsPerPageOptions" [value]="option">{{ option }}</option>
+        </select>
+        <span class="text-sm text-[#666666]">resultados por página</span>
+      </div>
+
+      <!-- Información de paginación -->
+      <div class="text-sm text-[#666666] order-first sm:order-none">
+        Mostrando {{ first + 1 }} a {{ last }} de {{ totalRecords }} productos
+      </div>
+
+      <!-- Controles de paginación -->
+      <div class="flex gap-2">
+        <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                (click)="changePage('first')"
+                [disabled]="first === 0"
+                title="Primera página">
+          <i class="pi pi-angle-double-left"></i>
+        </button>
+        <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                (click)="changePage('prev')"
+                [disabled]="first === 0"
+                title="Página anterior">
+          <i class="pi pi-angle-left"></i>
+        </button>
+        
+        <!-- Números de página -->
+        <div class="flex gap-1">
+          <button *ngFor="let page of pageNumbers" 
+                  class="min-w-[2.5rem] h-10 rounded-lg transition-all font-medium"
+                  [ngClass]="page === currentPage ? 
+                    'bg-[#0367A6] text-white hover:bg-[#035A91]' : 
+                    'border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6]'"
+                  (click)="goToPage(page)">
+            {{ page }}
+          </button>
+        </div>
+
+        <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                (click)="changePage('next')"
+                [disabled]="last >= totalRecords"
+                title="Página siguiente">
+          <i class="pi pi-angle-right"></i>
+        </button>
+        <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                (click)="changePage('last')"
+                [disabled]="last >= totalRecords"
+                title="Última página">
+          <i class="pi pi-angle-double-right"></i>
+        </button>
+      </div>
+    </div>
+  </ng-container>
+
+
+
+
+
+  <!-- MODAAAL EDITAR---------------------------------------- -->
+
+
+   <!-- Modal de Edición de Producto -->
+<div *ngIf="showEditModal && selectedProduct" class="fixed inset-0 bg-black/50  z-50 flex items-center justify-center p-4" 
+     style="position: fixed; top: 0; left: 0; right: 0; bottom: 0;" 
+     (click)="closeEditModal()">
+  
+  <!-- Contenido del Modal (evita que se cierre al hacer click dentro) -->
+  <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto" 
+       (click)="$event.stopPropagation()">
+    
+    <!-- Cabecera del Modal -->
+    <div class="sticky top-0 bg-gradient-to-r from-[#0367A6] to-[#035A91] text-white px-6 py-4 rounded-t-xl flex justify-between items-center">
+      <div class="flex items-center gap-3">
+        <span class="material-symbols-outlined text-2xl">edit</span>
+        <h3 class="text-xl font-bold">Editando Producto: {{ selectedProduct.nombre }}</h3>
+      </div>
+      <button (click)="closeEditModal()" class="hover:bg-white/20 p-2 rounded-lg transition-colors">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+
+    <!-- Pestañas: Producto / Variantes -->
+    <div class="border-b border-gray-200 px-6 pt-4">
+      <div class="flex gap-4">
+        <button class="px-4 py-2 font-medium transition-all relative"
+                [class.text-[#0367A6]]="editMode === 'producto'"
+                [class.text-gray-500]="editMode !== 'producto'"
+                (click)="switchEditMode('producto')">
+          Datos del Producto
+          <span *ngIf="editMode === 'producto'" class="absolute bottom-0 left-0 w-full h-0.5 bg-[#0367A6]"></span>
+        </button>
+        <button class="px-4 py-2 font-medium transition-all relative"
+                [class.text-[#0367A6]]="editMode === 'variante'"
+                [class.text-gray-500]="editMode !== 'variante'"
+                (click)="switchEditMode('variante')">
+          Variantes
+          <span *ngIf="editMode === 'variante'" class="absolute bottom-0 left-0 w-full h-0.5 bg-[#0367A6]"></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Cuerpo del Modal DE EDITAR -->
+    <div class="p-6">
+      <!-- MODO: DATOS DEL PRODUCTO -->
+      <div *ngIf="editMode === 'producto'" class="space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-semibold text-[#202020] mb-1">ID Producto</label>
+            <input type="text" [(ngModel)]="selectedProduct.id" readonly
+                   class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed">
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-[#202020] mb-1">Nombre del Producto</label>
+            <input type="text" [(ngModel)]="selectedProduct.nombre"
+                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-[#202020] mb-1">Descripción</label>
+          <textarea [(ngModel)]="selectedProduct.descripcion" rows="3"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none"></textarea>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-semibold text-[#202020] mb-1">Marca</label>
+            <input type="text" [(ngModel)]="selectedProduct.marca"
+                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none">
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-[#202020] mb-1">Categoría</label>
+            <input type="text" [(ngModel)]="selectedProduct.categoria"
+                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-semibold text-[#202020] mb-1">Categoría Padre</label>
+            <input type="text" [(ngModel)]="selectedProduct.categoria_padre"
+                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none">
+          </div>
+          <div class="flex items-center gap-4">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" [(ngModel)]="selectedProduct.activo" class="w-4 h-4 text-[#0367A6]">
+              <span class="text-sm font-semibold text-[#202020]">Producto Activo</span>
+            </label>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-[#202020] mb-2">Fecha de Creación</label>
+          <input type="text" [value]="selectedProduct.fecha_creacion | date:'dd/MM/yyyy HH:mm'" readonly
+                 class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed">
+        </div>
+      </div>
+
+      <!-- MODO: VARIANTES -->
+      <div *ngIf="editMode === 'variante'" class="space-y-6">
+        <!-- Selector de variantes -->
+        <div class="flex flex-wrap gap-2">
+          <button *ngFor="let variant of selectedProduct.variantes; let i = index"
+                  (click)="selectVariant(i)"
+                  class="px-4 py-2 rounded-lg border transition-all"
+                  [ngClass]="selectedVariantIndex === i ? 
+                    'border-[#0367A6] bg-[#0367A6]/10 text-[#0367A6]' : 
+                    'border-gray-300 text-gray-600 hover:border-[#0367A6] hover:text-[#0367A6]'">
+            Variante {{ i + 1 }}: {{ variant.sku }}
+          </button>
+        </div>
+
+        <!-- Detalles de la variante seleccionada -->
+        <div *ngIf="selectedProduct.variantes && selectedProduct.variantes[selectedVariantIndex]" 
+             class="border border-gray-200 rounded-xl p-4 space-y-4">
+          <h4 class="font-semibold text-[#202020] text-lg">Detalles de Variante</h4>
+          
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-semibold text-[#202020] mb-1">SKU</label>
+              <input type="text" [(ngModel)]="selectedProduct.variantes[selectedVariantIndex].sku"
+                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none">
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-[#202020] mb-1">Stock</label>
+              <input type="number" [(ngModel)]="selectedProduct.variantes[selectedVariantIndex].stock"
+                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-semibold text-[#202020] mb-1">Precio</label>
+            <input type="number" [(ngModel)]="selectedProduct.variantes[selectedVariantIndex].precio"
+                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none">
+          </div>
+
+          <!-- Atributos -->
+          <div *ngIf="selectedProduct.variantes[selectedVariantIndex].atributos">
+            <label class="block text-sm font-semibold text-[#202020] mb-2">Atributos</label>
+            <div class="grid grid-cols-2 gap-4 bg-gray-50 p-3 rounded-lg">
+              <div *ngFor="let attr of selectedProduct.variantes[selectedVariantIndex].atributos | keyvalue">
+                <label class="block text-xs text-gray-500 mb-1">{{ attr.key }}</label>
+                <input type="text" [value]="attr.value" readonly
+                       class="w-full px-2 py-1 border border-gray-200 rounded bg-white text-gray-700">
+              </div>
+            </div>
+          </div>
+
+          <!-- Imágenes de la variante -->
+          <div>
+            <label class="block text-sm font-semibold text-[#202020] mb-2">Imágenes</label>
+            <div class="flex flex-wrap gap-3">
+              <div *ngFor="let img of selectedProduct.variantes[selectedVariantIndex].imagenes; let i = index" 
+                   class="relative group">
+                <img [src]="img" [alt]="'Imagen ' + (i+1)" 
+                     class="w-24 h-24 object-cover rounded-lg border-2 border-gray-200 hover:border-[#0367A6] transition-all">
+                <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 rounded-lg transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
+                  <button class="bg-white p-1 rounded-full text-[#0367A6]">
+                    <span class="material-symbols-outlined text-sm">zoom_in</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pie del Modal (Botones) -->
+    <div class="sticky bottom-0 bg-gray-50 px-6 py-4 rounded-b-xl flex justify-end gap-3 border-t border-gray-200">
+      <button (click)="closeEditModal()" 
+              class="px-4 py-2 border border-gray-300 rounded-lg text-[#666666] hover:bg-gray-100 transition-all">
+        Cancelar
+      </button>
+      <button (click)="saveProductChanges()" 
+              class="px-4 py-2 bg-[#0367A6] hover:bg-[#035A91] text-white rounded-lg shadow-md hover:shadow-lg transition-all flex items-center gap-2">
+        <span class="material-symbols-outlined text-sm">save</span>
+        Guardar Cambios
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<!-- CREAR PRODUCTOOOOO -------------------------------- -->
+<div *ngIf="showCreateModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" (click)="closeCreateModal()">
+  
+  <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl" (click)="$event.stopPropagation()">
+    
+    <div class="bg-gradient-to-r from-[#0367A6] to-[#035A91] text-white px-6 py-4 rounded-t-xl flex justify-between items-center">
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined">add_circle</span>
+        <h3 class="text-xl font-bold">Crear Nuevo Producto Base</h3>
+      </div>
+      <button (click)="closeCreateModal()" class="hover:bg-white/20 p-2 rounded-lg transition-colors">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+
+    <div class="p-8">
+      <div class="space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1">Nombre del Producto *</label>
+            <input type="text" [(ngModel)]="nuevoProducto.nombre" (input)="onFormChange()"
+                   [ngClass]="{'border-red-500 ring-1 ring-red-500': validationErrors.nombre}"
+                   placeholder="Ej: Camiseta Deportiva"
+                   class="w-full px-4 py-2.5 border placeholder-gray-400 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0367A6]/20 focus:border-[#0367A6] outline-none transition-all">
+            <p *ngIf="validationErrors.nombre" class="text-red-500 text-xs mt-1">{{ validationErrors.nombre }}</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1">Marca *</label>
+            <select [(ngModel)]="nuevoProducto.id_marca" (change)="onFormChange()"
+                    [ngClass]="{'border-red-500 ring-1 ring-red-500': validationErrors.id_marca}"
+                    class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0367A6]/20 focus:border-[#0367A6] outline-none transition-all">
+              <option [ngValue]="0" disabled selected>Selecciona una marca</option>
+              <option *ngFor="let m of marcas" [ngValue]="m.id_marca">{{ m.nombre }}</option>
+            </select>
+            <p *ngIf="validationErrors.id_marca" class="text-red-500 text-xs mt-1">{{ validationErrors.id_marca }}</p>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1">Categoría *</label>
+          <select [(ngModel)]="nuevoProducto.id_categoria" (change)="onFormChange()"
+                  [ngClass]="{'border-red-500 ring-1 ring-red-500': validationErrors.id_categoria}"
+                  class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0367A6]/20 focus:border-[#0367A6] outline-none transition-all">
+            <option [ngValue]="0" disabled selected>Selecciona una categoría</option>
+            <option *ngFor="let c of categorias" [ngValue]="c.id_categoria">{{ c.nombre }}</option>
+          </select>
+          <p *ngIf="validationErrors.id_categoria" class="text-red-500 text-xs mt-1">{{ validationErrors.id_categoria }}</p>
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1">Descripción *</label>
+          <textarea [(ngModel)]="nuevoProducto.descripcion" rows="4" (input)="onFormChange()"
+                    [ngClass]="{'border-red-500 ring-1 ring-red-500': validationErrors.descripcion}"
+                    placeholder="Ej: Camiseta deportiva de alta calidad, ideal para entrenamientos y actividades al aire libre."
+                    class="w-full px-4 py-2.5 border placeholder-gray-400 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0367A6]/20 focus:border-[#0367A6] outline-none transition-all"></textarea>
+          <p *ngIf="validationErrors.descripcion" class="text-red-500 text-xs mt-1">{{ validationErrors.descripcion }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-gray-50 px-8 py-5 rounded-b-xl border-t border-gray-200 flex justify-end gap-3">
+      <button (click)="closeCreateModal()" class="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition-all font-medium">
+        Cancelar
+      </button>
+      <button (click)="guardarProductoBase()" [disabled]="creatingProduct"
+              class="px-6 py-2.5 bg-[#0367A6] text-white rounded-lg hover:bg-[#035A91] transition-all disabled:opacity-50 font-medium flex items-center gap-2">
+        <i *ngIf="creatingProduct" class="pi pi-spin pi-spinner text-sm"></i>
+        {{ creatingProduct ? 'Guardando...' : 'Crear Producto' }}
+      </button>
+    </div>
+  </div>
+</div>
+<!-- MODAL DE VISUALIZACIÓN DE PRODUCTO -->
+<div *ngIf="showViewModal && viewProductData" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" 
+     style="position: fixed; top: 0; left: 0; right: 0; bottom: 0;" 
+     (click)="closeViewModal()">
+  
+  <!-- Contenido del Modal - MÁS ANCHO -->
+  <div class="bg-white rounded-xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-y-auto" 
+       (click)="$event.stopPropagation()">
+    
+    <!-- Cabecera del Modal -->
+    <div class="sticky top-0 bg-gradient-to-r from-[#0367A6] to-[#035A91] text-white px-6 py-4 rounded-t-xl flex justify-between items-center">
+      <div class="flex items-center gap-3">
+        <span class="material-symbols-outlined text-2xl">visibility</span>
+        <div>
+          <h3 class="text-xl font-bold">Detalles del Producto</h3>
+          <p class="text-sm text-white/80">ID: #{{ viewProductData.id || viewProductData.id_producto }}</p>
+        </div>
+      </div>
+      <button (click)="closeViewModal()" class="hover:bg-white/20 p-2 rounded-lg transition-colors">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+
+    <!-- Cuerpo del Modal -->
+    <div class="p-8">
+      
+      <!-- SECCIÓN SUPERIOR: IMAGEN + INFO GENERAL EN DOS COLUMNAS -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+        
+        <!-- Columna 1: Imagen Principal (más grande) -->
+        <div class="lg:col-span-1">
+          <h4 class="text-lg font-semibold text-[#202020] mb-3 flex items-center gap-2">
+            <span class="material-symbols-outlined text-[#0367A6]">image</span>
+            Imagen Principal
+          </h4>
+          <div class="bg-gray-50 p-4 rounded-lg flex justify-center items-center h-64">
+            <img [src]="getProductImage(viewProductData)" 
+                 [alt]="viewProductData.nombre"
+                 class="max-h-56 max-w-full object-contain rounded-lg border border-gray-200"
+                 onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/a/a3/Image-not-found.png'">
+          </div>
+        </div>
+
+        <!-- Columna 2: Información General (ocupa 2 columnas) -->
+        <div class="lg:col-span-2">
+          <h4 class="text-lg font-semibold text-[#202020] mb-3 flex items-center gap-2">
+            <span class="material-symbols-outlined text-[#0367A6]">info</span>
+            Información General
+          </h4>
+          
+          <div class="bg-gray-50 p-5 rounded-lg">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <p class="text-xs text-gray-500">Nombre</p>
+                <p class="font-medium text-[#202020] text-lg">{{ viewProductData.nombre }}</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-500">Marca</p>
+                <p class="font-medium text-[#202020]">{{ viewProductData.marca || 'N/A' }}</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-500">Categoría</p>
+                <p class="font-medium text-[#202020]">{{ viewProductData.categoria }}</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-500">Categoría Padre</p>
+                <p class="font-medium text-[#202020]">{{ viewProductData.categoria_padre || 'N/A' }}</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-500">Estado</p>
+                <span [class]="viewProductData.activo ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'"
+                      class="px-3 py-1 rounded-full text-xs font-semibold inline-flex items-center gap-1">
+                  <i [class]="viewProductData.activo ? 'pi pi-check' : 'pi pi-times'"></i>
+                  {{ viewProductData.activo ? 'Activo' : 'Inactivo' }}
+                </span>
+              </div>
+              <div>
+                <p class="text-xs text-gray-500">Fecha de Creación</p>
+                <p class="font-medium text-[#202020]">{{ viewProductData.fecha_creacion | date:'dd/MM/yyyy HH:mm' }}</p>
+              </div>
+            </div>
+            
+            <div class="border-t border-gray-200 pt-4">
+              <p class="text-xs text-gray-500 mb-2">Descripción</p>
+              <p class="text-[#202020]">{{ viewProductData.descripcion }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECCIÓN INFERIOR: Variantes -->
+      <div>
+        <h4 class="text-lg font-semibold text-[#202020] mb-3 flex items-center gap-2">
+          <span class="material-symbols-outlined text-[#0367A6]">sell</span>
+          Variantes
+          <span class="text-sm font-normal text-gray-500 ml-2">({{ viewProductVariants.length }})</span>
+        </h4>
+
+        <div *ngIf="loadingViewVariants" class="flex justify-center py-8">
+          <div class="animate-spin rounded-full h-8 w-8 border-2 border-gray-300 border-t-[#0367A6]"></div>
+        </div>
+
+        <div *ngIf="!loadingViewVariants && viewProductVariants.length === 0" class="text-center py-8 bg-gray-50 rounded-lg">
+          <span class="material-symbols-outlined text-4xl text-gray-300">info</span>
+          <p class="text-[#666666] mt-2">Este producto no tiene variantes</p>
+        </div>
+
+        <!-- Grid de variantes - 2 columnas para aprovechar el espacio -->
+        <div *ngIf="!loadingViewVariants && viewProductVariants.length > 0" 
+             class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          
+          <div *ngFor="let variant of viewProductVariants; let i = index" 
+               class="border border-gray-200 rounded-lg p-5 hover:border-[#0367A6] hover:shadow-md transition-all">
+            
+            <div class="flex items-center justify-between mb-3">
+              <h5 class="font-semibold text-[#0367A6] text-base">Variante {{ i + 1 }}</h5>
+              <span class="text-xs bg-gray-100 px-2 py-1 rounded-full">{{ variant.sku }}</span>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-3 mb-3">
+              <div>
+                <p class="text-xs text-gray-500">Precio</p>
+                <p class="font-semibold text-[#202020]">${{ formatPrecio(variant.precio) }}</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-500">Stock</p>
+                <span [class]="getStockClass(getStockValue(variant.stock)) + ' px-2 py-0.5 rounded-full text-xs font-medium'">
+                  {{ variant.stock }} uds
+                </span>
+              </div>
+            </div>
+
+            <!-- Atributos de la variante -->
+            <div *ngIf="variant.atributos && getObjectKeys(variant.atributos).length > 0" class="mt-2 mb-3">
+              <p class="text-xs text-gray-500 mb-1">Atributos</p>
+              <div class="flex flex-wrap gap-1">
+                <span *ngFor="let attr of getVariantAttributes(variant)" 
+                      class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full text-xs">
+                  {{ attr.key }}: {{ attr.value }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Miniaturas de imágenes -->
+            <div *ngIf="variant.imagenes && variant.imagenes.length > 0" class="mt-2">
+              <p class="text-xs text-gray-500 mb-1">Imágenes ({{ variant.imagenes.length }})</p>
+              <div class="flex gap-1">
+                <div *ngFor="let img of variant.imagenes.slice(0, 4)" class="w-10 h-10">
+                  <img [src]="img" class="w-full h-full object-cover rounded border border-gray-200"
+                       onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/a/a3/Image-not-found.png'">
+                </div>
+                <span *ngIf="variant.imagenes.length > 4" class="text-xs text-gray-500 self-center">
+                  +{{ variant.imagenes.length - 4 }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pie del Modal -->
+    <div class="sticky bottom-0 bg-gray-50 px-8 py-4 rounded-b-xl flex justify-end border-t border-gray-200">
+      <button (click)="closeViewModal()" 
+              class="px-6 py-2.5 bg-[#0367A6] text-white rounded-lg hover:bg-[#035A91] transition-all font-medium">
+        Cerrar
+      </button>
+    </div>
+  </div>
+</div>
+</div>

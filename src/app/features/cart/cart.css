@@ -1,0 +1,160 @@
+/* Estilos para el carrito de compras */
+
+/* Animación para botones */
+button {
+  transition: all 0.2s ease-in-out;
+}
+
+button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* Estilos para inputs de cantidad */
+input[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Hover effects para items del carrito */
+.cart-item {
+  transition: background-color 0.2s ease-in-out;
+}
+
+.cart-item:hover {
+  background-color: rgba(249, 250, 251, 0.5);
+}
+
+/* Estilos para warnings de stock */
+.stock-warning {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: .5;
+  }
+}
+
+/* Estilos para el resumen de orden */
+.order-summary {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Spinner personalizado */
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Mejoras de accesibilidad */
+.focus\:ring-2:focus {
+  box-shadow: 0 0 0 2px rgba(3, 103, 166, 0.5);
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .cart-item-image {
+    width: 80px;
+    height: 80px;
+  }
+  
+  .cart-item-content {
+    margin-left: 12px;
+  }
+}
+
+/* Estilos para badges de descuento */
+.discount-badge {
+  animation: subtle-bounce 2s ease-in-out infinite;
+}
+
+@keyframes subtle-bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+/* Estilos para botones de cantidad */
+.quantity-button {
+  transition: background-color 0.15s ease-in-out;
+}
+
+.quantity-button:hover:not(:disabled) {
+  background-color: rgba(3, 103, 166, 0.1);
+}
+
+/* Efecto de hover para cards de producto */
+.product-card {
+  transition: box-shadow 0.2s ease-in-out;
+}
+
+.product-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Estilos para el estado vacío */
+.empty-cart-icon {
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Mejoras visuales para el summary */
+.summary-item {
+  transition: background-color 0.2s ease-in-out;
+}
+
+.summary-item:hover {
+  background-color: rgba(255, 255, 255, 0.5);
+}
+
+/* Estilos para notificaciones de envío gratis */
+.shipping-notice {
+  border-left: 4px solid #3B82F6;
+}
+
+/* Estilos para botones de acción principal */
+.primary-action-button {
+  box-shadow: 0 4px 14px 0 rgba(3, 103, 166, 0.25);
+}
+
+.primary-action-button:hover:not(:disabled) {
+  box-shadow: 0 6px 20px 0 rgba(3, 103, 166, 0.35);
+}
+
+/* Estilos para inputs con focus */
+input:focus {
+  border-color: #0367A6;
+  box-shadow: 0 0 0 1px #0367A6;
+}

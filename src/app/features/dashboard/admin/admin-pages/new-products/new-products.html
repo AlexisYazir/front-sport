@@ -1,0 +1,625 @@
+<div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+  <!-- Toolbar -->
+  <div class="mb-6 p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="bg-[#0367A6]/10 p-3 rounded-xl">
+        <span class="material-symbols-outlined text-[#0367A6] text-2xl">fiber_new</span>
+      </div>
+      <div>
+        <h2 class="text-2xl font-bold text-[#202020]">Productos Nuevos</h2>
+        <p class="text-sm text-[#666666] mt-0.5">Productos recientes y pendientes de completar</p>
+      </div>
+    </div>
+    <div class="flex gap-3">
+      <!-- <button class="px-4 py-2 border border-gray-300 rounded-lg text-[#666666] hover:bg-gray-50 transition-all flex items-center gap-2 text-sm font-medium">
+        <i class="pi pi-download text-base"></i>
+        Exportar
+      </button> -->
+      <a routerLink="/dashboard/admin/products" 
+   class="inline-flex items-center gap-2 px-4 py-2 bg-[#0367A6] hover:bg-[#035A91] text-white rounded-lg transition-all">
+  <span class="material-symbols-outlined text-base">inventory_2</span>
+  <span>Ver Productos</span>
+</a>
+    </div>
+  </div>
+
+  <!-- Pestañas -->
+  <div class="border-b border-gray-200 mb-6">
+    <div class="flex gap-4">
+      <button class="px-4 py-2 font-medium transition-all relative"
+              [class.text-[#0367A6]]="activeTab === 'recientes'"
+              [class.text-gray-500]="activeTab !== 'recientes'"
+              (click)="switchTab('recientes')">
+        Productos Recientes
+        <span *ngIf="activeTab === 'recientes'" class="absolute bottom-0 left-0 w-full h-0.5 bg-[#0367A6]"></span>
+      </button>
+      <button class="px-4 py-2 font-medium transition-all relative"
+              [class.text-[#0367A6]]="activeTab === 'incompletos'"
+              [class.text-gray-500]="activeTab !== 'incompletos'"
+              (click)="switchTab('incompletos')">
+        Productos Incompletos
+        <span *ngIf="activeTab === 'incompletos'" class="absolute bottom-0 left-0 w-full h-0.5 bg-[#0367A6]"></span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading()" class="flex flex-col items-center justify-center py-16">
+    <div class="relative">
+      <div class="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-[#0367A6]"></div>
+      <div class="absolute inset-0 flex items-center justify-center">
+        <span class="material-symbols-outlined text-[#0367A6] text-xl">fiber_new</span>
+      </div>
+    </div>
+    <p class="text-[#666666] mt-4">Cargando productos...</p>
+  </div>
+
+  <!-- Contenido principal -->
+  <ng-container *ngIf="!isLoading()">
+    <!-- Barra de búsqueda -->
+    <div class="flex flex-col gap-4 mb-6">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div class="relative w-full sm:w-96">
+          <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#666666]">
+            <i class="pi pi-search text-lg"></i>
+          </span>
+          <input type="text" 
+                 (input)="onSearch($event)" 
+                 [ngModel]="searchValue"
+                 placeholder="Buscar por ID o nombre..." 
+                 class="w-full pl-10 pr-10 py-3 border-2 border-gray-200 rounded-xl focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 transition-all outline-none text-sm"/>
+          <button *ngIf="searchValue" 
+                  (click)="clearSearch()"
+                  class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#0367A6] transition-colors">
+            <i class="pi pi-times-circle text-lg"></i>
+          </button>
+        </div>
+        
+        <div class="flex items-center gap-4">
+          <div class="bg-blue-50 px-4 py-2 rounded-xl border border-blue-100">
+            <span class="text-[#0367A6] font-semibold text-lg">{{ totalRecords }}</span>
+            <span class="text-[#666666] text-sm ml-2">productos</span>
+          </div>
+          <button class="w-10 h-10 rounded-full border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all flex items-center justify-center"
+                  (click)="refreshData()"
+                  title="Actualizar datos">
+            <i class="pi pi-refresh text-lg"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabla de productos recientes -->
+    <div *ngIf="activeTab === 'recientes'" class="overflow-x-auto rounded-xl border border-gray-200">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 border-b-2 border-gray-200">
+          <tr>
+            <th class="px-4 py-4 text-left font-semibold text-[#202020]">ID</th>
+            <th class="px-4 py-4 text-left font-semibold text-[#202020]">Nombre</th>
+            <th class="px-4 py-4 text-left font-semibold text-[#202020]">Descripción</th>
+            <th class="px-4 py-4 text-left font-semibold text-[#202020]">Fecha Creación</th>
+            <!-- <th class="px-4 py-4 text-left font-semibold text-[#202020]">Estado</th> -->
+            <th class="px-4 py-4 text-center font-semibold text-[#202020]">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let product of paginatedProducts" class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+            <td class="px-4 py-4 font-mono font-medium text-[#0367A6]">#{{ product.id_producto }}</td>
+            <td class="px-4 py-4">
+              <div class="font-semibold text-[#202020]">{{ product.nombre }}</div>
+            </td>
+            <td class="px-4 py-4">
+              <div class="text-[#666666] max-w-xs truncate">{{ product.descripcion || 'Sin descripción' }}</div>
+            </td>
+            <td class="px-4 py-4">
+              <div class="flex items-center gap-1 text-[#666666]">
+                <span class="material-symbols-outlined text-sm">calendar_today</span>
+                {{ formatDate(product.fecha_creacion) }}
+              </div>
+            </td>
+            <!-- <td class="px-4 py-4">
+              <span [class]="getStatusClass(product.activo) + ' px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm border inline-flex items-center gap-1'">
+                <i [class]="getStatusIcon(product.activo)"></i>
+                {{ getStatusText(product.activo) }}
+              </span>
+            </td> -->
+            <td class="px-4 py-4">
+              <div class="flex gap-2 justify-center">
+                <button class="bg-green-100 text-green-700 border-green-200 hover:bg-green-200 hover:text-green-800 px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm border inline-flex items-center gap-1 transition-all"
+                        (click)="completeProduct(product)"
+                        title="Completar producto">
+                  <i class="pi pi-check"></i>
+                  Completar
+                </button>
+              </div>
+            </td>
+          </tr>
+          
+<!-- Fila vacía para productos recientes -->
+<tr *ngIf="filteredProducts.length === 0">
+  <td colspan="5" class="text-center py-12">
+    <div class="flex flex-col items-center gap-3">
+      <span class="material-symbols-outlined text-5xl text-gray-300">inbox</span>
+      <span class="text-[#666666] text-lg font-medium">No hay productos creados recientemente</span>
+      <span class="text-sm text-gray-400">Los productos nuevos aparecerán aquí</span>
+      <a routerLink="/dashboard/admin/products" 
+         class="px-4 py-2 bg-[#0367A6] text-white rounded-lg hover:bg-[#035A91] transition-all text-sm font-medium mt-2 inline-flex items-center gap-2">
+        <span class="material-symbols-outlined text-sm">inventory_2</span>
+        Ir a Gestión de Productos
+      </a>
+    </div>
+  </td>
+</tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Tabla de productos incompletos -->
+    <div *ngIf="activeTab === 'incompletos'" class="overflow-x-auto rounded-xl border border-gray-200">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 border-b-2 border-gray-200">
+          <tr>
+            <th class="px-4 py-4 text-left font-semibold text-[#202020]">ID</th>
+            <th class="px-4 py-4 text-left font-semibold text-[#202020]">Nombre</th>
+            <th class="px-4 py-4 text-left font-semibold text-[#202020]">Descripción</th>
+            <th class="px-4 py-4 text-left font-semibold text-[#202020]">Fecha Creación</th>
+            <!-- <th class="px-4 py-4 text-left font-semibold text-[#202020]">Estado</th> -->
+            <th class="px-4 py-4 text-left font-semibold text-[#202020]">Estado</th>
+            <th class="px-4 py-4 text-center font-semibold text-[#202020]">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let product of paginatedIncompleteProducts" class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+            <td class="px-4 py-4 font-mono font-medium text-[#0367A6]">#{{ product.id_producto }}</td>
+            <td class="px-4 py-4">
+              <div class="font-semibold text-[#202020]">{{ product.nombre }}</div>
+            </td>
+            <td class="px-4 py-4">
+              <div class="text-[#666666] max-w-xs truncate">{{ product.descripcion || 'Sin descripción' }}</div>
+            </td>
+            <td class="px-4 py-4">
+              <div class="flex items-center gap-1 text-[#666666]">
+                <span class="material-symbols-outlined text-sm">calendar_today</span>
+                {{ formatDate(product.fecha_creacion) }}
+              </div>
+            </td>
+            <!-- <td class="px-4 py-4">
+              <span [class]="getStatusClass(product.activo) + ' px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm border inline-flex items-center gap-1'">
+                <i [class]="getStatusIcon(product.activo)"></i>
+                {{ getStatusText(product.activo) }}
+              </span>
+            </td> -->
+            <td class="px-4 py-4">
+              <span [class]="getCompletionStatusClass(product.estado_completado) + ' px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm border inline-flex items-center gap-1'">
+                <i [class]="getCompletionStatusIcon(product.estado_completado)"></i>
+                {{ getCompletionStatusText(product.estado_completado) }}
+              </span>
+            </td>
+            <td class="px-4 py-4">
+              <div class="flex gap-2 justify-center">
+                <button class="bg-yellow-100 text-yellow-700 border-yellow-200 hover:bg-yellow-200 hover:text-yellow-800 px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm border inline-flex items-center gap-1 transition-all"
+                        (click)="completeProduct(product)"
+                        title="Continuar completando">
+                  <i class="pi pi-exclamation-triangle"></i>
+                  Continuar
+                </button>
+              </div>
+            </td>
+          </tr>
+          
+          <!-- Fila vacía -->
+          <tr *ngIf="filteredIncompleteProducts.length === 0">
+            <td colspan="7" class="text-center py-12">
+              <div class="flex flex-col items-center gap-3">
+                <i class="pi pi-check-circle text-5xl text-green-300"></i>
+                <span class="text-[#666666] text-lg font-medium">¡Todos los productos están completos!</span>
+                <span class="text-sm text-gray-400">No hay productos pendientes de completar</span>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Paginación -->
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
+      <div class="flex items-center gap-3">
+        <span class="text-sm text-[#666666]">Mostrar</span>
+        <select class="px-3 py-2 border border-gray-300 rounded-lg text-sm text-[#202020] focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none"
+                [(ngModel)]="rowsPerPage"
+                (change)="onRowsPerPageChange()">
+          <option *ngFor="let option of rowsPerPageOptions" [value]="option">{{ option }}</option>
+        </select>
+        <span class="text-sm text-[#666666]">resultados por página</span>
+      </div>
+
+      <div class="text-sm text-[#666666] order-first sm:order-none">
+        Mostrando {{ first + 1 }} a {{ last }} de {{ totalRecords }} productos
+      </div>
+
+      <div class="flex gap-2">
+        <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50"
+                (click)="changePage('first')" [disabled]="first === 0" title="Primera página">
+          <i class="pi pi-angle-double-left"></i>
+        </button>
+        <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50"
+                (click)="changePage('prev')" [disabled]="first === 0" title="Página anterior">
+          <i class="pi pi-angle-left"></i>
+        </button>
+        
+        <div class="flex gap-1">
+          <button *ngFor="let page of pageNumbers" 
+                  class="min-w-[2.5rem] h-10 rounded-lg transition-all font-medium"
+                  [ngClass]="page === currentPage ? 
+                    'bg-[#0367A6] text-white hover:bg-[#035A91]' : 
+                    'border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6]'"
+                  (click)="goToPage(page)">
+            {{ page }}
+          </button>
+        </div>
+
+        <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50"
+                (click)="changePage('next')" [disabled]="last >= totalRecords" title="Página siguiente">
+          <i class="pi pi-angle-right"></i>
+        </button>
+        <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50"
+                (click)="changePage('last')" [disabled]="last >= totalRecords" title="Última página">
+          <i class="pi pi-angle-double-right"></i>
+        </button>
+      </div>
+    </div>
+  </ng-container>
+  
+  <!-- MODAL PARA COMPLETAR PRODUCTOOOOOO --------------------- -->
+<!-- Modal de Completar Producto -->
+<div *ngIf="showCompleteModal && selectedProduct" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" (click)="closeCompleteModal()">
+  
+  <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto" (click)="$event.stopPropagation()">
+    
+    <!-- Cabecera -->
+    <div class="sticky top-0 bg-gradient-to-r from-[#0367A6] to-[#035A91] text-white px-6 py-4 rounded-t-xl flex justify-between items-center z-10">
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined">assignment_turned_in</span>
+        <div>
+          <h3 class="text-xl font-bold">Completar Producto</h3>
+          <p class="text-sm text-white/80">{{ selectedProduct.nombre }}</p>
+        </div>
+      </div>
+      <button (click)="closeCompleteModal()" class="hover:bg-white/20 p-2 rounded-lg transition-colors">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+
+    <!-- Barra de progreso de pasos -->
+    <div class="px-6 pt-6 pb-2">
+      <div class="flex items-center justify-between mb-2">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
+               [ngClass]="currentStep >= 1 ? 'bg-[#0367A6] text-white' : 'bg-gray-200 text-gray-500'">
+            1
+          </div>
+          <span class="font-medium" [ngClass]="currentStep >= 1 ? 'text-[#0367A6]' : 'text-gray-400'">
+            Datos de Variantes
+          </span>
+        </div>
+        <div class="w-16 h-0.5" [ngClass]="currentStep >= 2 ? 'bg-[#0367A6]' : 'bg-gray-200'"></div>
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
+               [ngClass]="currentStep >= 2 ? 'bg-[#0367A6] text-white' : 'bg-gray-200 text-gray-500'">
+            2
+          </div>
+          <span class="font-medium" [ngClass]="currentStep >= 2 ? 'text-[#0367A6]' : 'text-gray-400'">
+            Seleccionar Variantes
+          </span>
+        </div>
+        <div class="w-16 h-0.5" [ngClass]="currentStep >= 3 ? 'bg-[#0367A6]' : 'bg-gray-200'"></div>
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
+               [ngClass]="currentStep >= 3 ? 'bg-[#0367A6] text-white' : 'bg-gray-200 text-gray-500'">
+            3
+          </div>
+          <span class="font-medium" [ngClass]="currentStep >= 3 ? 'text-[#0367A6]' : 'text-gray-400'">
+            Asignar Atributos
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cuerpo del modal -->
+    <div class="p-6">
+      
+      <!-- PASO 1: Datos de variantes (precio, stock, imágenes) -->
+      <div *ngIf="currentStep === 1">
+        
+        <!-- Tabs de variantes -->
+        <div class="flex flex-wrap items-center gap-2 border-b border-gray-200 pb-3 mb-4">
+          <button *ngFor="let variant of variantes; let i = index"
+                  (click)="seleccionarVariante(i)"
+                  class="px-4 py-2 rounded-lg border transition-all flex items-center gap-2 text-sm"
+                  [ngClass]="varianteActualIndex === i ? 
+                    'border-[#0367A6] bg-[#0367A6]/10 text-[#0367A6] font-medium' : 
+                    'border-gray-300 text-gray-600 hover:border-[#0367A6] hover:text-[#0367A6]'">
+            <span class="material-symbols-outlined text-sm">sell</span>
+            Variante {{ i + 1 }}
+            <button *ngIf="variantes.length > 1" 
+                    (click)="eliminarVariante(i); $event.stopPropagation()"
+                    class="ml-1 text-gray-400 hover:text-red-500">
+              <span class="material-symbols-outlined text-sm">close</span>
+            </button>
+          </button>
+          
+          <button (click)="agregarVariante()"
+                  class="px-4 py-2 border border-dashed border-[#0367A6] text-[#0367A6] rounded-lg hover:bg-[#0367A6]/10 transition-all flex items-center gap-2 text-sm">
+            <span class="material-symbols-outlined text-sm">add</span>
+            Agregar Variante
+          </button>
+        </div>
+
+        <!-- Formulario de variante actual -->
+        <div *ngIf="variantes[varianteActualIndex]" class="space-y-4">
+          <h4 class="font-semibold text-[#202020] text-lg">Detalles de Variante {{ varianteActualIndex + 1 }}</h4>
+          
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- SKU -->
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-1">
+                SKU <span class="text-red-500">*</span>
+              </label>
+              <input type="text" [(ngModel)]="variantes[varianteActualIndex].sku"
+                     (input)="validationErrors.sku = ''"
+                     [ngClass]="{'border-red-500 ring-1 ring-red-500': validationErrors.sku}"
+                     class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0367A6]/20 focus:border-[#0367A6] outline-none transition-all"
+                     placeholder="Ej: NIKE-DRY-AZ-L">
+              <p *ngIf="validationErrors.sku" class="text-red-500 text-xs mt-1">{{ validationErrors.sku }}</p>
+            </div>
+
+            <!-- Precio -->
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-1">
+                Precio <span class="text-red-500">*</span>
+              </label>
+              <div class="relative">
+                <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
+                <input type="number" [(ngModel)]="variantes[varianteActualIndex].precio"
+                       (input)="validationErrors.precio = ''"
+                       [ngClass]="{'border-red-500 ring-1 ring-red-500': validationErrors.precio}"
+                       class="w-full pl-8 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0367A6]/20 focus:border-[#0367A6] outline-none transition-all"
+                       placeholder="0.00" min="0" step="0.01">
+              </div>
+              <p *ngIf="validationErrors.precio" class="text-red-500 text-xs mt-1">{{ validationErrors.precio }}</p>
+            </div>
+
+            <!-- Stock -->
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-1">
+                Stock <span class="text-red-500">*</span>
+              </label>
+              <input type="number" [(ngModel)]="variantes[varianteActualIndex].stock"
+                     (input)="validationErrors.stock = ''"
+                     [ngClass]="{'border-red-500 ring-1 ring-red-500': validationErrors.stock}"
+                     class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0367A6]/20 focus:border-[#0367A6] outline-none transition-all"
+                     placeholder="0" min="0">
+              <p *ngIf="validationErrors.stock" class="text-red-500 text-xs mt-1">{{ validationErrors.stock }}</p>
+            </div>
+          </div>
+
+          <!-- Imágenes -->
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Imágenes</label>
+            
+            <!-- Lista de imágenes -->
+            <div class="flex flex-wrap gap-3 mb-3">
+              <div *ngFor="let img of variantes[varianteActualIndex].imagenes; let i = index" 
+                   class="relative group">
+                <img [src]="img" class="w-20 h-20 object-cover rounded-lg border-2 border-gray-200" 
+                     onerror="this.src='assets/images/no-imagen.webp'">
+                <button (click)="eliminarImagen(i)" 
+                        class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity">
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            <!-- Agregar imagen -->
+            <div class="flex gap-2">
+              <input type="text" [(ngModel)]="variantes[varianteActualIndex].imagenInput"
+                     placeholder="URL de la imagen"
+                     class="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0367A6]/20 focus:border-[#0367A6] outline-none transition-all placeholder-gray-400">
+              <button (click)="agregarImagen()" 
+                      class="px-4 py-2.5 bg-[#0367A6] text-white rounded-lg hover:bg-[#035A91] transition-colors">
+                Agregar
+              </button>
+            </div>
+            <p class="text-xs text-gray-400 mt-1">Las imágenes deben ser URLs válidas</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- PASO 2: Seleccionar variantes para asignar atributos -->
+      <div *ngIf="currentStep === 2">
+        <div *ngIf="loadingVariants" class="flex justify-center py-8">
+          <div class="animate-spin rounded-full h-8 w-8 border-2 border-gray-300 border-t-[#0367A6]"></div>
+        </div>
+
+        <div *ngIf="!loadingVariants && existingVariants.length > 0">
+          <div class="mb-4 flex items-center justify-between">
+            <h4 class="font-semibold text-[#202020] text-lg">Selecciona variantes para asignar atributos</h4>
+            <div class="flex gap-2">
+              <button (click)="seleccionarTodasVariantes(true)" 
+                      class="text-sm text-[#0367A6] hover:underline">
+                Seleccionar todas
+              </button>
+              <span class="text-gray-300">|</span>
+              <button (click)="seleccionarTodasVariantes(false)" 
+                      class="text-sm text-[#0367A6] hover:underline">
+                Deseleccionar todas
+              </button>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto rounded-xl border border-gray-200">
+            <table class="w-full text-sm">
+              <thead class="bg-gray-50 border-b-2 border-gray-200">
+                <tr>
+                  <th class="px-4 py-3 w-12">
+                    <input type="checkbox" 
+                           [checked]="isAllSelected()"
+                           (change)="seleccionarTodasVariantes($any($event.target).checked)"
+                           class="w-4 h-4 text-[#0367A6] rounded">
+                  </th>
+                  <th class="px-4 py-3 text-left font-semibold text-[#202020]">SKU</th>
+                  <th class="px-4 py-3 text-left font-semibold text-[#202020]">Precio</th>
+                  <th class="px-4 py-3 text-left font-semibold text-[#202020]">Stock</th>
+                  <th class="px-4 py-3 text-left font-semibold text-[#202020]">Imágenes</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let variant of existingVariants" class="border-b border-gray-100 hover:bg-gray-50">
+                  <td class="px-4 py-3">
+                    <input type="checkbox" [(ngModel)]="variant.selected" class="w-4 h-4 text-[#0367A6] rounded">
+                  </td>
+                  <td class="px-4 py-3 font-mono text-[#0367A6]">{{ variant.sku }}</td>
+                  <td class="px-4 py-3">${{ formatPrecio(variant.precio) }}</td>
+                  <td class="px-4 py-3">{{ variant.stock }} uds</td>
+                  <td class="px-4 py-3">
+                    <div class="flex gap-1">
+                      <div *ngFor="let img of variant.imagenes.slice(0, 2)" class="w-8 h-8">
+                        <img [src]="img" class="w-full h-full object-cover rounded border border-gray-200"
+                             onerror="this.src='assets/images/no-imagen.webp'">
+                      </div>
+                      <span *ngIf="variant.imagenes.length > 2" class="text-xs text-gray-500">
+                        +{{ variant.imagenes.length - 2 }}
+                      </span>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <p class="text-sm text-blue-700 flex items-center gap-2">
+              <span class="material-symbols-outlined text-blue-500 text-sm">info</span>
+              Selecciona las variantes a las que quieras asignar atributos (talla, color, material, etc.)
+            </p>
+          </div>
+        </div>
+
+        <div *ngIf="!loadingVariants && existingVariants.length === 0" class="text-center py-8">
+          <span class="material-symbols-outlined text-4xl text-gray-300">info</span>
+          <p class="text-[#666666] mt-2">No hay variantes para este producto</p>
+          <p class="text-sm text-gray-400">Completa el paso 1 primero</p>
+        </div>
+      </div>
+
+      <!-- PASO 3: Asignar valores a atributos -->
+      <div *ngIf="currentStep === 3">
+        <div *ngIf="loadingAttributes" class="flex justify-center py-8">
+          <div class="animate-spin rounded-full h-8 w-8 border-2 border-gray-300 border-t-[#0367A6]"></div>
+        </div>
+
+        <div *ngIf="!loadingAttributes && variantAttributeValues.length > 0">
+          <h4 class="font-semibold text-[#202020] text-lg mb-4">Asignar valores a atributos</h4>
+
+          <div *ngFor="let item of variantAttributeValues; let vIdx = index" class="mb-6 p-4 border border-gray-200 rounded-lg">
+            <div class="flex items-center justify-between mb-2">
+              <span class="font-medium text-[#0367A6]">
+                Variante: {{ getVariantSku(item.id_variante) }}
+              </span>
+              <button (click)="agregarCampoAtributo(vIdx)"
+                      class="text-sm text-[#0367A6] hover:underline flex items-center gap-1">
+                <span class="material-symbols-outlined text-sm">add</span>
+                Agregar atributo
+              </button>
+            </div>
+
+            <div *ngFor="let attr of item.valores; let aIdx = index" class="flex gap-2 mb-2">
+              <select [(ngModel)]="attr.id_atributo"
+                      class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#0367A6]/20 focus:border-[#0367A6] outline-none">
+                <option [ngValue]="0" disabled>Selecciona un atributo</option>
+                <option *ngFor="let a of availableAttributes" [ngValue]="a.id_atributo">
+                  {{ a.nombre }}
+                </option>
+              </select>
+
+              <input type="text" [(ngModel)]="attr.valor"
+                     placeholder="Valor"
+                     class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#0367A6]/20 focus:border-[#0367A6] outline-none" />
+
+              <button (click)="eliminarCampoAtributo(vIdx, aIdx)"
+                      class="px-3 py-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                <span class="material-symbols-outlined text-sm">delete</span>
+              </button>
+            </div>
+
+            <div *ngIf="item.valores.length === 0" class="text-sm text-gray-400 italic">
+              No hay atributos asignados aún. Haz clic en "Agregar atributo".
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="!loadingAttributes && variantAttributeValues.length === 0" class="text-center py-8">
+          <span class="material-symbols-outlined text-4xl text-gray-300">info</span>
+          <p class="text-[#666666] mt-2">No hay variantes seleccionadas</p>
+        </div>
+      </div>
+
+      <!-- Mensajes -->
+      <div *ngIf="errorMessage" class="mt-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+        {{ errorMessage }}
+      </div>
+      
+      <div *ngIf="successMessage" class="mt-4 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg flex items-center gap-2">
+        <span class="material-symbols-outlined text-green-600">check_circle</span>
+        {{ successMessage }}
+      </div>
+    </div>
+
+    <!-- Footer con botones según el paso -->
+    <div class="sticky bottom-0 bg-gray-50 px-6 py-4 rounded-b-xl border-t border-gray-200 flex justify-end gap-3">
+      <button (click)="closeCompleteModal()" 
+              class="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition-all font-medium">
+        Cancelar
+      </button>
+
+      <!-- Botones Paso 1 -->
+      <div *ngIf="currentStep === 1" class="flex gap-3">
+        <button *ngIf="step1Completed" (click)="irAlPaso2()"
+                class="px-6 py-2.5 bg-[#0367A6] text-white rounded-lg hover:bg-[#035A91] transition-all font-medium">
+          Siguiente: Seleccionar Variantes
+        </button>
+        <button (click)="guardarPaso1()" [disabled]="saving"
+                class="px-6 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all disabled:opacity-50 font-medium flex items-center gap-2">
+          <i *ngIf="saving" class="pi pi-spin pi-spinner text-sm"></i>
+          {{ saving ? 'Guardando...' : 'Guardar Paso 1' }}
+        </button>
+      </div>
+
+      <!-- Botones Paso 2 -->
+      <div *ngIf="currentStep === 2" class="flex gap-3">
+        <button (click)="volverAlPaso1()"
+                class="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition-all font-medium">
+          Volver
+        </button>
+        <button [disabled]="!hayVariantesSeleccionadas()"
+                (click)="continuarConAtributos()"
+                class="px-6 py-2.5 bg-[#0367A6] text-white rounded-lg hover:bg-[#035A91] transition-all disabled:opacity-50 font-medium">
+          Continuar con Atributos
+        </button>
+      </div>
+
+      <!-- Botones Paso 3 -->
+      <div *ngIf="currentStep === 3" class="flex gap-3">
+        <button (click)="currentStep = 2"
+                class="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition-all font-medium">
+          Volver
+        </button>
+        <button (click)="guardarValoresAtributos()"
+                class="px-6 py-2.5 bg-[#0367A6] text-white rounded-lg hover:bg-[#035A91] transition-all font-medium">
+          Guardar atributos
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+</div>

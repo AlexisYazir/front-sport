@@ -1,0 +1,70 @@
+<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#F2F2F2] via-[#F8F9FA] to-[#E9ECEF] p-6">
+  <div class="w-full max-w-md">
+    <!-- Header -->
+    <div class="mb-6 text-center">
+      <h2 class="text-3xl font-bold text-[#202020]">Verificar Cuenta</h2>
+      <p class="text-[#666666] mt-2">Introduce el código de 6 dígitos que te enviamos</p>
+    </div>
+
+    <!-- Card -->
+    <div class="bg-white rounded-2xl shadow-xl border border-white/50 p-8">
+      <!-- Info -->
+      <p class="text-sm text-[#666666] mb-4" *ngIf="info">{{ info }}</p>
+
+      <!-- Reactive Form -->
+      <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-4" novalidate>
+        <!-- Código -->
+        <div>
+          <label for="code" class="block text-sm font-semibold text-[#202020] mb-2">Código</label>
+          <input
+            id="code"
+            type="text"
+            inputmode="numeric"
+            maxlength="6"
+            formControlName="code"
+            autocomplete="one-time-code"
+            aria-label="Código de verificación de 6 dígitos"
+            class="w-full pl-4 pr-4 py-3 bg-[#F8F9FA] border-2 border-transparent rounded-xl focus:bg-white focus:border-[#0367A6] focus:ring-4 focus:ring-[#0367A6]/10 outline-none transition-all duration-200 text-[#202020] placeholder:text-[#A6A6A6]"
+            placeholder="123456" />
+          
+          <!-- Validación local -->
+          <div *ngIf="form.controls['code'].touched || form.controls['code'].dirty">
+            <div *ngIf="form.controls['code'].hasError('required')" class="text-red-600 text-sm mt-2">
+              El código es obligatorio.
+            </div>
+            <div *ngIf="form.controls['code'].hasError('pattern')" class="text-red-600 text-sm mt-2">
+              El código debe contener 6 dígitos.
+            </div>
+          </div>
+        </div>
+
+        <!-- Mensaje de error del servidor -->
+        <div *ngIf="error" class="text-red-600 text-sm">{{ error }}</div>
+
+        <!-- Botones -->
+        <div class="flex items-center gap-3">
+          <button
+            type="submit"
+            [disabled]="loading || form.invalid"
+            class="flex-1 bg-gradient-to-r from-[#0367A6] to-[#035A91] text-white py-3 rounded-xl font-semibold disabled:opacity-60 disabled:cursor-not-allowed">
+            <span *ngIf="loading" class="animate-spin material-symbols-outlined text-lg">progress_activity</span>
+            <span *ngIf="!loading">{{ loading ? 'Verificando...' : 'Verificar' }}</span>
+          </button>
+
+          <button
+            type="button"
+            (click)="resend()"
+            [disabled]="resendCooldown > 0 || loading"
+            class="px-4 py-3 rounded-xl border bg-white text-[#0367A6] font-medium disabled:opacity-60 disabled:cursor-not-allowed">
+            <span *ngIf="resendCooldown === 0">Reenviar</span>
+            <span *ngIf="resendCooldown > 0">Reenviar ({{ resendCooldown }}s)</span>
+          </button>
+        </div>
+
+        <div class="text-center mt-2">
+          <button type="button" (click)="cancel()" class="text-sm text-[#666666] underline">Volver al inicio de sesión</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

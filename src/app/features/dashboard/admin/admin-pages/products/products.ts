@@ -1,0 +1,392 @@
+import { Component, OnInit, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router'; // <-- Importar RouterModule
+import { ProductService } from '../../../../../core/services/product.service';
+import { Product, CreateProductDto, Categorie, Marca, Attibute, RecientProduct } from '../../../../../core/models/product.model';
+
+@Component({
+  selector: 'app-products',
+  standalone: true,
+  imports: [CommonModule, FormsModule, RouterModule], // <-- Agregar RouterModule
+  templateUrl: './products.html',
+  styleUrls: ['./products.css']
+})
+export class Products implements OnInit {
+  private productService = inject(ProductService);
+  
+  products: Product[] = [];
+  filteredProducts: Product[] = [];
+  paginatedProducts: Product[] = [];
+  searchValue: string = '';
+  
+  filterEstado: string = 'todos';
+  filterStock: string = 'todos';
+  
+  rowsPerPage: number = 10;
+  rowsPerPageOptions: number[] = [5, 10, 20, 50, 100];
+  first: number = 0;
+  currentPage: number = 1;
+  totalRecords: number = 0;
+  
+  showCreateModal: boolean = false;
+  nuevoProducto: CreateProductDto = {
+    nombre: '',
+    descripcion: '',
+    id_marca: 0,
+    id_categoria: 0
+  };
+  
+  validationErrors = {
+    nombre: '',
+    descripcion: '',
+    id_marca: '',
+    id_categoria: ''
+  };
+  
+  creatingProduct: boolean = false;
+  createSuccess: boolean = false;
+  createError: string = '';
+  
+  categorias: Categorie[] = [];
+  categoriasPadre: Categorie[] = [];
+  subcategorias: Categorie[] = [];
+  marcas: Marca[] = [];
+  
+  showEditModal: boolean = false;
+  selectedProduct: Product | null = null;
+  selectedVariantIndex: number = 0;
+  editMode: 'producto' | 'variante' = 'producto';
+  attributes: Attibute[] = [];
+  
+  // Contador de productos nuevos
+  newProductsCount: number = 0;
+  
+  isLoading = this.productService.isLoading;
+
+  ngOnInit() {
+    this.loadProducts();
+    this.loadCategories();
+    this.loadMarcas();
+    this.loadAttributes();
+    this.loadNewProductsCount(); // <-- Cargar contador
+  }
+
+  loadProducts() {
+    this.productService.getProducts().subscribe({
+      next: (products) => {
+        this.products = products;
+        this.applyFilters();
+      },
+      error: (error) => console.error('Error loading products:', error)
+    });
+  }
+
+  // Cargar contador de productos nuevos
+  loadNewProductsCount() {
+    this.productService.getReceientProducts().subscribe({
+      next: (data: RecientProduct[]) => {
+        this.newProductsCount = data.length;
+        console.log('Productos nuevos:', this.newProductsCount);
+      },
+      error: (error) => {
+        console.error('Error al cargar productos nuevos:', error);
+      }
+    });
+  }
+
+  applyFilters() {
+    let filtered = [...this.products];
+
+    if (this.searchValue) {
+      const term = this.searchValue.toLowerCase();
+      filtered = filtered.filter(product => 
+        product.nombre.toLowerCase().includes(term) ||
+        product.marca?.toLowerCase().includes(term) ||
+        product.categoria.toLowerCase().includes(term) ||
+        product.id?.toString().includes(term)
+      );
+    }
+
+    if (this.filterEstado !== 'todos') {
+      filtered = filtered.filter(product => 
+        this.filterEstado === 'activo' ? product.activo : !product.activo
+      );
+    }
+
+    if (this.filterStock !== 'todos') {
+      filtered = filtered.filter(product => 
+        this.filterStock === 'con-stock' ? product.stock > 0 : product.stock === 0
+      );
+    }
+
+    this.filteredProducts = filtered;
+    this.totalRecords = filtered.length;
+    this.first = 0;
+    this.updatePaginatedProducts();
+  }
+
+  onFilterEstadoChange(event: any) {
+    this.filterEstado = event.target.value;
+    this.applyFilters();
+  }
+
+  onFilterStockChange(event: any) {
+    this.filterStock = event.target.value;
+    this.applyFilters();
+  }
+
+  loadCategories() {
+    this.productService.getCategorias().subscribe({
+      next: (data: Categorie[]) => {
+        this.categorias = data;
+        this.categoriasPadre = data.filter(c => c.id_padre === null);
+      }
+    });
+  }
+
+  onCategoriaPadreChange(event: any) {
+    const padreId = parseInt(event.target.value);
+    if (padreId) {
+      this.subcategorias = this.categorias.filter(c => c.id_padre === padreId);
+      this.nuevoProducto.id_categoria = 0;
+      this.validationErrors.id_categoria = '';
+    } else {
+      this.subcategorias = [];
+    }
+  }
+
+  loadMarcas() {
+    this.productService.getMarcas().subscribe({
+      next: (data: Marca[]) => this.marcas = data
+    });
+  }
+
+  loadAttributes() {
+    this.productService.getAttributes().subscribe({
+      next: (data: Attibute[]) => this.attributes = data
+    });
+  }
+
+  updatePaginatedProducts() {
+    const start = this.first;
+    const end = this.first + this.rowsPerPage;
+    this.paginatedProducts = this.filteredProducts.slice(start, end);
+    this.totalRecords = this.filteredProducts.length;
+    this.currentPage = Math.floor(this.first / this.rowsPerPage) + 1;
+  }
+
+  onSearch(event: any) {
+    this.searchValue = event.target.value;
+    this.applyFilters();
+  }
+
+  clearSearch() {
+    this.searchValue = '';
+    this.filterEstado = 'todos';
+    this.filterStock = 'todos';
+    this.applyFilters();
+  }
+
+  onRowsPerPageChange() {
+    this.first = 0;
+    this.updatePaginatedProducts();
+  }
+
+  changePage(action: 'first' | 'prev' | 'next' | 'last') {
+    switch (action) {
+      case 'first': this.first = 0; break;
+      case 'prev': if (this.first > 0) this.first -= this.rowsPerPage; break;
+      case 'next': if (this.first + this.rowsPerPage < this.totalRecords) this.first += this.rowsPerPage; break;
+      case 'last': this.first = Math.floor((this.totalRecords - 1) / this.rowsPerPage) * this.rowsPerPage; break;
+    }
+    this.updatePaginatedProducts();
+  }
+
+  goToPage(page: number) {
+    this.first = (page - 1) * this.rowsPerPage;
+    this.updatePaginatedProducts();
+  }
+
+  get last(): number {
+    return Math.min(this.first + this.rowsPerPage, this.totalRecords);
+  }
+
+  get pageNumbers(): number[] {
+    const totalPages = Math.ceil(this.totalRecords / this.rowsPerPage);
+    const pages: number[] = [];
+    for (let i = 1; i <= totalPages; i++) pages.push(i);
+    return pages;
+  }
+
+  getProductImage(product: Product): string {
+    return product.imagen || 'assets/images/no-imagen.webp';
+  }
+
+  getStockClass(stock: number): string {
+    if (stock <= 0) return 'bg-red-100 text-red-800';
+    if (stock <= 5) return 'bg-yellow-100 text-yellow-800';
+    return 'bg-green-100 text-green-800';
+  }
+
+  getStockIcon(stock: number): string {
+    if (stock <= 0) return 'pi pi-exclamation-circle';
+    if (stock <= 5) return 'pi pi-exclamation-triangle';
+    return 'pi pi-check-circle';
+  }
+
+  refreshData() {
+    this.loadProducts();
+    this.loadNewProductsCount(); // <-- Actualizar contador al refrescar
+  }
+
+  deleteProduct(product: Product) {
+    console.log('Eliminar:', product);
+  }
+
+  openCreateModal() {
+    this.nuevoProducto = { nombre: '', descripcion: '', id_marca: 0, id_categoria: 0 };
+    this.validationErrors = { nombre: '', descripcion: '', id_marca: '', id_categoria: '' };
+    this.subcategorias = [];
+    this.createSuccess = false;
+    this.createError = '';
+    this.showCreateModal = true;
+  }
+
+  onFormChange() {
+    if (this.nuevoProducto.nombre) this.validationErrors.nombre = '';
+    if (this.nuevoProducto.descripcion) this.validationErrors.descripcion = '';
+  }
+
+  closeCreateModal() {
+    this.showCreateModal = false;
+  }
+
+  validateFields(): boolean {
+    let isValid = true;
+    this.validationErrors = { nombre: '', descripcion: '', id_marca: '', id_categoria: '' };
+
+    if (!this.nuevoProducto.nombre?.trim()) {
+      this.validationErrors.nombre = 'El nombre es obligatorio';
+      isValid = false;
+    }
+    if (!this.nuevoProducto.descripcion?.trim()) {
+      this.validationErrors.descripcion = 'La descripción es obligatoria';
+      isValid = false;
+    }
+    if (!this.nuevoProducto.id_marca) {
+      this.validationErrors.id_marca = 'Selecciona una marca';
+      isValid = false;
+    }
+    if (!this.nuevoProducto.id_categoria) {
+      this.validationErrors.id_categoria = 'Selecciona una categoría';
+      isValid = false;
+    }
+    return isValid;
+  }
+
+  guardarProductoBase() {
+    if (!this.validateFields()) return;
+
+    this.creatingProduct = true;
+    this.productService.createBaseProduct(this.nuevoProducto).subscribe({
+      next: () => {
+        this.creatingProduct = false;
+        this.closeCreateModal();
+        this.loadProducts();
+        this.loadNewProductsCount(); // <-- Actualizar contador después de crear
+      },
+      error: () => {
+        this.creatingProduct = false;
+      }
+    });
+  }
+
+  editProduct(product: Product) {
+    this.selectedProduct = JSON.parse(JSON.stringify(product));
+    this.selectedVariantIndex = 0;
+    this.editMode = 'producto';
+    this.showEditModal = true;
+  }
+
+  closeEditModal() {
+    this.showEditModal = false;
+    this.selectedProduct = null;
+  }
+
+  selectVariant(index: number) {
+    this.selectedVariantIndex = index;
+  }
+
+  switchEditMode(mode: 'producto' | 'variante') {
+    this.editMode = mode;
+  }
+
+  saveProductChanges() {
+    console.log('Guardando cambios:', this.selectedProduct);
+    this.showEditModal = false;
+  }
+
+  // ===== PROPIEDADES PARA MODAL DE VISUALIZACIÓN =====
+showViewModal: boolean = false;
+viewProductData: Product | null = null;
+viewProductVariants: any[] = [];
+loadingViewVariants: boolean = false;
+
+// ===== FUNCIÓN PARA VER DETALLES DEL PRODUCTO =====
+viewProduct(product: Product) {
+  this.viewProductData = product;
+  this.loadingViewVariants = true;
+  this.showViewModal = true;
+  
+  // Usar id_producto si existe, sino usar id
+  const productId = product.id_producto || product.id;
+  
+  if (productId) {
+    this.productService.getProductVariants(productId).subscribe({
+      next: (variants: any[]) => {
+        this.viewProductVariants = variants;
+        this.loadingViewVariants = false;
+      },
+      error: (err) => {
+        console.error('Error al cargar variantes:', err);
+        this.viewProductVariants = [];
+        this.loadingViewVariants = false;
+      }
+    });
+  } else {
+    this.viewProductVariants = [];
+    this.loadingViewVariants = false;
+  }
+}
+
+closeViewModal() {
+  this.showViewModal = false;
+  this.viewProductData = null;
+  this.viewProductVariants = [];
+}
+// ===== MÉTODOS AUXILIARES PARA EL MODAL DE VISUALIZACIÓN =====
+formatPrecio(precio: number | string): string {
+  const precioNum = typeof precio === 'string' ? parseFloat(precio) : precio;
+  return precioNum.toFixed(2);
+}
+
+getStockValue(stock: number | string): number {
+  return typeof stock === 'string' ? parseInt(stock) : stock;
+}
+
+getObjectKeys(obj: any): string[] {
+  return obj ? Object.keys(obj) : [];
+}
+
+getVariantAttributes(variant: any): { key: string, value: any }[] {
+  if (!variant.atributos) return [];
+  
+  return Object.keys(variant.atributos).map(key => ({
+    key: key,
+    value: variant.atributos[key]
+  }));
+}
+  
+}
+

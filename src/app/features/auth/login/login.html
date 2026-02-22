@@ -1,0 +1,177 @@
+<!-- Complete redesign with modern split-screen layout matching register view -->
+<div class="min-h-screen bg-gradient-to-br from-[#F2F2F2] via-[#F8F9FA] to-[#E9ECEF] flex">
+  <!-- Left Side - Branding & Visual -->
+  <div class="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-[#0367A6] to-[#035A91] p-12 flex-col justify-between relative overflow-hidden">
+    <!-- Decorative Elements -->
+    <div class="absolute top-0 right-0 w-96 h-96 bg-[#FF7A00] opacity-10 rounded-full blur-3xl"></div>
+    <div class="absolute bottom-0 left-0 w-80 h-80 bg-white opacity-5 rounded-full blur-3xl"></div>
+    
+    <!-- Logo & Brand -->
+    <div class="relative z-10">
+      <div class="flex items-center space-x-3 mb-8">
+        <div class="bg-white/10 backdrop-blur-sm p-3 rounded-xl">
+          <span class="material-symbols-outlined text-white text-4xl font-variation-settings-wght-400">storefront</span>
+        </div>
+        <span class="text-4xl font-bold text-white">Sport Center</span>
+      </div>
+      <h1 class="text-5xl font-bold text-white leading-tight mb-6">
+        Bienvenido<br/>
+        de Nuevo
+      </h1>
+      <p class="text-xl text-white/80 leading-relaxed max-w-md">
+        Accede a tu cuenta y continúa explorando los mejores productos deportivos diseñados para tu rendimiento.
+      </p>
+    </div>
+
+    <!-- Features -->
+    <div class="relative z-10 space-y-4">
+      <div class="flex items-center space-x-3 text-white/90">
+        <div class="bg-white/10 backdrop-blur-sm p-2 rounded-lg">
+          <span class="material-symbols-outlined text-xl font-variation-settings-wght-400">shopping_bag</span>
+        </div>
+        <span class="text-sm">Acceso rápido a tus pedidos</span>
+      </div>
+      <div class="flex items-center space-x-3 text-white/90">
+        <div class="bg-white/10 backdrop-blur-sm p-2 rounded-lg">
+          <span class="material-symbols-outlined text-xl font-variation-settings-wght-400">favorite</span>
+        </div>
+        <span class="text-sm">Guarda tus productos favoritos</span>
+      </div>
+      <div class="flex items-center space-x-3 text-white/90">
+        <div class="bg-white/10 backdrop-blur-sm p-2 rounded-lg">
+          <span class="material-symbols-outlined text-xl font-variation-settings-wght-400">local_offer</span>
+        </div>
+        <span class="text-sm">Ofertas exclusivas para miembros</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Side - Login Form -->
+  <div class="flex-1 flex items-center justify-center p-6 sm:p-12">
+    <div class="w-full max-w-md">
+      <!-- Mobile Logo -->
+      <div class="lg:hidden flex justify-center items-center space-x-2 mb-8">
+        <span class="material-symbols-outlined text-[#0367A6] text-3xl font-variation-settings-wght-400">storefront</span>
+        <span class="text-2xl font-bold text-[#202020]">Sport Center</span>
+      </div>
+
+      <!-- Header -->
+      <div class="mb-8">
+        <h2 class="text-4xl font-bold text-[#202020] mb-3">Iniciar Sesión</h2>
+        <p class="text-[#666666] text-lg">Accede a tu cuenta deportiva</p>
+      </div>
+
+      <!-- Form Card -->
+      <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/50 p-8">
+        <form class="space-y-5" (ngSubmit)="onSubmit()" #loginForm="ngForm">
+          <!-- Email -->
+          <div class="group">
+            <label for="email" class="block text-sm font-semibold text-[#202020] mb-2">
+              Correo Electrónico
+            </label>
+            <div class="relative">
+              <div class="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#A6A6A6] group-focus-within:text-[#0367A6] transition-colors">
+                <span class="material-symbols-outlined text-xl font-variation-settings-wght-400">mail</span>
+              </div>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                [(ngModel)]="credentials.email"
+                required
+                class="w-full pl-12 pr-4 py-3.5 bg-[#F8F9FA] border-2 border-transparent rounded-xl focus:bg-white focus:border-[#0367A6] focus:ring-4 focus:ring-[#0367A6]/10 outline-none transition-all duration-200 text-[#202020] placeholder:text-[#A6A6A6]"
+                placeholder="tu@email.com">
+            </div>
+          </div>
+
+          <!-- Password -->
+          <div class="group">
+            <label for="password" class="block text-sm font-semibold text-[#202020] mb-2">
+              Contraseña
+            </label>
+            <div class="relative">
+              <div class="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#A6A6A6] group-focus-within:text-[#0367A6] transition-colors">
+                <span class="material-symbols-outlined text-xl font-variation-settings-wght-400">lock</span>
+              </div>
+              <input
+                id="password"
+                name="password"
+                [type]="showPassword ? 'text' : 'password'"
+                [(ngModel)]="credentials.passw"
+                required
+                class="w-full pl-12 pr-12 py-3.5 bg-[#F8F9FA] border-2 border-transparent rounded-xl focus:bg-white focus:border-[#0367A6] focus:ring-4 focus:ring-[#0367A6]/10 outline-none transition-all duration-200 text-[#202020] placeholder:text-[#A6A6A6]"
+                placeholder="••••••••">
+              <button
+                type="button"
+                (click)="togglePassword()"
+                class="absolute right-4 top-1/2 transform -translate-y-1/2 text-[#A6A6A6] hover:text-[#0367A6] transition-colors">
+                <span class="material-symbols-outlined text-xl font-variation-settings-wght-400">
+                  {{ showPassword ? 'visibility_off' : 'visibility' }}
+                </span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Remember Me & Forgot Password -->
+          <div class="flex items-center justify-between pt-2">
+            <div class="flex items-center gap-2">
+              <input
+                id="remember-me"
+                name="remember-me"
+                type="checkbox"
+                [(ngModel)]="rememberMe"
+                class="h-5 w-5 text-[#0367A6] focus:ring-2 focus:ring-[#0367A6] focus:ring-offset-2 border-[#A6A6A6] rounded cursor-pointer">
+              <label for="remember-me" class="text-sm text-[#666666] cursor-pointer select-none">
+                Recordarme
+              </label>
+            </div>
+            <a routerLink="/auth/forgot-password" class="text-sm text-[#0367A6] hover:text-[#035A91] font-semibold underline decoration-2 underline-offset-2 transition-colors">
+              ¿Olvidaste tu contraseña?
+            </a>
+          </div>
+
+          <!-- Submit Button -->
+          <button
+            type="submit"
+            [disabled]="isLoading || !loginForm.form.valid"
+            class="w-full bg-gradient-to-r from-[#0367A6] to-[#035A91] hover:from-[#035A91] hover:to-[#024A7A] disabled:from-[#A6A6A6] disabled:to-[#A6A6A6] text-white py-4 px-6 rounded-xl font-semibold text-base transition-all duration-200 inline-flex items-center justify-center gap-3 shadow-lg shadow-[#0367A6]/20 hover:shadow-xl hover:shadow-[#0367A6]/30 disabled:shadow-none transform hover:-translate-y-0.5 disabled:transform-none">
+            <span *ngIf="isLoading" class="animate-spin material-symbols-outlined text-xl font-variation-settings-wght-400">progress_activity</span>
+            <span class="material-symbols-outlined text-xl font-variation-settings-wght-400" *ngIf="!isLoading">login</span>
+            <span>{{ isLoading ? 'Iniciando Sesión...' : 'Iniciar Sesión' }}</span>
+          </button>
+
+          <!-- Divider -->
+          <div class="relative py-4">
+            <div class="absolute inset-0 flex items-center">
+              <div class="w-full border-t-2 border-[#E9ECEF]"></div>
+            </div>
+            <div class="relative flex justify-center">
+              <span class="px-4 bg-white text-sm font-medium text-[#666666]">O continúa con</span>
+            </div>
+          </div>
+
+          <!-- Social Login -->
+          <div class="space-y-3">
+            <!-- Google Sign-In Button (rendered by Google) -->
+            <div id="google-signin-button" class="flex justify-center"></div>
+            
+            <!-- Fallback button if Google doesn't load -->
+            <div *ngIf="!googleAuthService.isGoogleAvailable()" class="w-full bg-white border-2 border-[#E9ECEF] hover:border-[#0367A6] hover:bg-[#F8F9FA] text-[#666666] py-3.5 px-4 rounded-xl font-medium transition-all duration-200 inline-flex items-center justify-center gap-2 group">
+              <span class="text-xs text-[#A6A6A6]">⚠️ Google no disponible</span>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <!-- Register Link -->
+      <div class="text-center mt-6">
+        <p class="text-[#666666]">
+          ¿No tienes cuenta?
+          <a routerLink="/auth/register" class="text-[#0367A6] hover:text-[#035A91] font-semibold ml-1 underline decoration-2 underline-offset-2">
+            Regístrate aquí
+          </a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>

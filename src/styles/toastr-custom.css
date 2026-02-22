@@ -1,0 +1,74 @@
+/* toastr-custom.css - Estilos claros para toastr */
+.toast-success {
+  background-color: #4caf50 !important;
+  color: white !important;
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.2) !important;
+  border-radius: 8px !important;
+  background-image: none !important;
+}
+
+.toast-success .toast-message {
+  color: white !important;
+}
+
+.toast-success .toast-title {
+  color: white !important;
+  font-weight: bold !important;
+}
+
+.toast-error {
+  background-color: #f44336 !important;
+  color: white !important;
+  box-shadow: 0 4px 12px rgba(244, 67, 54, 0.2) !important;
+  border-radius: 8px !important;
+  background-image: none !important;
+}
+
+.toast-error .toast-message {
+  color: white !important;
+}
+
+.toast-error .toast-title {
+  color: white !important;
+  font-weight: bold !important;
+}
+
+.toast-info {
+  background-color: #2196f3 !important;
+  color: white !important;
+  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.2) !important;
+  border-radius: 8px !important;
+  background-image: none !important;
+}
+
+.toast-info .toast-message {
+  color: white !important;
+}
+
+.toast-info .toast-title {
+  color: white !important;
+  font-weight: bold !important;
+}
+
+.toast-warning {
+  background-color: #ff9800 !important;
+  color: white !important;
+  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.2) !important;
+  border-radius: 8px !important;
+  background-image: none !important;
+}
+
+.toast-warning .toast-message {
+  color: white !important;
+}
+
+.toast-warning .toast-title {
+  color: white !important;
+  font-weight: bold !important;
+}
+
+/* Posición de los toast */
+.toast-top-right {
+  top: 20px;
+  right: 20px;
+}

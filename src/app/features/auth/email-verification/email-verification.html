@@ -1,0 +1,136 @@
+<div class="min-h-screen bg-gradient-to-br from-[#F2F2F2] via-[#F8F9FA] to-[#E9ECEF] flex items-center justify-center p-4">
+  <!-- Left Side - Branding (Desktop) -->
+  <div class="hidden lg:flex lg:absolute lg:left-0 lg:top-0 lg:h-full lg:w-1/2 bg-gradient-to-br from-[#0367A6] to-[#035A91] p-12 flex-col justify-between relative overflow-hidden">
+    <div class="absolute top-0 right-0 w-96 h-96 bg-[#FF7A00] opacity-10 rounded-full blur-3xl"></div>
+    <div class="absolute bottom-0 left-0 w-80 h-80 bg-white opacity-5 rounded-full blur-3xl"></div>
+
+    <div class="relative z-10">
+      <div class="flex items-center space-x-3 mb-8">
+        <div class="bg-white/10 backdrop-blur-sm p-3 rounded-xl">
+          <span class="material-symbols-outlined text-white text-4xl font-variation-settings-wght-400">storefront</span>
+        </div>
+        <span class="text-4xl font-bold text-white">Sport Center</span>
+      </div>
+      <h1 class="text-5xl font-bold text-white leading-tight mb-6">
+        ¡Bienvenido!
+      </h1>
+      <p class="text-xl text-white/80 leading-relaxed max-w-md">
+        Tu cuenta está siendo verificada. Esto solo toma unos momentos.
+      </p>
+    </div>
+
+    <div class="relative z-10 space-y-4">
+      <div class="flex items-center space-x-3 text-white/90">
+        <div class="bg-white/10 backdrop-blur-sm p-2 rounded-lg">
+          <span class="material-symbols-outlined text-xl font-variation-settings-wght-400">verified_user</span>
+        </div>
+        <span class="text-sm">Verificación 100% segura</span>
+      </div>
+      <div class="flex items-center space-x-3 text-white/90">
+        <div class="bg-white/10 backdrop-blur-sm p-2 rounded-lg">
+          <span class="material-symbols-outlined text-xl font-variation-settings-wght-400">security</span>
+        </div>
+        <span class="text-sm">Protegido por encriptación</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Side - Content -->
+  <div class="w-full lg:w-1/2 lg:ml-auto flex items-center justify-center">
+    <div class="w-full max-w-md">
+      <!-- Mobile Logo -->
+      <div class="lg:hidden flex justify-center items-center space-x-2 mb-8">
+        <span class="material-symbols-outlined text-[#0367A6] text-3xl font-variation-settings-wght-400">storefront</span>
+        <span class="text-2xl font-bold text-[#202020]">Sport Center</span>
+      </div>
+
+      <!-- Card -->
+      <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/50 p-8 text-center">
+        
+        <!-- Loading State -->
+        <div *ngIf="status() === 'loading'" class="space-y-6">
+          <div class="flex justify-center">
+            <div class="animate-spin rounded-full h-16 w-16 border-4 border-[#F8F9FA] border-t-[#0367A6]"></div>
+          </div>
+          <h2 class="text-2xl font-bold text-[#202020]">{{ message() }}</h2>
+          <p class="text-[#666666]">Por favor espera mientras verificamos tu cuenta...</p>
+        </div>
+
+        <!-- Success State -->
+        <div *ngIf="status() === 'success'" class="space-y-6">
+          <div class="flex justify-center">
+            <div class="bg-green-100 rounded-full p-4">
+              <span class="material-symbols-outlined text-5xl text-green-600 font-variation-settings-wght-400">check_circle</span>
+            </div>
+          </div>
+          <div>
+            <h2 class="text-3xl font-bold text-green-600 mb-2">¡Verificación Exitosa!</h2>
+            <p class="text-[#666666]">{{ message() }}</p>
+          </div>
+          <div class="bg-blue-50 rounded-lg p-4 border border-blue-200">
+            <p class="text-[#0367A6] font-medium">
+              Redirigiendo en <span class="font-bold">{{ redirectCountdown() }}s</span>...
+            </p>
+          </div>
+          <button
+            (click)="goToLogin()"
+            class="w-full bg-gradient-to-r from-[#0367A6] to-[#035A91] hover:from-[#035A91] hover:to-[#024A7A] text-white py-3 px-6 rounded-xl font-semibold transition-all duration-200 flex items-center justify-center gap-2">
+            <span class="material-symbols-outlined text-xl font-variation-settings-wght-400">login</span>
+            <span>Ir a Login Ahora</span>
+          </button>
+        </div>
+
+        <!-- Error State -->
+        <div *ngIf="status() === 'error'" class="space-y-6">
+          <div class="flex justify-center">
+            <div class="bg-red-100 rounded-full p-4">
+              <span class="material-symbols-outlined text-5xl text-red-600 font-variation-settings-wght-400">error</span>
+            </div>
+          </div>
+          <div>
+            <h2 class="text-3xl font-bold text-red-600 mb-2">Error de Verificación</h2>
+            <p class="text-[#666666]">{{ message() }}</p>
+          </div>
+          <p class="text-sm text-[#999999]">Por favor intenta registrarte nuevamente o contacta al soporte si el problema persiste.</p>
+          <div class="flex gap-3">
+            <button
+              (click)="goToRegister()"
+              class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 px-4 rounded-xl font-semibold transition-all duration-200">
+              Registrarse de Nuevo
+            </button>
+            <button
+              (click)="goToLogin()"
+              class="flex-1 bg-gradient-to-r from-[#0367A6] to-[#035A91] hover:from-[#035A91] hover:to-[#024A7A] text-white py-3 px-4 rounded-xl font-semibold transition-all duration-200">
+              Ir a Login
+            </button>
+          </div>
+        </div>
+
+        <!-- Invalid Token State -->
+        <div *ngIf="status() === 'invalid-token'" class="space-y-6">
+          <div class="flex justify-center">
+            <div class="bg-yellow-100 rounded-full p-4">
+              <span class="material-symbols-outlined text-5xl text-yellow-600 font-variation-settings-wght-400">info</span>
+            </div>
+          </div>
+          <div>
+            <h2 class="text-3xl font-bold text-yellow-600 mb-2">Token Inválido</h2>
+            <p class="text-[#666666]">{{ message() }}</p>
+          </div>
+          <p class="text-sm text-[#999999]">Verifica que el enlace de verificación sea correcto o solicita un nuevo correo de confirmación.</p>
+          <button
+            (click)="goToRegister()"
+            class="w-full bg-gradient-to-r from-[#0367A6] to-[#035A91] hover:from-[#035A91] hover:to-[#024A7A] text-white py-3 px-6 rounded-xl font-semibold transition-all duration-200 flex items-center justify-center gap-2">
+            <span class="material-symbols-outlined text-xl font-variation-settings-wght-400">mail</span>
+            <span>Registrarse de Nuevo</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Footer Links -->
+      <div class="text-center mt-6 space-y-2">
+        <p class="text-[#666666]">¿Tienes problemas? <a href="mailto:support@sportcenter.com" class="text-[#0367A6] hover:text-[#035A91] font-semibold underline decoration-2 underline-offset-2">Contacta soporte</a></p>
+      </div>
+    </div>
+  </div>
+</div>

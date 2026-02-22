@@ -1,0 +1,96 @@
+
+/* Estilos para el detalle del producto */
+
+/* Contenedor de imagen principal */
+.pt-\[75\%\] {
+  padding-top: 75%;
+}
+
+/* Animaciones */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Transiciones suaves */
+button, .transition-all {
+  transition: all 0.2s ease-in-out;
+}
+
+/* Efectos hover */
+.hover\:shadow-lg:hover {
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
+}
+
+.hover\:shadow-xl:hover {
+  box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.15);
+}
+
+/* Focus ring */
+.focus\:ring-2:focus {
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.5);
+}
+
+/* Prose styles */
+.prose {
+  max-width: none;
+}
+
+.prose p {
+  margin-bottom: 1rem;
+  line-height: 1.6;
+}
+
+.prose-sm {
+  font-size: 0.875rem;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .pt-\[75\%\] {
+    padding-top: 100%;
+  }
+}
+
+/* Efecto de escala en hover */
+.transform {
+  transform: scale(1);
+}
+
+.hover\:scale-\[1\.02\]:hover {
+  transform: scale(1.02);
+}
+
+/* Animación de pulso para disponibilidad */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Bordes redondeados personalizados */
+.rounded-2xl {
+  border-radius: 1rem;
+}
+
+/* Sombras personalizadas */
+.shadow-xl {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+}
+
+/* Mejoras para thumbnails */
+.aspect-square {
+  aspect-ratio: 1 / 1;
+}
+
+/* Scroll suave */
+* {
+  scroll-behavior: smooth;
+}

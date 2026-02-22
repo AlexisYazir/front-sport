@@ -1,0 +1,236 @@
+<!-- Loading State -->
+<div *ngIf="isLoading()" class="flex justify-center items-center min-h-[400px]">
+  <div class="text-center">
+    <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
+    <p class="text-gray-600">Cargando producto...</p>
+  </div>
+</div>
+
+<!-- Product Detail -->
+<div *ngIf="!isLoading() && product()" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <!-- Breadcrumbs -->
+  <app-breadcrumbs [items]="breadcrumbs()"></app-breadcrumbs>
+
+  <!-- Product Content -->
+  <div class="lg:grid lg:grid-cols-2 lg:gap-x-8 lg:items-start mt-6">
+    <!-- Product Images -->
+    <div class="flex flex-col">
+      <!-- Main Image -->
+      <div class="relative w-full bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
+        <div class="pt-[75%] relative">
+          <img 
+            [src]="getMainImage()" 
+            [alt]="product()?.nombre"
+            class="absolute top-0 left-0 w-full h-full object-contain p-8">
+        </div>
+      </div>
+      
+      <!-- Thumbnails Gallery -->
+      <div *ngIf="productImages().length > 1" class="mt-4 grid grid-cols-5 gap-2">
+        <button
+          *ngFor="let image of productImages(); let i = index"
+          (click)="selectImage(i)"
+          [class]="mainImageIndex() === i ? 'ring-2 ring-blue-600 ring-offset-2' : 'opacity-70 hover:opacity-100'"
+          class="relative aspect-square rounded-lg overflow-hidden bg-white border border-gray-200 shadow-md hover:shadow-lg transition-all duration-200">
+          <img 
+            [src]="image" 
+            [alt]="'Imagen ' + (i + 1)"
+            class="w-full h-full object-contain p-1">
+        </button>
+      </div>
+    </div>
+
+    <!-- Product Info -->
+    <div class="mt-10 px-4 sm:px-0 sm:mt-16 lg:mt-0">
+      <!-- Marca y Categoría -->
+      <div class="flex items-center gap-2 mb-3">
+        <span class="text-sm font-medium text-gray-700 bg-gray-100 px-3 py-1 rounded-full">
+          {{ product()?.marca }}
+        </span>
+        <span class="text-xs text-white bg-blue-600 px-2 py-1 rounded-full font-medium">
+          {{ product()?.categoria }}
+        </span>
+        <span *ngIf="product()?.categoria_padre" class="text-xs text-gray-600 bg-gray-200 px-2 py-1 rounded-full">
+          {{ product()?.categoria_padre }}
+        </span>
+      </div>
+
+      <!-- Product Name -->
+      <h1 class="text-3xl font-bold tracking-tight text-gray-900">{{ product()?.nombre || product()?.producto }}</h1>
+      
+      <!-- ID Producto y SKU (si hay variantes) -->
+      <div class="flex items-center gap-3 mt-2 text-xs text-gray-500">
+        
+        <span *ngIf="product()?.variantes && product()?.variantes!.length > 0" class="flex items-center">
+          <span class="material-symbols-outlined text-sm mr-1">inventory_2</span>
+          {{ product()?.variantes?.length }} variantes
+        </span>
+      </div>
+
+      <!-- Price -->
+      <div class="mt-6">
+        <div class="flex items-center space-x-3">
+          <span class="text-3xl font-bold text-blue-600">
+            ${{ getPriceWithDiscount() | number:'1.0-0' }}
+          </span>
+          <span *ngIf="hasDiscount()" class="text-lg text-gray-400 line-through">
+            ${{ product()?.precio | number:'1.0-0' }}
+          </span>
+          <span *ngIf="hasDiscount()" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+            -{{ product()?.descuento }}%
+          </span>
+        </div>
+      </div>
+
+      <!-- Stock Status -->
+      <div class="mt-4">
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full" 
+                [ngClass]="isProductAvailable() ? 'bg-green-500 animate-pulse' : 'bg-red-500'"></span>
+          <p class="text-sm font-medium" [ngClass]="getStockClass()">
+            {{ getStockText() }}
+          </p>
+        </div>
+        
+        <!-- Stock por variante (si hay) -->
+        <div *ngIf="product()?.variantes && product()?.variantes!.length > 0" class="mt-3 p-3 bg-gray-50 rounded-xl">
+          <p class="text-xs font-medium text-gray-700 mb-2">Stock por variante:</p>
+          <div class="flex flex-wrap gap-2">
+            <div *ngFor="let variante of product()?.variantes" 
+                 class="text-xs bg-white border border-gray-200 text-gray-700 px-2 py-1 rounded-md flex items-center shadow-sm">
+              <span class="material-symbols-outlined text-xs mr-1 text-gray-500">inventory</span>
+              <span *ngFor="let attr of getAtributosArray(variante.atributos); let last = last">
+                {{ attr.value }}<span *ngIf="!last">, </span>
+              </span>
+              <span class="mx-1 text-gray-300">|</span>
+              <span [ngClass]="variante.stock > 0 ? 'text-green-600' : 'text-red-600'">
+                {{ variante.stock }} uds
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div class="mt-6">
+        <h3 class="text-sm font-medium text-gray-900">Descripción</h3>
+        <div class="mt-2 prose prose-sm text-gray-600">
+          <p>{{ product()?.descripcion }}</p>
+        </div>
+      </div>
+
+      <!-- Atributos de variantes (si no hay selectores específicos) -->
+      <div *ngIf="product()?.variantes && product()?.variantes!.length > 0 && !product()?.talla && !product()?.color" class="mt-6">
+        <h3 class="text-sm font-medium text-gray-900 mb-3">Opciones disponibles</h3>
+        <div class="space-y-3">
+          <div *ngFor="let variante of product()?.variantes" 
+               class="p-3 bg-gray-50 rounded-xl border border-gray-100">
+            <div class="flex justify-between items-center">
+              <div class="flex flex-wrap gap-2">
+                <span *ngFor="let attr of getAtributosArray(variante.atributos)" 
+                      class="text-xs bg-white text-gray-700 px-2 py-1 rounded-md border border-gray-200">
+                  {{ attr.key }}: {{ attr.value }}
+                </span>
+              </div>
+              <div class="text-right">
+                <span class="text-sm font-bold text-blue-600">${{ variante.precio }}</span>
+                <span class="text-xs text-gray-500 ml-2">Stock: {{ variante.stock }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Size Selection -->
+      <div *ngIf="product()?.talla && product()?.talla!.length > 0" class="mt-6">
+        <h3 class="text-sm font-medium text-gray-900 mb-3">Talla</h3>
+        <div class="flex flex-wrap gap-2">
+          <button
+            *ngFor="let size of product()?.talla"
+            (click)="selectSize(size)"
+            [class]="selectedSize() === size ? 
+              'bg-blue-600 text-white border-blue-600 shadow-md' : 
+              'bg-white text-gray-900 border-gray-200 hover:border-gray-300 hover:shadow'"
+            class="px-4 py-2 text-sm font-medium border rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-600 transition-all duration-200">
+            {{ size }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Color Selection -->
+      <div *ngIf="product()?.color && product()?.color!.length > 0" class="mt-6">
+        <h3 class="text-sm font-medium text-gray-900 mb-3">Color</h3>
+        <div class="flex flex-wrap gap-2">
+          <button
+            *ngFor="let color of product()?.color"
+            (click)="selectColor(color)"
+            [class]="selectedColor() === color ? 
+              'bg-blue-600 text-white border-blue-600 shadow-md' : 
+              'bg-white text-gray-900 border-gray-200 hover:border-gray-300 hover:shadow'"
+            class="px-4 py-2 text-sm font-medium border rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-600 transition-all duration-200">
+            {{ color }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Quantity -->
+      <div class="mt-6">
+        <h3 class="text-sm font-medium text-gray-900 mb-3">Cantidad</h3>
+        <div class="flex items-center space-x-3">
+          <button 
+            (click)="decreaseQuantity()"
+            [disabled]="selectedQuantity() <= 1"
+            class="inline-flex items-center justify-center w-10 h-10 border border-gray-200 rounded-xl text-gray-700 bg-white hover:border-gray-300 hover:shadow focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200">
+            <span class="material-symbols-outlined text-lg">remove</span>
+          </button>
+          
+          <span class="inline-flex items-center justify-center w-16 h-10 text-lg font-medium text-gray-900 bg-gray-50 border border-gray-200 rounded-xl">
+            {{ selectedQuantity() }}
+          </span>
+          
+          <button 
+            (click)="increaseQuantity()"
+            [disabled]="!isProductAvailable() || selectedQuantity() >= getMaxStock()"
+            class="inline-flex items-center justify-center w-10 h-10 border border-gray-200 rounded-xl text-gray-700 bg-white hover:border-gray-300 hover:shadow focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200">
+            <span class="material-symbols-outlined text-lg">add</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Total Price -->
+      <div class="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl">
+        <div class="flex justify-between items-center">
+          <span class="text-lg font-medium text-gray-900">Total:</span>
+          <span class="text-2xl font-bold text-blue-600">
+            ${{ getTotalPrice() | number:'1.0-0' }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Add to Cart Button -->
+      <div class="mt-8">
+        <button
+          (click)="addToCart()"
+          [disabled]="!isProductAvailable()"
+          class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 border border-transparent rounded-2xl py-4 px-8 flex items-center justify-center text-base font-medium text-white shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100">
+          <span class="material-symbols-outlined mr-2">shopping_cart</span>
+          <span *ngIf="isProductAvailable()">Agregar al carrito</span>
+          <span *ngIf="!isProductAvailable()">No disponible</span>
+        </button>
+      </div>
+
+      <!-- Essential Info Only -->
+      <div class="mt-6 grid grid-cols-2 gap-3">
+        <div class="p-3 bg-gray-50 rounded-xl flex items-center text-sm text-gray-600">
+          <span class="material-symbols-outlined text-sm mr-2 text-blue-600">local_shipping</span>
+          <span>Envío gratis +$50k</span>
+        </div>
+        <div class="p-3 bg-gray-50 rounded-xl flex items-center text-sm text-gray-600">
+          <span class="material-symbols-outlined text-sm mr-2 text-blue-600">security</span>
+          <span>Compra segura</span>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+</div>

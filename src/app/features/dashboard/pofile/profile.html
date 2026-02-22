@@ -1,0 +1,156 @@
+<div class="min-h-screen bg-gradient-to-br from-[#F2F2F2] via-[#F8F9FA] to-[#E9ECEF] py-8">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    
+    <!-- Header -->
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-[#202020]">Mi Perfil</h1>
+      <p class="text-[#666666] mt-2">Gestiona tu información personal</p>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="isLoading()" class="flex justify-center py-12">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0367A6]"></div>
+    </div>
+
+    <!-- Profile Content -->
+    <div *ngIf="!isLoading() && user()" class="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+      
+      <!-- Profile Header con icono dinámico según rol -->
+      <div class="bg-gradient-to-r from-[#0367A6] to-[#035A91] px-8 py-6">
+        <div class="flex items-center gap-4">
+          <!-- Icono dinámico según el rol -->
+          <div class="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+            <span class="material-symbols-outlined text-5xl text-white">
+              {{ getRoleIcon() }}
+            </span>
+          </div>
+          <div class="flex-1">
+            <h2 class="text-2xl font-bold text-white">
+              {{ user()?.nombre }} {{ user()?.aPaterno }} {{ user()?.aMaterno }}
+            </h2>
+            <p class="text-white/80">{{ user()?.email }}</p>
+            
+            <!-- Badge del rol y estado - EN LA MISMA LÍNEA -->
+            <div class="mt-2 flex items-center gap-2 flex-wrap">
+              <span [class]="getRoleClass() + ' px-3 py-1 rounded-full text-xs font-semibold inline-flex items-center gap-1'">
+                <span class="material-symbols-outlined text-xs">{{ getRoleIcon() }}</span>
+                {{ getRoleName() }}
+              </span>
+              
+              <span *ngIf="user()?.activo === 1" 
+                    class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-semibold inline-flex items-center gap-1">
+                <span class="material-symbols-outlined text-xs">check_circle</span>
+                Activo
+              </span>
+              <span *ngIf="user()?.activo === 0" 
+                    class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-semibold inline-flex items-center gap-1">
+                <span class="material-symbols-outlined text-xs">cancel</span>
+                Inactivo
+              </span>
+            </div>
+          </div>
+          
+          <!-- BOTONES A LA DERECHA DEL HEADER - EN EL ESPACIO BLANCO -->
+          <div class="ml-auto">
+            <button *ngIf="!isEditing()" 
+                    (click)="toggleEdit()"
+                    class="bg-white hover:bg-gray-100 text-[#0367A6] px-6 py-2.5 rounded-xl font-semibold flex items-center gap-2 transition-all duration-200 shadow-md hover:shadow-lg border border-white/20">
+              <span class="material-symbols-outlined">edit</span>
+              Editar Perfil
+            </button>
+            <div *ngIf="isEditing()" class="flex gap-3">
+              <button (click)="saveProfile()"
+                      class="bg-green-600 hover:bg-green-700 text-white px-6 py-2.5 rounded-xl font-semibold flex items-center gap-2 transition-all duration-200 shadow-md hover:shadow-lg">
+                <span class="material-symbols-outlined">save</span>
+                Guardar
+              </button>
+              <button (click)="cancelEdit()"
+                      class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2.5 rounded-xl font-semibold flex items-center gap-2 transition-all duration-200 shadow-md hover:shadow-lg">
+                <span class="material-symbols-outlined">close</span>
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Profile Form (sin botones) -->
+      <div class="p-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Nombre -->
+          <div>
+            <label class="block text-sm font-semibold text-[#202020] mb-2">Nombre</label>
+            <input type="text" 
+                   [(ngModel)]="profileForm.nombre"
+                   [disabled]="!isEditing()"
+                   class="w-full px-4 py-3 bg-[#F8F9FA] border-2 border-gray-200 rounded-xl focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed">
+          </div>
+
+          <!-- Apellido Paterno -->
+          <div>
+            <label class="block text-sm font-semibold text-[#202020] mb-2">Apellido Paterno</label>
+            <input type="text" 
+                   [(ngModel)]="profileForm.aPaterno"
+                   [disabled]="!isEditing()"
+                   class="w-full px-4 py-3 bg-[#F8F9FA] border-2 border-gray-200 rounded-xl focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed">
+          </div>
+
+          <!-- Apellido Materno -->
+          <div>
+            <label class="block text-sm font-semibold text-[#202020] mb-2">Apellido Materno</label>
+            <input type="text" 
+                   [(ngModel)]="profileForm.aMaterno"
+                   [disabled]="!isEditing()"
+                   class="w-full px-4 py-3 bg-[#F8F9FA] border-2 border-gray-200 rounded-xl focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed">
+          </div>
+
+          <!-- Email -->
+          <div>
+            <label class="block text-sm font-semibold text-[#202020] mb-2">Email</label>
+            <input type="email" 
+                   [(ngModel)]="profileForm.email"
+                   [disabled]="!isEditing()"
+                   class="w-full px-4 py-3 bg-[#F8F9FA] border-2 border-gray-200 rounded-xl focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed">
+          </div>
+
+          <!-- Teléfono -->
+          <div class="md:col-span-2">
+            <label class="block text-sm font-semibold text-[#202020] mb-2">Teléfono</label>
+            <input type="tel" 
+                   [(ngModel)]="profileForm.telefono"
+                   [disabled]="!isEditing()"
+                   class="w-full px-4 py-3 bg-[#F8F9FA] border-2 border-gray-200 rounded-xl focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed">
+          </div>
+        </div>
+
+        <!-- Información de seguridad -->
+        <div class="mt-8 pt-6 border-t border-gray-200">
+          <h3 class="text-lg font-semibold text-[#202020] mb-4">Información de Seguridad</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-gray-50 p-4 rounded-xl flex items-center gap-3">
+              <span class="material-symbols-outlined text-[#0367A6] text-2xl">schedule</span>
+              <div>
+                <p class="text-sm text-[#666666] mb-1">Último acceso</p>
+                <p class="font-medium text-[#202020]">{{ currentDate | date:'dd/MM/yyyy HH:mm' }}</p>
+              </div>
+            </div>
+            <div class="bg-gray-50 p-4 rounded-xl flex items-center gap-3">
+              <span class="material-symbols-outlined text-[#0367A6] text-2xl">devices</span>
+              <div>
+                <p class="text-sm text-[#666666] mb-1">Dispositivos activos</p>
+                <p class="font-medium text-[#202020]">1 sesión activa</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Estado vacío -->
+    <div *ngIf="!user()" class="text-center py-12 bg-white rounded-2xl shadow-xl">
+      <span class="material-symbols-outlined text-6xl text-[#A6A6A6]">person_off</span>
+      <p class="text-[#666666] mt-4 text-lg">No hay información de usuario disponible</p>
+      <p class="text-[#A6A6A6] text-sm mt-2">Inicia sesión para ver tu perfil</p>
+    </div>
+  </div>
+</div>

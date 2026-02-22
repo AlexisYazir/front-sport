@@ -1,0 +1,181 @@
+<div class="min-h-screen bg-gradient-to-br from-[#F2F2F2] via-[#F8F9FA] to-[#E9ECEF]">
+  <!-- Header Section -->
+  <div class="bg-white shadow-sm border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-3xl font-bold text-[#202020]">Bienvenido, Usuario</h1>
+          <p class="text-[#666666] mt-1">Gestiona tus pedidos y productos favoritos</p>
+        </div>
+        <div class="flex items-center space-x-3">
+          <span class="material-symbols-outlined text-[#0367A6] text-4xl font-variation-settings-wght-400">account_circle</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <!-- Pedidos Card -->
+      <div class="bg-white rounded-xl shadow-md border border-gray-100 p-6 hover:shadow-lg transition-shadow duration-200">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-[#666666] text-sm font-medium mb-1">Total Pedidos</p>
+            <p class="text-3xl font-bold text-[#202020]">{{ stats.pedidos }}</p>
+          </div>
+          <div class="bg-[#0367A6]/10 p-3 rounded-lg">
+            <span class="material-symbols-outlined text-[#0367A6] text-3xl font-variation-settings-wght-400">shopping_bag</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Favoritos Card -->
+      <div class="bg-white rounded-xl shadow-md border border-gray-100 p-6 hover:shadow-lg transition-shadow duration-200">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-[#666666] text-sm font-medium mb-1">Favoritos</p>
+            <p class="text-3xl font-bold text-[#202020]">{{ stats.favoritos }}</p>
+          </div>
+          <div class="bg-[#FF7A00]/10 p-3 rounded-lg">
+            <span class="material-symbols-outlined text-[#FF7A00] text-3xl font-variation-settings-wght-400">favorite</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Carrito Card -->
+      <div class="bg-white rounded-xl shadow-md border border-gray-100 p-6 hover:shadow-lg transition-shadow duration-200">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-[#666666] text-sm font-medium mb-1">En Carrito</p>
+            <p class="text-3xl font-bold text-[#202020]">{{ stats.carrito }}</p>
+          </div>
+          <div class="bg-green-100 p-3 rounded-lg">
+            <span class="material-symbols-outlined text-green-600 text-3xl font-variation-settings-wght-400">shopping_cart</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Puntos Card -->
+      <div class="bg-white rounded-xl shadow-md border border-gray-100 p-6 hover:shadow-lg transition-shadow duration-200">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-[#666666] text-sm font-medium mb-1">Puntos</p>
+            <p class="text-3xl font-bold text-[#202020]">{{ stats.puntos }}</p>
+          </div>
+          <div class="bg-purple-100 p-3 rounded-lg">
+            <span class="material-symbols-outlined text-purple-600 text-3xl font-variation-settings-wght-400">stars</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Two Column Layout -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      
+      <!-- Left Column - Recent Orders -->
+      <div class="lg:col-span-2">
+        <div class="bg-white rounded-xl shadow-md border border-gray-100 p-6">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-xl font-bold text-[#202020] flex items-center gap-2">
+              <span class="material-symbols-outlined text-[#0367A6] font-variation-settings-wght-400">receipt_long</span>
+              Pedidos Recientes
+            </h2>
+            <a routerLink="/orders" class="text-[#0367A6] hover:text-[#035A91] text-sm font-semibold flex items-center gap-1">
+              Ver todos
+              <span class="material-symbols-outlined text-base font-variation-settings-wght-400">arrow_forward</span>
+            </a>
+          </div>
+
+          <div class="space-y-4">
+            <div *ngFor="let order of recentOrders" 
+                 class="border border-gray-200 rounded-lg p-4 hover:border-[#0367A6] transition-colors duration-200">
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-3">
+                  <div class="bg-[#0367A6]/10 p-2 rounded-lg">
+                    <span class="material-symbols-outlined text-[#0367A6] font-variation-settings-wght-400">package_2</span>
+                  </div>
+                  <div>
+                    <p class="font-semibold text-[#202020]">{{ order.id }}</p>
+                    <p class="text-sm text-[#666666]">{{ order.fecha }}</p>
+                  </div>
+                </div>
+                <span [class]="getEstadoClass(order.estado) + ' px-3 py-1 rounded-full text-xs font-semibold'">
+                  {{ order.estado }}
+                </span>
+              </div>
+              <div class="flex items-center justify-between pt-3 border-t border-gray-100">
+                <span class="text-sm text-[#666666]">{{ order.productos }} productos</span>
+                <span class="text-lg font-bold text-[#0367A6]">${{ order.total.toFixed(2) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column - Quick Actions & Favorites -->
+      <div class="space-y-6">
+        
+        <!-- Quick Actions -->
+        <div class="bg-white rounded-xl shadow-md border border-gray-100 p-6">
+          <h3 class="text-lg font-bold text-[#202020] mb-4 flex items-center gap-2">
+            <span class="material-symbols-outlined text-[#0367A6] font-variation-settings-wght-400">bolt</span>
+            Acciones Rápidas
+          </h3>
+          <div class="space-y-3">
+            <a routerLink="/products" 
+               class="flex items-center justify-between p-3 bg-[#F8F9FA] hover:bg-[#0367A6]/10 rounded-lg transition-colors duration-200 group">
+              <div class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-[#0367A6] font-variation-settings-wght-400">storefront</span>
+                <span class="text-sm font-medium text-[#202020]">Ver Productos</span>
+              </div>
+              <span class="material-symbols-outlined text-[#666666] group-hover:text-[#0367A6] font-variation-settings-wght-400">arrow_forward</span>
+            </a>
+            
+            <a routerLink="/ofertas" 
+               class="flex items-center justify-between p-3 bg-[#F8F9FA] hover:bg-[#FF7A00]/10 rounded-lg transition-colors duration-200 group">
+              <div class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-[#FF7A00] font-variation-settings-wght-400">local_offer</span>
+                <span class="text-sm font-medium text-[#202020]">Ver Ofertas</span>
+              </div>
+              <span class="material-symbols-outlined text-[#666666] group-hover:text-[#FF7A00] font-variation-settings-wght-400">arrow_forward</span>
+            </a>
+            
+            <a routerLink="/profile" 
+               class="flex items-center justify-between p-3 bg-[#F8F9FA] hover:bg-green-50 rounded-lg transition-colors duration-200 group">
+              <div class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-green-600 font-variation-settings-wght-400">account_circle</span>
+                <span class="text-sm font-medium text-[#202020]">Mi Perfil</span>
+              </div>
+              <span class="material-symbols-outlined text-[#666666] group-hover:text-green-600 font-variation-settings-wght-400">arrow_forward</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Favorite Products Preview -->
+        <div class="bg-white rounded-xl shadow-md border border-gray-100 p-6">
+          <h3 class="text-lg font-bold text-[#202020] mb-4 flex items-center gap-2">
+            <span class="material-symbols-outlined text-[#FF7A00] font-variation-settings-wght-400">favorite</span>
+            Favoritos
+          </h3>
+          <div class="space-y-3">
+            <div *ngFor="let product of favoriteProducts" 
+                 class="flex items-center gap-3 p-2 hover:bg-[#F8F9FA] rounded-lg transition-colors duration-200">
+              <div class="w-12 h-12 bg-[#F2F2F2] rounded-lg flex items-center justify-center">
+                <span class="material-symbols-outlined text-[#A6A6A6] font-variation-settings-wght-400">image</span>
+              </div>
+              <div class="flex-1">
+                <p class="text-sm font-semibold text-[#202020]">{{ product.nombre }}</p>
+                <p class="text-sm text-[#0367A6] font-bold">${{ product.precio.toFixed(2) }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>

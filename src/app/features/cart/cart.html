@@ -1,0 +1,219 @@
+<!-- Cart Header -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="flex items-center justify-between mb-8">
+    <h1 class="text-3xl font-bold text-gray-900">Carrito de Compras</h1>
+    <button 
+      (click)="continueShopping()"
+      class="inline-flex items-center px-4 py-2 text-sm font-medium text-spurt-primary bg-white border border-spurt-primary rounded-md hover:bg-spurt-primary hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-spurt-primary transition-colors">
+      <span class="material-symbols-outlined text-sm mr-2">arrow_back</span>
+      Seguir comprando
+    </button>
+  </div>
+
+  <!-- Empty Cart -->
+  <div *ngIf="isEmpty()" class="text-center py-16">
+    <div class="mx-auto flex items-center justify-center h-24 w-24 rounded-full bg-gray-100 mb-6">
+      <span class="material-symbols-outlined text-4xl text-gray-400">shopping_cart</span>
+    </div>
+    <h2 class="text-2xl font-bold text-gray-900 mb-4">Tu carrito está vacío</h2>
+    <p class="text-gray-600 mb-8">¡Descubre nuestros productos deportivos y comienza a comprar!</p>
+    <button 
+      (click)="continueShopping()"
+      class="inline-flex items-center px-6 py-3 text-base font-medium text-white bg-spurt-primary border border-transparent rounded-md hover:bg-spurt-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-spurt-primary transition-colors">
+      <span class="material-symbols-outlined mr-2">storefront</span>
+      Ver productos
+    </button>
+  </div>
+
+  <!-- Cart with Items -->
+  <div *ngIf="!isEmpty()" class="lg:grid lg:grid-cols-12 lg:gap-x-12 lg:items-start">
+    <!-- Cart Items -->
+    <div class="lg:col-span-7">
+      <div class="flow-root">
+        <ul class="-my-6 divide-y divide-gray-200">
+          <li *ngFor="let item of cartItems()" class="py-6 flex">
+            <!-- Product Image -->
+            <div class="flex-shrink-0 w-24 h-24 border border-gray-200 rounded-md overflow-hidden">
+              <img 
+                [src]="item.product.imagen" 
+                [alt]="item.product.nombre"
+                class="w-full h-full object-center object-cover">
+            </div>
+
+            <!-- Product Details -->
+            <div class="ml-4 flex-1 flex flex-col">
+              <div>
+                <div class="flex justify-between text-base font-medium text-gray-900">
+                  <h3>
+                    <a [routerLink]="['/product', item.product.id]" class="hover:text-spurt-primary transition-colors">
+                      {{ item.product.nombre }}
+                    </a>
+                  </h3>
+                  <p class="ml-4 font-bold text-spurt-primary">
+                    {{ formatCurrency(getItemTotal(item)) }}
+                  </p>
+                </div>
+
+                <!-- Product Info -->
+                <div class="mt-1 text-sm text-gray-500 space-y-1">
+                  <p *ngIf="item.product.marca">Marca: {{ item.product.marca }}</p>
+                  <p *ngIf="item.selectedSize">Talla: {{ item.selectedSize }}</p>
+                  <p *ngIf="item.selectedColor">Color: {{ item.selectedColor }}</p>
+                  <p>Categoría: {{ item.product.categoria }}</p>
+                </div>
+
+                <!-- Price Details -->
+                <div class="mt-2 flex items-center space-x-2">
+                  <span class="text-sm font-medium text-gray-900">
+                    {{ formatCurrency(getItemPrice(item)) }} c/u
+                  </span>
+                  <span *ngIf="hasDiscount(item)" class="text-sm text-gray-500 line-through">
+                    {{ formatCurrency(getOriginalPrice(item)) }}
+                  </span>
+                  <span *ngIf="hasDiscount(item)" class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                    -{{ getDiscountPercentage(item) }}%
+                  </span>
+                </div>
+
+                <!-- Stock Warning -->
+                <div *ngIf="hasStockWarning(item)" class="mt-2">
+                  <p class="text-sm" [ngClass]="isStockCritical(item) ? 'text-red-600' : 'text-yellow-600'">
+                    <span class="material-symbols-outlined text-sm mr-1">warning</span>
+                    {{ getStockWarning(item) }}
+                  </p>
+                </div>
+              </div>
+
+              <!-- Quantity and Remove -->
+              <div class="flex-1 flex items-end justify-between text-sm">
+                <!-- Quantity Controls -->
+                <div class="flex items-center space-x-2">
+                  <label class="text-gray-500">Cantidad:</label>
+                  <div class="flex items-center border border-gray-300 rounded">
+                    <button 
+                      (click)="updateQuantity(item, item.quantity - 1)"
+                      class="px-3 py-1 text-gray-600 hover:text-gray-800 focus:outline-none">
+                      <span class="material-symbols-outlined text-sm">remove</span>
+                    </button>
+                    
+                    <input 
+                      type="number" 
+                      [value]="item.quantity"
+                      (change)="updateQuantity(item, +$any($event.target).value)"
+                      min="1" 
+                      [max]="item.product.stock"
+                      class="w-16 px-2 py-1 text-center border-0 focus:ring-0 focus:outline-none">
+                    
+                    <button 
+                      (click)="updateQuantity(item, item.quantity + 1)"
+                      [disabled]="item.quantity >= item.product.stock"
+                      class="px-3 py-1 text-gray-600 hover:text-gray-800 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed">
+                      <span class="material-symbols-outlined text-sm">add</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Remove Button -->
+                <div class="flex">
+                  <button 
+                    (click)="removeItem(item)"
+                    class="font-medium text-red-600 hover:text-red-500 focus:outline-none focus:underline transition-colors">
+                    <span class="material-symbols-outlined text-sm mr-1">delete</span>
+                    Eliminar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Clear Cart Button -->
+      <div class="mt-8 pt-6 border-t border-gray-200">
+        <button 
+          (click)="clearCart()"
+          class="inline-flex items-center px-4 py-2 text-sm font-medium text-red-600 bg-white border border-red-300 rounded-md hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
+          <span class="material-symbols-outlined text-sm mr-2">delete_sweep</span>
+          Vaciar carrito
+        </button>
+      </div>
+    </div>
+
+    <!-- Order Summary -->
+    <div class="mt-16 rounded-lg bg-gray-50 px-4 py-6 sm:p-6 lg:col-span-5 lg:mt-0 lg:p-8">
+      <h2 class="text-lg font-medium text-gray-900 mb-6">Resumen del pedido</h2>
+      
+      <div class="flow-root">
+        <div class="-my-4 divide-y divide-gray-200">
+          <!-- Items Count -->
+          <div class="py-4 flex items-center justify-between">
+            <dt class="text-sm text-gray-600">Productos ({{ cartSummary().itemCount }})</dt>
+            <dd class="text-sm font-medium text-gray-900">{{ formatCurrency(cartSummary().subtotal) }}</dd>
+          </div>
+
+          <!-- Discount -->
+          <div *ngIf="cartSummary().discount > 0" class="py-4 flex items-center justify-between">
+            <dt class="text-sm text-gray-600">
+              <span class="flex items-center">
+                <span class="material-symbols-outlined text-sm mr-1 text-green-600">local_offer</span>
+                Descuentos
+              </span>
+            </dt>
+            <dd class="text-sm font-medium text-green-600">-{{ formatCurrency(cartSummary().discount) }}</dd>
+          </div>
+
+          <!-- Shipping -->
+          <div class="py-4 flex items-center justify-between">
+            <dt class="text-sm text-gray-600">
+              <span class="flex items-center">
+                <span class="material-symbols-outlined text-sm mr-1">local_shipping</span>
+                Envío
+              </span>
+            </dt>
+            <dd class="text-sm font-medium text-gray-900">
+              <span *ngIf="cartSummary().shipping === 0" class="text-green-600">Gratis</span>
+              <span *ngIf="cartSummary().shipping > 0">{{ formatCurrency(cartSummary().shipping) }}</span>
+            </dd>
+          </div>
+
+          <!-- Tax -->
+          <div class="py-4 flex items-center justify-between">
+            <dt class="text-sm text-gray-600">IVA (19%)</dt>
+            <dd class="text-sm font-medium text-gray-900">{{ formatCurrency(cartSummary().tax) }}</dd>
+          </div>
+
+          <!-- Total -->
+          <div class="py-4 flex items-center justify-between border-t border-gray-200">
+            <dt class="text-base font-medium text-gray-900">Total</dt>
+            <dd class="text-xl font-bold text-spurt-primary">{{ formatCurrency(cartSummary().total) }}</dd>
+          </div>
+        </div>
+      </div>
+
+      <!-- Free Shipping Notice -->
+      <div *ngIf="cartSummary().shipping > 0" class="mt-6 p-4 bg-blue-50 rounded-lg">
+        <p class="text-sm text-blue-800">
+          <span class="material-symbols-outlined text-sm mr-2">info</span>
+          Agrega {{ formatCurrency(50000 - cartSummary().subtotal) }} más para obtener envío gratis
+        </p>
+      </div>
+
+      <!-- Checkout Button -->
+      <button 
+        (click)="proceedToCheckout()"
+        [disabled]="!canCheckout() || isProcessing()"
+        class="w-full mt-6 bg-spurt-primary border border-transparent rounded-md shadow-sm py-3 px-4 text-base font-medium text-white hover:bg-spurt-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-spurt-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+        <span *ngIf="!isProcessing()" class="flex items-center justify-center">
+          <span class="material-symbols-outlined mr-2">shopping_cart_checkout</span>
+          Finalizar compra
+        </span>
+        <span *ngIf="isProcessing()" class="flex items-center justify-center">
+          <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+          Procesando...
+        </span>
+      </button>
+
+
+    </div>
+  </div>
+</div>

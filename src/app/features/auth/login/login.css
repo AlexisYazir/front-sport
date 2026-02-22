@@ -1,0 +1,11 @@
+:host input::placeholder,
+:host textarea::placeholder {
+  color: #6e7a89;
+  opacity: 0.6;
+  font-weight: 500;
+}
+
+:host input:focus::placeholder,
+:host textarea:focus::placeholder {
+  opacity: 0.45;
+}

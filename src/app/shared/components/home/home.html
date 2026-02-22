@@ -1,0 +1,159 @@
+<!-- Modern Home Page for Sport Center -->
+<div class="min-h-screen bg-[#F2F2F2]">
+  
+
+
+  <!-- Hero Section -->
+  <section class="relative bg-linear-to-r from-[#0367A6] to-[#035A91] text-white overflow-hidden">
+    <div class="absolute inset-0 bg-black/20"></div>
+    <div class="relative container mx-auto px-4 sm:px-6 py-20">
+      <div class="max-w-2xl">
+        <h1 class="text-5xl sm:text-6xl font-bold leading-tight mb-6">
+          Equípate para<br/>
+          <span class="text-[#FF7A00]">el Éxito</span>
+        </h1>
+        <p class="text-xl text-white/90 mb-8 leading-relaxed">
+          Descubre la mejor selección de ropa y equipo deportivo. Calidad profesional para atletas de todos los niveles.
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4">
+          <button routerLink="/products" class="bg-[#FF7A00] hover:bg-[#E56E00] text-[#202020] font-semibold py-4 px-8 rounded-xl transition-all duration-200 transform hover:-translate-y-1 shadow-lg hover:shadow-xl">
+            <span class="flex items-center gap-2">
+              <span class="material-symbols-outlined font-variation-settings-wght-400">shopping_bag</span>
+              Explorar Catálogo
+            </span>
+          </button>
+          <button routerLink="/offers" class="bg-white/20 hover:bg-white/30 backdrop-blur-sm border-2 border-white/30 text-white font-semibold py-4 px-8 rounded-xl transition-all duration-200 transform hover:-translate-y-1">
+            <span class="flex items-center gap-2">
+              <span class="material-symbols-outlined font-variation-settings-wght-400">local_offer</span>
+              Ver Ofertas
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Featured Categories -->
+  <section class="py-16 bg-white">
+    <div class="container mx-auto px-4 sm:px-6">
+      <div class="text-center mb-12">
+        <h2 class="text-3xl sm:text-4xl font-bold text-[#202020] mb-4">Categorías Destacadas</h2>
+        <p class="text-[#666666] text-lg max-w-2xl mx-auto">Encuentra todo lo que necesitas para tu deporte favorito</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <!-- Categorías dinámicas -->
+        <div *ngFor="let category of featuredCategories" 
+             class="group relative bg-[#F8F9FA] rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-xl hover:transform hover:-translate-y-2 cursor-pointer"
+             (click)="navigateToCategory(category.id)">
+          <div class="h-48 bg-linear-to-br {{category.gradient}} relative overflow-hidden">
+            <div class="absolute inset-0 bg-black/10"></div>
+            <span class="material-symbols-outlined text-white text-6xl absolute bottom-4 right-4 font-variation-settings-wght-400">{{category.icon}}</span>
+          </div>
+          <div class="p-6">
+            <h3 class="text-xl font-bold text-[#202020] mb-2">{{category.name}}</h3>
+            <p class="text-[#666666] mb-4">{{category.description}}</p>
+            <button class="text-[#0367A6] font-semibold flex items-center gap-2 group-hover:text-[#035A91] transition-colors">
+              Explorar
+              <span class="material-symbols-outlined text-lg font-variation-settings-wght-400">arrow_forward</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Featured Products -->
+  <section class="py-16 bg-[#F2F2F2]">
+    <div class="container mx-auto px-4 sm:px-6">
+      <div class="flex items-center justify-between mb-12">
+        <div>
+          <h2 class="text-3xl sm:text-4xl font-bold text-[#202020] mb-4">Productos Destacados</h2>
+          <p class="text-[#666666] text-lg">Lo más vendido esta semana</p>
+        </div>
+        <button routerLink="/products" class="hidden sm:flex items-center gap-2 text-[#0367A6] font-semibold hover:text-[#035A91] transition-colors">
+          Ver todos
+          <span class="material-symbols-outlined text-lg font-variation-settings-wght-400">arrow_forward</span>
+        </button>
+      </div>
+
+      <!-- Loading State -->
+      <div *ngIf="loading()" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div *ngFor="let i of [].constructor(4)" class="bg-white rounded-2xl overflow-hidden shadow-lg animate-pulse">
+          <div class="h-48 bg-gray-300"></div>
+          <div class="p-4">
+            <div class="h-4 bg-gray-300 rounded mb-2"></div>
+            <div class="h-6 bg-gray-300 rounded mb-3"></div>
+            <div class="h-10 bg-gray-300 rounded"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Products Grid -->
+      <div *ngIf="!loading()" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div *ngFor="let product of featuredProducts(); trackBy: trackByProductId" 
+             class="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 group cursor-pointer">
+          <div class="relative overflow-hidden" (click)="navigateToProduct(product.id)">
+            <img [src]="product.imagen" 
+                 [alt]="product.nombre" 
+                 class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                 (error)="$any($event.target).src='https://images.unsplash.com/photo-1542291026-7eec264c27ff?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80'">
+            <div class="absolute top-3 left-3" *ngIf="product.descuento && product.descuento > 0">
+              <span class="bg-[#FF7A00] text-[#202020] text-xs font-bold px-2 py-1 rounded-full">
+                {{product.descuento}}% OFF
+              </span>
+            </div>
+            <div class="absolute top-3 left-3" *ngIf="!product.descuento">
+              <span class="bg-[#22C55E] text-white text-xs font-bold px-2 py-1 rounded-full">NUEVO</span>
+            </div>
+            <button class="absolute top-3 right-3 bg-white/90 backdrop-blur-sm p-2 rounded-full text-[#666666] hover:text-[#0367A6] transition-colors"
+                    (click)="$event.stopPropagation()">
+              <span class="material-symbols-outlined text-lg font-variation-settings-wght-400">favorite</span>
+            </button>
+          </div>
+          <div class="p-4">
+            <h3 class="font-semibold text-[#202020] mb-2 truncate" [title]="product.nombre">{{product.nombre}}</h3>
+            <p class="text-[#666666] text-sm mb-3 line-clamp-2" [title]="product.descripcion">{{product.descripcion}}</p>
+            
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-2" *ngIf="product.descuento && product.descuento > 0; else normalPrice">
+                <span class="text-xl font-bold text-[#202020]">
+                  ${{(product.precio * (1 - product.descuento / 100)).toFixed(2)}}
+                </span>
+                <span class="text-sm text-[#666666] line-through">${{product.precio.toFixed(2)}}</span>
+              </div>
+              <ng-template #normalPrice>
+                <span class="text-xl font-bold text-[#202020]">${{product.precio.toFixed(2)}}</span>
+              </ng-template>
+              
+              <!-- Estrellas estáticas por ahora -->
+              <div class="flex text-[#FF7A00]">
+                <span class="material-symbols-outlined text-lg font-variation-settings-wght-400">star</span>
+                <span class="material-symbols-outlined text-lg font-variation-settings-wght-400">star</span>
+                <span class="material-symbols-outlined text-lg font-variation-settings-wght-400">star</span>
+                <span class="material-symbols-outlined text-lg font-variation-settings-wght-400">star</span>
+                <span class="material-symbols-outlined text-lg font-variation-settings-wght-400">star_half</span>
+              </div>
+            </div>
+            
+            <button (click)="addToCart(product)" 
+                    [disabled]="!product.disponible || product.stock <= 0"
+                    class="w-full bg-[#0367A6] hover:bg-[#035A91] disabled:bg-gray-400 disabled:cursor-not-allowed text-white py-3 rounded-xl font-semibold transition-all duration-200 flex items-center justify-center gap-2">
+              <span class="material-symbols-outlined text-lg font-variation-settings-wght-400">shopping_cart</span>
+              <span *ngIf="product.disponible && product.stock > 0; else noStock">Agregar al Carrito</span>
+              <ng-template #noStock>Sin Stock</ng-template>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div *ngIf="!loading() && featuredProducts().length === 0" 
+           class="text-center py-12">
+        <span class="material-symbols-outlined text-6xl text-gray-400 mb-4">inventory_2</span>
+        <h3 class="text-xl font-semibold text-gray-600 mb-2">No hay productos destacados</h3>
+        <p class="text-gray-500">Vuelve más tarde para ver nuestros productos destacados</p>
+      </div>
+    </div>
+  </section>
+</div>

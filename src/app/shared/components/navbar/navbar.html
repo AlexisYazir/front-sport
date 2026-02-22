@@ -1,0 +1,450 @@
+<!-- Navbar normal para usuarios no admin -->
+<ng-container *ngIf="!isAdmin()">
+  <nav class="bg-white shadow-lg border-b border-gray-100 sticky top-0 z-50">
+    <div class="max-w-9xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-16">
+        <!-- Logo Sport Center con efecto hover -->
+        <div class="flex items-center">
+          <a routerLink="/" class="flex items-center group">
+            <img 
+              src="/assets/images/logo_sportcenter.png" 
+              alt="SportCenter" 
+              class="h-10 w-auto transition-transform duration-300 group-hover:scale-105" 
+            />
+          </a>
+        </div>
+
+        <!-- Navigation Links con iconos y efecto moderno -->
+        <div class="hidden md:flex items-center space-x-1 lg:space-x-2">
+          <a
+            routerLink="/"
+            routerLinkActive="text-[#0367A6] bg-blue-50"
+            [routerLinkActiveOptions]="{exact: true}"
+            class="nav-link flex items-center px-4 py-2 rounded-xl text-[#666666] hover:text-[#0367A6] hover:bg-blue-50/80 text-sm font-medium transition-all duration-200"
+          >
+            <span class="material-symbols-outlined text-xl mr-2 font-variation-settings-wght-400">home</span>
+            <span>Home</span>
+          </a>
+          
+          <a
+            routerLink="/products"
+            routerLinkActive="text-[#0367A6] bg-blue-50"
+            class="nav-link flex items-center px-4 py-2 rounded-xl text-[#666666] hover:text-[#0367A6] hover:bg-blue-50/80 text-sm font-medium transition-all duration-200"
+          >
+            <span class="material-symbols-outlined text-xl mr-2 font-variation-settings-wght-400">storefront</span>
+            <span>Productos</span>
+          </a>
+        </div>
+
+        <!-- Search Bar estilo Amazon - Solo input con lupa a la derecha -->
+        <div class="hidden lg:flex flex-1 max-w-md mx-8">
+          <div class="relative w-full">
+            <input
+              type="text"
+              [(ngModel)]="searchTerm"
+              (keypress)="onSearchKeyPress($event)"
+              placeholder="Buscar en SportCenter..."
+              class="w-full pl-4 pr-12 py-2.5 bg-gray-50 border border-gray-300 rounded-lg text-sm placeholder-gray-500 focus:bg-white focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none transition-all duration-200"
+            />
+            
+            <!-- Botón de búsqueda con lupa a la derecha -->
+            <button
+              (click)="onSearch()"
+              class="absolute right-0 top-0 h-full px-4 text-gray-500 hover:text-[#0367A6] bg-transparent rounded-r-lg transition-colors duration-200"
+              aria-label="Buscar"
+            >
+              <span class="material-symbols-outlined text-xl font-variation-settings-wght-400">
+                search
+              </span>
+            </button>
+          </div>
+        </div>
+
+        <!-- shopping cart mejorado -->
+        <div class="hidden md:flex items-center space-x-4 lg:space-x-6">
+          <a
+            routerLink="/cart"
+            routerLinkActive="text-[#0367A6]"
+            class="cart-link relative p-2 text-[#666666] hover:text-[#0367A6] rounded-xl hover:bg-blue-50/80 transition-all duration-200 group"
+          >
+            <span class="material-symbols-outlined text-2xl font-variation-settings-wght-400 group-hover:scale-110 transition-transform duration-200">
+              shopping_cart
+            </span>
+            <span
+              *ngIf="cartItemCount() > 0"
+              class="absolute -top-1 -right-1 bg-gradient-to-r from-[#FF7A00] to-[#FF9F4A] text-white text-xs font-bold rounded-full h-5 min-w-5 px-1.5 flex items-center justify-center shadow-sm"
+            >
+              {{ cartItemCount() > 99 ? '99+' : cartItemCount() }}
+            </span>
+          </a>
+        </div>
+
+        <!-- Auth Buttons con menú desplegable para usuarios normales -->
+        <div class="flex items-center space-x-3 lg:space-x-4">
+          <ng-container *ngIf="authServicePublic.isLoggedIn(); else loginButtons">
+            <!-- Menú desplegable para usuario normal (estilo blanco) -->
+            <div class="relative group">
+              <button class="flex items-center gap-3 px-3 py-2 bg-gray-100 rounded-xl hover:bg-gray-200 transition-all duration-200">
+                <div class="w-8 h-8 bg-[#0367A6] rounded-lg flex items-center justify-center">
+                  <span class="material-symbols-outlined text-white text-xl">person</span>
+                </div>
+                <div class="hidden lg:block text-left">
+                  <p class="text-[#202020] text-sm font-medium">{{ authServicePublic.currentUser()?.nombre }}</p>
+                  <p class="text-[#666666] text-xs">Usuario</p>
+                </div>
+                <span class="material-symbols-outlined text-[#666666] text-lg group-hover:rotate-180 transition-transform duration-300">
+                  expand_more
+                </span>
+              </button>
+
+              <!-- Dropdown menu blanco para usuario normal -->
+              <div class="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-2xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top-right">
+                <div class="p-3 border-b border-gray-100">
+                  <p class="text-sm font-semibold text-[#202020]">{{ authServicePublic.currentUser()?.nombre }} {{ authServicePublic.currentUser()?.aPaterno }}</p>
+                  <p class="text-xs text-[#666666]">{{ authServicePublic.currentUser()?.email }}</p>
+                </div>
+                
+                <div class="p-2">
+                  <a (click)="goToProfile()" 
+                     class="flex items-center gap-3 px-4 py-3 text-sm text-[#666666] hover:text-[#0367A6] hover:bg-blue-50 rounded-lg cursor-pointer transition-colors">
+                    <span class="material-symbols-outlined text-lg">account_circle</span>
+                    <span>Mi Perfil</span>
+                  </a>
+                  
+                  <a [routerLink]="getDashboardLink()"
+                     class="flex items-center gap-3 px-4 py-3 text-sm text-[#666666] hover:text-[#0367A6] hover:bg-blue-50 rounded-lg cursor-pointer transition-colors">
+                    <span class="material-symbols-outlined text-lg">dashboard</span>
+                    <span>Mi Dashboard</span>
+                  </a>
+                  
+                  <a (click)="goToSettings()"
+                     class="flex items-center gap-3 px-4 py-3 text-sm text-[#666666] hover:text-[#0367A6] hover:bg-blue-50 rounded-lg cursor-pointer transition-colors">
+                    <span class="material-symbols-outlined text-lg">settings</span>
+                    <span>Configuración</span>
+                  </a>
+                  
+                  <div class="border-t border-gray-100 my-2"></div>
+                  
+                  <button (click)="logout()"
+                          class="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 rounded-lg cursor-pointer transition-colors">
+                    <span class="material-symbols-outlined text-lg">logout</span>
+                    <span>Cerrar Sesión</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </ng-container>
+
+          <ng-template #loginButtons>
+            <!-- Usuario no logueado - botones elegantes -->
+            <a
+              routerLink="/auth/login"
+              class="text-[#666666] hover:text-[#0367A6] px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 hover:bg-blue-50/80 flex items-center gap-2"
+            >
+              <span class="material-symbols-outlined text-xl font-variation-settings-wght-400">login</span>
+              <span class="hidden sm:inline">Iniciar Sesión</span>
+            </a>
+            
+            <a
+              routerLink="/auth/register"
+              class="bg-[#0367A6] hover:bg-[#035A91] text-white px-5 py-2 rounded-xl text-sm font-medium transition-all duration-200 flex items-center gap-2 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+            >
+              <span class="material-symbols-outlined text-xl font-variation-settings-wght-400">how_to_reg</span>
+              <span>Registrarse</span>
+            </a>
+          </ng-template>
+
+          <!-- Mobile menu button mejorado -->
+          <div class="md:hidden">
+            <button 
+              (click)="toggleMobileMenu()" 
+              class="p-2 text-[#666666] hover:text-[#0367A6] rounded-xl hover:bg-blue-50/80 transition-all duration-200"
+            >
+              <span class="material-symbols-outlined text-2xl font-variation-settings-wght-400">
+                {{ mobileMenuOpen() ? 'close' : 'menu' }}
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Mobile menu content mejorado -->
+  <div *ngIf="mobileMenuOpen()" class="md:hidden fixed inset-0 z-40 bg-black/20 backdrop-blur-sm transition-opacity duration-300" (click)="toggleMobileMenu()">
+    <div class="absolute right-0 top-0 h-full w-80 bg-white shadow-2xl transform transition-transform duration-300" (click)="$event.stopPropagation()">
+      <div class="p-6">
+        <!-- Header del menú mobile -->
+        <div class="flex justify-between items-center mb-6">
+          <span class="text-lg font-semibold text-gray-900">Menú</span>
+          <button (click)="toggleMobileMenu()" class="p-2 hover:bg-gray-100 rounded-xl transition-colors">
+            <span class="material-symbols-outlined font-variation-settings-wght-400">close</span>
+          </button>
+        </div>
+
+        <!-- Search en mobile mejorada -->
+        <div class="mb-6">
+          <div class="relative">
+            <input 
+              type="text" 
+              [(ngModel)]="searchTerm" 
+              (keypress)="onSearchKeyPress($event)"
+              placeholder="Buscar productos..." 
+              class="w-full pl-10 pr-4 py-3 bg-gray-100 border-0 rounded-xl focus:ring-2 focus:ring-[#0367A6] outline-none text-sm"
+            />
+            <span class="material-symbols-outlined absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 font-variation-settings-wght-400">
+              search
+            </span>
+          </div>
+        </div>
+
+        <!-- Navigation links mobile con iconos -->
+        <div class="space-y-1">
+          <a 
+            routerLink="/" 
+            (click)="toggleMobileMenu()" 
+            class="flex items-center px-4 py-3 text-[#666666] hover:text-[#0367A6] hover:bg-blue-50/80 rounded-xl transition-all duration-200"
+          >
+            <span class="material-symbols-outlined mr-3 text-xl font-variation-settings-wght-400">home</span>
+            <span class="text-sm font-medium">Home</span>
+          </a>
+          
+          <a 
+            routerLink="/products" 
+            (click)="toggleMobileMenu()"
+            class="flex items-center px-4 py-3 text-[#666666] hover:text-[#0367A6] hover:bg-blue-50/80 rounded-xl transition-all duration-200"
+          >
+            <span class="material-symbols-outlined mr-3 text-xl font-variation-settings-wght-400">storefront</span>
+            <span class="text-sm font-medium">Productos</span>
+          </a>
+          
+          <a 
+            routerLink="/cart" 
+            (click)="toggleMobileMenu()"
+            class="flex items-center px-4 py-3 text-[#666666] hover:text-[#0367A6] hover:bg-blue-50/80 rounded-xl transition-all duration-200"
+          >
+            <span class="material-symbols-outlined mr-3 text-xl font-variation-settings-wght-400">shopping_cart</span>
+            <span class="text-sm font-medium">Carrito</span>
+            <span *ngIf="cartItemCount() > 0" 
+                  class="ml-auto bg-gradient-to-r from-[#FF7A00] to-[#FF9F4A] text-white text-xs px-2 py-1 rounded-full">
+              {{ cartItemCount() }}
+            </span>
+          </a>
+        </div>
+
+        <!-- Auth mobile mejorado -->
+        <div class="mt-6 pt-6 border-t border-gray-200">
+          <ng-container *ngIf="authServicePublic.isLoggedIn(); else mobileGuest">
+            <a 
+              [routerLink]="getDashboardLink()" 
+              (click)="toggleMobileMenu()"
+              class="flex items-center px-4 py-3 text-[#666666] hover:text-[#0367A6] hover:bg-blue-50/80 rounded-xl transition-all duration-200"
+            >
+              <span class="material-symbols-outlined mr-3 text-xl font-variation-settings-wght-400">account_circle</span>
+              <span class="text-sm font-medium">Mi Cuenta</span>
+            </a>
+            
+            <button 
+              (click)="logout(); toggleMobileMenu()"
+              class="w-full flex items-center px-4 py-3 text-red-600 hover:bg-red-50 rounded-xl transition-all duration-200 mt-2"
+            >
+              <span class="material-symbols-outlined mr-3 text-xl font-variation-settings-wght-400">logout</span>
+              <span class="text-sm font-medium">Cerrar Sesión</span>
+            </button>
+          </ng-container>
+          
+          <ng-template #mobileGuest>
+            <a 
+              routerLink="/auth/login" 
+              (click)="toggleMobileMenu()"
+              class="flex items-center px-4 py-3 text-[#666666] hover:text-[#0367A6] hover:bg-blue-50/80 rounded-xl transition-all duration-200"
+            >
+              <span class="material-symbols-outlined mr-3 text-xl font-variation-settings-wght-400">login</span>
+              <span class="text-sm font-medium">Iniciar Sesión</span>
+            </a>
+            
+            <a 
+              routerLink="/auth/register" 
+              (click)="toggleMobileMenu()"
+              class="flex items-center px-4 py-3 bg-[#0367A6] text-white rounded-xl hover:bg-[#035A91] transition-all duration-200 mt-2"
+            >
+              <span class="material-symbols-outlined mr-3 text-xl font-variation-settings-wght-400">how_to_reg</span>
+              <span class="text-sm font-medium">Registrarse</span>
+            </a>
+          </ng-template>
+        </div>
+      </div>
+    </div>
+  </div>
+</ng-container>
+
+<!-- Navbar especial para Administrador (rol = 3) -->
+<ng-container *ngIf="isAdmin()">
+  <nav class="bg-gradient-to-r from-[#0367A6] to-[#035A91] shadow-lg sticky top-0 z-50">
+    <div class="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-16">
+        <!-- Logo y título Admin -->
+        <div class="flex items-center gap-4">
+          <a routerLink="/dashboard/admin" class="flex items-center group">
+            <img 
+              src="/assets/images/logo_sportcenter.png" 
+              alt="SportCenter" 
+              class="h-9 w-auto transition-transform duration-300 group-hover:scale-105" 
+            />
+          </a>
+          <span class="text-white/60 text-2xl font-light hidden lg:inline">|</span>
+          <span class="text-white font-semibold text-lg hidden lg:block">Panel Administrativo</span>
+        </div>
+
+        <!-- Navigation Links del Admin -->
+        <div class="hidden md:flex items-center space-x-1">
+          <a
+            routerLink="/dashboard/admin"
+            routerLinkActive="bg-white/20"
+            class="flex items-center px-4 py-2 rounded-xl text-white hover:bg-white/10 transition-all duration-200 gap-2"
+          >
+            <span class="material-symbols-outlined text-xl">dashboard</span>
+            <span class="text-sm font-medium">Dashboard</span>
+          </a>
+          
+          <a
+            routerLink="/dashboard/admin/products"
+            routerLinkActive="bg-white/20"
+            class="flex items-center px-4 py-2 rounded-xl text-white hover:bg-white/10 transition-all duration-200 gap-2"
+          >
+            <span class="material-symbols-outlined text-xl">inventory_2</span>
+            <span class="text-sm font-medium">Productos</span>
+          </a>
+        </div>
+
+        <!-- Admin User Menu -->
+        <div class="flex items-center gap-3">
+          <!-- Notificaciones (opcional) -->
+          <!-- <button class="relative p-2 text-white hover:bg-white/10 rounded-xl transition-all duration-200">
+            <span class="material-symbols-outlined text-2xl">notifications</span>
+            <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+          </button> -->
+
+          <!-- Admin Dropdown Menu -->
+          <div class="relative group">
+            <button class="flex items-center gap-3 px-3 py-2 bg-white/10 rounded-xl hover:bg-white/20 transition-all duration-200">
+              <div class="w-8 h-8 bg-[#FF7A00] rounded-lg flex items-center justify-center">
+                <span class="material-symbols-outlined text-white text-xl">shield</span>
+              </div>
+              <div class="hidden lg:block text-left">
+                <p class="text-white text-sm font-medium">{{ authServicePublic.currentUser()?.nombre }}</p>
+                <p class="text-white/60 text-xs">Administrador</p>
+              </div>
+              <span class="material-symbols-outlined text-white text-lg group-hover:rotate-180 transition-transform duration-300">
+                expand_more
+              </span>
+            </button>
+
+            <!-- Dropdown menu -->
+            <div class="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-2xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top-right">
+              <div class="p-3 border-b border-gray-100">
+                <p class="text-sm font-semibold text-[#202020]">{{ authServicePublic.currentUser()?.nombre }}</p>
+                <p class="text-xs text-[#666666]">{{ authServicePublic.currentUser()?.email }}</p>
+              </div>
+              
+              <div class="p-2">
+                <a (click)="goToProfileAdmin()" 
+                   class="flex items-center gap-3 px-4 py-3 text-sm text-[#666666] hover:text-[#0367A6] hover:bg-blue-50 rounded-lg cursor-pointer transition-colors">
+                  <span class="material-symbols-outlined text-lg">account_circle</span>
+                  <span>Mi Perfil</span>
+                </a>
+                <a (click)="goToDashboardAdmin()"
+                   class="flex items-center gap-3 px-4 py-3 text-sm text-[#666666] hover:text-[#0367A6] hover:bg-blue-50 rounded-lg cursor-pointer transition-colors">
+                  <span class="material-symbols-outlined text-lg">dashboard</span>
+                  <span>Mi Dashboard</span>
+                </a>
+                
+                <a (click)="goToSettings()"
+                   class="flex items-center gap-3 px-4 py-3 text-sm text-[#666666] hover:text-[#0367A6] hover:bg-blue-50 rounded-lg cursor-pointer transition-colors">
+                  <span class="material-symbols-outlined text-lg">settings</span>
+                  <span>Configuración</span>
+                </a>
+                
+                <div class="border-t border-gray-100 my-2"></div>
+                
+                <button (click)="adminLogout()"
+                        class="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 rounded-lg cursor-pointer transition-colors">
+                  <span class="material-symbols-outlined text-lg">logout</span>
+                  <span>Cerrar Sesión</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+</ng-container>
+
+<!-- Estilos adicionales (se mantienen igual) -->
+<style>
+  @keyframes subtle-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+  
+  .cart-link span.absolute {
+    animation: subtle-pulse 2s infinite;
+  }
+
+  .nav-link {
+    position: relative;
+  }
+
+  .nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background: #0367A6;
+    transition: all 0.3s ease;
+    transform: translateX(-50%);
+    border-radius: 2px;
+  }
+
+  .nav-link:hover::after {
+    width: 80%;
+  }
+
+  .search-input:focus {
+    box-shadow: 0 4px 20px rgba(3, 103, 166, 0.15);
+  }
+
+  .transition-all {
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 200ms;
+  }
+
+  @media (max-width: 640px) {
+    .nav-link span:last-child {
+      font-size: 0.8rem;
+    }
+  }
+
+  /* Scrollbar personalizado para dropdown */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+  }
+</style>

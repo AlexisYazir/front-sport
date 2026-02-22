@@ -1,0 +1,107 @@
+<section class="relative isolate overflow-hidden bg-gradient-to-b from-white via-spurt-bg/60 to-white min-h-[75vh]">
+  <div class="absolute inset-0 -z-10 opacity-60">
+    <div class="error-blob error-blob-primary"></div>
+    <div class="error-blob error-blob-secondary"></div>
+    <div class="error-grid"></div>
+  </div>
+
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-14 lg:py-24 grid gap-12 lg:grid-cols-[1.1fr_0.9fr] items-center">
+    <div class="space-y-6">
+      <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 border border-spurt-primary/20 shadow-sm backdrop-blur">
+        <span class="material-symbols-outlined text-spurt-primary text-xl">warning</span>
+        <span class="text-sm font-semibold tracking-wide text-spurt-primary">Error {{ config().status }} · {{ config().badge }}</span>
+      </div>
+
+      <h1 class="text-4xl sm:text-5xl font-bold text-spurt-dark leading-tight">
+        {{ config().title }}
+      </h1>
+      <p class="text-lg text-spurt-gray max-w-2xl">
+        {{ config().description }}
+      </p>
+
+      <div class="flex flex-wrap gap-3">
+        <ng-container *ngIf="config().primaryAction as primary">
+          <a *ngIf="isRouteAction(primary)"
+             [routerLink]="primary.route"
+             class="btn-primary">
+            {{ primary.label }}
+          </a>
+
+          <button *ngIf="isCallbackAction(primary)"
+                  (click)="go(primary)"
+                  class="btn-primary">
+            {{ primary.label }}
+          </button>
+        </ng-container>
+
+        <ng-container *ngIf="config().secondaryAction as secondary">
+          <a *ngIf="isRouteAction(secondary)"
+             [routerLink]="secondary.route"
+             class="btn-secondary">
+            {{ secondary.label }}
+          </a>
+
+          <button *ngIf="isCallbackAction(secondary)"
+                  (click)="go(secondary)"
+                  class="btn-secondary">
+            {{ secondary.label }}
+          </button>
+        </ng-container>
+
+        <button class="btn-ghost" (click)="goBack()">
+          Volver atrás
+        </button>
+      </div>
+
+      <div class="rounded-2xl border border-spurt-primary/15 bg-white/70 backdrop-blur shadow-lg shadow-spurt-primary/5 p-4 sm:p-5 flex gap-4 items-start">
+        <div class="h-12 w-12 rounded-xl bg-spurt-primary/10 text-spurt-primary flex items-center justify-center text-2xl font-semibold">
+          {{ config().status }}
+        </div>
+        <div class="space-y-1">
+          <p class="text-base text-spurt-dark font-semibold">Sugerencia rápida</p>
+          <p class="text-sm text-spurt-gray leading-relaxed">
+            {{ config().recommendation }}
+          </p>
+        </div>
+      </div>
+
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <a *ngFor="let link of config().quickLinks"
+           [routerLink]="link.route"
+           class="quick-link">
+          <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-xl text-spurt-primary bg-spurt-primary/10 rounded-lg p-2">{{ link.icon }}</span>
+            <div>
+              <p class="text-sm font-semibold text-spurt-dark">{{ link.label }}</p>
+              <p class="text-xs text-spurt-gray leading-snug">{{ link.description }}</p>
+            </div>
+          </div>
+          <span class="material-symbols-outlined text-sm text-spurt-secondary icon-shift">arrow_forward</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="relative">
+      <div class="status-card">
+        <div class="status-ring"></div>
+        <div class="status-body">
+          <div class="status-number">{{ config().status }}</div>
+          <div class="status-subtitle">{{ config().badge }}</div>
+          <p class="status-copy">
+            Navega con seguridad: te dejamos accesos directos para continuar sin perder tu sesión ni el carrito.
+          </p>
+          <div class="flex flex-wrap gap-2 pt-3">
+            <span class="pill">Inicio</span>
+            <span class="pill">Catálogo</span>
+            <span class="pill">Carrito</span>
+            <span class="pill">Soporte</span>
+          </div>
+        </div>
+        <div class="floating-badge">
+          <span class="material-symbols-outlined text-base">navigation</span>
+          <span class="text-xs font-semibold">Sigue explorando</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

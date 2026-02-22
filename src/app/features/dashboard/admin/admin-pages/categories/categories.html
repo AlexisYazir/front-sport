@@ -1,0 +1,389 @@
+<div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+  <!-- Toolbar -->
+  <div class="mb-6 p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="bg-[#0367A6]/10 p-3 rounded-xl">
+        <span class="material-symbols-outlined text-[#0367A6] text-2xl">category</span>
+      </div>
+      <div>
+        <h2 class="text-2xl font-bold text-[#202020]">Gestión de Categorías</h2>
+        <p class="text-sm text-[#666666] mt-0.5">Administra las categorías de tus productos</p>
+      </div>
+    </div>
+    <div class="flex gap-3">
+      
+      <button class="px-4 py-2 bg-[#0367A6] hover:bg-[#035A91] text-white rounded-lg flex items-center gap-2"
+              (click)="openCreateModal()">
+        <i class="pi pi-plus"></i>
+        Nueva Categoría
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading()" class="flex flex-col items-center justify-center py-16">
+    <div class="relative">
+      <div class="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-[#0367A6]"></div>
+      <div class="absolute inset-0 flex items-center justify-center">
+        <span class="material-symbols-outlined text-[#0367A6] text-xl">category</span>
+      </div>
+    </div>
+    <p class="text-[#666666] mt-4">Cargando categorías...</p>
+  </div>
+
+  <!-- Contenido principal -->
+  <ng-container *ngIf="!isLoading()">
+    <!-- Barra de búsqueda y filtros -->
+    <div class="flex flex-col gap-4 mb-6">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div class="relative w-full sm:w-96">
+          <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#666666]">
+            <i class="pi pi-search text-lg"></i>
+          </span>
+          <input type="text" 
+                 (input)="onSearch($event)" 
+                 [ngModel]="searchValue"
+                 placeholder="Buscar por ID o nombre..." 
+                 class="w-full pl-10 pr-10 py-3 border-2 border-gray-200 rounded-xl focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 transition-all outline-none text-sm"/>
+          <button *ngIf="searchValue" 
+                  (click)="clearSearch()"
+                  class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#0367A6] transition-colors">
+            <i class="pi pi-times-circle text-lg"></i>
+          </button>
+        </div>
+        
+        <div class="flex items-center gap-4">
+          <div class="bg-blue-50 px-4 py-2 rounded-xl border border-blue-100">
+            <span class="text-[#0367A6] font-semibold text-lg">{{ totalRecords }}</span>
+            <span class="text-[#666666] text-sm ml-2">categorías</span>
+          </div>
+          <button class="w-10 h-10 rounded-full border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all"
+                  (click)="refreshData()" title="Actualizar datos">
+            <i class="pi pi-refresh text-lg"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Filtro por tipo -->
+      <div class="flex flex-wrap gap-3">
+        <div class="flex items-center gap-2">
+          <label class="text-sm font-medium text-[#666666]">Tipo:</label>
+          <select (change)="onFilterTipoChange($event)" 
+                  [ngModel]="filterTipo"
+                  class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none">
+            <option value="todas">Todas</option>
+            <option value="padre">Categorías Padre</option>
+            <option value="hija">Subcategorías</option>
+          </select>
+        </div>
+
+        <button *ngIf="filterTipo !== 'todas' || searchValue"
+                (click)="clearSearch()"
+                class="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm flex items-center gap-1">
+          <i class="pi pi-filter-slash"></i>
+          Limpiar filtros
+        </button>
+      </div>
+    </div>
+
+    <!-- Tabla de categorías -->
+    <div class="overflow-x-auto rounded-xl border border-gray-200">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 border-b-2 border-gray-200">
+          <tr>
+            <th class="px-4 py-4 text-left font-semibold text-[#202020]">ID</th>
+            <th class="px-4 py-4 text-left font-semibold text-[#202020]">Nombre</th>
+            <th class="px-4 py-4 text-left font-semibold text-[#202020]">Tipo</th>
+            <th class="px-4 py-4 text-left font-semibold text-[#202020]">Pertenece a</th>
+            <th class="px-4 py-4 text-center font-semibold text-[#202020]">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let cat of paginatedCategorias" class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+            <td class="px-4 py-4 font-mono font-medium text-[#0367A6]">#{{ cat.id_categoria }}</td>
+            <td class="px-4 py-4 font-medium text-[#202020]">{{ cat.nombre }}</td>
+            <td class="px-4 py-4">
+              <span [class]="cat.id_padre === null ? 'bg-purple-100 text-purple-700 px-3 py-1.5 rounded-full text-xs font-semibold' : 'bg-blue-100 text-blue-700 px-3 py-1.5 rounded-full text-xs font-semibold'">
+                {{ cat.id_padre === null ? 'Categoría Padre' : 'Subcategoría' }}
+              </span>
+            </td>
+            <td class="px-4 py-4">
+              <span *ngIf="cat.id_padre !== null" class="text-[#666666]">
+                {{ getNombreCategoriaPadre(cat.id_padre) }}
+              </span>
+              <span *ngIf="cat.id_padre === null" class="text-gray-400"><span class="material-symbols-outlined text-gray-400 text-sm">do_not_disturb_on</span></span>
+            </td>
+            <td class="px-4 py-4">
+              <div class="flex gap-2 justify-center">
+                <button class="w-9 h-9 rounded-full border-2 border-green-500 text-green-500 hover:bg-green-500 hover:text-white transition-all"
+                        (click)="openEditModal(cat)" title="Editar">
+                  <i class="pi pi-pencil"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          
+          <!-- Fila vacía -->
+          <tr *ngIf="filteredCategorias.length === 0">
+            <td colspan="5" class="text-center py-12">
+              <div class="flex flex-col items-center gap-3">
+                <i class="pi pi-search text-5xl text-gray-300"></i>
+                <span class="text-[#666666] text-lg font-medium">No se encontraron categorías</span>
+                <span class="text-sm text-gray-400">Intenta con otros términos de búsqueda</span>
+                <button class="px-4 py-2 border border-gray-300 rounded-lg text-[#666666] hover:bg-gray-50 transition-all text-sm font-medium mt-2"
+                        (click)="clearSearch()">
+                  <i class="pi pi-times mr-2"></i>
+                  Limpiar búsqueda
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Paginación -->
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
+      <div class="flex items-center gap-3">
+        <span class="text-sm text-[#666666]">Mostrar</span>
+        <select class="px-3 py-2 border border-gray-300 rounded-lg text-sm text-[#202020] focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none"
+                [(ngModel)]="rowsPerPage" (change)="onRowsPerPageChange()">
+          <option *ngFor="let option of rowsPerPageOptions" [value]="option">{{ option }}</option>
+        </select>
+        <span class="text-sm text-[#666666]">resultados por página</span>
+      </div>
+
+      <div class="text-sm text-[#666666] order-first sm:order-none">
+        Mostrando {{ first + 1 }} a {{ last }} de {{ totalRecords }} categorías
+      </div>
+
+      <div class="flex gap-2">
+        <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50"
+                (click)="changePage('first')" [disabled]="first === 0">
+          <i class="pi pi-angle-double-left"></i>
+        </button>
+        <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50"
+                (click)="changePage('prev')" [disabled]="first === 0">
+          <i class="pi pi-angle-left"></i>
+        </button>
+        
+        <div class="flex gap-1">
+          <button *ngFor="let page of pageNumbers" 
+                  class="min-w-[2.5rem] h-10 rounded-lg transition-all font-medium"
+                  [ngClass]="page === currentPage ? 'bg-[#0367A6] text-white hover:bg-[#035A91]' : 'border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6]'"
+                  (click)="goToPage(page)">
+            {{ page }}
+          </button>
+        </div>
+
+        <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50"
+                (click)="changePage('next')" [disabled]="last >= totalRecords">
+          <i class="pi pi-angle-right"></i>
+        </button>
+        <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50"
+                (click)="changePage('last')" [disabled]="last >= totalRecords">
+          <i class="pi pi-angle-double-right"></i>
+        </button>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- Modal de Creación de Categoría -->
+<div *ngIf="showCreateModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" (click)="closeCreateModal()">
+  
+  <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl" (click)="$event.stopPropagation()">
+    
+    <div class="bg-gradient-to-r from-[#0367A6] to-[#035A91] text-white px-6 py-4 rounded-t-xl flex justify-between items-center">
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined">add_circle</span>
+        <h3 class="text-xl font-bold">Crear Nueva Categoría</h3>
+      </div>
+      <button (click)="closeCreateModal()" class="hover:bg-white/20 p-2 rounded-lg transition-colors">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+
+    <div class="p-8">
+      <div class="space-y-6">
+        
+        <!-- Tipo de Categoría -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-3">Tipo de Categoría *</label>
+          <div class="flex gap-6">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="radio" name="tipoCategoria" 
+                     [value]="'padre'" 
+                     [(ngModel)]="nuevaCategoria.tipo"
+                     (change)="onTipoChange()"
+                     class="w-4 h-4 text-[#0367A6] focus:ring-[#0367A6]">
+              <span class="text-sm text-gray-700">Categoría Padre</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="radio" name="tipoCategoria" 
+                     [value]="'hija'" 
+                     [(ngModel)]="nuevaCategoria.tipo"
+                     (change)="onTipoChange()"
+                     class="w-4 h-4 text-[#0367A6] focus:ring-[#0367A6]">
+              <span class="text-sm text-gray-700">Subcategoría</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Nombre -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1">
+            Nombre de la Categoría <span class="text-red-500">*</span>
+          </label>
+          <input type="text" [(ngModel)]="nuevaCategoria.nombre"
+                 [ngClass]="{'border-red-500 ring-1 ring-red-500': validationErrors.nombre}"
+                 class="w-full px-4 py-2.5 border placeholder-gray-400 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0367A6]/20 focus:border-[#0367A6] outline-none transition-all"
+                 placeholder="Ej: Ropa Deportiva">
+          <p *ngIf="validationErrors.nombre" class="text-red-500 text-xs mt-1">{{ validationErrors.nombre }}</p>
+        </div>
+
+        <!-- Selector de categoría padre (solo si es subcategoría) -->
+        <div *ngIf="nuevaCategoria.tipo === 'hija'">
+          <label class="block text-sm font-semibold text-gray-700 mb-1">
+            Categoría Padre <span class="text-red-500">*</span>
+          </label>
+          <select [(ngModel)]="nuevaCategoria.id_padre"
+                  [ngClass]="{'border-red-500 ring-1 ring-red-500': validationErrors.id_padre}"
+                  class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0367A6]/20 focus:border-[#0367A6] outline-none transition-all">
+            <option [ngValue]="null" disabled selected>Selecciona una categoría padre</option>
+            <option *ngFor="let cat of categoriasPadre" [ngValue]="cat.id_categoria">{{ cat.nombre }}</option>
+          </select>
+          <!-- CORREGIDO: validationErrors.id_padre (antes era id_categoria) -->
+          <p *ngIf="validationErrors.id_padre" class="text-red-500 text-xs mt-1">{{ validationErrors.id_padre }}</p>
+        </div>
+
+        <!-- Mensajes de error/éxito -->
+        <div *ngIf="createError" class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+          {{ createError }}
+        </div>
+        
+        <div *ngIf="createSuccess" class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg flex items-center gap-2">
+          <span class="material-symbols-outlined text-green-600">check_circle</span>
+          ¡Categoría creada exitosamente!
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="bg-gray-50 px-8 py-5 rounded-b-xl border-t border-gray-200 flex justify-end gap-3">
+      <button (click)="closeCreateModal()" 
+              class="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition-all font-medium">
+        Cancelar
+      </button>
+      <button (click)="guardarCategoria()" [disabled]="creatingCategoria || createSuccess"
+              class="px-6 py-2.5 bg-[#0367A6] text-white rounded-lg hover:bg-[#035A91] transition-all disabled:opacity-50 font-medium flex items-center gap-2">
+        <i *ngIf="creatingCategoria" class="pi pi-spin pi-spinner text-sm"></i>
+        {{ creatingCategoria ? 'Guardando...' : 'Crear Categoría' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDITAR CATEGORIAAAAAAA ------------- -->
+<!-- Modal de Edición de Categoría -->
+<div *ngIf="showEditModal && categoriaEditando" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" (click)="closeEditModal()">
+  
+  <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl" (click)="$event.stopPropagation()">
+    
+    <div class="bg-gradient-to-r from-[#0367A6] to-[#035A91] text-white px-6 py-4 rounded-t-xl flex justify-between items-center">
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined">edit</span>
+        <h3 class="text-xl font-bold">Editar Categoría</h3>
+      </div>
+      <button (click)="closeEditModal()" class="hover:bg-white/20 p-2 rounded-lg transition-colors">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+
+    <div class="p-8">
+      <div class="space-y-6">
+        
+        <!-- ID y Tipo en el mismo renglón -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- ID (solo lectura) -->
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1">ID de Categoría</label>
+            <input type="text" [value]="categoriaEditando.id_categoria" readonly
+                   class="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed">
+          </div>
+
+          <!-- Tipo de Categoría (solo informativo) -->
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1">Tipo de Categoría</label>
+            <div class="px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg text-gray-700">
+              {{ categoriaEditando.id_padre === null ? 'Categoría Padre' : 'Subcategoría' }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Nombre de la categoría -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1">
+            Nombre de la Categoría <span class="text-red-500">*</span>
+          </label>
+          <input type="text" [(ngModel)]="categoriaEditando.nombre"
+                 [ngClass]="{'border-red-500 ring-1 ring-red-500': editValidationErrors.nombre}"
+                 class="w-full px-4 py-2.5 border placeholder-gray-400 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0367A6]/20 focus:border-[#0367A6] outline-none transition-all"
+                 placeholder="Ej: Ropa Deportiva">
+          <p *ngIf="editValidationErrors.nombre" class="text-red-500 text-xs mt-1">{{ editValidationErrors.nombre }}</p>
+        </div>
+
+        <!-- Selector de categoría padre (solo si es subcategoría) -->
+        <div *ngIf="categoriaEditando.id_padre !== null">
+          <label class="block text-sm font-semibold text-gray-700 mb-1">
+            Categoría Padre <span class="text-red-500">*</span>
+          </label>
+          <select [(ngModel)]="categoriaEditando.id_padre"
+                  [ngClass]="{'border-red-500 ring-1 ring-red-500': editValidationErrors.id_padre}"
+                  class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0367A6]/20 focus:border-[#0367A6] outline-none transition-all">
+            <option [ngValue]="null" disabled>Selecciona una categoría padre</option>
+            <option *ngFor="let cat of categoriasPadre" [ngValue]="cat.id_categoria">{{ cat.nombre }}</option>
+          </select>
+          <p *ngIf="editValidationErrors.id_padre" class="text-red-500 text-xs mt-1">{{ editValidationErrors.id_padre }}</p>
+        </div>
+
+        <!-- Mensaje para categorías padre (no pueden cambiar a subcategoría) -->
+        <div *ngIf="categoriaEditando.id_padre === null" class="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg flex items-center gap-2">
+          <span class="material-symbols-outlined text-blue-600">info</span>
+          Las categorías padre solo pueden modificar su nombre.
+        </div>
+
+        <!-- Mensajes -->
+        <div
+          *ngIf="noChangesMessage"
+          class="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg flex items-center gap-2"
+        >
+          <span class="material-symbols-outlined text-blue-600">info</span>
+          {{ noChangesMessage }}
+        </div>
+        
+        <div *ngIf="editError" class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+          {{ editError }}
+        </div>
+        
+        <div *ngIf="editSuccess" class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg flex items-center gap-2">
+          <span class="material-symbols-outlined text-green-600">check_circle</span>
+          ¡Categoría actualizada exitosamente!
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="bg-gray-50 px-8 py-5 rounded-b-xl border-t border-gray-200 flex justify-end gap-3">
+      <button (click)="closeEditModal()" 
+              class="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition-all font-medium">
+        Cancelar
+      </button>
+      <button (click)="actualizarCategoria()" [disabled]="editingCategoria || editSuccess"
+              class="px-6 py-2.5 bg-[#0367A6] text-white rounded-lg hover:bg-[#035A91] transition-all disabled:opacity-50 font-medium flex items-center gap-2">
+        <i *ngIf="editingCategoria" class="pi pi-spin pi-spinner text-sm"></i>
+        {{ editingCategoria ? 'Guardando...' : 'Guardar Cambios' }}
+      </button>
+    </div>
+  </div>
+</div>
+</div>
