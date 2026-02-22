@@ -48,7 +48,6 @@ Thumbs.db
 .env.example
 .env.production
 
-src/environments
 
 # SSL Certificates - no incluir en repositorio
 /certs
