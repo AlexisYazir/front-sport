@@ -4,7 +4,7 @@
 
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:3000', // URL de la API backend o local https://back-sport.vercel.app
+  apiUrl: 'https://back-sport.vercel.app', // URL de la API backend o local https://back-sport.vercel.app  http://localhost:3000
   appName: 'Sport Center',
   appVersion: '1.0.0',
   storageKeys: {
