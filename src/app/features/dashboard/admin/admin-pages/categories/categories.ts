@@ -235,7 +235,7 @@ export class Categories implements OnInit {
 
     const categoriaData = {
       nombre: this.nuevaCategoria.nombre,
-      id_padre: this.nuevaCategoria.tipo === 'padre' ? 0 : this.nuevaCategoria.id_padre!
+      id_padre: this.nuevaCategoria.tipo === 'padre' ? null : this.nuevaCategoria.id_padre!
     };
 
     this.productService.createCatetorie(categoriaData).subscribe({

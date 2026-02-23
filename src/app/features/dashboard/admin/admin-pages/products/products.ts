@@ -1,14 +1,14 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router'; // <-- Importar RouterModule
+import { RouterModule } from '@angular/router';
 import { ProductService } from '../../../../../core/services/product.service';
 import { Product, CreateProductDto, Categorie, Marca, Attibute, RecientProduct } from '../../../../../core/models/product.model';
 
 @Component({
   selector: 'app-products',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule], // <-- Agregar RouterModule
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './products.html',
   styleUrls: ['./products.css']
 })
@@ -55,9 +55,21 @@ export class Products implements OnInit {
   
   showEditModal: boolean = false;
   selectedProduct: Product | null = null;
-  selectedVariantIndex: number = 0;
-  editMode: 'producto' | 'variante' = 'producto';
   attributes: Attibute[] = [];
+  
+  // Datos para edición de producto (SOLO DATOS GENERALES)
+  editProductData = {
+    id_producto: 0,
+    id_marca: 0,
+    id_categoria: 0,
+    nombre: '',
+    descripcion: ''
+  };
+  
+  // Estados para guardado
+  savingProduct: boolean = false;
+  editSuccess: boolean = false;
+  editError: string = '';
   
   // Contador de productos nuevos
   newProductsCount: number = 0;
@@ -69,7 +81,7 @@ export class Products implements OnInit {
     this.loadCategories();
     this.loadMarcas();
     this.loadAttributes();
-    this.loadNewProductsCount(); // <-- Cargar contador
+    this.loadNewProductsCount();
   }
 
   loadProducts() {
@@ -82,12 +94,10 @@ export class Products implements OnInit {
     });
   }
 
-  // Cargar contador de productos nuevos
   loadNewProductsCount() {
     this.productService.getReceientProducts().subscribe({
       next: (data: RecientProduct[]) => {
         this.newProductsCount = data.length;
-        console.log('Productos nuevos:', this.newProductsCount);
       },
       error: (error) => {
         console.error('Error al cargar productos nuevos:', error);
@@ -237,7 +247,7 @@ export class Products implements OnInit {
 
   refreshData() {
     this.loadProducts();
-    this.loadNewProductsCount(); // <-- Actualizar contador al refrescar
+    this.loadNewProductsCount();
   }
 
   deleteProduct(product: Product) {
@@ -294,7 +304,7 @@ export class Products implements OnInit {
         this.creatingProduct = false;
         this.closeCreateModal();
         this.loadProducts();
-        this.loadNewProductsCount(); // <-- Actualizar contador después de crear
+        this.loadNewProductsCount();
       },
       error: () => {
         this.creatingProduct = false;
@@ -302,91 +312,133 @@ export class Products implements OnInit {
     });
   }
 
+  // ===== FUNCIÓN PARA EDITAR SOLO DATOS GENERALES =====
   editProduct(product: Product) {
     this.selectedProduct = JSON.parse(JSON.stringify(product));
-    this.selectedVariantIndex = 0;
-    this.editMode = 'producto';
+    
+    // Inicializar datos de edición
+    this.editProductData = {
+      id_producto: product.id_producto || product.id || 0,
+      id_marca: this.marcas.find(m => m.nombre === product.marca)?.id_marca || 0,
+      id_categoria: this.categorias.find(c => c.nombre === product.categoria)?.id_categoria || 0,
+      nombre: product.nombre,
+      descripcion: product.descripcion
+    };
+    
+    this.editSuccess = false;
+    this.editError = '';
     this.showEditModal = true;
   }
 
   closeEditModal() {
     this.showEditModal = false;
     this.selectedProduct = null;
+    this.editSuccess = false;
+    this.editError = '';
   }
 
-  selectVariant(index: number) {
-    this.selectedVariantIndex = index;
+  // ===== VALIDAR DATOS DEL PRODUCTO =====
+  validateProductData(): boolean {
+    if (!this.editProductData.nombre.trim()) {
+      this.editError = 'El nombre es obligatorio';
+      return false;
+    }
+    if (!this.editProductData.descripcion.trim()) {
+      this.editError = 'La descripción es obligatoria';
+      return false;
+    }
+    if (!this.editProductData.id_marca) {
+      this.editError = 'Selecciona una marca';
+      return false;
+    }
+    if (!this.editProductData.id_categoria) {
+      this.editError = 'Selecciona una categoría';
+      return false;
+    }
+    return true;
   }
 
-  switchEditMode(mode: 'producto' | 'variante') {
-    this.editMode = mode;
-  }
-
-  saveProductChanges() {
-    console.log('Guardando cambios:', this.selectedProduct);
-    this.showEditModal = false;
+  // ===== GUARDAR SOLO DATOS GENERALES =====
+  saveProductData() {
+    if (!this.validateProductData()) return;
+    
+    this.savingProduct = true;
+    this.editError = '';
+    
+    this.productService.updateProductFull(this.editProductData).subscribe({
+      next: () => {
+        this.savingProduct = false;
+        this.editSuccess = true;
+        setTimeout(() => {
+          this.closeEditModal();
+          this.loadProducts();
+        }, 1500);
+      },
+      error: (err) => {
+        console.error('Error al guardar producto:', err);
+        this.editError = err.error?.message || 'Error al guardar los datos del producto';
+        this.savingProduct = false;
+      }
+    });
   }
 
   // ===== PROPIEDADES PARA MODAL DE VISUALIZACIÓN =====
-showViewModal: boolean = false;
-viewProductData: Product | null = null;
-viewProductVariants: any[] = [];
-loadingViewVariants: boolean = false;
+  showViewModal: boolean = false;
+  viewProductData: Product | null = null;
+  viewProductVariants: any[] = [];
+  loadingViewVariants: boolean = false;
 
-// ===== FUNCIÓN PARA VER DETALLES DEL PRODUCTO =====
-viewProduct(product: Product) {
-  this.viewProductData = product;
-  this.loadingViewVariants = true;
-  this.showViewModal = true;
-  
-  // Usar id_producto si existe, sino usar id
-  const productId = product.id_producto || product.id;
-  
-  if (productId) {
-    this.productService.getProductVariants(productId).subscribe({
-      next: (variants: any[]) => {
-        this.viewProductVariants = variants;
-        this.loadingViewVariants = false;
-      },
-      error: (err) => {
-        console.error('Error al cargar variantes:', err);
-        this.viewProductVariants = [];
-        this.loadingViewVariants = false;
-      }
-    });
-  } else {
+  viewProduct(product: Product) {
+    this.viewProductData = product;
+    this.loadingViewVariants = true;
+    this.showViewModal = true;
+    
+    const productId = product.id_producto || product.id;
+    
+    if (productId) {
+      this.productService.getProductVariants(productId).subscribe({
+        next: (variants: any[]) => {
+          this.viewProductVariants = variants;
+          this.loadingViewVariants = false;
+        },
+        error: (err) => {
+          console.error('Error al cargar variantes:', err);
+          this.viewProductVariants = [];
+          this.loadingViewVariants = false;
+        }
+      });
+    } else {
+      this.viewProductVariants = [];
+      this.loadingViewVariants = false;
+    }
+  }
+
+  closeViewModal() {
+    this.showViewModal = false;
+    this.viewProductData = null;
     this.viewProductVariants = [];
-    this.loadingViewVariants = false;
+  }
+
+  // ===== MÉTODOS AUXILIARES =====
+  formatPrecio(precio: number | string): string {
+    const precioNum = typeof precio === 'string' ? parseFloat(precio) : precio;
+    return precioNum.toFixed(2);
+  }
+
+  getStockValue(stock: number | string): number {
+    return typeof stock === 'string' ? parseInt(stock) : stock;
+  }
+
+  getObjectKeys(obj: any): string[] {
+    return obj ? Object.keys(obj) : [];
+  }
+
+  getVariantAttributes(variant: any): { key: string, value: any }[] {
+    if (!variant.atributos) return [];
+    
+    return Object.keys(variant.atributos).map(key => ({
+      key: key,
+      value: variant.atributos[key]
+    }));
   }
 }
-
-closeViewModal() {
-  this.showViewModal = false;
-  this.viewProductData = null;
-  this.viewProductVariants = [];
-}
-// ===== MÉTODOS AUXILIARES PARA EL MODAL DE VISUALIZACIÓN =====
-formatPrecio(precio: number | string): string {
-  const precioNum = typeof precio === 'string' ? parseFloat(precio) : precio;
-  return precioNum.toFixed(2);
-}
-
-getStockValue(stock: number | string): number {
-  return typeof stock === 'string' ? parseInt(stock) : stock;
-}
-
-getObjectKeys(obj: any): string[] {
-  return obj ? Object.keys(obj) : [];
-}
-
-getVariantAttributes(variant: any): { key: string, value: any }[] {
-  if (!variant.atributos) return [];
-  
-  return Object.keys(variant.atributos).map(key => ({
-    key: key,
-    value: variant.atributos[key]
-  }));
-}
-  
-}
-

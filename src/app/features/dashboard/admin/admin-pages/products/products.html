@@ -219,21 +219,18 @@
 
 
 
-
-  <!-- MODAAAL EDITAR---------------------------------------- -->
-
-
-   <!-- Modal de Edición de Producto -->
-<div *ngIf="showEditModal && selectedProduct" class="fixed inset-0 bg-black/50  z-50 flex items-center justify-center p-4" 
+<!-- MODAL DE EDICIÓN DE PRODUCTO -->
+<!-- MODAL DE EDICIÓN DE PRODUCTO (SOLO DATOS GENERALES) - CORREGIDO -->
+<div *ngIf="showEditModal && selectedProduct" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" 
      style="position: fixed; top: 0; left: 0; right: 0; bottom: 0;" 
      (click)="closeEditModal()">
   
-  <!-- Contenido del Modal (evita que se cierre al hacer click dentro) -->
+  <!-- Contenido del Modal - CON SCROLL SI ES NECESARIO -->
   <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto" 
        (click)="$event.stopPropagation()">
     
-    <!-- Cabecera del Modal -->
-    <div class="sticky top-0 bg-gradient-to-r from-[#0367A6] to-[#035A91] text-white px-6 py-4 rounded-t-xl flex justify-between items-center">
+    <!-- Cabecera del Modal - STICKY PARA QUE SIEMPRE SE VEA -->
+    <div class="sticky top-0 bg-gradient-to-r from-[#0367A6] to-[#035A91] text-white px-6 py-4 rounded-t-xl flex justify-between items-center z-10">
       <div class="flex items-center gap-3">
         <span class="material-symbols-outlined text-2xl">edit</span>
         <h3 class="text-xl font-bold">Editando Producto: {{ selectedProduct.nombre }}</h3>
@@ -243,163 +240,99 @@
       </button>
     </div>
 
-    <!-- Pestañas: Producto / Variantes -->
-    <div class="border-b border-gray-200 px-6 pt-4">
-      <div class="flex gap-4">
-        <button class="px-4 py-2 font-medium transition-all relative"
-                [class.text-[#0367A6]]="editMode === 'producto'"
-                [class.text-gray-500]="editMode !== 'producto'"
-                (click)="switchEditMode('producto')">
-          Datos del Producto
-          <span *ngIf="editMode === 'producto'" class="absolute bottom-0 left-0 w-full h-0.5 bg-[#0367A6]"></span>
-        </button>
-        <button class="px-4 py-2 font-medium transition-all relative"
-                [class.text-[#0367A6]]="editMode === 'variante'"
-                [class.text-gray-500]="editMode !== 'variante'"
-                (click)="switchEditMode('variante')">
-          Variantes
-          <span *ngIf="editMode === 'variante'" class="absolute bottom-0 left-0 w-full h-0.5 bg-[#0367A6]"></span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Cuerpo del Modal DE EDITAR -->
+    <!-- Cuerpo del Modal -->
     <div class="p-6">
-      <!-- MODO: DATOS DEL PRODUCTO -->
-      <div *ngIf="editMode === 'producto'" class="space-y-4">
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-semibold text-[#202020] mb-1">ID Producto</label>
-            <input type="text" [(ngModel)]="selectedProduct.id" readonly
-                   class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed">
-          </div>
-          <div>
-            <label class="block text-sm font-semibold text-[#202020] mb-1">Nombre del Producto</label>
-            <input type="text" [(ngModel)]="selectedProduct.nombre"
-                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none">
-          </div>
-        </div>
-
+      
+      <!-- ID Producto (solo lectura) -->
+      <div class="grid grid-cols-2 gap-4 mb-4">
         <div>
-          <label class="block text-sm font-semibold text-[#202020] mb-1">Descripción</label>
-          <textarea [(ngModel)]="selectedProduct.descripcion" rows="3"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none"></textarea>
+          <label class="block text-sm font-semibold text-[#202020] mb-1">ID Producto</label>
+          <input type="text" [value]="editProductData.id_producto" readonly
+                 class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed">
         </div>
-
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-semibold text-[#202020] mb-1">Marca</label>
-            <input type="text" [(ngModel)]="selectedProduct.marca"
-                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none">
-          </div>
-          <div>
-            <label class="block text-sm font-semibold text-[#202020] mb-1">Categoría</label>
-            <input type="text" [(ngModel)]="selectedProduct.categoria"
-                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none">
-          </div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-semibold text-[#202020] mb-1">Categoría Padre</label>
-            <input type="text" [(ngModel)]="selectedProduct.categoria_padre"
-                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none">
-          </div>
-          <div class="flex items-center gap-4">
-            <label class="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" [(ngModel)]="selectedProduct.activo" class="w-4 h-4 text-[#0367A6]">
-              <span class="text-sm font-semibold text-[#202020]">Producto Activo</span>
-            </label>
-          </div>
-        </div>
-
         <div>
-          <label class="block text-sm font-semibold text-[#202020] mb-2">Fecha de Creación</label>
+          <label class="block text-sm font-semibold text-[#202020] mb-1">Fecha de Creación</label>
           <input type="text" [value]="selectedProduct.fecha_creacion | date:'dd/MM/yyyy HH:mm'" readonly
                  class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed">
         </div>
       </div>
 
-      <!-- MODO: VARIANTES -->
-      <div *ngIf="editMode === 'variante'" class="space-y-6">
-        <!-- Selector de variantes -->
-        <div class="flex flex-wrap gap-2">
-          <button *ngFor="let variant of selectedProduct.variantes; let i = index"
-                  (click)="selectVariant(i)"
-                  class="px-4 py-2 rounded-lg border transition-all"
-                  [ngClass]="selectedVariantIndex === i ? 
-                    'border-[#0367A6] bg-[#0367A6]/10 text-[#0367A6]' : 
-                    'border-gray-300 text-gray-600 hover:border-[#0367A6] hover:text-[#0367A6]'">
-            Variante {{ i + 1 }}: {{ variant.sku }}
-          </button>
+      <!-- Nombre -->
+      <div class="mb-4">
+        <label class="block text-sm font-semibold text-[#202020] mb-1">Nombre del Producto</label>
+        <input type="text" [(ngModel)]="editProductData.nombre"
+               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none">
+      </div>
+
+      <!-- Descripción -->
+      <div class="mb-4">
+        <label class="block text-sm font-semibold text-[#202020] mb-1">Descripción</label>
+        <textarea [(ngModel)]="editProductData.descripcion" rows="3"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none"></textarea>
+      </div>
+
+      <!-- Marca y Categoría en grid -->
+      <div class="grid grid-cols-2 gap-4 mb-4">
+        <div>
+          <label class="block text-sm font-semibold text-[#202020] mb-1">Marca</label>
+          <select [(ngModel)]="editProductData.id_marca"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none">
+            <option [ngValue]="0" disabled>Selecciona una marca</option>
+            <option *ngFor="let m of marcas" [ngValue]="m.id_marca">{{ m.nombre }}</option>
+          </select>
         </div>
+        <div>
+          <label class="block text-sm font-semibold text-[#202020] mb-1">Categoría</label>
+          <select [(ngModel)]="editProductData.id_categoria"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none">
+            <option [ngValue]="0" disabled>Selecciona una categoría</option>
+            <option *ngFor="let c of categorias" [ngValue]="c.id_categoria">{{ c.nombre }}</option>
+          </select>
+        </div>
+      </div>
 
-        <!-- Detalles de la variante seleccionada -->
-        <div *ngIf="selectedProduct.variantes && selectedProduct.variantes[selectedVariantIndex]" 
-             class="border border-gray-200 rounded-xl p-4 space-y-4">
-          <h4 class="font-semibold text-[#202020] text-lg">Detalles de Variante</h4>
-          
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-semibold text-[#202020] mb-1">SKU</label>
-              <input type="text" [(ngModel)]="selectedProduct.variantes[selectedVariantIndex].sku"
-                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none">
-            </div>
-            <div>
-              <label class="block text-sm font-semibold text-[#202020] mb-1">Stock</label>
-              <input type="number" [(ngModel)]="selectedProduct.variantes[selectedVariantIndex].stock"
-                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none">
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-sm font-semibold text-[#202020] mb-1">Precio</label>
-            <input type="number" [(ngModel)]="selectedProduct.variantes[selectedVariantIndex].precio"
-                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none">
-          </div>
-
-          <!-- Atributos -->
-          <div *ngIf="selectedProduct.variantes[selectedVariantIndex].atributos">
-            <label class="block text-sm font-semibold text-[#202020] mb-2">Atributos</label>
-            <div class="grid grid-cols-2 gap-4 bg-gray-50 p-3 rounded-lg">
-              <div *ngFor="let attr of selectedProduct.variantes[selectedVariantIndex].atributos | keyvalue">
-                <label class="block text-xs text-gray-500 mb-1">{{ attr.key }}</label>
-                <input type="text" [value]="attr.value" readonly
-                       class="w-full px-2 py-1 border border-gray-200 rounded bg-white text-gray-700">
-              </div>
-            </div>
-          </div>
-
-          <!-- Imágenes de la variante -->
-          <div>
-            <label class="block text-sm font-semibold text-[#202020] mb-2">Imágenes</label>
-            <div class="flex flex-wrap gap-3">
-              <div *ngFor="let img of selectedProduct.variantes[selectedVariantIndex].imagenes; let i = index" 
-                   class="relative group">
-                <img [src]="img" [alt]="'Imagen ' + (i+1)" 
-                     class="w-24 h-24 object-cover rounded-lg border-2 border-gray-200 hover:border-[#0367A6] transition-all">
-                <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 rounded-lg transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
-                  <button class="bg-white p-1 rounded-full text-[#0367A6]">
-                    <span class="material-symbols-outlined text-sm">zoom_in</span>
-                  </button>
-                </div>
-              </div>
-            </div>
+      <!-- Categoría Padre y Estado en grid -->
+      <div class="grid grid-cols-2 gap-4 mb-4">
+        <div>
+          <label class="block text-sm font-semibold text-[#202020] mb-1">Categoría Padre</label>
+          <input type="text" [value]="selectedProduct.categoria_padre || 'N/A'" readonly
+                 class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed">
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-[#202020] mb-1">Estado</label>
+          <div class="flex items-center gap-2 h-10">
+            <span [class]="selectedProduct.activo ? 'bg-green-100 text-green-700 border-green-200' : 'bg-red-100 text-red-700 border-red-200'"
+                  class="px-3 py-1.5 rounded-full text-xs font-semibold border inline-flex items-center gap-1">
+              <i [class]="selectedProduct.activo ? 'pi pi-check' : 'pi pi-times'"></i>
+              {{ selectedProduct.activo ? 'Activo' : 'Inactivo' }}
+            </span>
+            <span class="text-xs text-gray-400">(No editable)</span>
           </div>
         </div>
       </div>
+
+      <!-- Mensajes -->
+      <div *ngIf="editError" class="mt-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+        {{ editError }}
+      </div>
+      
+      <div *ngIf="editSuccess" class="mt-4 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg flex items-center gap-2">
+        <span class="material-symbols-outlined text-green-600">check_circle</span>
+        ¡Producto actualizado exitosamente!
+      </div>
     </div>
 
-    <!-- Pie del Modal (Botones) -->
+    <!-- Pie del Modal - STICKY BOTTOM -->
     <div class="sticky bottom-0 bg-gray-50 px-6 py-4 rounded-b-xl flex justify-end gap-3 border-t border-gray-200">
       <button (click)="closeEditModal()" 
-              class="px-4 py-2 border border-gray-300 rounded-lg text-[#666666] hover:bg-gray-100 transition-all">
+              class="px-4 py-2 border border-gray-300 rounded-lg text-[#666666] hover:bg-gray-100 transition-all font-medium">
         Cancelar
       </button>
-      <button (click)="saveProductChanges()" 
-              class="px-4 py-2 bg-[#0367A6] hover:bg-[#035A91] text-white rounded-lg shadow-md hover:shadow-lg transition-all flex items-center gap-2">
+      <button (click)="saveProductData()" [disabled]="savingProduct"
+              class="px-4 py-2 bg-[#0367A6] hover:bg-[#035A91] text-white rounded-lg shadow-md hover:shadow-lg transition-all disabled:opacity-50 font-medium flex items-center gap-2">
+        <i *ngIf="savingProduct" class="pi pi-spin pi-spinner text-sm"></i>
         <span class="material-symbols-outlined text-sm">save</span>
-        Guardar Cambios
+        {{ savingProduct ? 'Guardando...' : 'Guardar Cambios' }}
       </button>
     </div>
   </div>

@@ -15,12 +15,14 @@ interface ExistingVariant {
   selected?: boolean;
 }
 
-// Interfaz para editar variante
-interface EditVariantData {
+// Interfaz para editar variante completa
+interface EditVariantFullData {
   id_producto: number;
   id_variante: number;
+  sku: string;
   precio: number;
   stock: number;
+  imagenes: string[];
 }
 
 @Component({
@@ -56,12 +58,19 @@ export class Inventario implements OnInit {
   
   // Variante seleccionada para editar
   selectedVariant: ExistingVariant | null = null;
-  editData: EditVariantData = {
+  
+  // Datos para edición completa de variante
+  editVariantData: EditVariantFullData = {
     id_producto: 0,
     id_variante: 0,
+    sku: '',
     precio: 0,
-    stock: 0
+    stock: 0,
+    imagenes: []
   };
+  
+  // Input para nueva imagen
+  variantImageInput: string = '';
   
   // Estados del modal
   loadingVariants: boolean = false;
@@ -70,6 +79,7 @@ export class Inventario implements OnInit {
   editError: string = '';
   
   validationErrors = {
+    sku: '',
     precio: '',
     stock: ''
   };
@@ -117,25 +127,24 @@ export class Inventario implements OnInit {
       );
     }
 
-   if (this.filterStock !== 'todos') {
-  if (this.filterStock === 'con-stock') {
-    filtered = filtered.filter(product => {
-      const stock = product.stock ? Number(product.stock) : 0;
-      return stock > 0;
-    });
-  } else if (this.filterStock === 'sin-stock') {
-    filtered = filtered.filter(product => {
-      const stock = product.stock ? Number(product.stock) : 0;
-      return stock === 0;
-    });
-  } else if (this.filterStock === 'stock-bajo') {
-    filtered = filtered.filter(product => {
-      const stock = product.stock ? Number(product.stock) : 0;
-      return stock >= 0 && stock <= 5;
-    });
-  }
-}
-
+    if (this.filterStock !== 'todos') {
+      if (this.filterStock === 'con-stock') {
+        filtered = filtered.filter(product => {
+          const stock = product.stock ? Number(product.stock) : 0;
+          return stock > 0;
+        });
+      } else if (this.filterStock === 'sin-stock') {
+        filtered = filtered.filter(product => {
+          const stock = product.stock ? Number(product.stock) : 0;
+          return stock === 0;
+        });
+      } else if (this.filterStock === 'stock-bajo') {
+        filtered = filtered.filter(product => {
+          const stock = product.stock ? Number(product.stock) : 0;
+          return stock > 0 && stock <= 5;
+        });
+      }
+    }
 
     this.filteredProducts = filtered;
     this.totalRecords = filtered.length;
@@ -160,12 +169,11 @@ export class Inventario implements OnInit {
   }
 
   clearSearch() {
-  this.searchValue = '';
-  this.filterEstado = 'todos';
-  this.filterStock = 'todos';
-  this.applyFilters();
-}
-
+    this.searchValue = '';
+    this.filterEstado = 'todos';
+    this.filterStock = 'todos';
+    this.applyFilters();
+  }
 
   // Paginación
   updatePaginatedProducts() {
@@ -253,74 +261,48 @@ export class Inventario implements OnInit {
     return activo ? 'Activo' : 'Inactivo';
   }
 
-  // ===== FUNCIÓN PARA TOGGLE DE ESTADO =====
-  // ===== FUNCIÓN PARA TOGGLE DE ESTADO CON RECARGA =====
-toggleProductStatus(product: InventoryProduct) {
-  const productId = product.id_producto;
-  
-  // Evitar múltiples clics
-  if (this.togglingActive[productId]) return;
-  
-  this.togglingActive[productId] = true;
-  
-  // Guardar estado anterior por si hay error
-  const previousState = product.activo;
-  
-  // Cambiar visualmente inmediatamente para mejor UX
-  product.activo = !product.activo;
-  
-  // Necesitamos una variante para actualizar el estado
-  this.productService.getProductVariants(productId).subscribe({
-    next: (variants: any[]) => {
-      if (variants && variants.length > 0) {
-        const firstVariant = variants[0];
-        
-        const updateData = {
-          id_producto: productId,
-          id_variante: firstVariant.id_variante,
-          precio: Number(firstVariant.precio),
-          stock: firstVariant.stock,
-          estado: product.activo
-        };
-        
-        this.productService.updateProductInv(updateData).subscribe({
-          next: () => {
-            this.togglingActive[productId] = false;
-            // RECARGAR LA TABLA COMPLETA
-            this.loadInventory();
-          },
-          error: (err) => {
-            console.error('Error al cambiar estado:', err.error.message || err);
-            // Revertir cambio visual en caso de error
-            product.activo = previousState;
-            this.togglingActive[productId] = false;
-          }
-        });
-      } else {
-        console.error('No hay variantes para este producto');
-        // Revertir cambio visual
+  // ===== FUNCIÓN PARA TOGGLE DE ESTADO (CORREGIDA - SOLO ENVÍA ID Y ESTADO) =====
+  toggleProductStatus(product: InventoryProduct) {
+    const productId = product.id_producto;
+    
+    if (this.togglingActive[productId]) return;
+    
+    this.togglingActive[productId] = true;
+    const previousState = product.activo;
+    product.activo = !product.activo;
+    
+    console.log('Cambiando estado a:', product.activo);
+    
+    // SOLO enviamos id_producto y estado (como espera el backend)
+    const updateData = {
+      id_producto: productId,
+      estado: product.activo // boolean
+    };
+    
+    console.log('Enviando datos al backend:', updateData);
+    
+    this.productService.updateProductInv(updateData).subscribe({
+      next: (response) => {
+        console.log('Respuesta exitosa:', response);
+        this.togglingActive[productId] = false;
+        this.loadInventory(); // Recargar para asegurar datos actualizados
+      },
+      error: (err) => {
+        console.error('Error al cambiar estado:', err);
         product.activo = previousState;
         this.togglingActive[productId] = false;
       }
-    },
-    error: (err) => {
-      console.error('Error al cargar variantes:', err);
-      // Revertir cambio visual
-      product.activo = previousState;
-      this.togglingActive[productId] = false;
-    }
-  });
-}
+    });
+  }
 
-
-  // ===== FUNCIONES PARA EDITAR VARIANTES (SOLO PRECIO Y STOCK) =====
+  // ===== FUNCIONES PARA EDITAR VARIANTES COMPLETAS =====
   openEditModal(product: InventoryProduct) {
     this.selectedProduct = product;
     this.loadingVariants = true;
     this.editSuccess = false;
     this.editError = '';
+    this.variantImageInput = '';
     
-    // Cargar variantes del producto
     this.productService.getProductVariants(product.id_producto).subscribe({
       next: (variants: any[]) => {
         this.productVariants = variants.map(v => ({
@@ -347,30 +329,52 @@ toggleProductStatus(product: InventoryProduct) {
     this.selectedProduct = null;
     this.productVariants = [];
     this.selectedVariant = null;
-    this.validationErrors = { precio: '', stock: '' };
+    this.variantImageInput = '';
+    this.validationErrors = { sku: '', precio: '', stock: '' };
   }
 
   selectVariant(variant: ExistingVariant) {
     this.selectedVariant = variant;
-    this.editData = {
+    this.editVariantData = {
       id_producto: variant.id_producto,
       id_variante: variant.id_variante,
+      sku: variant.sku,
       precio: variant.precio,
-      stock: variant.stock
+      stock: variant.stock,
+      imagenes: [...variant.imagenes]
     };
-    this.validationErrors = { precio: '', stock: '' };
+    this.variantImageInput = '';
+    this.validationErrors = { sku: '', precio: '', stock: '' };
   }
 
+  // Funciones para manejar imágenes
+  addVariantImage() {
+    if (this.variantImageInput && this.variantImageInput.trim()) {
+      this.editVariantData.imagenes.push(this.variantImageInput.trim());
+      this.variantImageInput = '';
+    }
+  }
+
+  removeVariantImage(index: number) {
+    this.editVariantData.imagenes.splice(index, 1);
+  }
+
+  // Validaciones
   validateFields(): boolean {
     let isValid = true;
-    this.validationErrors = { precio: '', stock: '' };
+    this.validationErrors = { sku: '', precio: '', stock: '' };
 
-    if (this.editData.precio <= 0) {
+    if (!this.editVariantData.sku.trim()) {
+      this.validationErrors.sku = 'El SKU es obligatorio';
+      isValid = false;
+    }
+
+    if (this.editVariantData.precio <= 0) {
       this.validationErrors.precio = 'El precio debe ser mayor a 0';
       isValid = false;
     }
 
-    if (this.editData.stock < 0) {
+    if (this.editVariantData.stock < 0) {
       this.validationErrors.stock = 'El stock no puede ser negativo';
       isValid = false;
     }
@@ -381,89 +385,82 @@ toggleProductStatus(product: InventoryProduct) {
   hasChanges(): boolean {
     if (!this.selectedVariant) return false;
     
-    return this.editData.precio !== this.selectedVariant.precio ||
-           this.editData.stock !== this.selectedVariant.stock;
+    return this.editVariantData.sku !== this.selectedVariant.sku ||
+           this.editVariantData.precio !== this.selectedVariant.precio ||
+           this.editVariantData.stock !== this.selectedVariant.stock ||
+           JSON.stringify(this.editVariantData.imagenes) !== JSON.stringify(this.selectedVariant.imagenes);
   }
 
+  // Guardar cambios de la variante
   guardarCambios() {
-  if (!this.selectedVariant || !this.selectedProduct) return;
-  
-  if (!this.validateFields()) return;
-  
-  if (!this.hasChanges()) {
-    this.editError = 'No se detectaron cambios';
-    return;
+    if (!this.selectedVariant || !this.selectedProduct) return;
+    
+    if (!this.validateFields()) return;
+    
+    if (!this.hasChanges()) {
+      this.editError = 'No se detectaron cambios';
+      return;
+    }
+
+    this.saving = true;
+    this.editError = '';
+
+    this.productService.updateProductVariantAttributes(this.editVariantData).subscribe({
+      next: () => {
+        this.saving = false;
+        this.editSuccess = true;
+        
+        // Actualizar datos locales
+        if (this.selectedVariant) {
+          this.selectedVariant.sku = this.editVariantData.sku;
+          this.selectedVariant.precio = this.editVariantData.precio;
+          this.selectedVariant.stock = this.editVariantData.stock;
+          this.selectedVariant.imagenes = [...this.editVariantData.imagenes];
+        }
+        
+        setTimeout(() => {
+          this.editSuccess = false;
+          this.closeEditModal();
+          this.loadInventory();
+        }, 1500);
+      },
+      error: (err) => {
+        console.error('Error al guardar cambios:', err);
+        this.editError = err.error?.message || 'Error al guardar los cambios';
+        this.saving = false;
+      }
+    });
   }
 
-  this.saving = true;
-  this.editError = '';
+  // ===== FUNCIÓN PARA DETECTAR WARNINGS EN VARIANTES =====
+  hasVariantWarnings(variant: ExistingVariant): boolean {
+    if (variant.stock <= 5) return true;
+    if (variant.precio < 10) return true;
+    if (!variant.imagenes || variant.imagenes.length === 0) return true;
+    return false;
+  }
 
-  // Mantener el estado actual del producto
-  const updateData = {
-    ...this.editData,
-    estado: this.selectedProduct.activo
-  };
+  getWarningIcon(variant: ExistingVariant): string {
+    if (variant.stock <= 0) return 'pi pi-exclamation-circle text-red-500';
+    if (variant.stock <= 5) return 'pi pi-exclamation-triangle text-yellow-500';
+    if (variant.precio < 10) return 'pi pi-exclamation-triangle text-yellow-500';
+    if (!variant.imagenes || variant.imagenes.length === 0) return 'pi pi-image text-yellow-500';
+    return '';
+  }
 
-  this.productService.updateProductInv(updateData).subscribe({
-    next: () => {
-      this.saving = false;
-      this.editSuccess = true;
-      
-      // Actualizar datos locales
-      if (this.selectedVariant) {
-        this.selectedVariant.precio = this.editData.precio;
-        this.selectedVariant.stock = this.editData.stock;
-      }
-      
-      // Mostrar mensaje de éxito y cerrar modal después de 1 segundo
-      setTimeout(() => {
-        this.editSuccess = false;
-        this.closeEditModal();
-        this.loadInventory(); // Recargar datos
-      }, 1000);
-    },
-    error: (err) => {
-      console.error('Error al guardar cambios:', err);
-      this.editError = 'Error al guardar los cambios';
-      this.saving = false;
-    }
-  });
-}
+  getWarningTooltip(variant: ExistingVariant): string {
+    const warnings: string[] = [];
+    
+    if (variant.stock <= 0) warnings.push('Stock agotado');
+    else if (variant.stock <= 5) warnings.push(`Stock bajo (${variant.stock} unidades)`);
+    
+    if (variant.precio < 10) warnings.push('Precio muy bajo');
+    
+    if (!variant.imagenes || variant.imagenes.length === 0) warnings.push('Sin imágenes');
+    
+    return warnings.join(' • ');
+  }
 
-// ===== FUNCIÓN PARA DETECTAR WARNINGS EN VARIANTES =====
-hasVariantWarnings(variant: ExistingVariant): boolean {
-  // Stock bajo (menor o igual a 5)
-  if (variant.stock <= 5) return true;
-  
-  // Precio muy bajo (menor a 10)
-  if (variant.precio < 10) return true;
-  
-  // Sin imágenes
-  if (!variant.imagenes || variant.imagenes.length === 0) return true;
-  
-  return false;
-}
-
-getWarningIcon(variant: ExistingVariant): string {
-  if (variant.stock <= 0) return 'pi pi-exclamation-circle text-red-500';
-  if (variant.stock <= 5) return 'pi pi-exclamation-triangle text-yellow-500';
-  if (variant.precio < 10) return 'pi pi-exclamation-triangle text-yellow-500';
-  if (!variant.imagenes || variant.imagenes.length === 0) return 'pi pi-image text-yellow-500';
-  return '';
-}
-
-getWarningTooltip(variant: ExistingVariant): string {
-  const warnings: string[] = [];
-  
-  if (variant.stock <= 0) warnings.push('Stock agotado');
-  else if (variant.stock <= 5) warnings.push(`Stock bajo (${variant.stock} unidades)`);
-  
-  if (variant.precio < 10) warnings.push('Precio muy bajo');
-  
-  if (!variant.imagenes || variant.imagenes.length === 0) warnings.push('Sin imágenes');
-  
-  return warnings.join(' • ');
-}
   // Acciones
   refreshData() {
     this.loadInventory();
@@ -482,5 +479,4 @@ getWarningTooltip(variant: ExistingVariant): string {
       console.log('Eliminar:', product);
     }
   }
-  
 }

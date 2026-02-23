@@ -310,7 +310,7 @@ createProductVariantValues(data: { id_variante: number, id_atributo: number, val
   );
 }
 
-createCatetorie(data: { nombre: string, id_padre: number }): Observable<any> {
+createCatetorie(data: { nombre: string, id_padre: number | null }): Observable<any> {
   this.isLoading.set(true);
   console.log(data);
   return this.http.post(`${this.API_URL}/products/create-categorie`, data).pipe(
@@ -332,16 +332,58 @@ updateCatetorie(data: { id_categoria: number, nombre: string, id_padre: number }
   );
 }
 
-updateProductInv(data: { id_producto: number, id_variante: number, precio: number, stock: number, estado: boolean }): Observable<any> {
+updateProductInv(data: { id_producto: number, estado: boolean }): Observable<any> {
   this.isLoading.set(true);
   console.log(data);
-  return this.http.post(`${this.API_URL}/products/update-product-inventory`, data).pipe(
+  return this.http.put(`${this.API_URL}/products/update-product-inventory`, data).pipe(
     map(res => {
       this.isLoading.set(false);
       return res;
     })
   );
 }
+
+//datos para actualzar un producto completo
+/*
+{
+  "id_producto": 1,
+  "id_marca": 1,
+  "id_categoria": 3,
+  "nombre": "Producto simple",
+  "descripcion": "Solo una variante",
+
+  "id_variante": 1,
+  "sku": "SKU-TEST",
+  "imagenes": [
+    "img1.jpg"
+  ],
+
+  "id_atributo": 1,
+  "valor": "XL"
+}
+*/
+updateProductFull(data: { id_producto: number, id_marca: number, id_categoria: number, nombre: string, descripcion: string}): Observable<any> {
+  this.isLoading.set(true);
+  console.log(data);
+  return this.http.put(`${this.API_URL}/products/update-product-full`, data).pipe(
+    map(res => {
+      this.isLoading.set(false);
+      return res;
+    })
+  );
+}
+
+updateProductVariantAttributes(data: { id_producto: number, id_variante: number, sku: string, imagenes: string[], stock: number, precio: number }): Observable<any> {
+  this.isLoading.set(true);
+  console.log(data);
+  return this.http.put(`${this.API_URL}/products/update-product-variant-attributes`, data).pipe(
+    map(res => {
+      this.isLoading.set(false);
+      return res;
+    })
+  );
+}
+
 
 createMarca(data: { nombre: string, sitio_web: string }): Observable<any> {
   this.isLoading.set(true);
