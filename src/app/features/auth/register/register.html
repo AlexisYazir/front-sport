@@ -1,13 +1,22 @@
-<div class="min-h-screen bg-gradient-to-br from-[#F2F2F2] via-[#F8F9FA] to-[#E9ECEF] flex">
+<div class="min-h-screen bg-gradient-to-br from-[#F2F2F2] via-[#F8F9FA] to-[#E9ECEF] flex relative overflow-hidden">
+  
+  <!-- Efectos de fondo naranja más tenues y lentos -->
+  <div class="absolute inset-0 overflow-hidden pointer-events-none">
+    <div class="absolute top-20 right-20 w-64 h-64 bg-[#FF7A00] opacity-5 rounded-full blur-3xl animate-pulse" style="animation-duration: 4s;"></div>
+    <div class="absolute bottom-20 left-20 w-80 h-80 bg-[#FF7A00] opacity-5 rounded-full blur-3xl animate-pulse" style="animation-duration: 5s;"></div>
+  </div>
+
   <!-- Left Side - Branding (Desktop) -->
   <div class="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-[#0367A6] to-[#035A91] p-12 flex-col justify-between relative overflow-hidden">
-    <div class="absolute top-0 right-0 w-96 h-96 bg-[#FF7A00] opacity-10 rounded-full blur-3xl"></div>
+    <!-- Decorative Elements - naranja más tenue y lento -->
+    <div class="absolute top-0 right-0 w-96 h-96 bg-[#FF7A00] opacity-10 rounded-full blur-3xl animate-pulse" style="animation-duration: 6s;"></div>
     <div class="absolute bottom-0 left-0 w-80 h-80 bg-white opacity-5 rounded-full blur-3xl"></div>
+    <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#FF7A00] opacity-3 rounded-full blur-3xl"></div>
     
     <div class="relative z-10">
       <div class="flex items-center space-x-3 mb-8">
         <div class="bg-white/10 backdrop-blur-sm p-3 rounded-xl">
-          <span class="material-symbols-outlined text-white text-4xl font-variation-settings-wght-400">storefront</span>
+          <span class="material-symbols-outlined text-white text-4xl">storefront</span>
         </div>
         <span class="text-4xl font-bold text-white">Sport Center</span>
       </div>
@@ -18,44 +27,50 @@
     <div class="relative z-10 space-y-4">
       <div class="flex items-center space-x-3 text-white/90">
         <div class="bg-white/10 backdrop-blur-sm p-2 rounded-lg">
-          <span class="material-symbols-outlined text-xl font-variation-settings-wght-400">verified</span>
+          <span class="material-symbols-outlined text-xl">verified</span>
         </div>
         <span class="text-sm">Productos 100% auténticos</span>
       </div>
       <div class="flex items-center space-x-3 text-white/90">
         <div class="bg-white/10 backdrop-blur-sm p-2 rounded-lg">
-          <span class="material-symbols-outlined text-xl font-variation-settings-wght-400">local_shipping</span>
+          <span class="material-symbols-outlined text-xl">local_shipping</span>
         </div>
         <span class="text-sm">Envío rápido y seguro</span>
       </div>
       <div class="flex items-center space-x-3 text-white/90">
         <div class="bg-white/10 backdrop-blur-sm p-2 rounded-lg">
-          <span class="material-symbols-outlined text-xl font-variation-settings-wght-400">support_agent</span>
+          <span class="material-symbols-outlined text-xl">support_agent</span>
         </div>
         <span class="text-sm">Atención al cliente 24/7</span>
       </div>
     </div>
   </div>
 
-  <!-- Right Side - Form -->
-  <div class="flex-1 flex items-center justify-center p-6 sm:p-12">
+  <!-- Right Side - Form (MISMO DISEÑO QUE LOGIN - LETRA GRANDE) -->
+  <div class="flex-1 flex items-center justify-center p-4 sm:p-6">
     <div class="w-full max-w-md">
       <!-- Mobile Logo -->
-      <div class="lg:hidden flex justify-center items-center space-x-2 mb-8">
-        <span class="material-symbols-outlined text-[#0367A6] text-3xl font-variation-settings-wght-400">storefront</span>
+      <div class="lg:hidden flex justify-center items-center space-x-2 mb-4">
+        <span class="material-symbols-outlined text-[#0367A6] text-3xl">storefront</span>
         <span class="text-2xl font-bold text-[#202020]">Sport Center</span>
       </div>
 
-      <!-- Header -->
-      <div class="mb-8">
-        <h2 class="text-4xl font-bold text-[#202020] mb-3">Crear Cuenta</h2>
-        <p class="text-[#666666] text-lg">Comienza tu experiencia deportiva</p>
-      </div>
-
       <!-- Form Card -->
-      <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/50 p-8 max-h-[70vh] overflow-y-auto custom-scrollbar">
-        <form class="space-y-5" (ngSubmit)="onSubmit()" novalidate>
-          <!-- Nombres Section -->
+      <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-white/50 p-6 relative overflow-hidden">
+        
+        <!-- Efecto naranja en el borde superior -->
+        <div class="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[#FF7A00]/70 to-[#0367A6]/70"></div>
+        
+        <!-- Título dentro del form (IGUAL QUE LOGIN) -->
+        <div class="text-center mb-5">
+          <h2 class="text-3xl font-bold text-[#202020]">Crear Cuenta</h2>
+          <p class="text-sm text-[#666666] mt-1">Comienza tu experiencia deportiva</p>
+        </div>
+
+        <!-- Form con scroll -->
+        <form class="space-y-4 max-h-[60vh] overflow-y-auto pr-1 custom-scrollbar" (ngSubmit)="onSubmit()" novalidate>
+          
+          <!-- Información Personal -->
           <div class="space-y-4">
             <h3 class="text-sm font-bold text-[#0367A6] uppercase tracking-wide flex items-center gap-2">
               <span class="material-symbols-outlined text-lg">person</span>
@@ -63,8 +78,8 @@
             </h3>
             
             <!-- Nombre -->
-            <div class="group">
-              <label for="nombre" class="block text-sm font-semibold text-[#202020] mb-2">
+            <div>
+              <label for="nombre" class="block text-sm font-medium text-[#202020] mb-1.5">
                 Nombre <span class="text-red-500">*</span>
               </label>
               <input 
@@ -74,10 +89,10 @@
                 [(ngModel)]="userData.nombre" 
                 (ngModelChange)="onNameChange('nombre', userData.nombre)" 
                 required 
-                class="w-full px-4 py-3 bg-[#F8F9FA] border-2 border-transparent rounded-xl focus:bg-white focus:border-[#0367A6] focus:ring-4 focus:ring-[#0367A6]/10 outline-none transition-all duration-200 text-[#202020] placeholder:text-[#A6A6A6]" 
+                class="w-full px-3 py-3.5 bg-[#F8F9FA] rounded-xl outline-none transition-all duration-200 text-[#202020] text-base placeholder:text-[#A6A6A6] hover:bg-gray-100 focus:bg-white focus:ring-2 focus:ring-[#0367A6]/20" 
                 placeholder="Juan"
                 maxlength="50">
-              <p *ngIf="nombreError()" class="mt-2 text-xs text-red-600 flex items-center gap-1">
+              <p *ngIf="nombreError()" class="mt-1 text-sm text-red-600 flex items-center gap-1">
                 <span class="material-symbols-outlined text-sm">error</span>
                 {{ nombreError() }}
               </p>
@@ -86,8 +101,8 @@
             <!-- Apellidos Grid -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <!-- Apellido Paterno -->
-              <div class="group">
-                <label for="aPaterno" class="block text-sm font-semibold text-[#202020] mb-2">
+              <div>
+                <label for="aPaterno" class="block text-sm font-medium text-[#202020] mb-1.5">
                   Apellido Paterno <span class="text-red-500">*</span>
                 </label>
                 <input 
@@ -97,18 +112,18 @@
                   [(ngModel)]="userData.aPaterno" 
                   (ngModelChange)="onNameChange('aPaterno', userData.aPaterno)" 
                   required 
-                  class="w-full px-4 py-3 bg-[#F8F9FA] border-2 border-transparent rounded-xl focus:bg-white focus:border-[#0367A6] focus:ring-4 focus:ring-[#0367A6]/10 outline-none transition-all duration-200 text-[#202020] placeholder:text-[#A6A6A6]" 
+                  class="w-full px-3 py-3.5 bg-[#F8F9FA] rounded-xl outline-none transition-all duration-200 text-[#202020] text-base placeholder:text-[#A6A6A6] hover:bg-gray-100 focus:bg-white focus:ring-2 focus:ring-[#0367A6]/20" 
                   placeholder="Pérez"
                   maxlength="50">
-                <p *ngIf="aPaternoError()" class="mt-2 text-xs text-red-600 flex items-center gap-1">
+                <p *ngIf="aPaternoError()" class="mt-1 text-sm text-red-600 flex items-center gap-1">
                   <span class="material-symbols-outlined text-sm">error</span>
                   {{ aPaternoError() }}
                 </p>
               </div>
 
               <!-- Apellido Materno -->
-              <div class="group">
-                <label for="aMaterno" class="block text-sm font-semibold text-[#202020] mb-2">
+              <div>
+                <label for="aMaterno" class="block text-sm font-medium text-[#202020] mb-1.5">
                   Apellido Materno
                 </label>
                 <input 
@@ -117,10 +132,10 @@
                   type="text" 
                   [(ngModel)]="userData.aMaterno" 
                   (ngModelChange)="onNameChange('aMaterno', userData.aMaterno)" 
-                  class="w-full px-4 py-3 bg-[#F8F9FA] border-2 border-transparent rounded-xl focus:bg-white focus:border-[#0367A6] focus:ring-4 focus:ring-[#0367A6]/10 outline-none transition-all duration-200 text-[#202020] placeholder:text-[#A6A6A6]" 
+                  class="w-full px-3 py-3.5 bg-[#F8F9FA] rounded-xl outline-none transition-all duration-200 text-[#202020] text-base placeholder:text-[#A6A6A6] hover:bg-gray-100 focus:bg-white focus:ring-2 focus:ring-[#0367A6]/20" 
                   placeholder="García"
                   maxlength="50">
-                <p *ngIf="aMaternoError()" class="mt-2 text-xs text-red-600 flex items-center gap-1">
+                <p *ngIf="aMaternoError()" class="mt-1 text-sm text-red-600 flex items-center gap-1">
                   <span class="material-symbols-outlined text-sm">error</span>
                   {{ aMaternoError() }}
                 </p>
@@ -128,10 +143,7 @@
             </div>
           </div>
 
-          <!-- Divider -->
-          <div class="border-t-2 border-[#E9ECEF] my-6"></div>
-
-          <!-- Contacto Section -->
+          <!-- Datos de Contacto -->
           <div class="space-y-4">
             <h3 class="text-sm font-bold text-[#0367A6] uppercase tracking-wide flex items-center gap-2">
               <span class="material-symbols-outlined text-lg">contact_mail</span>
@@ -139,13 +151,13 @@
             </h3>
 
             <!-- Email -->
-            <div class="group">
-              <label for="email" class="block text-sm font-semibold text-[#202020] mb-2">
+            <div>
+              <label for="email" class="block text-sm font-medium text-[#202020] mb-1.5">
                 Correo Electrónico <span class="text-red-500">*</span>
               </label>
               <div class="relative">
-                <div class="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#A6A6A6] group-focus-within:text-[#0367A6] transition-colors">
-                  <span class="material-symbols-outlined text-xl">mail</span>
+                <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#A6A6A6]">
+                  <span class="material-symbols-outlined text-lg">mail</span>
                 </div>
                 <input 
                   id="email" 
@@ -154,24 +166,24 @@
                   [(ngModel)]="userData.email" 
                   (ngModelChange)="onEmailChange(userData.email)" 
                   required 
-                  class="w-full pl-12 pr-4 py-3 bg-[#F8F9FA] border-2 border-transparent rounded-xl focus:bg-white focus:border-[#0367A6] focus:ring-4 focus:ring-[#0367A6]/10 outline-none transition-all duration-200 text-[#202020] placeholder:text-[#A6A6A6]" 
+                  class="w-full pl-10 pr-3 py-3.5 bg-[#F8F9FA] rounded-xl outline-none transition-all duration-200 text-[#202020] text-base placeholder:text-[#A6A6A6] hover:bg-gray-100 focus:bg-white focus:ring-2 focus:ring-[#0367A6]/20" 
                   placeholder="tu@email.com"
                   maxlength="254">
               </div>
-              <p *ngIf="emailError()" class="mt-2 text-xs text-red-600 flex items-center gap-1">
+              <p *ngIf="emailError()" class="mt-1 text-sm text-red-600 flex items-center gap-1">
                 <span class="material-symbols-outlined text-sm">error</span>
                 {{ emailError() }}
               </p>
             </div>
 
             <!-- Teléfono -->
-            <div class="group">
-              <label for="telefono" class="block text-sm font-semibold text-[#202020] mb-2">
+            <div>
+              <label for="telefono" class="block text-sm font-medium text-[#202020] mb-1.5">
                 Teléfono <span class="text-red-500">*</span>
               </label>
               <div class="relative">
-                <div class="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#A6A6A6] group-focus-within:text-[#0367A6] transition-colors">
-                  <span class="material-symbols-outlined text-xl">phone</span>
+                <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#A6A6A6]">
+                  <span class="material-symbols-outlined text-lg">phone</span>
                 </div>
                 <input 
                   id="telefono" 
@@ -179,21 +191,18 @@
                   type="tel" 
                   [(ngModel)]="userData.telefono" 
                   required 
-                  class="w-full pl-12 pr-4 py-3 bg-[#F8F9FA] border-2 border-transparent rounded-xl focus:bg-white focus:border-[#0367A6] focus:ring-4 focus:ring-[#0367A6]/10 outline-none transition-all duration-200 text-[#202020] placeholder:text-[#A6A6A6]" 
+                  class="w-full pl-10 pr-3 py-3.5 bg-[#F8F9FA] rounded-xl outline-none transition-all duration-200 text-[#202020] text-base placeholder:text-[#A6A6A6] hover:bg-gray-100 focus:bg-white focus:ring-2 focus:ring-[#0367A6]/20" 
                   placeholder="5512345678"
                   maxlength="10">
               </div>
-              <p *ngIf="telefonoError()" class="mt-2 text-xs text-red-600 flex items-center gap-1">
+              <p *ngIf="telefonoError()" class="mt-1 text-sm text-red-600 flex items-center gap-1">
                 <span class="material-symbols-outlined text-sm">error</span>
                 {{ telefonoError() }}
               </p>
             </div>
           </div>
 
-          <!-- Divider -->
-          <div class="border-t-2 border-[#E9ECEF] my-6"></div>
-
-          <!-- Seguridad Section -->
+          <!-- Seguridad -->
           <div class="space-y-4">
             <h3 class="text-sm font-bold text-[#0367A6] uppercase tracking-wide flex items-center gap-2">
               <span class="material-symbols-outlined text-lg">lock</span>
@@ -201,8 +210,8 @@
             </h3>
 
             <!-- Contraseña -->
-            <div class="group">
-              <label for="password" class="block text-sm font-semibold text-[#202020] mb-2">
+            <div>
+              <label for="password" class="block text-sm font-medium text-[#202020] mb-1.5">
                 Contraseña <span class="text-red-500">*</span>
               </label>
               <div class="relative">
@@ -214,40 +223,25 @@
                   (ngModelChange)="onPasswordChange(userData.passw)"
                   (keydown)="preventSpace($event)"
                   required 
-                  class="w-full pl-4 pr-12 py-3 bg-[#F8F9FA] border-2 border-transparent rounded-xl focus:bg-white focus:border-[#0367A6] focus:ring-4 focus:ring-[#0367A6]/10 outline-none transition-all duration-200 text-[#202020] placeholder:text-[#A6A6A6]" 
+                  class="w-full px-3 pr-10 py-3.5 bg-[#F8F9FA] rounded-xl outline-none transition-all duration-200 text-[#202020] text-base placeholder:text-[#A6A6A6] hover:bg-gray-100 focus:bg-white focus:ring-2 focus:ring-[#0367A6]/20" 
                   placeholder="Mínimo 8 caracteres"
                   maxlength="128">
                 <button 
                   type="button" 
                   (click)="togglePassword()" 
-                  class="absolute right-4 top-1/2 transform -translate-y-1/2 text-[#A6A6A6] hover:text-[#0367A6] transition-colors">
-                  <span class="material-symbols-outlined text-xl">{{ showPassword ? 'visibility_off' : 'visibility' }}</span>
+                  class="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#A6A6A6] hover:text-[#0367A6] transition-colors">
+                  <span class="material-symbols-outlined text-lg">{{ showPassword ? 'visibility_off' : 'visibility' }}</span>
                 </button>
               </div>
-              <p *ngIf="passwordError()" class="mt-2 text-xs text-red-600 flex items-center gap-1">
+              <p *ngIf="passwordError()" class="mt-1 text-sm text-red-600 flex items-center gap-1">
                 <span class="material-symbols-outlined text-sm">error</span>
                 {{ passwordError() }}
               </p>
-              <p *ngIf="secureError()" class="mt-2 text-xs text-red-600 flex items-center gap-1">
-                <span class="material-symbols-outlined text-sm">error</span>
-                {{ secureError() }}
-              </p>
-              <div class="mt-2 text-xs text-[#666666] space-y-1">
-                <p class="flex items-center gap-1">
-                  <span class="material-symbols-outlined text-sm">info</span>
-                  Debe incluir: mayúsculas, minúsculas, números y símbolos
-                </p>
-                <p class="flex items-center gap-1">
-                  <span class="material-symbols-outlined text-sm">block</span>
-                  Sin espacios, caracteres repetidos ni secuencias
-                </p>
-              </div>
-              <app-password-strength [strength]="passwordStrength()"></app-password-strength>
             </div>
 
             <!-- Confirmar Contraseña -->
-            <div class="group">
-              <label for="confirmPassword" class="block text-sm font-semibold text-[#202020] mb-2">
+            <div>
+              <label for="confirmPassword" class="block text-sm font-medium text-[#202020] mb-1.5">
                 Confirmar Contraseña <span class="text-red-500">*</span>
               </label>
               <div class="relative">
@@ -259,65 +253,66 @@
                   (ngModelChange)="onConfirmPasswordChange(confirmPassword)"
                   (keydown)="preventSpace($event)"
                   required 
-                  class="w-full pl-4 pr-12 py-3 bg-[#F8F9FA] border-2 border-transparent rounded-xl focus:bg-white focus:border-[#0367A6] focus:ring-4 focus:ring-[#0367A6]/10 outline-none transition-all duration-200 text-[#202020] placeholder:text-[#A6A6A6]" 
+                  class="w-full px-3 pr-10 py-3.5 bg-[#F8F9FA] rounded-xl outline-none transition-all duration-200 text-[#202020] text-base placeholder:text-[#A6A6A6] hover:bg-gray-100 focus:bg-white focus:ring-2 focus:ring-[#0367A6]/20" 
                   placeholder="Confirma tu contraseña"
                   maxlength="128">
                 <button 
                   type="button" 
                   (click)="toggleConfirmPassword()" 
-                  class="absolute right-4 top-1/2 transform -translate-y-1/2 text-[#A6A6A6] hover:text-[#0367A6] transition-colors">
-                  <span class="material-symbols-outlined text-xl">{{ showConfirmPassword ? 'visibility_off' : 'visibility' }}</span>
+                  class="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#A6A6A6] hover:text-[#0367A6] transition-colors">
+                  <span class="material-symbols-outlined text-lg">{{ showConfirmPassword ? 'visibility_off' : 'visibility' }}</span>
                 </button>
               </div>
-              <p *ngIf="!passwordsMatch() && confirmPassword" class="mt-2 text-xs text-red-600 flex items-center gap-1">
+              <p *ngIf="!passwordsMatch() && confirmPassword" class="mt-1 text-sm text-red-600 flex items-center gap-1">
                 <span class="material-symbols-outlined text-sm">error</span>
                 Las contraseñas no coinciden
               </p>
-              <p *ngIf="passwordsMatch() && confirmPassword" class="mt-2 text-xs text-green-600 flex items-center gap-1">
-                <span class="material-symbols-outlined text-sm">check_circle</span>
-                Las contraseñas coinciden
-              </p>
+            </div>
+            
+            <!-- Password Strength (si existe) -->
+            <div *ngIf="passwordStrength" class="mt-2">
+              <app-password-strength [strength]="passwordStrength()"></app-password-strength>
             </div>
           </div>
 
-          <!-- Terms -->
-          <div class="flex items-start pt-4">
+          <!-- Términos y Condiciones -->
+          <div class="flex items-start pt-3">
             <input 
               id="terms" 
               name="terms" 
               type="checkbox" 
               [(ngModel)]="acceptTerms" 
               required 
-              class="h-5 w-5 text-[#0367A6] focus:ring-2 focus:ring-[#0367A6] border-[#A6A6A6] rounded mt-0.5 cursor-pointer">
+              class="h-5 w-5 text-[#0367A6] rounded focus:ring-1 focus:ring-[#0367A6] mt-0.5 cursor-pointer">
             <label for="terms" class="ml-3 block text-sm text-[#666666] cursor-pointer leading-relaxed">
               Acepto los 
-              <a routerLink="/legal/terms" class="text-[#0367A6] hover:text-[#035A91] underline font-medium">Términos y Condiciones</a> 
+              <a routerLink="/legal/terms" class="text-[#0367A6] font-medium">Términos</a> 
               y el 
-              <a routerLink="/legal/privacy" class="text-[#0367A6] hover:text-[#035A91] underline font-medium">Aviso de Privacidad</a>
+              <a routerLink="/legal/privacy" class="text-[#0367A6] font-medium">Aviso de Privacidad</a>
               <span class="text-red-500 ml-1">*</span>
             </label>
           </div>
 
-          <!-- Submit Button -->
+          <!-- Submit Button (IGUAL QUE LOGIN) -->
           <button 
             type="submit" 
             [disabled]="isSubmitDisabled()" 
-            class="w-full bg-gradient-to-r from-[#0367A6] to-[#035A91] hover:from-[#035A91] hover:to-[#024A7A] disabled:from-[#A6A6A6] disabled:to-[#A6A6A6] text-white py-4 px-6 rounded-xl font-semibold text-base transition-all duration-200 inline-flex items-center justify-center gap-3 shadow-lg hover:shadow-xl disabled:shadow-none transform hover:-translate-y-0.5 disabled:transform-none disabled:cursor-not-allowed">
-            <span *ngIf="isLoading" class="animate-spin material-symbols-outlined text-xl">progress_activity</span>
-            <span class="material-symbols-outlined text-xl" *ngIf="!isLoading">person_add</span>
-            <span class="text-base">{{ isLoading ? 'Creando Cuenta...' : 'Crear Cuenta' }}</span>
+            class="w-full bg-[#0367A6] hover:bg-[#035A91] disabled:bg-[#A6A6A6] text-white py-3.5 px-4 rounded-xl font-medium text-base transition-colors duration-200 inline-flex items-center justify-center gap-2">
+            <span *ngIf="isLoading" class="animate-spin material-symbols-outlined text-base">progress_activity</span>
+            <span class="material-symbols-outlined text-base" *ngIf="!isLoading">person_add</span>
+            <span>{{ isLoading ? 'Creando...' : 'Crear Cuenta' }}</span>
           </button>
-        </form>
-      </div>
 
-      <!-- Footer Links -->
-      <div class="text-center mt-6">
-        <p class="text-[#666666]">
-          ¿Ya tienes cuenta? 
-          <a routerLink="/auth/login" class="text-[#0367A6] hover:text-[#035A91] font-semibold ml-1 underline decoration-2 underline-offset-2 transition-colors">
-            Inicia sesión aquí
-          </a>
-        </p>
+          <!-- Link a Login (IGUAL QUE LOGIN) -->
+          <div class="text-center">
+            <p class="text-sm text-[#666666]">
+              ¿Ya tienes cuenta?
+              <a routerLink="/auth/login" class="text-[#0367A6] font-medium ml-1">
+                Inicia sesión aquí
+              </a>
+            </p>
+          </div>
+        </form>
       </div>
     </div>
   </div>
@@ -326,7 +321,7 @@
 <!-- Custom Scrollbar Styles -->
 <style>
   .custom-scrollbar::-webkit-scrollbar {
-    width: 8px;
+    width: 6px;
   }
   
   .custom-scrollbar::-webkit-scrollbar-track {
@@ -341,5 +336,13 @@
   
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: #035A91;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.1; }
+    50% { opacity: 0.15; }
+  }
+  .animate-pulse {
+    animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
 </style>

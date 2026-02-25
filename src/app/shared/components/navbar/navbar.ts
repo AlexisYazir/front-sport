@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -23,6 +23,9 @@ export class Navbar {
   searchTerm = signal<string>('');
   // Estado del menú móvil
   mobileMenuOpen = signal<boolean>(false);
+  // Estado para mostrar/ocultar navbar al hacer scroll
+  showNavbar = signal<boolean>(true);
+  private lastScrollPosition = 0;
 
   // Verificar si el usuario es administrador (rol = 3)
   isAdmin = computed(() => {
@@ -34,6 +37,34 @@ export class Navbar {
   get authServicePublic() { return this.authService; }
   cartItemCount = this.cartService.itemCount;
 
+  @HostListener('window:scroll', [])
+  onWindowScroll() {
+    const currentScroll = window.pageYOffset || document.documentElement.scrollTop;
+    
+    // Determinar dirección del scroll
+    if (currentScroll > this.lastScrollPosition && currentScroll > 50) {
+      // Scrolling down - ocultar navbar
+      this.showNavbar.set(false);
+    } else {
+      // Scrolling up - mostrar navbar
+      this.showNavbar.set(true);
+    }
+    
+    this.lastScrollPosition = currentScroll;
+  }
+
+  getRoleText(): string {
+    const user = this.authService.currentUser();
+    if (!user) return 'Usuario';
+    
+    switch(user.rol) {
+      case 1: return 'Usuario';
+      case 2: return 'Empleado';
+      case 3: return 'Administrador';
+      default: return 'Usuario';
+    }
+  }
+
   onSearch() {
     const term = this.searchTerm().trim();
     if (term) {
@@ -43,6 +74,11 @@ export class Navbar {
     } else {
       this.router.navigate(['/products']);
     }
+  }
+
+  clearSearch() {
+    this.searchTerm.set('');
+    this.onSearch();
   }
 
   onSearchKeyPress(event: KeyboardEvent) {
@@ -63,11 +99,9 @@ export class Navbar {
   getDashboardLink(): string {
     const user = this.authService.currentUser();
     if (user) {
-      // Si es admin (rol=3), va al dashboard admin
       if (user.rol === 3) {
         return '/dashboard/admin';
       }
-      // Otros roles
       switch(user.rol) {
         case 1: return '/dashboard/usuario';
         case 2: return '/dashboard/empleado';
@@ -77,34 +111,24 @@ export class Navbar {
     return '/';
   }
 
-  // NUEVO: Método para cerrar sesión desde admin navbar
   adminLogout() {
     this.authService.logout();
     this.router.navigate(['/']);
   }
 
-  // NUEVO: Método para ir al perfil
   goToProfile() {
     this.router.navigate(['/dashboard/usuario/profile']);
   }
 
-    // NUEVO: Método para ir al perfil admin
   goToProfileAdmin() {
     this.router.navigate(['/dashboard/admin/profile']);
   }
 
-    // NUEVO: Método para ir al dashboard admin
-  goToDashboardAdmin() {
-    this.router.navigate(['/dashboard/admin']);
-  }
-
-  // NUEVO: Método para ir a configuración
   goToSettings() {
-  // Para usuario normal
-  if (this.isAdmin()) {
-    this.router.navigate(['/dashboard/admin/settings']);
-  } else {
-    this.router.navigate(['/dashboard/usuario/settings']);
+    if (this.isAdmin()) {
+      this.router.navigate(['/dashboard/admin/settings']);
+    } else {
+      this.router.navigate(['/dashboard/usuario/settings']);
+    }
   }
-}
 }

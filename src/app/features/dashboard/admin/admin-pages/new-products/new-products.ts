@@ -538,9 +538,13 @@ continuarConAtributos() {
   const seleccionadas = this.existingVariants.filter(v => v.selected);
   
   if (seleccionadas.length === 0) {
-    alert('Selecciona al menos una variante');
+    this.errorMessage = 'Selecciona al menos una variante';
     return;
   }
+
+  // Limpiar mensajes anteriores
+  this.errorMessage = '';
+  this.successMessage = '';
 
   // Inicializar estructura para cada variante seleccionada
   this.variantAttributeValues = seleccionadas.map(v => ({
@@ -548,9 +552,9 @@ continuarConAtributos() {
     valores: []
   }));
 
-  // Aquí puedes mostrar un submodal o cambiar a un "Paso 3"
-  // Por simplicidad, lo haremos en el mismo modal, mostrando un nuevo paso
-  this.currentStep = 3; // Necesitas agregar un paso 3 en el HTML
+  console.log('Variantes seleccionadas para atributos:', seleccionadas.length);
+  
+  this.currentStep = 3;
 }
 
 // Agregar un nuevo campo de atributo a una variante específica
@@ -568,41 +572,89 @@ eliminarCampoAtributo(varianteIndex: number, attrIndex: number) {
 
 // Guardar todos los valores de atributos
 guardarValoresAtributos() {
-  let pendientes = 0;
-  let errores = false;
-
+  // Contar cuántos atributos válidos hay realmente
+  let totalAtributosValidos = 0;
   for (const item of this.variantAttributeValues) {
     for (const attr of item.valores) {
-      if (!attr.id_atributo || !attr.valor.trim()) continue;
+      if (attr.id_atributo && attr.id_atributo > 0 && attr.valor?.trim()) {
+        totalAtributosValidos++;
+      }
+    }
+  }
 
-      pendientes++;
-      this.productService.createProductVariantValues({
+  if (totalAtributosValidos === 0) {
+    this.errorMessage = 'No hay atributos válidos para guardar';
+    return;
+  }
+
+  this.saving = true;
+  this.errorMessage = '';
+  this.successMessage = '';
+  
+  let completadas = 0;
+  let errores = false;
+  const resultados: any[] = [];
+
+  // Procesar cada variante y sus atributos
+  for (const item of this.variantAttributeValues) {
+    for (const attr of item.valores) {
+      // Validar que el atributo sea válido
+      if (!attr.id_atributo || attr.id_atributo === 0 || !attr.valor?.trim()) {
+        continue; // Saltar atributos inválidos
+      }
+
+      const attributeData = {
         id_variante: item.id_variante,
         id_atributo: attr.id_atributo,
-        valor: attr.valor
-      }).subscribe({
-        next: () => {
-          pendientes--;
-          if (pendientes === 0 && !errores) {
-            this.successMessage = 'Atributos asignados correctamente';
-            setTimeout(() => {
-              this.closeCompleteModal();
-            }, 1500);
+        valor: attr.valor.trim()
+      };
+
+      console.log('Guardando atributo:', attributeData);
+
+      this.productService.createProductVariantValues(attributeData).subscribe({
+        next: (response) => {
+          completadas++;
+          resultados.push({ success: true, data: attributeData, response });
+          
+          console.log(`Atributo guardado (${completadas}/${totalAtributosValidos})`);
+          
+          // Verificar si ya se completaron todos
+          if (completadas === totalAtributosValidos && !errores) {
+            this.finalizarGuardadoAtributos();
           }
         },
         error: (err) => {
-          console.error('Error al asignar atributo:', err);
+          console.error('Error al guardar atributo:', err);
           errores = true;
-          this.errorMessage = 'Error al asignar atributos';
+          resultados.push({ success: false, data: attributeData, error: err });
+          
+          this.errorMessage = `Error en atributo: ${err.error?.message || 'Error desconocido'}`;
+          this.saving = false;
         }
       });
     }
   }
 
-  if (pendientes === 0) {
-    this.successMessage = 'Atributos asignados correctamente';
-    setTimeout(() => this.closeCompleteModal(), 1500);
+  // Si no hay atributos para procesar (caso borde)
+  if (totalAtributosValidos === 0) {
+    this.saving = false;
   }
+}
+
+finalizarGuardadoAtributos() {
+  this.saving = false;
+  this.successMessage = 'Atributos asignados correctamente';
+  
+  // Recargar las variantes para actualizar la vista
+  if (this.selectedProduct) {
+    this.checkExistingVariants(this.selectedProduct.id_producto);
+  }
+  
+  setTimeout(() => {
+    this.successMessage = '';
+    this.currentStep = 2; // Volver al paso 2
+    this.variantAttributeValues = []; // Limpiar datos temporales
+  }, 2000);
 }
 // ===== MÉTODO AUXILIAR PARA PASO 3 =====
 getVariantSku(id_variante: number): string {
