@@ -18,7 +18,18 @@ export class Navbar {
   private authService = inject(AuthService);
   private cartService = inject(CartService);
   private router = inject(Router);
+  private closeTimeout: any;
 
+  // Estados de los dropdowns (por click)
+  userMenuOpen = signal<boolean>(false);
+  guestMenuOpen = signal<boolean>(false);
+  adminMenuOpen = signal<boolean>(false);
+  
+  // Estados de hover
+  userHovered = false;
+  guestHovered = false;
+  adminHovered = false;
+  
   // Estado de búsqueda
   searchTerm = signal<string>('');
   // Estado del menú móvil
@@ -37,20 +48,162 @@ export class Navbar {
   get authServicePublic() { return this.authService; }
   cartItemCount = this.cartService.itemCount;
 
+  // Métodos para determinar si mostrar los menús (hover O click)
+  shouldShowUserMenu(): boolean {
+    return this.userMenuOpen() || this.userHovered;
+  }
+
+  shouldShowGuestMenu(): boolean {
+    return this.guestMenuOpen() || this.guestHovered;
+  }
+
+  shouldShowAdminMenu(): boolean {
+    return this.adminMenuOpen() || this.adminHovered;
+  }
+
   @HostListener('window:scroll', [])
   onWindowScroll() {
     const currentScroll = window.pageYOffset || document.documentElement.scrollTop;
     
-    // Determinar dirección del scroll
     if (currentScroll > this.lastScrollPosition && currentScroll > 50) {
-      // Scrolling down - ocultar navbar
       this.showNavbar.set(false);
     } else {
-      // Scrolling up - mostrar navbar
       this.showNavbar.set(true);
     }
     
     this.lastScrollPosition = currentScroll;
+  }
+
+  // Cerrar menús al hacer click fuera
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.relative')) {
+      this.userMenuOpen.set(false);
+      this.guestMenuOpen.set(false);
+      this.adminMenuOpen.set(false);
+      // No cerramos hover states inmediatamente
+    }
+  }
+
+  // Manejo de hover con delay
+  onMouseEnter(menu: 'user' | 'guest' | 'admin') {
+    if (this.closeTimeout) {
+      clearTimeout(this.closeTimeout);
+      this.closeTimeout = null;
+    }
+    
+    if (menu === 'user') this.userHovered = true;
+    if (menu === 'guest') this.guestHovered = true;
+    if (menu === 'admin') this.adminHovered = true;
+  }
+
+  onMouseLeave(menu: 'user' | 'guest' | 'admin') {
+    // Programar cierre con delay para poder mover el mouse al menú
+    this.closeTimeout = setTimeout(() => {
+      if (menu === 'user') this.userHovered = false;
+      if (menu === 'guest') this.guestHovered = false;
+      if (menu === 'admin') this.adminHovered = false;
+      this.closeTimeout = null;
+    }, 300); // 300ms de delay
+  }
+
+  // Cancelar cierre cuando el mouse está sobre el menú
+  cancelUserClose() {
+    if (this.closeTimeout) {
+      clearTimeout(this.closeTimeout);
+      this.closeTimeout = null;
+    }
+  }
+
+  cancelGuestClose() {
+    if (this.closeTimeout) {
+      clearTimeout(this.closeTimeout);
+      this.closeTimeout = null;
+    }
+  }
+
+  cancelAdminClose() {
+    if (this.closeTimeout) {
+      clearTimeout(this.closeTimeout);
+      this.closeTimeout = null;
+    }
+  }
+
+  // Programar cierre desde el menú
+  scheduleUserClose() {
+    this.closeTimeout = setTimeout(() => {
+      if (!this.userMenuOpen()) {
+        this.userHovered = false;
+      }
+      this.closeTimeout = null;
+    }, 300);
+  }
+
+  scheduleGuestClose() {
+    this.closeTimeout = setTimeout(() => {
+      if (!this.guestMenuOpen()) {
+        this.guestHovered = false;
+      }
+      this.closeTimeout = null;
+    }, 300);
+  }
+
+  scheduleAdminClose() {
+    this.closeTimeout = setTimeout(() => {
+      if (!this.adminMenuOpen()) {
+        this.adminHovered = false;
+      }
+      this.closeTimeout = null;
+    }, 300);
+  }
+
+  // Toggles para click
+  toggleUserMenu() {
+    this.userMenuOpen.update(val => !val);
+    this.guestMenuOpen.set(false);
+    this.adminMenuOpen.set(false);
+    // Si cerramos por click, también limpiamos hover
+    if (this.userMenuOpen()) {
+      this.userHovered = true;
+    } else {
+      this.userHovered = false;
+    }
+  }
+
+  toggleGuestMenu() {
+    this.guestMenuOpen.update(val => !val);
+    this.userMenuOpen.set(false);
+    this.adminMenuOpen.set(false);
+    if (this.guestMenuOpen()) {
+      this.guestHovered = true;
+    } else {
+      this.guestHovered = false;
+    }
+  }
+
+  toggleAdminMenu() {
+    this.adminMenuOpen.update(val => !val);
+    this.userMenuOpen.set(false);
+    this.guestMenuOpen.set(false);
+    if (this.adminMenuOpen()) {
+      this.adminHovered = true;
+    } else {
+      this.adminHovered = false;
+    }
+  }
+
+  closeAllMenus() {
+    this.userMenuOpen.set(false);
+    this.guestMenuOpen.set(false);
+    this.adminMenuOpen.set(false);
+    this.userHovered = false;
+    this.guestHovered = false;
+    this.adminHovered = false;
+    if (this.closeTimeout) {
+      clearTimeout(this.closeTimeout);
+      this.closeTimeout = null;
+    }
   }
 
   getRoleText(): string {
@@ -89,11 +242,12 @@ export class Navbar {
 
   logout() {
     this.authService.logout();
+    this.closeAllMenus();
     this.router.navigate(['/']);
   }
 
   toggleMobileMenu() {
-    this.mobileMenuOpen.set(!this.mobileMenuOpen());
+    this.mobileMenuOpen.update(val => !val);
   }
 
   getDashboardLink(): string {
@@ -113,15 +267,18 @@ export class Navbar {
 
   adminLogout() {
     this.authService.logout();
+    this.closeAllMenus();
     this.router.navigate(['/']);
   }
 
   goToProfile() {
     this.router.navigate(['/dashboard/usuario/profile']);
+    this.closeAllMenus();
   }
 
   goToProfileAdmin() {
     this.router.navigate(['/dashboard/admin/profile']);
+    this.closeAllMenus();
   }
 
   goToSettings() {
@@ -130,5 +287,6 @@ export class Navbar {
     } else {
       this.router.navigate(['/dashboard/usuario/settings']);
     }
+    this.closeAllMenus();
   }
 }
