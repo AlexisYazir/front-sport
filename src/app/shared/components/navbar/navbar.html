@@ -179,6 +179,100 @@
   <!-- Mobile menu content (sin cambios) -->
   <div *ngIf="mobileMenuOpen()" class="md:hidden fixed inset-0 z-40 bg-black/20 backdrop-blur-sm transition-opacity duration-300" (click)="toggleMobileMenu()">
     <!-- ... contenido del menú móvil ... -->
+     <div *ngIf="mobileMenuOpen()" class="md:hidden fixed inset-0 z-40 bg-black/20 backdrop-blur-sm transition-opacity duration-300" (click)="toggleMobileMenu()">
+    <div class="absolute right-0 top-0 h-full w-80 bg-white shadow-2xl transform transition-transform duration-300" (click)="$event.stopPropagation()">
+      <div class="p-6">
+        <!-- Header del menú mobile -->
+        <div class="flex justify-between items-center mb-6">
+          <span class="text-lg font-semibold text-gray-900">Menú</span>
+          <button (click)="toggleMobileMenu()" class="p-2 hover:bg-gray-100 rounded-xl transition-colors">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+
+        <!-- Search en mobile -->
+        <div class="mb-6">
+          <div class="relative">
+            <input 
+              type="text" 
+              [(ngModel)]="searchTerm" 
+              (keypress)="onSearchKeyPress($event)"
+              placeholder="Buscar productos..." 
+              class="w-full pl-10 pr-10 py-3 bg-gray-100 border-0 rounded-full focus:ring-2 focus:ring-[#0367A6] outline-none text-sm"
+            />
+            <span class="material-symbols-outlined absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+              search
+            </span>
+            <button
+              *ngIf="searchTerm()"
+              (click)="clearSearch()"
+              class="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 rounded-full"
+            >
+              <span class="material-symbols-outlined text-lg">close</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Navigation links mobile -->
+        <div class="space-y-1">
+          <a 
+            routerLink="/cart" 
+            (click)="toggleMobileMenu()"
+            class="flex items-center px-4 py-3 text-[#666666] hover:text-[#0367A6] hover:bg-blue-50/80 rounded-xl transition-all duration-200"
+          >
+            <span class="material-symbols-outlined mr-3 text-xl">shopping_cart</span>
+            <span class="text-sm font-medium">Carrito</span>
+            <span *ngIf="cartItemCount() > 0" 
+                  class="ml-auto bg-gradient-to-r from-[#FF7A00] to-[#FF9F4A] text-white text-xs px-2 py-1 rounded-full">
+              {{ cartItemCount() }}
+            </span>
+          </a>
+        </div>
+
+        <!-- Auth mobile -->
+        <div class="mt-6 pt-6 border-t border-gray-200">
+          <ng-container *ngIf="authServicePublic.isLoggedIn(); else mobileGuest">
+            <a 
+              [routerLink]="getDashboardLink()" 
+              (click)="toggleMobileMenu()"
+              class="flex items-center px-4 py-3 text-[#666666] hover:text-[#0367A6] hover:bg-blue-50/80 rounded-xl transition-all duration-200"
+            >
+              <span class="material-symbols-outlined mr-3 text-xl">account_circle</span>
+              <span class="text-sm font-medium">Mi Cuenta</span>
+            </a>
+            
+            <button 
+              (click)="logout(); toggleMobileMenu()"
+              class="w-full flex items-center px-4 py-3 text-red-600 hover:bg-red-50 rounded-xl transition-all duration-200 mt-2"
+            >
+              <span class="material-symbols-outlined mr-3 text-xl">logout</span>
+              <span class="text-sm font-medium">Cerrar Sesión</span>
+            </button>
+          </ng-container>
+          
+          <ng-template #mobileGuest>
+            <a 
+              routerLink="/auth/login" 
+              (click)="toggleMobileMenu()"
+              class="flex items-center px-4 py-3 text-[#666666] hover:text-[#0367A6] hover:bg-blue-50/80 rounded-xl transition-all duration-200"
+            >
+              <span class="material-symbols-outlined mr-3 text-xl">login</span>
+              <span class="text-sm font-medium">Iniciar Sesión</span>
+            </a>
+            
+            <a 
+              routerLink="/auth/register" 
+              (click)="toggleMobileMenu()"
+              class="flex items-center px-4 py-3 bg-[#0367A6] text-white rounded-xl hover:bg-[#035A91] transition-all duration-200 mt-2"
+            >
+              <span class="material-symbols-outlined mr-3 text-xl">how_to_reg</span>
+              <span class="text-sm font-medium">Registrarse</span>
+            </a>
+          </ng-template>
+        </div>
+      </div>
+    </div>
+  </div>
   </div>
 </ng-container>
 
