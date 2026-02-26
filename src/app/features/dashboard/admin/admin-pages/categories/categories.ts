@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ToastrService } from 'ngx-toastr';
 import { Categorie } from '../../../../../core/models/product.model';
 import { ProductService } from '../../../../../core/services/product.service';
 
@@ -13,6 +14,7 @@ import { ProductService } from '../../../../../core/services/product.service';
 })
 export class Categories implements OnInit {
   private productService = inject(ProductService);
+  private toastr = inject(ToastrService);
   
   categorias: Categorie[] = [];
   filteredCategorias: Categorie[] = [];
@@ -43,8 +45,6 @@ export class Categories implements OnInit {
   };
   
   creatingCategoria: boolean = false;
-  createSuccess: boolean = false;
-  createError: string = '';
   
   // Modal edición
   showEditModal: boolean = false;
@@ -57,9 +57,12 @@ export class Categories implements OnInit {
   };
   
   editingCategoria: boolean = false;
-  editSuccess: boolean = false;
-  editError: string = '';
-  noChangesMessage: string = '';
+  
+  // Guardar copia original para detectar cambios
+  categoriaOriginalData = {
+    nombre: '',
+    id_padre: null as number | null
+  };
   
   // Solo categorías padre para el select
   categoriasPadre: Categorie[] = [];
@@ -80,7 +83,8 @@ export class Categories implements OnInit {
         this.isLoading.set(false);
       },
       error: (error) => {
-        //console.error('Error loading categorias:', error);
+        console.error('Error loading categorias:', error);
+        this.toastr.error('Error al cargar categorías', 'Error');
         this.isLoading.set(false);
       }
     });
@@ -124,6 +128,7 @@ export class Categories implements OnInit {
     this.searchValue = '';
     this.filterTipo = 'todas';
     this.applyFilters();
+    this.toastr.success('Filtros limpiados', 'Éxito');
   }
 
   // Paginación
@@ -191,8 +196,6 @@ export class Categories implements OnInit {
       nombre: '',
       id_padre: ''
     };
-    this.createSuccess = false;
-    this.createError = '';
     this.showCreateModal = true;
   }
 
@@ -228,10 +231,12 @@ export class Categories implements OnInit {
   }
 
   guardarCategoria() {
-    if (!this.validateFields()) return;
+    if (!this.validateFields()) {
+      this.toastr.warning('Corrige los errores en el formulario', 'Validación');
+      return;
+    }
 
     this.creatingCategoria = true;
-    this.createError = '';
 
     const categoriaData = {
       nombre: this.nuevaCategoria.nombre,
@@ -240,17 +245,17 @@ export class Categories implements OnInit {
 
     this.productService.createCatetorie(categoriaData).subscribe({
       next: () => {
-        this.createSuccess = true;
         this.creatingCategoria = false;
+        this.toastr.success('Categoría creada exitosamente', 'Éxito');
         setTimeout(() => {
           this.closeCreateModal();
           this.loadCategorias();
         }, 1500);
       },
       error: (err) => {
-        //console.error('Error al crear categoría:', err);
-        this.createError = err.error.message || 'Error al crear la categoría';
+        console.error('Error al crear categoría:', err);
         this.creatingCategoria = false;
+        this.toastr.error(err.error?.message || 'Error al crear la categoría', 'Error');
       }
     });
   }
@@ -261,13 +266,16 @@ export class Categories implements OnInit {
     this.categoriaEditando = JSON.parse(JSON.stringify(categoria));
     this.categoriaOriginal = JSON.parse(JSON.stringify(categoria));
     
+    // Guardar datos originales para comparar cambios
+    this.categoriaOriginalData = {
+      nombre: categoria.nombre,
+      id_padre: categoria.id_padre
+    };
+    
     this.editValidationErrors = {
       nombre: '',
       id_padre: ''
     };
-    this.editSuccess = false;
-    this.editError = '';
-    this.noChangesMessage = '';
     this.showEditModal = true;
   }
 
@@ -275,7 +283,6 @@ export class Categories implements OnInit {
     this.showEditModal = false;
     this.categoriaEditando = null;
     this.categoriaOriginal = null;
-    this.noChangesMessage = '';
   }
 
   validateEditFields(): boolean {
@@ -290,48 +297,33 @@ export class Categories implements OnInit {
       isValid = false;
     }
 
-    // Si es subcategoría, validar que tenga padre seleccionado
-    if (this.categoriaEditando?.id_padre !== null && !this.categoriaEditando?.id_padre) {
-      this.editValidationErrors.id_padre = 'Debes seleccionar una categoría padre';
-      isValid = false;
-    }
-
     return isValid;
   }
 
   hasChanges(): boolean {
-    if (!this.categoriaEditando || !this.categoriaOriginal) return false;
+    if (!this.categoriaEditando || !this.categoriaOriginalData) return false;
     
-    // Comparar nombre
-    if (this.categoriaEditando.nombre !== this.categoriaOriginal.nombre) return true;
-    
-    // Comparar id_padre (manejar null vs 0)
-    const originalPadre = this.categoriaOriginal.id_padre === null ? 0 : this.categoriaOriginal.id_padre;
-    const editandoPadre = this.categoriaEditando.id_padre === null ? 0 : this.categoriaEditando.id_padre;
-    
-    return editandoPadre !== originalPadre;
+    return this.categoriaEditando.nombre !== this.categoriaOriginalData.nombre ||
+           this.categoriaEditando.id_padre !== this.categoriaOriginalData.id_padre;
   }
 
   actualizarCategoria() {
-    // Limpiar mensaje anterior
-    this.noChangesMessage = '';
-    
     // Validar campos
-    if (!this.validateEditFields()) return;
+    if (!this.validateEditFields()) {
+      this.toastr.warning('Corrige los errores en el formulario', 'Validación');
+      return;
+    }
     
     // Verificar si hay cambios
     if (!this.hasChanges()) {
-      this.noChangesMessage = 'No se detectaron cambios en la categoría';
+      this.toastr.info('No se detectaron cambios en la categoría', 'Información');
       return;
     }
 
     this.editingCategoria = true;
-    this.editError = '';
 
     // Preparar datos para enviar
-    // Si es categoría padre, enviar id_padre = 0
-    // Si es subcategoría, enviar el id_padre seleccionado
-    const idPadre = this.categoriaEditando!.id_padre === null ? 0 : this.categoriaEditando!.id_padre;
+    const idPadre = this.categoriaEditando!.id_padre === null ? null : this.categoriaEditando!.id_padre;
 
     const categoriaData = {
       id_categoria: this.categoriaEditando!.id_categoria,
@@ -339,12 +331,10 @@ export class Categories implements OnInit {
       id_padre: idPadre
     };
 
-    //console.log('Actualizando categoría:', categoriaData);
-
     this.productService.updateCatetorie(categoriaData).subscribe({
       next: () => {
-        this.editSuccess = true;
         this.editingCategoria = false;
+        this.toastr.success('Categoría actualizada exitosamente', 'Éxito');
         setTimeout(() => {
           this.closeEditModal();
           this.loadCategorias();
@@ -352,8 +342,8 @@ export class Categories implements OnInit {
       },
       error: (err) => {
         //console.error('Error al actualizar categoría:', err);
-        this.editError = 'Error al actualizar la categoría';
         this.editingCategoria = false;
+        this.toastr.error(err.error?.message || 'Error al actualizar la categoría', 'Error');
       }
     });
   }
@@ -361,19 +351,15 @@ export class Categories implements OnInit {
   // Acciones existentes
   refreshData() {
     this.loadCategorias();
+    this.toastr.success('Datos actualizados', 'Éxito');
   }
 
   viewDetails(categoria: Categorie) {
-    console.log('Ver detalles:', categoria);
+    //console.log('Ver detalles:', categoria);
   }
 
   editCategoria(categoria: Categorie) {
     this.openEditModal(categoria);
   }
 
-  deleteCategoria(categoria: Categorie) {
-    if (confirm(`¿Estás seguro de eliminar la categoría "${categoria.nombre}"?`)) {
-      //console.log('Eliminar:', categoria);
-    }
-  }
 }

@@ -1,5 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ToastrService } from 'ngx-toastr';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { ProductService } from '../../../../../core/services/product.service';
@@ -14,6 +15,7 @@ import { Product, CreateProductDto, Categorie, Marca, Attibute, RecientProduct }
 })
 export class Products implements OnInit {
   private productService = inject(ProductService);
+  private toastr = inject(ToastrService);
   
   products: Product[] = [];
   filteredProducts: Product[] = [];
@@ -45,8 +47,6 @@ export class Products implements OnInit {
   };
   
   creatingProduct: boolean = false;
-  createSuccess: boolean = false;
-  createError: string = '';
   
   categorias: Categorie[] = [];
   categoriasPadre: Categorie[] = [];
@@ -66,10 +66,16 @@ export class Products implements OnInit {
     descripcion: ''
   };
   
+  // Guardar copia original para detectar cambios
+  originalProductData = {
+    id_marca: 0,
+    id_categoria: 0,
+    nombre: '',
+    descripcion: ''
+  };
+  
   // Estados para guardado
   savingProduct: boolean = false;
-  editSuccess: boolean = false;
-  editError: string = '';
   
   // Contador de productos nuevos
   newProductsCount: number = 0;
@@ -90,7 +96,10 @@ export class Products implements OnInit {
         this.products = products;
         this.applyFilters();
       },
-      error: (error) => console.error('Error loading products:', error)
+      error: (error) => {
+        console.error('Error loading products:', error);
+        this.toastr.error('Error al cargar productos', 'Error');
+      }
     });
   }
 
@@ -151,6 +160,10 @@ export class Products implements OnInit {
       next: (data: Categorie[]) => {
         this.categorias = data;
         this.categoriasPadre = data.filter(c => c.id_padre === null);
+      },
+      error: (error) => {
+        console.error('Error loading categories:', error);
+        this.toastr.error('Error al cargar categorías', 'Error');
       }
     });
   }
@@ -168,13 +181,25 @@ export class Products implements OnInit {
 
   loadMarcas() {
     this.productService.getMarcas().subscribe({
-      next: (data: Marca[]) => this.marcas = data
+      next: (data: Marca[]) => {
+        this.marcas = data;
+      },
+      error: (error) => {
+        console.error('Error loading marcas:', error);
+        this.toastr.error('Error al cargar marcas', 'Error');
+      }
     });
   }
 
   loadAttributes() {
     this.productService.getAttributes().subscribe({
-      next: (data: Attibute[]) => this.attributes = data
+      next: (data: Attibute[]) => {
+        this.attributes = data;
+      },
+      error: (error) => {
+        console.error('Error loading attributes:', error);
+        this.toastr.error('Error al cargar atributos', 'Error');
+      }
     });
   }
 
@@ -248,6 +273,7 @@ export class Products implements OnInit {
   refreshData() {
     this.loadProducts();
     this.loadNewProductsCount();
+    this.toastr.success('Datos actualizados correctamente', 'Éxito');
   }
 
   deleteProduct(product: Product) {
@@ -258,8 +284,6 @@ export class Products implements OnInit {
     this.nuevoProducto = { nombre: '', descripcion: '', id_marca: 0, id_categoria: 0 };
     this.validationErrors = { nombre: '', descripcion: '', id_marca: '', id_categoria: '' };
     this.subcategorias = [];
-    this.createSuccess = false;
-    this.createError = '';
     this.showCreateModal = true;
   }
 
@@ -305,9 +329,12 @@ export class Products implements OnInit {
         this.closeCreateModal();
         this.loadProducts();
         this.loadNewProductsCount();
+        this.toastr.success('Producto creado exitosamente', 'Éxito');
       },
-      error: () => {
+      error: (err) => {
         this.creatingProduct = false;
+        this.toastr.error(err.error?.message || 'Error al crear producto', 'Error');
+        console.error('Error al crear producto:', err);
       }
     });
   }
@@ -325,34 +352,46 @@ export class Products implements OnInit {
       descripcion: product.descripcion
     };
     
-    this.editSuccess = false;
-    this.editError = '';
+    // Guardar copia original para comparar cambios
+    this.originalProductData = {
+      id_marca: this.editProductData.id_marca,
+      id_categoria: this.editProductData.id_categoria,
+      nombre: this.editProductData.nombre,
+      descripcion: this.editProductData.descripcion
+    };
+    
     this.showEditModal = true;
   }
 
   closeEditModal() {
     this.showEditModal = false;
     this.selectedProduct = null;
-    this.editSuccess = false;
-    this.editError = '';
+  }
+
+  // ===== VERIFICAR SI HAY CAMBIOS =====
+  hasChanges(): boolean {
+    return this.editProductData.nombre !== this.originalProductData.nombre ||
+           this.editProductData.descripcion !== this.originalProductData.descripcion ||
+           this.editProductData.id_marca !== this.originalProductData.id_marca ||
+           this.editProductData.id_categoria !== this.originalProductData.id_categoria;
   }
 
   // ===== VALIDAR DATOS DEL PRODUCTO =====
   validateProductData(): boolean {
     if (!this.editProductData.nombre.trim()) {
-      this.editError = 'El nombre es obligatorio';
+      this.toastr.warning('El nombre es obligatorio', 'Validación');
       return false;
     }
     if (!this.editProductData.descripcion.trim()) {
-      this.editError = 'La descripción es obligatoria';
+      this.toastr.warning('La descripción es obligatoria', 'Validación');
       return false;
     }
     if (!this.editProductData.id_marca) {
-      this.editError = 'Selecciona una marca';
+      this.toastr.warning('Selecciona una marca', 'Validación');
       return false;
     }
     if (!this.editProductData.id_categoria) {
-      this.editError = 'Selecciona una categoría';
+      this.toastr.warning('Selecciona una categoría', 'Validación');
       return false;
     }
     return true;
@@ -362,22 +401,28 @@ export class Products implements OnInit {
   saveProductData() {
     if (!this.validateProductData()) return;
     
+    // Verificar si hay cambios
+    if (!this.hasChanges()) {
+      this.toastr.info('No se detectaron cambios', 'Información');
+      return;
+    }
+
     this.savingProduct = true;
-    this.editError = '';
     
     this.productService.updateProductFull(this.editProductData).subscribe({
       next: () => {
         this.savingProduct = false;
-        this.editSuccess = true;
+        this.toastr.success('Producto actualizado exitosamente', 'Éxito');
+        
         setTimeout(() => {
           this.closeEditModal();
           this.loadProducts();
         }, 1500);
       },
       error: (err) => {
-        console.error('Error al guardar producto:', err);
-        this.editError = err.error?.message || 'Error al guardar los datos del producto';
         this.savingProduct = false;
+        this.toastr.error(err.error?.message || 'Error al guardar los datos del producto', 'Error');
+        console.error('Error al guardar producto:', err);
       }
     });
   }
@@ -403,6 +448,7 @@ export class Products implements OnInit {
         },
         error: (err) => {
           console.error('Error al cargar variantes:', err);
+          this.toastr.error('Error al cargar variantes', 'Error');
           this.viewProductVariants = [];
           this.loadingViewVariants = false;
         }

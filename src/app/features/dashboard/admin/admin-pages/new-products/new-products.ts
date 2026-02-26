@@ -3,7 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ProductService } from '../../../../../core/services/product.service';
 import { RecientProduct, Attibute } from '../../../../../core/models/product.model';
-import { RouterModule } from '@angular/router'; // <-- Importar RouterModule
+import { RouterModule } from '@angular/router';
+import { ToastrService } from 'ngx-toastr';
 
 // Interfaz para variantes
 interface ProductVariant {
@@ -44,6 +45,7 @@ interface IncompleteProduct {
 })
 export class NewProducts implements OnInit {
   private productService = inject(ProductService);
+  private toastr = inject(ToastrService);
   
   // Productos recientes (todos)
   products: RecientProduct[] = [];
@@ -82,8 +84,6 @@ export class NewProducts implements OnInit {
   loadingVariants: boolean = false;
   saving: boolean = false;
   step1Completed: boolean = false;
-  successMessage: string = '';
-  errorMessage: string = '';
   
   // Validaciones paso 1
   validationErrors = {
@@ -96,9 +96,14 @@ export class NewProducts implements OnInit {
   isLoading = signal<boolean>(false);
   isLoadingIncomplete = signal<boolean>(false);
 
+  // ===== PROPIEDADES PARA ATRIBUTOS =====
+  availableAttributes: Attibute[] = [];
+  variantAttributeValues: { id_variante: number; valores: { id_atributo: number; valor: string }[] }[] = [];
+  loadingAttributes: boolean = false;
+
   ngOnInit(): void {
     this.loadRecentProducts();
-    this.loadIncompleteProducts(); // Cargar también al inicio
+    this.loadIncompleteProducts();
     this.loadAttributes(); 
   }
 
@@ -115,17 +120,16 @@ export class NewProducts implements OnInit {
       error: (error) => {
         console.error('Error al cargar productos recientes:', error);
         this.isLoading.set(false);
+        this.toastr.error('Error al cargar productos recientes', 'Error');
       }
     });
   }
-  //funciones
 
   // Cargar productos incompletos (sin atributos)
   loadIncompleteProducts() {
     this.isLoadingIncomplete.set(true);
     this.productService.getProductsWithoutVariantsAttributes().subscribe({
       next: (data: any[]) => {
-        // Mapear a IncompleteProduct
         this.incompleteProducts = data.map(p => ({
           id_producto: p.id_producto,
           nombre: p.nombre,
@@ -136,7 +140,6 @@ export class NewProducts implements OnInit {
         }));
         console.log('Productos incompletos:', this.incompleteProducts);
         
-        // Si estamos en la pestaña de incompletos, actualizar la vista
         if (this.activeTab === 'incompletos') {
           this.applyFilters();
         }
@@ -146,6 +149,23 @@ export class NewProducts implements OnInit {
       error: (error) => {
         console.error('Error al cargar productos incompletos:', error);
         this.isLoadingIncomplete.set(false);
+        this.toastr.error('Error al cargar productos incompletos', 'Error');
+      }
+    });
+  }
+
+  // Cargar atributos
+  loadAttributes() {
+    this.loadingAttributes = true;
+    this.productService.getAttributes().subscribe({
+      next: (data) => {
+        this.availableAttributes = data;
+        this.loadingAttributes = false;
+      },
+      error: (err) => {
+        console.error('Error al cargar atributos:', err);
+        this.loadingAttributes = false;
+        this.toastr.error('Error al cargar atributos', 'Error');
       }
     });
   }
@@ -155,7 +175,7 @@ export class NewProducts implements OnInit {
     this.activeTab = tab;
     this.first = 0;
     this.searchValue = '';
-    this.applyFilters(); // Aplicar filtros al cambiar de pestaña
+    this.applyFilters();
   }
 
   // APLICAR FILTROS según pestaña activa
@@ -174,7 +194,6 @@ export class NewProducts implements OnInit {
       this.filteredProducts = filtered;
       this.totalRecords = filtered.length;
     } else {
-      // Asegurarse de que incompleteProducts tenga datos
       let filtered = this.incompleteProducts && this.incompleteProducts.length > 0 
         ? [...this.incompleteProducts] 
         : [];
@@ -308,19 +327,15 @@ export class NewProducts implements OnInit {
   // ===== FUNCIONES DEL MODAL DE COMPLETAR PRODUCTO =====
   completeProduct(product: RecientProduct | IncompleteProduct) {
     this.selectedProduct = product;
-    this.isIncompleteProduct = 'estado_completado' in product; // true si es incompleto
-    this.currentStep = this.isIncompleteProduct ? 2 : 1; // Si es incompleto, va directo al paso 2
-    this.step1Completed = this.isIncompleteProduct; // Si es incompleto, ya tiene paso 1 completado
-    this.successMessage = '';
-    this.errorMessage = '';
+    this.isIncompleteProduct = 'estado_completado' in product;
+    this.currentStep = this.isIncompleteProduct ? 2 : 1;
+    this.step1Completed = this.isIncompleteProduct;
     
-    // Inicializar paso 1 (solo si es necesario)
     if (!this.isIncompleteProduct) {
       this.variantes = [];
       this.agregarVariante();
     }
     
-    // Verificar variantes existentes
     this.checkExistingVariants(product.id_producto);
     
     this.showCompleteModal = true;
@@ -350,6 +365,7 @@ export class NewProducts implements OnInit {
         console.error('Error al verificar variantes:', err);
         this.loadingVariants = false;
         this.existingVariants = [];
+        this.toastr.error('Error al cargar variantes', 'Error');
       }
     });
   }
@@ -361,8 +377,7 @@ export class NewProducts implements OnInit {
     this.variantes = [];
     this.existingVariants = [];
     this.isIncompleteProduct = false;
-    
-    // Recargar datos al cerrar el modal
+    this.variantAttributeValues = [];
     this.refreshData();
   }
 
@@ -442,7 +457,6 @@ export class NewProducts implements OnInit {
     if (!this.validateAllVariants()) return;
 
     this.saving = true;
-    this.errorMessage = '';
     
     let completadas = 0;
     
@@ -461,21 +475,19 @@ export class NewProducts implements OnInit {
           if (completadas === this.variantes.length) {
             this.saving = false;
             this.step1Completed = true;
-            this.successMessage = 'Paso 1 completado exitosamente';
+            this.toastr.success('Paso 1 completado exitosamente', 'Éxito');
             
-            // Recargar variantes para el paso 2
             this.checkExistingVariants(this.selectedProduct!.id_producto);
             
             setTimeout(() => {
               this.currentStep = 2;
-              this.successMessage = '';
             }, 1500);
           }
         },
         error: (err) => {
           console.error('Error al crear variante:', err);
-          this.errorMessage = 'Error al guardar las variantes';
           this.saving = false;
+          this.toastr.error('Error al guardar las variantes', 'Error');
         }
       });
     });
@@ -506,160 +518,116 @@ export class NewProducts implements OnInit {
     return Number(precio).toFixed(2);
   }
 
-
-  // ===== FUNCIONES PASO 2 - ASIGNAR VALORES =====
-
-// Lista de atributos disponibles (los cargas desde el servicio)
-availableAttributes: Attibute[] = [];
-
-// Almacena los valores ingresados por el usuario para cada variante
-// Ejemplo: { id_variante: 3, valores: [{ id_atributo: 1, valor: 'M' }] }
-variantAttributeValues: { id_variante: number; valores: { id_atributo: number; valor: string }[] }[] = [];
-
-// Estado para controlar la carga de atributos
-loadingAttributes: boolean = false;
-
-// Cargar atributos disponibles al iniciar (si no lo hiciste ya)
-loadAttributes() {
-  this.loadingAttributes = true;
-  this.productService.getAttributes().subscribe({
-    next: (data) => {
-      this.availableAttributes = data;
-      this.loadingAttributes = false;
-    },
-    error: (err) => {
-      console.error('Error al cargar atributos:', err);
-      this.loadingAttributes = false;
+  continuarConAtributos() {
+    const seleccionadas = this.existingVariants.filter(v => v.selected);
+    
+    if (seleccionadas.length === 0) {
+      this.toastr.warning('Selecciona al menos una variante', 'Advertencia');
+      return;
     }
-  });
-}
 
-continuarConAtributos() {
-  const seleccionadas = this.existingVariants.filter(v => v.selected);
-  
-  if (seleccionadas.length === 0) {
-    this.errorMessage = 'Selecciona al menos una variante';
-    return;
+    this.variantAttributeValues = seleccionadas.map(v => ({
+      id_variante: v.id_variante,
+      valores: []
+    }));
+
+    console.log('Variantes seleccionadas para atributos:', seleccionadas.length);
+    
+    this.currentStep = 3;
   }
 
-  // Limpiar mensajes anteriores
-  this.errorMessage = '';
-  this.successMessage = '';
+  agregarCampoAtributo(varianteIndex: number) {
+    this.variantAttributeValues[varianteIndex].valores.push({
+      id_atributo: 0,
+      valor: ''
+    });
+  }
 
-  // Inicializar estructura para cada variante seleccionada
-  this.variantAttributeValues = seleccionadas.map(v => ({
-    id_variante: v.id_variante,
-    valores: []
-  }));
+  eliminarCampoAtributo(varianteIndex: number, attrIndex: number) {
+    this.variantAttributeValues[varianteIndex].valores.splice(attrIndex, 1);
+  }
 
-  console.log('Variantes seleccionadas para atributos:', seleccionadas.length);
-  
-  this.currentStep = 3;
-}
-
-// Agregar un nuevo campo de atributo a una variante específica
-agregarCampoAtributo(varianteIndex: number) {
-  this.variantAttributeValues[varianteIndex].valores.push({
-    id_atributo: 0, // valor por defecto, el usuario elegirá después
-    valor: ''
-  });
-}
-
-// Eliminar un campo de atributo
-eliminarCampoAtributo(varianteIndex: number, attrIndex: number) {
-  this.variantAttributeValues[varianteIndex].valores.splice(attrIndex, 1);
-}
-
-// Guardar todos los valores de atributos
-guardarValoresAtributos() {
-  // Contar cuántos atributos válidos hay realmente
-  let totalAtributosValidos = 0;
-  for (const item of this.variantAttributeValues) {
-    for (const attr of item.valores) {
-      if (attr.id_atributo && attr.id_atributo > 0 && attr.valor?.trim()) {
-        totalAtributosValidos++;
+  // ===== FUNCIÓN PARA GUARDAR ATRIBUTOS CON TOASTR =====
+  guardarValoresAtributos() {
+    // Filtrar solo atributos válidos
+    const atributosValidos: { id_variante: number; id_atributo: number; valor: string }[] = [];
+    
+    for (const item of this.variantAttributeValues) {
+      for (const attr of item.valores) {
+        if (attr.id_atributo && attr.id_atributo > 0 && attr.valor?.trim()) {
+          atributosValidos.push({
+            id_variante: item.id_variante,
+            id_atributo: attr.id_atributo,
+            valor: attr.valor.trim()
+          });
+        }
       }
     }
-  }
 
-  if (totalAtributosValidos === 0) {
-    this.errorMessage = 'No hay atributos válidos para guardar';
-    return;
-  }
+    const totalAtributosValidos = atributosValidos.length;
 
-  this.saving = true;
-  this.errorMessage = '';
-  this.successMessage = '';
-  
-  let completadas = 0;
-  let errores = false;
-  const resultados: any[] = [];
+    if (totalAtributosValidos === 0) {
+      this.toastr.warning('No hay atributos válidos para guardar', 'Advertencia');
+      return;
+    }
 
-  // Procesar cada variante y sus atributos
-  for (const item of this.variantAttributeValues) {
-    for (const attr of item.valores) {
-      // Validar que el atributo sea válido
-      if (!attr.id_atributo || attr.id_atributo === 0 || !attr.valor?.trim()) {
-        continue; // Saltar atributos inválidos
-      }
+    this.saving = true;
+    
+    let completadas = 0;
+    let exitosas = 0;
+    let errores: { id_atributo: number; error: string }[] = [];
 
-      const attributeData = {
-        id_variante: item.id_variante,
-        id_atributo: attr.id_atributo,
-        valor: attr.valor.trim()
-      };
-
-      console.log('Guardando atributo:', attributeData);
-
-      this.productService.createProductVariantValues(attributeData).subscribe({
-        next: (response) => {
+    // Procesar cada atributo válido
+    atributosValidos.forEach((attr) => {
+      this.productService.createProductVariantValues(attr).subscribe({
+        next: () => {
           completadas++;
-          resultados.push({ success: true, data: attributeData, response });
+          exitosas++;
+          console.log(`✅ Atributo ${attr.id_atributo} guardado (${completadas}/${totalAtributosValidos})`);
           
-          console.log(`Atributo guardado (${completadas}/${totalAtributosValidos})`);
-          
-          // Verificar si ya se completaron todos
-          if (completadas === totalAtributosValidos && !errores) {
-            this.finalizarGuardadoAtributos();
+          if (completadas === totalAtributosValidos) {
+            this.procesarResultadoAtributos(exitosas, totalAtributosValidos, errores);
           }
         },
         error: (err) => {
-          console.error('Error al guardar atributo:', err);
-          errores = true;
-          resultados.push({ success: false, data: attributeData, error: err });
+          console.error(`❌ Error en atributo ${attr.id_atributo}:`, err);
+          completadas++;
+          errores.push({ 
+            id_atributo: attr.id_atributo, 
+            error: err.error?.message || 'Error desconocido' 
+          });
           
-          this.errorMessage = `Error en atributo: ${err.error?.message || 'Error desconocido'}`;
-          this.saving = false;
+          if (completadas === totalAtributosValidos) {
+            this.procesarResultadoAtributos(exitosas, totalAtributosValidos, errores);
+          }
         }
       });
+    });
+  }
+
+  private procesarResultadoAtributos(
+    exitosas: number, 
+    total: number, 
+    errores: { id_atributo: number; error: string }[]
+  ) {
+    this.saving = false;
+    
+    if (errores.length > 0) {
+      const erroresMsg = errores.map(e => e.error).join('. ');
+      this.toastr.error(`Se guardaron ${exitosas} de ${total} atributos. Errores: ${erroresMsg}`, 'Error');
+    } else {
+      this.toastr.success('Atributos asignados correctamente', 'Éxito');
+      
+      // Cerrar modal y recargar datos después de 1 segundo
+      setTimeout(() => {
+        this.closeCompleteModal();
+      }, 1000);
     }
   }
 
-  // Si no hay atributos para procesar (caso borde)
-  if (totalAtributosValidos === 0) {
-    this.saving = false;
+  // ===== MÉTODO AUXILIAR =====
+  getVariantSku(id_variante: number): string {
+    const variant = this.existingVariants.find(v => v.id_variante === id_variante);
+    return variant ? variant.sku : 'Variante no encontrada';
   }
-}
-
-finalizarGuardadoAtributos() {
-  this.saving = false;
-  this.successMessage = 'Atributos asignados correctamente';
-  
-  // Recargar las variantes para actualizar la vista
-  if (this.selectedProduct) {
-    this.checkExistingVariants(this.selectedProduct.id_producto);
-  }
-  
-  setTimeout(() => {
-    this.successMessage = '';
-    this.currentStep = 2; // Volver al paso 2
-    this.variantAttributeValues = []; // Limpiar datos temporales
-  }, 2000);
-}
-// ===== MÉTODO AUXILIAR PARA PASO 3 =====
-getVariantSku(id_variante: number): string {
-  const variant = this.existingVariants.find(v => v.id_variante === id_variante);
-  return variant ? variant.sku : 'Variante no encontrada';
-}
-
 }

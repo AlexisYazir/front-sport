@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ToastrService } from 'ngx-toastr';
 import { Marca } from '../../../../../core/models/product.model';
 import { ProductService } from '../../../../../core/services/product.service';
 
@@ -13,6 +14,7 @@ import { ProductService } from '../../../../../core/services/product.service';
 })
 export class Marcas implements OnInit {
   private productService = inject(ProductService);
+  private toastr = inject(ToastrService);
   
   marcas: Marca[] = [];
   filteredMarcas: Marca[] = [];
@@ -30,22 +32,25 @@ export class Marcas implements OnInit {
   showCreateModal: boolean = false;
   nuevaMarca = {
     nombre: '',
-    sitio_web: ''
+    sitio_web: '' // Aquí se guardará la URL de la imagen
   };
   
   validationErrors = {
     nombre: '',
-    sitio_web: ''
+    sitio_web: '' // Para validar la URL de la imagen
   };
   
   creatingMarca: boolean = false;
-  createSuccess: boolean = false;
-  createError: string = '';
   
   // Modal edición
   showEditModal: boolean = false;
   marcaEditando: Marca | null = null;
-  marcaOriginal: Marca | null = null;
+  
+  // Guardar copia original para detectar cambios
+  marcaOriginalData = {
+    nombre: '',
+    sitio_web: ''
+  };
   
   editValidationErrors = {
     nombre: '',
@@ -53,9 +58,6 @@ export class Marcas implements OnInit {
   };
   
   editingMarca: boolean = false;
-  editSuccess: boolean = false;
-  editError: string = '';
-  noChangesMessage: string = '';
   
   isLoading = signal<boolean>(false);
 
@@ -72,7 +74,8 @@ export class Marcas implements OnInit {
         this.isLoading.set(false);
       },
       error: (error) => {
-        //console.error('Error loading marcas:', error);
+        console.error('Error loading marcas:', error);
+        this.toastr.error('Error al cargar marcas', 'Error');
         this.isLoading.set(false);
       }
     });
@@ -105,6 +108,7 @@ export class Marcas implements OnInit {
   clearSearch() {
     this.searchValue = '';
     this.applyFilters();
+    this.toastr.success('Filtros limpiados', 'Éxito');
   }
 
   // Paginación
@@ -165,8 +169,6 @@ export class Marcas implements OnInit {
       nombre: '',
       sitio_web: ''
     };
-    this.createSuccess = false;
-    this.createError = '';
     this.showCreateModal = true;
   }
 
@@ -187,7 +189,7 @@ export class Marcas implements OnInit {
     }
 
     if (this.nuevaMarca.sitio_web && !this.isValidUrl(this.nuevaMarca.sitio_web)) {
-      this.validationErrors.sitio_web = 'Ingresa una URL válida (ej: https://ejemplo.com)';
+      this.validationErrors.sitio_web = 'Ingresa una URL válida para la imagen';
       isValid = false;
     }
 
@@ -205,10 +207,12 @@ export class Marcas implements OnInit {
   }
 
   guardarMarca() {
-    if (!this.validateFields()) return;
+    if (!this.validateFields()) {
+      this.toastr.warning('Corrige los errores en el formulario', 'Validación');
+      return;
+    }
 
     this.creatingMarca = true;
-    this.createError = '';
 
     const marcaData = {
       nombre: this.nuevaMarca.nombre.trim(),
@@ -219,42 +223,42 @@ export class Marcas implements OnInit {
 
     this.productService.createMarca(marcaData).subscribe({
       next: () => {
-        this.createSuccess = true;
         this.creatingMarca = false;
+        this.toastr.success('Marca creada exitosamente', 'Éxito');
         setTimeout(() => {
           this.closeCreateModal();
           this.loadMarcas();
         }, 1500);
       },
       error: (err) => {
-        //console.error('Error al crear marca:', err);
-        this.createError = err.error.message || 'Error al crear la marca';
+        console.error('Error al crear marca:', err);
         this.creatingMarca = false;
+        this.toastr.error(err.error?.message || 'Error al crear la marca', 'Error');
       }
     });
   }
 
   // ===== FUNCIONES PARA EDITAR MARCA =====
   openEditModal(marca: Marca) {
-    // Clonar la marca para no modificar la original
     this.marcaEditando = JSON.parse(JSON.stringify(marca));
-    this.marcaOriginal = JSON.parse(JSON.stringify(marca));
+    
+    // Guardar datos originales para comparar cambios
+    this.marcaOriginalData = {
+      nombre: marca.nombre,
+      sitio_web: marca.sitio_web || ''
+    };
     
     this.editValidationErrors = {
       nombre: '',
       sitio_web: ''
     };
-    this.editSuccess = false;
-    this.editError = '';
-    this.noChangesMessage = '';
+    
     this.showEditModal = true;
   }
 
   closeEditModal() {
     this.showEditModal = false;
     this.marcaEditando = null;
-    this.marcaOriginal = null;
-    this.noChangesMessage = '';
   }
 
   validateEditFields(): boolean {
@@ -270,7 +274,7 @@ export class Marcas implements OnInit {
     }
 
     if (this.marcaEditando?.sitio_web && !this.isValidUrl(this.marcaEditando.sitio_web)) {
-      this.editValidationErrors.sitio_web = 'Ingresa una URL válida (ej: https://ejemplo.com)';
+      this.editValidationErrors.sitio_web = 'Ingresa una URL válida para la imagen';
       isValid = false;
     }
 
@@ -278,27 +282,26 @@ export class Marcas implements OnInit {
   }
 
   hasChanges(): boolean {
-    if (!this.marcaEditando || !this.marcaOriginal) return false;
+    if (!this.marcaEditando) return false;
     
-    return this.marcaEditando.nombre !== this.marcaOriginal.nombre ||
-           this.marcaEditando.sitio_web !== this.marcaOriginal.sitio_web;
+    return this.marcaEditando.nombre !== this.marcaOriginalData.nombre ||
+           (this.marcaEditando.sitio_web || '') !== this.marcaOriginalData.sitio_web;
   }
 
   actualizarMarca() {
-    // Limpiar mensaje anterior
-    this.noChangesMessage = '';
-    
     // Validar campos
-    if (!this.validateEditFields()) return;
+    if (!this.validateEditFields()) {
+      this.toastr.warning('Corrige los errores en el formulario', 'Validación');
+      return;
+    }
     
     // Verificar si hay cambios
     if (!this.hasChanges()) {
-      this.noChangesMessage = 'No se detectaron cambios en la marca';
+      this.toastr.info('No se detectaron cambios en la marca', 'Información');
       return;
     }
 
     this.editingMarca = true;
-    this.editError = '';
 
     const marcaData = {
       id_marca: this.marcaEditando!.id_marca,
@@ -310,8 +313,8 @@ export class Marcas implements OnInit {
 
     this.productService.updateMarca(marcaData).subscribe({
       next: () => {
-        this.editSuccess = true;
         this.editingMarca = false;
+        this.toastr.success('Marca actualizada exitosamente', 'Éxito');
         setTimeout(() => {
           this.closeEditModal();
           this.loadMarcas();
@@ -319,15 +322,21 @@ export class Marcas implements OnInit {
       },
       error: (err) => {
         console.error('Error al actualizar marca:', err);
-        this.editError = 'Error al actualizar la marca';
         this.editingMarca = false;
+        this.toastr.error(err.error?.message || 'Error al actualizar la marca', 'Error');
       }
     });
+  }
+
+  // ===== FUNCIÓN PARA OBTENER IMAGEN DE LA MARCA =====
+  getMarcaImageUrl(marca: Marca): string {
+    return marca.sitio_web || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(marca.nombre) + '&background=0367A6&color=fff&size=64';
   }
 
   // Acciones existentes
   refreshData() {
     this.loadMarcas();
+    this.toastr.success('Datos actualizados', 'Éxito');
   }
 
   viewDetails(marca: Marca) {
@@ -336,11 +345,5 @@ export class Marcas implements OnInit {
 
   editMarca(marca: Marca) {
     this.openEditModal(marca);
-  }
-
-  deleteMarca(marca: Marca) {
-    if (confirm(`¿Estás seguro de eliminar la marca "${marca.nombre}"?`)) {
-      console.log('Eliminar:', marca);
-    }
   }
 }

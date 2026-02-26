@@ -236,8 +236,7 @@
     </div>
   </ng-container>
 
-  <!-- MODAL DE EDICIÓN DE VARIANTES (SOLO PRECIO Y STOCK) -->
-<!-- MODAL DE EDICIÓN COMPLETA DE VARIANTE -->
+  <!-- MODAL DE EDICIÓN COMPLETA DE VARIANTE (SIN MENSAJES VISUALES) -->
 <div *ngIf="showEditModal && selectedProduct" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" (click)="closeEditModal()">
   
   <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto" (click)="$event.stopPropagation()">
@@ -389,15 +388,7 @@
         <p class="text-sm text-gray-400">Debes agregar variantes primero desde "Productos Nuevos"</p>
       </div>
 
-      <!-- Mensajes -->
-      <div *ngIf="editError" class="mt-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-        {{ editError }}
-      </div>
-      
-      <div *ngIf="editSuccess" class="mt-4 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg flex items-center gap-2">
-        <span class="material-symbols-outlined text-green-600">check_circle</span>
-        ¡Variante actualizada exitosamente!
-      </div>
+      <!-- ELIMINADOS: Mensajes de editError y editSuccess -->
     </div>
 
     <!-- Footer - Botón de guardar solo para la variante seleccionada -->
@@ -408,7 +399,7 @@
       </button>
       <button *ngIf="selectedVariant" 
               (click)="guardarCambios()" 
-              [disabled]="saving || editSuccess"
+              [disabled]="saving"
               class="px-6 py-2.5 bg-[#0367A6] text-white rounded-lg hover:bg-[#035A91] transition-all disabled:opacity-50 font-medium flex items-center gap-2">
         <i *ngIf="saving" class="pi pi-spin pi-spinner text-sm"></i>
         {{ saving ? 'Guardando...' : 'Guardar Esta Variante' }}

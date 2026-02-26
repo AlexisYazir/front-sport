@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ToastrService } from 'ngx-toastr';
 import { ProductService } from '../../../../../core/services/product.service';
 import { InventoryProduct } from '../../../../../core/models/product.model';
 
@@ -34,6 +35,7 @@ interface EditVariantFullData {
 })
 export class Inventario implements OnInit {
   private productService = inject(ProductService);
+  private toastr = inject(ToastrService);
   
   products: InventoryProduct[] = [];
   filteredProducts: InventoryProduct[] = [];
@@ -69,14 +71,15 @@ export class Inventario implements OnInit {
     imagenes: []
   };
   
+  // Guardar copia original para detectar cambios
+  originalVariantData: EditVariantFullData | null = null;
+  
   // Input para nueva imagen
   variantImageInput: string = '';
   
   // Estados del modal
   loadingVariants: boolean = false;
   saving: boolean = false;
-  editSuccess: boolean = false;
-  editError: string = '';
   
   validationErrors = {
     sku: '',
@@ -103,6 +106,7 @@ export class Inventario implements OnInit {
       },
       error: (error) => {
         console.error('Error loading inventory:', error);
+        this.toastr.error('Error al cargar el inventario', 'Error');
         this.isLoading.set(false);
       }
     });
@@ -261,7 +265,7 @@ export class Inventario implements OnInit {
     return activo ? 'Activo' : 'Inactivo';
   }
 
-  // ===== FUNCIÓN PARA TOGGLE DE ESTADO (CORREGIDA - SOLO ENVÍA ID Y ESTADO) =====
+  // ===== FUNCIÓN PARA TOGGLE DE ESTADO CON TOASTR =====
   toggleProductStatus(product: InventoryProduct) {
     const productId = product.id_producto;
     
@@ -271,26 +275,25 @@ export class Inventario implements OnInit {
     const previousState = product.activo;
     product.activo = !product.activo;
     
-    console.log('Cambiando estado a:', product.activo);
-    
-    // SOLO enviamos id_producto y estado (como espera el backend)
     const updateData = {
       id_producto: productId,
-      estado: product.activo // boolean
+      estado: product.activo
     };
     
-    console.log('Enviando datos al backend:', updateData);
-    
     this.productService.updateProductInv(updateData).subscribe({
-      next: (response) => {
-        console.log('Respuesta exitosa:', response);
+      next: () => {
         this.togglingActive[productId] = false;
-        this.loadInventory(); // Recargar para asegurar datos actualizados
+        this.loadInventory();
+        this.toastr.success(
+          `Producto ${product.activo ? 'activado' : 'desactivado'} correctamente`, 
+          'Éxito'
+        );
       },
       error: (err) => {
         console.error('Error al cambiar estado:', err);
         product.activo = previousState;
         this.togglingActive[productId] = false;
+        this.toastr.error('Error al cambiar el estado del producto', 'Error');
       }
     });
   }
@@ -299,8 +302,6 @@ export class Inventario implements OnInit {
   openEditModal(product: InventoryProduct) {
     this.selectedProduct = product;
     this.loadingVariants = true;
-    this.editSuccess = false;
-    this.editError = '';
     this.variantImageInput = '';
     
     this.productService.getProductVariants(product.id_producto).subscribe({
@@ -319,7 +320,7 @@ export class Inventario implements OnInit {
       error: (err) => {
         console.error('Error al cargar variantes:', err);
         this.loadingVariants = false;
-        this.editError = 'Error al cargar las variantes';
+        this.toastr.error('Error al cargar las variantes', 'Error');
       }
     });
   }
@@ -329,6 +330,7 @@ export class Inventario implements OnInit {
     this.selectedProduct = null;
     this.productVariants = [];
     this.selectedVariant = null;
+    this.originalVariantData = null;
     this.variantImageInput = '';
     this.validationErrors = { sku: '', precio: '', stock: '' };
   }
@@ -343,6 +345,10 @@ export class Inventario implements OnInit {
       stock: variant.stock,
       imagenes: [...variant.imagenes]
     };
+    
+    // Guardar copia original para comparar cambios
+    this.originalVariantData = { ...this.editVariantData, imagenes: [...this.editVariantData.imagenes] };
+    
     this.variantImageInput = '';
     this.validationErrors = { sku: '', precio: '', stock: '' };
   }
@@ -383,32 +389,34 @@ export class Inventario implements OnInit {
   }
 
   hasChanges(): boolean {
-    if (!this.selectedVariant) return false;
+    if (!this.selectedVariant || !this.originalVariantData) return false;
     
-    return this.editVariantData.sku !== this.selectedVariant.sku ||
-           this.editVariantData.precio !== this.selectedVariant.precio ||
-           this.editVariantData.stock !== this.selectedVariant.stock ||
-           JSON.stringify(this.editVariantData.imagenes) !== JSON.stringify(this.selectedVariant.imagenes);
+    return this.editVariantData.sku !== this.originalVariantData.sku ||
+           this.editVariantData.precio !== this.originalVariantData.precio ||
+           this.editVariantData.stock !== this.originalVariantData.stock ||
+           JSON.stringify(this.editVariantData.imagenes) !== JSON.stringify(this.originalVariantData.imagenes);
   }
 
   // Guardar cambios de la variante
   guardarCambios() {
     if (!this.selectedVariant || !this.selectedProduct) return;
     
-    if (!this.validateFields()) return;
+    if (!this.validateFields()) {
+      this.toastr.warning('Corrige los errores en el formulario', 'Validación');
+      return;
+    }
     
     if (!this.hasChanges()) {
-      this.editError = 'No se detectaron cambios';
+      this.toastr.info('No se detectaron cambios', 'Información');
       return;
     }
 
     this.saving = true;
-    this.editError = '';
 
     this.productService.updateProductVariantAttributes(this.editVariantData).subscribe({
       next: () => {
         this.saving = false;
-        this.editSuccess = true;
+        this.toastr.success('Variante actualizada correctamente', 'Éxito');
         
         // Actualizar datos locales
         if (this.selectedVariant) {
@@ -419,15 +427,14 @@ export class Inventario implements OnInit {
         }
         
         setTimeout(() => {
-          this.editSuccess = false;
           this.closeEditModal();
           this.loadInventory();
         }, 1500);
       },
       error: (err) => {
         console.error('Error al guardar cambios:', err);
-        this.editError = err.error?.message || 'Error al guardar los cambios';
         this.saving = false;
+        this.toastr.error(err.error?.message || 'Error al guardar los cambios', 'Error');
       }
     });
   }
@@ -464,6 +471,7 @@ export class Inventario implements OnInit {
   // Acciones
   refreshData() {
     this.loadInventory();
+    // this.toastr.success('Datos actualizados', 'Éxito');
   }
 
   viewDetails(product: InventoryProduct) {
@@ -474,9 +482,4 @@ export class Inventario implements OnInit {
     this.openEditModal(product);
   }
 
-  deleteProduct(product: InventoryProduct) {
-    if (confirm(`¿Estás seguro de eliminar el producto "${product.producto}"?`)) {
-      console.log('Eliminar:', product);
-    }
-  }
 }

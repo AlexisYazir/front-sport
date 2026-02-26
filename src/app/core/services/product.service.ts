@@ -312,7 +312,7 @@ createProductVariantValues(data: { id_variante: number, id_atributo: number, val
 
 createCatetorie(data: { nombre: string, id_padre: number | null }): Observable<any> {
   this.isLoading.set(true);
-  console.log(data);
+  //
   return this.http.post(`${this.API_URL}/products/create-categorie`, data).pipe(
     map(res => {
       this.isLoading.set(false);
@@ -321,10 +321,10 @@ createCatetorie(data: { nombre: string, id_padre: number | null }): Observable<a
   );
 }
 
-updateCatetorie(data: { id_categoria: number, nombre: string, id_padre: number }): Observable<any> {
+updateCatetorie(data: { id_categoria: number, nombre: string, id_padre: number | null }): Observable<any> {
   this.isLoading.set(true);
-  console.log(data);
-  return this.http.post(`${this.API_URL}/products/update-categorie`, data).pipe(
+  //
+  return this.http.put(`${this.API_URL}/products/update-categorie`, data).pipe(
     map(res => {
       this.isLoading.set(false);
       return res;
@@ -334,7 +334,7 @@ updateCatetorie(data: { id_categoria: number, nombre: string, id_padre: number }
 
 updateProductInv(data: { id_producto: number, estado: boolean }): Observable<any> {
   this.isLoading.set(true);
-  console.log(data);
+  //
   return this.http.put(`${this.API_URL}/products/update-product-inventory`, data).pipe(
     map(res => {
       this.isLoading.set(false);
@@ -364,7 +364,7 @@ updateProductInv(data: { id_producto: number, estado: boolean }): Observable<any
 */
 updateProductFull(data: { id_producto: number, id_marca: number, id_categoria: number, nombre: string, descripcion: string}): Observable<any> {
   this.isLoading.set(true);
-  console.log(data);
+  //
   return this.http.put(`${this.API_URL}/products/update-product-full`, data).pipe(
     map(res => {
       this.isLoading.set(false);
@@ -375,7 +375,7 @@ updateProductFull(data: { id_producto: number, id_marca: number, id_categoria: n
 
 updateProductVariantAttributes(data: { id_producto: number, id_variante: number, sku: string, imagenes: string[], stock: number, precio: number }): Observable<any> {
   this.isLoading.set(true);
-  console.log(data);
+  
   return this.http.put(`${this.API_URL}/products/update-product-variant-attributes`, data).pipe(
     map(res => {
       this.isLoading.set(false);
@@ -387,7 +387,7 @@ updateProductVariantAttributes(data: { id_producto: number, id_variante: number,
 
 createMarca(data: { nombre: string, sitio_web: string }): Observable<any> {
   this.isLoading.set(true);
-  console.log(data);
+  
   return this.http.post(`${this.API_URL}/products/create-marca`, data).pipe(
     map(res => {
       this.isLoading.set(false);
@@ -398,7 +398,7 @@ createMarca(data: { nombre: string, sitio_web: string }): Observable<any> {
 
 updateMarca(data: { id_marca: number, nombre: string, sitio_web: string }): Observable<any> {
   this.isLoading.set(true);
-  console.log(data);
+  
   return this.http.post(`${this.API_URL}/products/update-marca`, data).pipe(
     map(res => {
       this.isLoading.set(false);
