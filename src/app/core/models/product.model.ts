@@ -23,6 +23,7 @@ export interface Product {
   stock: number;
   disponible: boolean;
   marca?: string;
+  imagen_marca?: string;
   talla?: string[];
   color?: string[];
   descuento?: number;
@@ -70,7 +71,7 @@ export interface Categorie {
 export interface Marca {
   id_marca: number;
   nombre: string; 
-  sitio_web?: string;
+  imagen?: string;
 }
 
 export interface Attibute {
@@ -94,6 +95,7 @@ export interface InventoryProduct {
   precio: number | null;
   stock: number | null;
   marca?: string;
+  imagen: string;
   fecha_creacion: string;
 
 }

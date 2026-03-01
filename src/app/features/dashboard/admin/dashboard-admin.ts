@@ -1,4 +1,4 @@
-import { Component, signal, OnInit, inject } from '@angular/core';
+import { Component, signal, OnInit, inject, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -20,12 +20,19 @@ export class DashboardAdmin implements OnInit {
   // Estado del menú lateral (inicialmente abierto)
   sidebarOpen = signal<boolean>(true);
 
+  // Estado del navbar (oculto o visible)
+  navbarOculto = signal<boolean>(false);
+  
+  // Variables para el scroll
+  lastScrollTop = 0;
+  scrollThreshold = 50;
+
   // Datos del usuario actual
   currentUser = {
     nombre: 'Administrador'
   };
 
-  // Estadísticas del sistema (ahora con valores reales)
+  // Estadísticas del sistema
   stats = {
     totalUsuarios: 0,
     usuariosActivos: 0,
@@ -47,7 +54,7 @@ export class DashboardAdmin implements OnInit {
     { icon: 'category', label: 'Categorías', route: '/dashboard/admin/categories' },
     { icon: 'branding_watermark', label: 'Marcas', route: '/dashboard/admin/marcas' },
     { icon: 'people', label: 'Usuarios', route: '/dashboard/admin/users' },
-    { icon: 'people', label: 'Perfil', route: '/dashboard/admin/profile' },
+    { icon: 'person', label: 'Perfil', route: '/dashboard/admin/profile' },
     { icon: 'settings', label: 'Configuración', route: '/dashboard/admin/settings' }
   ];
 
@@ -55,6 +62,19 @@ export class DashboardAdmin implements OnInit {
   recentUsers: RecentUserCreated[] = [];
 
   constructor(public router: Router) {}
+
+ @HostListener('window:scroll', [])
+  onWindowScroll() {
+    const currentScroll = window.pageYOffset || document.documentElement.scrollTop;
+    
+    if (currentScroll > this.lastScrollTop && currentScroll > 50) {
+      this.navbarOculto.set(true);
+    } else {
+      this.navbarOculto.set(false);
+    }
+    
+    this.lastScrollTop = currentScroll;
+  }
 
   ngOnInit(): void {
     this.loadAllStats();
@@ -117,7 +137,6 @@ export class DashboardAdmin implements OnInit {
     // Productos incompletos (sin atributos)
     this.productService.getProductsWithoutVariantsAttributes().subscribe({
       next: (products: any[]) => {
-        
         console.log(products);
         this.stats.productosIncompletos = products.length;
       },
@@ -198,4 +217,11 @@ export class DashboardAdmin implements OnInit {
   getProductosCompletos(): number {
     return this.stats.totalProductos - this.stats.productosIncompletos;
   }
+
+  // Método para verificar si la ruta está activa
+  isActive(route: string): boolean {
+    return this.router.url === route;
+  }
+
+  
 }

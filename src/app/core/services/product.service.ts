@@ -44,6 +44,7 @@ export class ProductService {
       stock: firstVariant?.stock ?? 0,
       disponible: (firstVariant?.stock ?? 0) > 0,
       marca: p.marca,
+      imagen_marca: p.imagen_marca,
       descuento: 0,
       // Mantener datos originales por si se necesitan
       variantes: p.variantes,
@@ -59,7 +60,7 @@ export class ProductService {
     return {
       id_marca: m.id_marca,
       nombre: m.nombre,
-      sitio_web: m.sitio_web
+      imagen: m.imagen
     };
   }
 
@@ -79,6 +80,7 @@ export class ProductService {
       precio: p.precio,
       stock: p.stock,
       marca: p.marca,
+      imagen: p.imagen,
       fecha_creacion: p.fecha_creacion
     }
   }
@@ -385,7 +387,7 @@ updateProductVariantAttributes(data: { id_producto: number, id_variante: number,
 }
 
 
-createMarca(data: { nombre: string, sitio_web: string }): Observable<any> {
+createMarca(data: { nombre: string, imagen: string }): Observable<any> {
   this.isLoading.set(true);
   
   return this.http.post(`${this.API_URL}/products/create-marca`, data).pipe(
@@ -396,7 +398,7 @@ createMarca(data: { nombre: string, sitio_web: string }): Observable<any> {
   );
 }
 
-updateMarca(data: { id_marca: number, nombre: string, sitio_web: string }): Observable<any> {
+updateMarca(data: { id_marca: number, nombre: string, imagen: string }): Observable<any> {
   this.isLoading.set(true);
   
   return this.http.post(`${this.API_URL}/products/update-marca`, data).pipe(

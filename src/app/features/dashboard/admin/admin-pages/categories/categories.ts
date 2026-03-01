@@ -128,7 +128,7 @@ export class Categories implements OnInit {
     this.searchValue = '';
     this.filterTipo = 'todas';
     this.applyFilters();
-    this.toastr.success('Filtros limpiados', 'Éxito');
+    //this.toastr.success('Filtros limpiados', 'Éxito');
   }
 
   // Paginación
@@ -351,7 +351,7 @@ export class Categories implements OnInit {
   // Acciones existentes
   refreshData() {
     this.loadCategorias();
-    this.toastr.success('Datos actualizados', 'Éxito');
+    //this.toastr.success('Datos actualizados', 'Éxito');
   }
 
   viewDetails(categoria: Categorie) {

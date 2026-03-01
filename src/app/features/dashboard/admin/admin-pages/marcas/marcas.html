@@ -64,7 +64,7 @@
       </div>
     </div>
 
-    <!-- Tabla de marcas (SITIO_WEB AHORA ES LA IMAGEN) -->
+    <!-- Tabla de marcas (imagen AHORA ES LA IMAGEN) -->
     <div class="overflow-x-auto rounded-xl border border-gray-200">
       <table class="w-full text-sm">
         <thead class="bg-gray-50 border-b-2 border-gray-200">
@@ -82,6 +82,7 @@
               <div class="w-12 h-12 rounded-lg overflow-hidden border border-gray-200">
                 <img [src]="getMarcaImageUrl(marca)" 
                      [alt]="marca.nombre"
+                     [title]="marca.nombre"
                      class="w-full h-full object-cover"
                      onerror="this.src='https://ui-avatars.com/api/?name=' + encodeURIComponent(marca.nombre) + '&background=0367A6&color=fff&size=64'">
               </div>
@@ -162,7 +163,7 @@
     </div>
   </ng-container>
 
-  <!-- Modal de Creación de Marca (SITIO_WEB = IMAGEN) -->
+  <!-- Modal de Creación de Marca (imagen = IMAGEN) -->
   <div *ngIf="showCreateModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" (click)="closeCreateModal()">
     
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl" (click)="$event.stopPropagation()">
@@ -192,23 +193,23 @@
             <p *ngIf="validationErrors.nombre" class="text-red-500 text-xs mt-1">{{ validationErrors.nombre }}</p>
           </div>
 
-          <!-- URL de la imagen (se guarda en sitio_web) -->
+          <!-- URL de la imagen (se guarda en imagen) -->
           <div>
             <label class="block text-sm font-semibold text-gray-700 mb-1">
               URL del Logo <span class="text-red-500">*</span>
             </label>
-            <input type="url" [(ngModel)]="nuevaMarca.sitio_web"
-                   [ngClass]="{'border-red-500 ring-1 ring-red-500': validationErrors.sitio_web}"
+            <input type="url" [(ngModel)]="nuevaMarca.imagen"
+                   [ngClass]="{'border-red-500 ring-1 ring-red-500': validationErrors.imagen}"
                    class="w-full px-4 py-2.5 border placeholder-gray-400 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0367A6]/20 focus:border-[#0367A6] outline-none transition-all"
                    placeholder="https://ejemplo.com/logo.png">
-            <p *ngIf="validationErrors.sitio_web" class="text-red-500 text-xs mt-1">{{ validationErrors.sitio_web }}</p>
+            <p *ngIf="validationErrors.imagen" class="text-red-500 text-xs mt-1">{{ validationErrors.imagen }}</p>
             <p class="text-xs text-gray-400 mt-1">URL de la imagen del logo de la marca</p>
           </div>
 
           <!-- Vista previa de la imagen -->
-          <div *ngIf="nuevaMarca.sitio_web" class="mt-2 p-3 bg-gray-50 rounded-lg flex items-center gap-3">
+          <div *ngIf="nuevaMarca.imagen" class="mt-2 p-3 bg-gray-50 rounded-lg flex items-center gap-3">
             <span class="text-xs text-gray-500">Vista previa:</span>
-            <img [src]="nuevaMarca.sitio_web" class="w-10 h-10 object-cover rounded-lg border border-gray-200" 
+            <img [src]="nuevaMarca.imagen" class="w-10 h-10 object-cover rounded-lg border border-gray-200" 
                  onerror="this.src='https://ui-avatars.com/api/?name=' + encodeURIComponent(nuevaMarca.nombre || 'Marca') + '&background=0367A6&color=fff&size=40'">
           </div>
         </div>
@@ -229,7 +230,7 @@
     </div>
   </div>
 
-  <!-- Modal de Edición de Marca (SITIO_WEB = IMAGEN) -->
+  <!-- Modal de Edición de Marca (imagen = IMAGEN) -->
   <div *ngIf="showEditModal && marcaEditando" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" (click)="closeEditModal()">
     
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl" (click)="$event.stopPropagation()">
@@ -266,22 +267,22 @@
             <p *ngIf="editValidationErrors.nombre" class="text-red-500 text-xs mt-1">{{ editValidationErrors.nombre }}</p>
           </div>
 
-          <!-- URL de la imagen (se guarda en sitio_web) -->
+          <!-- URL de la imagen (se guarda en imagen) -->
           <div>
             <label class="block text-sm font-semibold text-gray-700 mb-1">
               URL del Logo <span class="text-red-500">*</span>
             </label>
-            <input type="url" [(ngModel)]="marcaEditando.sitio_web"
-                   [ngClass]="{'border-red-500 ring-1 ring-red-500': editValidationErrors.sitio_web}"
+            <input type="url" [(ngModel)]="marcaEditando.imagen"
+                   [ngClass]="{'border-red-500 ring-1 ring-red-500': editValidationErrors.imagen}"
                    class="w-full px-4 py-2.5 border placeholder-gray-400 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0367A6]/20 focus:border-[#0367A6] outline-none transition-all"
                    placeholder="https://ejemplo.com/logo.png">
-            <p *ngIf="editValidationErrors.sitio_web" class="text-red-500 text-xs mt-1">{{ editValidationErrors.sitio_web }}</p>
+            <p *ngIf="editValidationErrors.imagen" class="text-red-500 text-xs mt-1">{{ editValidationErrors.imagen }}</p>
           </div>
 
           <!-- Vista previa de la imagen -->
-          <div *ngIf="marcaEditando.sitio_web" class="mt-2 p-3 bg-gray-50 rounded-lg flex items-center gap-3">
+          <div *ngIf="marcaEditando.imagen" class="mt-2 p-3 bg-gray-50 rounded-lg flex items-center gap-3">
             <span class="text-xs text-gray-500">Vista previa:</span>
-            <img [src]="marcaEditando.sitio_web" class="w-10 h-10 object-cover rounded-lg border border-gray-200" 
+            <img [src]="marcaEditando.imagen" class="w-10 h-10 object-cover rounded-lg border border-gray-200" 
                  onerror="this.src='https://ui-avatars.com/api/?name=' + encodeURIComponent(marcaEditando.nombre || 'Marca') + '&background=0367A6&color=fff&size=40'">
           </div>
         </div>

@@ -1,0 +1,358 @@
+<div class="min-h-screen bg-white">
+  <!-- Header con información de la marca - Mismo estilo que products -->
+  <div class="bg-gradient-to-r from-[#0367A6] to-[#035A91] text-white">
+    <div class="container mx-auto px-4 sm:px-6 py-5 sm:py-6">
+      
+      <!-- Fila superior con navegación -->
+      <div class="flex items-center justify-between mb-2">
+        <button (click)="goBack()" 
+                class="flex items-center gap-2 text-white/80 hover:text-white transition-colors group">
+          <span class="material-symbols-outlined text-lg sm:text-xl group-hover:-translate-x-1 transition-transform">arrow_back</span>
+          <span class="text-sm sm:text-base hidden sm:inline">Volver</span>
+        </button>
+      </div>
+      
+      <!-- Fila principal: Título a la izquierda, resultados y filtros a la derecha -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <!-- Título de la marca -->
+        <div>
+          <h1 class="text-2xl sm:text-3xl lg:text-4xl font-light text-white">
+            Productos <span class="font-bold">{{ marcaNombre() }}</span>
+          </h1>
+          <p class="text-white/70 text-xs sm:text-sm mt-1">
+            Explora todos los productos de esta marca
+          </p>
+        </div>
+
+        <!-- Resultados y filtros - Alineados verticalmente con el título -->
+        <div class="flex items-center gap-2 sm:gap-3">
+          <!-- Contador de resultados -->
+          <div class="bg-white/10 backdrop-blur-sm text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl border border-white/20 shadow-sm flex items-center">
+            <span class="text-xs sm:text-sm font-medium flex items-center gap-1">
+              <span class="text-lg sm:text-xl font-bold text-white">{{ filteredBySelection().length }}</span>
+              <span class="text-white/80">{{ filteredBySelection().length === 1 ? 'producto' : 'productos' }}</span>
+            </span>
+          </div>
+
+          <!-- Botón de filtro para móvil -->
+          <button *ngIf="isMobile()" (click)="toggleMobileFilters()" 
+                  class="flex sm:hidden items-center gap-2 px-3 py-2 sm:px-4 sm:py-2.5 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl hover:bg-white/20 transition-all duration-200 text-white h-[42px] sm:h-[46px]">
+            <span class="material-symbols-outlined text-sm sm:text-base">filter_alt</span>
+            <span class="text-sm sm:text-base">Filtros</span>
+            <span *ngIf="hasActiveFilters()" class="w-2 h-2 bg-white rounded-full ml-1"></span>
+          </button>
+
+          <!-- Botón de filtro para desktop -->
+          <button *ngIf="!isMobile()" (click)="toggleFilters()" 
+                  class="hidden sm:flex items-center gap-2 px-4 py-2.5 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl hover:bg-white/20 transition-all duration-200 text-white h-[46px]">
+            <span class="material-symbols-outlined">filter_alt</span>
+            <span class="text-sm font-medium">{{ showFilters() ? 'Ocultar filtros' : 'Mostrar filtros' }}</span>
+            <span *ngIf="hasActiveFilters()" class="ml-1 px-1.5 py-0.5 text-xs bg-white text-[#0367A6] rounded-full">
+              {{ filteredBySelection().length }}
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contenido principal con layout de filtros -->
+  <div class="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
+    <div class="flex flex-col lg:flex-row gap-6 lg:gap-8">
+      
+      <!-- Sidebar Filters - Desktop -->
+      <div *ngIf="!isMobile() && showFilters()" 
+           class="w-full lg:w-64 xl:w-72 shrink-0 transition-all duration-300">
+        <div class="sticky top-4">
+          <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-5">
+            <!-- Header -->
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined ">tune</span>
+                <h2 class="text-base font-semibold text-gray-900">Filtros</h2>
+                <span *ngIf="hasActiveFilters()" class="ml-1 px-2 py-0.5 text-xs bg-blue-100 text-blue-700 rounded-full">
+                  Activos
+                </span>
+              </div>
+              <button *ngIf="hasActiveFilters()" (click)="clearFilters()" 
+                      class="text-xs text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded-lg transition-colors">
+                Limpiar
+              </button>
+            </div>
+            
+            <!-- FILTROS DESPLEGABLES -->
+            <div class="space-y-2">
+              
+              <!-- CATEGORÍA -->
+              <div class="border border-gray-200 rounded-lg overflow-hidden">
+                <button (click)="toggleCategory()" class="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 transition-colors">
+                  <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined  text-lg">category</span>
+                    <span class="text-sm font-medium text-gray-900">Categoría</span>
+                  </div>
+                  <span class="material-symbols-outlined  transition-transform duration-300" 
+                        [class.rotate-180]="categoryExpanded()">expand_more</span>
+                </button>
+                
+                <div *ngIf="categoryExpanded()" class="p-3 bg-white max-h-48 overflow-y-auto">
+                  <label class="flex items-center cursor-pointer p-2 hover:bg-gray-50 rounded-lg">
+                    <input type="radio" name="category" value="" [(ngModel)]="selectedCategory" 
+                           (change)="onCategoryChange()" class="h-4 w-4 text-blue-600">
+                    <span class="ml-3 text-sm text-gray-700">Todas</span>
+                  </label>
+                  <label *ngFor="let category of availableCategories()" 
+                         class="flex items-center cursor-pointer p-2 hover:bg-gray-50 rounded-lg">
+                    <input type="radio" name="category" [value]="category" [(ngModel)]="selectedCategory" 
+                           (change)="onCategoryChange()" class="h-4 w-4 text-blue-600">
+                    <span class="ml-3 text-sm text-gray-700 capitalize">{{ category }}</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- PRECIO -->
+              <div class="border border-gray-200 rounded-lg overflow-hidden">
+                <button (click)="togglePrice()" class="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 transition-colors">
+                  <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined  text-lg">attach_money</span>
+                    <span class="text-sm font-medium text-gray-900">Precio</span>
+                  </div>
+                  <span class="material-symbols-outlined  transition-transform duration-300" 
+                        [class.rotate-180]="priceExpanded()">expand_more</span>
+                </button>
+                
+                <div *ngIf="priceExpanded()" class="p-3 bg-white">
+                  <div class="flex items-center gap-2">
+                    <input type="number" [(ngModel)]="minPrice" (change)="onPriceChange()" 
+                           placeholder="Mín" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg">
+                    <span class="text-gray-500">-</span>
+                    <input type="number" [(ngModel)]="maxPrice" (change)="onPriceChange()" 
+                           placeholder="Máx" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg">
+                  </div>
+                  <p *ngIf="minPrice() !== null && maxPrice() !== null && minPrice()! > maxPrice()!" 
+                     class="text-xs text-red-500 mt-2">
+                    El mínimo no puede ser mayor
+                  </p>
+                </div>
+              </div>
+
+              <!-- ORDENAR -->
+              <div class="border border-gray-200 rounded-lg overflow-hidden">
+                <button (click)="toggleSort()" class="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 transition-colors">
+                  <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined  text-lg">sort</span>
+                    <span class="text-sm font-medium text-gray-900">Ordenar por</span>
+                  </div>
+                  <span class="material-symbols-outlined  transition-transform duration-300" 
+                        [class.rotate-180]="sortExpanded()">expand_more</span>
+                </button>
+                
+                <div *ngIf="sortExpanded()" class="p-3 bg-white">
+                  <select [(ngModel)]="sortBy" (change)="onSortChange()" 
+                          class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white">
+                    <option value="">Relevancia</option>
+                    <option value="precio-asc">Precio: Menor a Mayor</option>
+                    <option value="precio-desc">Precio: Mayor a Menor</option>
+                    <option value="nombre">Nombre A-Z</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Menú MÓVIL (overlay) -->
+      <div *ngIf="isMobile() && mobileFiltersOpen()" 
+           class="fixed inset-0 z-50 bg-black/30 transition-opacity"
+           (click)="mobileFiltersOpen.set(false)">
+        <div class="absolute left-0 top-0 h-full w-[85%] max-w-sm bg-white shadow-xl overflow-y-auto"
+             (click)="$event.stopPropagation()">
+          <div class="p-5">
+            <!-- Header móvil -->
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined ">tune</span>
+                <h2 class="text-base font-semibold text-gray-900">Filtros</h2>
+                <span *ngIf="hasActiveFilters()" class="px-2 py-0.5 text-xs bg-blue-100 text-blue-700 rounded-full">
+                  Activos
+                </span>
+              </div>
+              <button (click)="mobileFiltersOpen.set(false)" class="p-2 hover:bg-gray-100 rounded-lg">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            <!-- Filtros móvil -->
+            <div class="space-y-2">
+              
+              <!-- Categoría -->
+              <div class="border border-gray-200 rounded-lg overflow-hidden">
+                <button (click)="toggleCategory()" class="w-full flex items-center justify-between p-3 bg-gray-50">
+                  <span class="text-sm font-medium">Categoría</span>
+                  <span class="material-symbols-outlined  transition-transform" 
+                        [class.rotate-180]="categoryExpanded()">expand_more</span>
+                </button>
+                <div *ngIf="categoryExpanded()" class="p-3">
+                  <label class="flex items-center py-2">
+                    <input type="radio" name="category-mobile" value="" [(ngModel)]="selectedCategory" 
+                           (change)="onCategoryChange()" class="h-4 w-4 text-blue-600">
+                    <span class="ml-3 text-sm">Todas</span>
+                  </label>
+                  <label *ngFor="let category of availableCategories()" class="flex items-center py-2">
+                    <input type="radio" name="category-mobile" [value]="category" [(ngModel)]="selectedCategory" 
+                           (change)="onCategoryChange()" class="h-4 w-4 text-blue-600">
+                    <span class="ml-3 text-sm capitalize">{{ category }}</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Precio -->
+              <div class="border border-gray-200 rounded-lg overflow-hidden">
+                <button (click)="togglePrice()" class="w-full flex items-center justify-between p-3 bg-gray-50">
+                  <span class="text-sm font-medium">Precio</span>
+                  <span class="material-symbols-outlined  transition-transform" 
+                        [class.rotate-180]="priceExpanded()">expand_more</span>
+                </button>
+                <div *ngIf="priceExpanded()" class="p-3">
+                  <div class="flex gap-2">
+                    <input type="number" [(ngModel)]="minPrice" (change)="onPriceChange()" 
+                           placeholder="Mín" class="w-1/2 px-3 py-2 text-sm border rounded-lg">
+                    <input type="number" [(ngModel)]="maxPrice" (change)="onPriceChange()" 
+                           placeholder="Máx" class="w-1/2 px-3 py-2 text-sm border rounded-lg">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Ordenar -->
+              <div class="border border-gray-200 rounded-lg overflow-hidden">
+                <button (click)="toggleSort()" class="w-full flex items-center justify-between p-3 bg-gray-50">
+                  <span class="text-sm font-medium">Ordenar</span>
+                  <span class="material-symbols-outlined  transition-transform" 
+                        [class.rotate-180]="sortExpanded()">expand_more</span>
+                </button>
+                <div *ngIf="sortExpanded()" class="p-3">
+                  <select [(ngModel)]="sortBy" (change)="onSortChange()" class="w-full px-3 py-2 text-sm border rounded-lg">
+                    <option value="">Relevancia</option>
+                    <option value="precio-asc">Precio: Menor a Mayor</option>
+                    <option value="precio-desc">Precio: Mayor a Menor</option>
+                    <option value="nombre">Nombre A-Z</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Botón limpiar móvil -->
+            <button *ngIf="hasActiveFilters()" (click)="clearFilters()" 
+                    class="w-full mt-4 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+              Limpiar filtros
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contenido principal -->
+      <div class="flex-1">
+        
+        <!-- Loading State -->
+        <div *ngIf="loading()" class="flex justify-center items-center py-12 sm:py-20">
+          <div class="animate-spin rounded-full h-12 w-12 sm:h-16 sm:w-16 border-b-2 border-[#0367A6]"></div>
+        </div>
+
+        <!-- Error State -->
+        <div *ngIf="error() && !loading()" class="text-center py-12 sm:py-16 bg-red-50 rounded-xl border border-red-100">
+          <span class="material-symbols-outlined text-4xl sm:text-5xl text-red-300 mb-4">error</span>
+          <h3 class="text-lg sm:text-xl font-semibold text-red-800 mb-2">Error</h3>
+          <p class="text-sm sm:text-base text-red-600 mb-6">{{ error() }}</p>
+          <button (click)="goBack()" class="px-5 py-2 sm:px-6 sm:py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+            Volver
+          </button>
+        </div>
+
+        <!-- Productos Grid -->
+        <div *ngIf="!loading() && !error()">
+          <!-- Si hay productos -->
+          <div *ngIf="filteredBySelection().length > 0" 
+               class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
+            
+            <!-- Productos paginados -->
+            <div *ngFor="let product of filteredBySelection() | paginate: { itemsPerPage: itemsPerPage(), currentPage: currentPage() }" 
+                 class="group bg-white rounded-lg sm:rounded-xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border border-gray-100 overflow-hidden"
+                 (click)="viewProduct(product.id_producto || product.id)">
+              
+              <!-- Imagen -->
+              <div class="w-full pt-[75%] relative overflow-hidden bg-white">
+                <img [src]="getProductImage(product)" [alt]="product.nombre" 
+                     class="absolute top-0 left-0 w-full h-full object-contain p-2 sm:p-3 group-hover:scale-110 transition-transform duration-500"
+                     loading="lazy">
+              </div>
+
+              <div class="p-2 sm:p-3">
+                <!-- Categoría -->
+                <div class="flex items-center gap-1 mb-1">
+                  <span class="text-[10px] sm:text-xs font-medium text-gray-700 bg-gray-100 px-1.5 sm:px-2 py-0.5 rounded-full truncate max-w-[70px] sm:max-w-full">
+                    {{ product.categoria || 'General' }}
+                  </span>
+                </div>
+
+                <!-- Nombre -->
+                <h3 class="text-xs sm:text-sm font-semibold text-gray-900 mb-1 line-clamp-2 h-8 sm:h-10">
+                  {{ product.nombre }}
+                </h3>
+
+                <!-- Precio -->
+                <div class="flex items-center justify-between mt-1 sm:mt-2">
+                  <span class="text-sm sm:text-base lg:text-lg font-bold">
+                    {{ getPriceDisplay(product) }}
+                  </span>
+                  <div class="flex items-center">
+                    <span class="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full mr-1" 
+                          [ngClass]="isProductAvailable(product) ? 'bg-green-500' : 'bg-red-500'"></span>
+                    <span class="text-[8px] sm:text-[10px] font-medium" 
+                          [ngClass]="isProductAvailable(product) ? 'text-green-600' : 'text-red-600'">
+                      {{ isProductAvailable(product) ? 'Disp' : 'Agot' }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Paginación -->
+          <div *ngIf="filteredBySelection().length > 0" 
+               class="mt-6 sm:mt-8 flex justify-center">
+            <pagination-controls
+              (pageChange)="onPageChange($event)"
+              previousLabel="‹"
+              nextLabel="›"
+              [maxSize]="3"
+              [directionLinks]="true"
+              [autoHide]="true"
+              [responsive]="true"
+              class="custom-pagination text-xs sm:text-sm">
+            </pagination-controls>
+          </div>
+
+          <!-- Empty State -->
+          <div *ngIf="filteredBySelection().length === 0" 
+               class="text-center py-12 sm:py-20 bg-white rounded-xl border border-gray-100">
+            <span class="material-symbols-outlined text-5xl sm:text-6xl text-gray-300 mb-4">brand_family</span>
+            <h3 class="text-xl sm:text-2xl font-semibold text-gray-900 mb-2">No hay productos</h3>
+            <p class="text-sm sm:text-base  mb-6 sm:mb-8">
+              No encontramos productos con los filtros seleccionados
+            </p>
+            <div class="flex flex-col sm:flex-row gap-3 justify-center px-4">
+              <button (click)="clearFilters()" 
+                      class="px-5 py-2 sm:px-6 sm:py-3 bg-[#0367A6] text-white rounded-lg hover:bg-[#035A91] transition-colors text-sm sm:text-base">
+                Limpiar filtros
+              </button>
+              <a routerLink="/products" 
+                 class="px-5 py-2 sm:px-6 sm:py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm sm:text-base">
+                Ver todos los productos
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

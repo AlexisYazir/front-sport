@@ -32,12 +32,12 @@ export class Marcas implements OnInit {
   showCreateModal: boolean = false;
   nuevaMarca = {
     nombre: '',
-    sitio_web: '' // Aquí se guardará la URL de la imagen
+    imagen: '' // Aquí se guardará la URL de la imagen
   };
   
   validationErrors = {
     nombre: '',
-    sitio_web: '' // Para validar la URL de la imagen
+    imagen: '' // Para validar la URL de la imagen
   };
   
   creatingMarca: boolean = false;
@@ -49,12 +49,12 @@ export class Marcas implements OnInit {
   // Guardar copia original para detectar cambios
   marcaOriginalData = {
     nombre: '',
-    sitio_web: ''
+    imagen: ''
   };
   
   editValidationErrors = {
     nombre: '',
-    sitio_web: ''
+    imagen: ''
   };
   
   editingMarca: boolean = false;
@@ -90,7 +90,7 @@ export class Marcas implements OnInit {
       filtered = filtered.filter(marca => 
         marca.nombre.toLowerCase().includes(term) ||
         marca.id_marca?.toString().includes(term) ||
-        (marca.sitio_web && marca.sitio_web.toLowerCase().includes(term))
+        (marca.imagen && marca.imagen.toLowerCase().includes(term))
       );
     }
 
@@ -163,11 +163,11 @@ export class Marcas implements OnInit {
   openCreateModal() {
     this.nuevaMarca = {
       nombre: '',
-      sitio_web: ''
+      imagen: ''
     };
     this.validationErrors = {
       nombre: '',
-      sitio_web: ''
+      imagen: ''
     };
     this.showCreateModal = true;
   }
@@ -180,7 +180,7 @@ export class Marcas implements OnInit {
     let isValid = true;
     this.validationErrors = {
       nombre: '',
-      sitio_web: ''
+      imagen: ''
     };
 
     if (!this.nuevaMarca.nombre?.trim()) {
@@ -188,8 +188,8 @@ export class Marcas implements OnInit {
       isValid = false;
     }
 
-    if (this.nuevaMarca.sitio_web && !this.isValidUrl(this.nuevaMarca.sitio_web)) {
-      this.validationErrors.sitio_web = 'Ingresa una URL válida para la imagen';
+    if (this.nuevaMarca.imagen && !this.isValidUrl(this.nuevaMarca.imagen)) {
+      this.validationErrors.imagen = 'Ingresa una URL válida para la imagen';
       isValid = false;
     }
 
@@ -216,7 +216,7 @@ export class Marcas implements OnInit {
 
     const marcaData = {
       nombre: this.nuevaMarca.nombre.trim(),
-      sitio_web: this.nuevaMarca.sitio_web?.trim() || ''
+      imagen: this.nuevaMarca.imagen?.trim() || ''
     };
 
     console.log('Enviando marca:', marcaData);
@@ -245,12 +245,12 @@ export class Marcas implements OnInit {
     // Guardar datos originales para comparar cambios
     this.marcaOriginalData = {
       nombre: marca.nombre,
-      sitio_web: marca.sitio_web || ''
+      imagen: marca.imagen || ''
     };
     
     this.editValidationErrors = {
       nombre: '',
-      sitio_web: ''
+      imagen: ''
     };
     
     this.showEditModal = true;
@@ -265,7 +265,7 @@ export class Marcas implements OnInit {
     let isValid = true;
     this.editValidationErrors = {
       nombre: '',
-      sitio_web: ''
+      imagen: ''
     };
 
     if (!this.marcaEditando?.nombre?.trim()) {
@@ -273,8 +273,8 @@ export class Marcas implements OnInit {
       isValid = false;
     }
 
-    if (this.marcaEditando?.sitio_web && !this.isValidUrl(this.marcaEditando.sitio_web)) {
-      this.editValidationErrors.sitio_web = 'Ingresa una URL válida para la imagen';
+    if (this.marcaEditando?.imagen && !this.isValidUrl(this.marcaEditando.imagen)) {
+      this.editValidationErrors.imagen = 'Ingresa una URL válida para la imagen';
       isValid = false;
     }
 
@@ -285,7 +285,7 @@ export class Marcas implements OnInit {
     if (!this.marcaEditando) return false;
     
     return this.marcaEditando.nombre !== this.marcaOriginalData.nombre ||
-           (this.marcaEditando.sitio_web || '') !== this.marcaOriginalData.sitio_web;
+           (this.marcaEditando.imagen || '') !== this.marcaOriginalData.imagen;
   }
 
   actualizarMarca() {
@@ -306,7 +306,7 @@ export class Marcas implements OnInit {
     const marcaData = {
       id_marca: this.marcaEditando!.id_marca,
       nombre: this.marcaEditando!.nombre.trim(),
-      sitio_web: this.marcaEditando!.sitio_web?.trim() || ''
+      imagen: this.marcaEditando!.imagen?.trim() || ''
     };
 
     console.log('Actualizando marca:', marcaData);
@@ -330,13 +330,13 @@ export class Marcas implements OnInit {
 
   // ===== FUNCIÓN PARA OBTENER IMAGEN DE LA MARCA =====
   getMarcaImageUrl(marca: Marca): string {
-    return marca.sitio_web || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(marca.nombre) + '&background=0367A6&color=fff&size=64';
+    return marca.imagen || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(marca.nombre) + '&background=0367A6&color=fff&size=64';
   }
 
   // Acciones existentes
   refreshData() {
     this.loadMarcas();
-    this.toastr.success('Datos actualizados', 'Éxito');
+    //this.toastr.success('Datos actualizados', 'Éxito');
   }
 
   viewDetails(marca: Marca) {

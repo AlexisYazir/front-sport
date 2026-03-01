@@ -106,7 +106,15 @@
               <div class="font-semibold text-[#202020]">{{ product.nombre }}</div>
               <div class="text-xs text-[#666666] mt-0.5 truncate max-w-[200px]">{{ product.descripcion | slice:0:50 }}...</div>
             </td>
-            <td class="px-4 py-4 font-medium text-[#202020]">{{ product.marca || 'N/A' }}</td>
+            <td class="px-4 py-4">
+              <div class="w-12 h-12 rounded-lg overflow-hidden border border-gray-200">
+                <img [src]="getMarcaImageUrl(product)" 
+                     [alt]="product.marca"
+                     [title]="product.marca"
+                     class="w-full h-full object-cover"
+                     onerror="this.src='https://ui-avatars.com/api/?name=' + encodeURIComponent(product.marca) + '&background=0367A6&color=fff&size=64'">
+              </div>
+            </td>
             <td class="px-4 py-4">
               <span class="bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700 px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm border border-blue-200">
                 {{ product.categoria }}
@@ -461,7 +469,11 @@
               </div>
               <div>
                 <p class="text-xs text-gray-500">Marca</p>
-                <p class="font-medium text-[#202020]">{{ viewProductData.marca || 'N/A' }}</p>
+                <div class="w-17 h-17 rounded-lg overflow-hidden border border-gray-200">
+                  <img src="{{viewProductData.imagen_marca}}" 
+                  title="{{viewProductData.marca}}"
+                  >
+                </div>
               </div>
               <div>
                 <p class="text-xs text-gray-500">Categoría</p>

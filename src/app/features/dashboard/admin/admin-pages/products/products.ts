@@ -270,6 +270,10 @@ export class Products implements OnInit {
     return 'pi pi-check-circle';
   }
 
+   getMarcaImageUrl(product: Product): string {
+    return product.imagen_marca || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(product.nombre) + '&background=0367A6&color=fff&size=64';
+  }
+
   refreshData() {
     this.loadProducts();
     this.loadNewProductsCount();

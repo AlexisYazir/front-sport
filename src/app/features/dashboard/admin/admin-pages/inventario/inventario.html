@@ -122,7 +122,15 @@
             <td class="px-4 py-4">
               <div class="font-semibold text-[#202020]">{{ product.producto }}</div>
             </td>
-            <td class="px-4 py-4 font-medium text-[#202020]">{{ product.marca || 'N/A' }}</td>
+            <!-- <td class="px-4 py-4 font-medium text-[#202020]">{{ product.marca || 'N/A' }}</td> -->
+             <td class="px-4 py-4">
+              <div class="w-12 h-12 rounded-lg overflow-hidden border border-gray-200">
+                <img [src]="getMarcaImageUrl(product)" 
+                     [alt]="product.marca"
+                     class="w-full h-full object-cover"
+                     onerror="this.src='https://ui-avatars.com/api/?name=' + encodeURIComponent(product.marca) + '&background=0367A6&color=fff&size=64'">
+              </div>
+            </td>
             <td class="px-4 py-4">
               <span class="font-semibold text-[#202020]">
                 ${{ getPrecioValue(product) }}

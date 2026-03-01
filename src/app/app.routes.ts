@@ -23,6 +23,10 @@ export const routes: Routes = [
       import('./features/products/product-detail/product-detail').then((m) => m.ProductDetail),
   },
   {
+    path: 'marca/:nombre',
+      loadComponent: () => import('./features/products/product-marca/product-marca').then((m) => m.ProductMarca),
+    },
+  {
     path: 'cart',
     loadComponent: () => import('./features/cart/cart').then((m) => m.Cart),
   },

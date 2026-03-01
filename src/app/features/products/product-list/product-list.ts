@@ -1,7 +1,8 @@
-import { Component, inject, OnInit, signal, computed } from '@angular/core';
+import { Component, inject, OnInit, signal, computed, HostListener, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
+import { NgxPaginationModule } from 'ngx-pagination';
 import { ProductService } from '../../../core/services/product.service';
 import { Product, Category, ProductFilters } from '../../../core/models/product.model';
 import { Breadcrumbs, BreadcrumbItem } from '../../../shared/components/breadcrumbs/breadcrumbs';
@@ -10,7 +11,7 @@ import { ToastrService } from 'ngx-toastr';
 @Component({
   selector: 'app-product-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, Breadcrumbs],
+  imports: [CommonModule, FormsModule, RouterModule, Breadcrumbs, NgxPaginationModule],
   templateUrl: './product-list.html',
   styleUrl: './product-list.css',
 })
@@ -29,6 +30,22 @@ export class ProductList implements OnInit {
   sortBy = signal<string>('');
   showOnlyAvailable = signal<boolean>(false);
 
+  // Estado de UI
+  showFilters = signal<boolean>(true);
+  mobileFiltersOpen = signal<boolean>(false);
+  isMobile = signal<boolean>(window.innerWidth < 768);
+  
+  // Estado de filtros desplegables
+  categoryExpanded = signal<boolean>(true);
+  brandExpanded = signal<boolean>(false);
+  priceExpanded = signal<boolean>(false);
+  availabilityExpanded = signal<boolean>(false);
+  sortExpanded = signal<boolean>(false);
+  
+  // Paginación
+  currentPage = signal<number>(1);
+  itemsPerPage = signal<number>(window.innerWidth < 640 ? 6 : 12); // 6 en móvil, 12 en desktop
+  
   // Datos reactivos
   searchResults = signal<{products: Product[], total: number, hasResults: boolean}>({
     products: [], 
@@ -37,9 +54,9 @@ export class ProductList implements OnInit {
   });
   categories = signal<Category[]>([]);
   brands = signal<string[]>([]);
-  isLoading = computed(() => this.productService.isLoading());
+  isLoading = signal<boolean>(false);
   
-  // NUEVA: Categorías filtradas (sin "todos" o "todas")
+  // Categorías filtradas
   filteredCategories = computed(() => {
     return this.categories().filter(c => 
       c.nombre.toLowerCase() !== 'todos' && 
@@ -47,11 +64,20 @@ export class ProductList implements OnInit {
     );
   });
   
+  // Verificar si hay filtros activos
+  hasActiveFilters = computed(() => {
+    return this.selectedCategory() !== '' ||
+           this.selectedBrand() !== '' ||
+           this.minPrice() !== null ||
+           this.maxPrice() !== null ||
+           this.showOnlyAvailable() ||
+           this.sortBy() !== '';
+  });
+  
   // Estado de la UI
-  showFilters = signal<boolean>(false);
   noResults = computed(() => !this.searchResults().hasResults && !this.isLoading());
 
-  // Breadcrumbs para el catálogo
+  // Breadcrumbs
   breadcrumbs = computed((): BreadcrumbItem[] => {
     const items: BreadcrumbItem[] = [
       { label: 'Productos', url: '/products', icon: 'storefront' }
@@ -74,6 +100,29 @@ export class ProductList implements OnInit {
     return items;
   });
 
+  constructor() {
+    // Efecto para cargar productos cuando cambian los filtros
+    effect(() => {
+      // Solo ejecutar si no estamos en la carga inicial
+      if (this.categories().length > 0) {
+        this.onSearch();
+      }
+    });
+  }
+
+  @HostListener('window:resize', ['$event'])
+  onResize(event: any) {
+    const mobile = event.target.innerWidth < 768;
+    this.isMobile.set(mobile);
+    
+    // Ajustar items por página según tamaño de pantalla
+    this.itemsPerPage.set(event.target.innerWidth < 640 ? 6 : 12);
+    
+    if (mobile && this.showFilters()) {
+      this.showFilters.set(false);
+    }
+  }
+
   ngOnInit() {
     this.route.queryParams.subscribe(params => {
       if (!this.parseQueryParams(params)) {
@@ -85,17 +134,10 @@ export class ProductList implements OnInit {
   }
 
   private parseQueryParams(params: Record<string, any>): boolean {
-    if (params['search']) {
-      this.searchTerm.set(String(params['search']));
-    }
-
-    if (params['category']) {
-      this.selectedCategory.set(String(params['category']));
-    }
-
-    if (params['brand']) {
-      this.selectedBrand.set(String(params['brand']));
-    }
+    if (params['search']) this.searchTerm.set(String(params['search']));
+    if (params['category']) this.selectedCategory.set(String(params['category']));
+    if (params['brand']) this.selectedBrand.set(String(params['brand']));
+    if (params['page']) this.currentPage.set(Number(params['page']) || 1);
 
     const min = params['minPrice'];
     const max = params['maxPrice'];
@@ -118,13 +160,16 @@ export class ProductList implements OnInit {
       return false;
     }
 
+    // Validar que minPrice no sea mayor que maxPrice
     if (minParsed !== null && maxParsed !== null && minParsed > maxParsed) {
-      this.toastr.error('minPrice no puede ser mayor que maxPrice', 'Parámetro inválido');
-      return false;
+      this.toastr.error('El precio mínimo no puede ser mayor que el máximo', 'Filtro inválido');
+      // Intercambiar valores automáticamente
+      this.minPrice.set(maxParsed);
+      this.maxPrice.set(minParsed);
+    } else {
+      if (minParsed !== null) this.minPrice.set(minParsed);
+      if (maxParsed !== null) this.maxPrice.set(maxParsed);
     }
-
-    if (minParsed !== null) this.minPrice.set(minParsed);
-    if (maxParsed !== null) this.maxPrice.set(maxParsed);
 
     if (params['available'] !== undefined) {
       const available = params['available'];
@@ -139,7 +184,7 @@ export class ProductList implements OnInit {
     }
 
     if (params['sort']) {
-      const allowed = ['precio-asc', 'precio-desc', 'nombre'];
+      const allowed = ['precio-asc', 'precio-desc', 'nombre', 'fecha'];
       if (!allowed.includes(params['sort'])) {
         this.toastr.error('sort no es válido', 'Parámetro inválido');
         return false;
@@ -151,18 +196,46 @@ export class ProductList implements OnInit {
   }
 
   private loadInitialData() {
-    this.productService.getCategories().subscribe(categories => {
-      this.categories.set(categories);
+    this.isLoading.set(true);
+    
+    // Cargar categorías
+    this.productService.getCategories().subscribe({
+      next: (categories) => {
+        this.categories.set(categories);
+      },
+      error: (error) => {
+        console.error('Error cargando categorías:', error);
+        this.toastr.error('Error al cargar categorías', 'Error');
+      }
     });
 
-    this.productService.getBrands().subscribe(brands => {
-      this.brands.set(brands);
+    // Cargar marcas
+    this.productService.getBrands().subscribe({
+      next: (brands) => {
+        this.brands.set(brands);
+      },
+      error: (error) => {
+        console.error('Error cargando marcas:', error);
+        this.toastr.error('Error al cargar marcas', 'Error');
+      }
     });
 
+    // Carga inicial de productos
     this.onSearch();
   }
 
   onSearch() {
+    // Validar precios antes de buscar
+    if (this.minPrice() !== null && this.maxPrice() !== null) {
+      if (this.minPrice()! > this.maxPrice()!) {
+        this.toastr.warning('El precio mínimo no puede ser mayor que el máximo', 'Ajustando filtros');
+        // Intercambiar valores
+        const temp = this.minPrice();
+        this.minPrice.set(this.maxPrice());
+        this.maxPrice.set(temp);
+      }
+    }
+
     const filters: ProductFilters = {
       categoria: this.selectedCategory() || undefined,
       marca: this.selectedBrand() || undefined,
@@ -172,20 +245,41 @@ export class ProductList implements OnInit {
       ordenarPor: this.sortBy() as any
     };
 
-    this.productService.searchProducts(this.searchTerm(), filters).subscribe(result => {
-      this.searchResults.set(result);
+    this.isLoading.set(true);
+    
+    this.productService.searchProducts(this.searchTerm(), filters).subscribe({
+      next: (result) => {
+        this.searchResults.set(result);
+        this.isLoading.set(false);
+        // Resetear a primera página
+        this.currentPage.set(1);
+      },
+      error: (error) => {
+        console.error('Error en búsqueda:', error);
+        this.toastr.error('Error al buscar productos', 'Error');
+        this.isLoading.set(false);
+      }
     });
   }
 
-  onCategoryChange() {
+  onCategoryChange() { 
     this.onSearch();
+    if (this.isMobile()) this.mobileFiltersOpen.set(false);
   }
-
-  onBrandChange() {
+  
+  onBrandChange() { 
     this.onSearch();
+    if (this.isMobile()) this.mobileFiltersOpen.set(false);
   }
-
+  
   onPriceChange() {
+    // Validar en tiempo real
+    if (this.minPrice() !== null && this.maxPrice() !== null) {
+      if (this.minPrice()! > this.maxPrice()!) {
+        this.toastr.warning('El precio mínimo no puede ser mayor que el máximo');
+        return;
+      }
+    }
     this.onSearch();
   }
 
@@ -197,35 +291,51 @@ export class ProductList implements OnInit {
     this.maxPrice.set(null);
     this.sortBy.set('');
     this.showOnlyAvailable.set(false);
+    this.currentPage.set(1);
+    
+    // Si no hay filtros activos, igual cargamos productos
     this.onSearch();
+    
+    if (this.isMobile()) {
+      this.mobileFiltersOpen.set(false);
+    }
   }
 
+  // Toggles
   toggleFilters() {
     this.showFilters.set(!this.showFilters());
   }
 
-  // Métodos originales
-  getPriceWithDiscount(product: Product): number {
-    return this.productService.getPriceWithDiscount(product);
+  toggleMobileFilters() {
+    this.mobileFiltersOpen.set(!this.mobileFiltersOpen());
   }
 
-  hasDiscount(product: Product): boolean {
-    return product.descuento ? product.descuento > 0 : false;
+  toggleCategory() {
+    this.categoryExpanded.set(!this.categoryExpanded());
   }
 
-  getStockClass(stock: number): string {
-    if (stock === 0) return 'text-red-600';
-    if (stock <= 5) return 'text-yellow-600';
-    return 'text-green-600';
+  toggleBrand() {
+    this.brandExpanded.set(!this.brandExpanded());
   }
 
-  getStockText(product: Product): string {
-    if (!product.disponible || product.stock === 0) return 'Agotado';
-    if (product.stock <= 5) return `Solo ${product.stock} disponibles`;
-    return 'Disponible';
+  togglePrice() {
+    this.priceExpanded.set(!this.priceExpanded());
   }
 
-  // NUEVOS MÉTODOS PARA VARIANTES
+  toggleAvailability() {
+    this.availabilityExpanded.set(!this.availabilityExpanded());
+  }
+
+  toggleSort() {
+    this.sortExpanded.set(!this.sortExpanded());
+  }
+
+  onPageChange(page: number) {
+    this.currentPage.set(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // Métodos para variantes
   getProductImage(product: Product): string {
     if (product.variantes && product.variantes.length > 0) {
       for (const variante of product.variantes) {
@@ -234,21 +344,7 @@ export class ProductList implements OnInit {
         }
       }
     }
-    return  'https://upload.wikimedia.org/wikipedia/commons/a/a3/Image-not-found.png';
-  }
-
-  getTotalStock(product: Product): number {
-    if (product.variantes && product.variantes.length > 0) {
-      return product.variantes.reduce((sum, v) => sum + (v.stock || 0), 0);
-    }
-    return product.stock || 0;
-  }
-
-  getAvailableVariants(product: Product): number {
-    if (product.variantes && product.variantes.length > 0) {
-      return product.variantes.filter(v => v.stock > 0).length;
-    }
-    return product.stock > 0 ? 1 : 0;
+    return 'https://upload.wikimedia.org/wikipedia/commons/a/a3/Image-not-found.png';
   }
 
   getMinPrice(product: Product): number {
@@ -276,17 +372,11 @@ export class ProductList implements OnInit {
     }
   }
 
-  hasMultiplePrices(product: Product): boolean {
-    return this.getMinPrice(product) !== this.getMaxPrice(product);
-  }
-
-  getAtributosArray(atributos: Record<string, string>): {key: string, value: string}[] {
-    if (!atributos) return [];
-    return Object.entries(atributos).map(([key, value]) => ({ key, value }));
-  }
-
-  hasVariants(product: Product): boolean {
-    return !!(product.variantes && product.variantes.length > 0);
+  getAvailableVariants(product: Product): number {
+    if (product.variantes && product.variantes.length > 0) {
+      return product.variantes.filter(v => v.stock > 0).length;
+    }
+    return product.stock > 0 ? 1 : 0;
   }
 
   isProductAvailable(product: Product): boolean {

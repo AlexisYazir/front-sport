@@ -1,102 +1,100 @@
-import { Component, Inject, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { ProductService } from '../../../core/services/product.service';
 import { CartService } from '../../../core/services/cart.service';
-import { Product } from '../../../core/models/product.model';
-
+import { Product, Marca } from '../../../core/models/product.model';
 
 @Component({
   selector: 'app-home',
+  standalone: true,
   imports: [CommonModule, RouterModule],
   templateUrl: './home.html',
   styleUrl: './home.css',
 })
 export class Home implements OnInit {
-  private toastr = Inject(ToastrService);
-  private productService = Inject(ProductService);
-  private cartService = Inject(CartService);
-  private router = Inject(Router);
-
+  private toastr = inject(ToastrService);
+  private productService = inject(ProductService);
+  private cartService = inject(CartService);
+  private router = inject(Router);
+  
+  products: Product[] = [];
+  marcas: Marca[] = [];
+  
   // Signals para el estado reactivo
   featuredProducts = signal<Product[]>([]);
-  loading = signal(true);
+  loading = signal<boolean>(true);
+  loadingMarcas = signal<boolean>(true);
 
   // Computed para el contador del carrito
   cartCount = computed(() => this.cartService.cartItems().length);
 
-  // Categorías destacadas
-  featuredCategories = [
-    {
-      id: 'running',
-      name: 'Running',
-      description: 'Zapatillas, ropa técnica y accesorios para corredores',
-      icon: 'directions_run',
-      gradient: 'from-[#0367A6] to-[#035A91]'
-    },
-    {
-      id: 'football',
-      name: 'Fútbol',
-      description: 'Balones, botas y equipamiento completo',
-      icon: 'sports_soccer',
-      gradient: 'from-[#FF7A00] to-[#E56E00]'
-    },
-    {
-      id: 'fitness',
-      name: 'Fitness',
-      description: 'Equipo para gym y entrenamiento en casa',
-      icon: 'fitness_center',
-      gradient: 'from-[#22C55E] to-[#16A34A]'
-    }
-  ];
-
-  // Breadcrumbs para la página home
-  breadcrumbs = [
-    { label: 'Inicio', url: '/home', active: true }
-  ];
-
   ngOnInit() {
-    this.loadFeaturedProducts();
+    this.loadProducts();
+    this.loadMarcas();
   }
 
-  loadFeaturedProducts() {
+  loadProducts() {
     this.loading.set(true);
-    
-    // Cargar productos destacados (los primeros 4)
     this.productService.getProducts().subscribe({
-      next: (products: Product[]) => {
-        this.featuredProducts.set(products.slice(0, 4));
+      next: (data: Product[]) => {
+        this.products = data;
+        this.featuredProducts.set(data.slice(0, 8)); // Tomar primeros 8 como destacados
+        console.log('Productos cargados:', data);
         this.loading.set(false);
       },
-      error: (error: any) => {
-        console.error('Error loading featured products:', error);
+      error: (error) => {
+        console.error('Error cargando productos:', error);
+        this.toastr.error('Error al cargar los productos', 'Error');
         this.loading.set(false);
-        this.toastr.error('Error al cargar productos destacados');
       }
     });
   }
 
-  addToCart(product: Product) {
-    this.cartService.addToCart(product);
-    this.toastr.success(`${product.nombre} agregado al carrito`, 'Producto agregado');
-  }
-
-  navigateToCategory(categoryId: string) {
-    this.router.navigate(['/products'], { 
-      queryParams: { category: categoryId }
+  loadMarcas() {
+    this.loadingMarcas.set(true);
+    this.productService.getMarcas().subscribe({
+      next: (data: Marca[]) => {
+        this.marcas = data;
+        console.log('Marcas cargadas:', data);
+        this.loadingMarcas.set(false);
+      },
+      error: (error) => {
+        console.error('Error cargando marcas:', error);
+        this.toastr.error('Error al cargar las marcas', 'Error');
+        this.loadingMarcas.set(false);
+      }
     });
   }
 
-  navigateToProduct(productId: number) {
-    this.router.navigate(['/products', productId]);
+  // Método para obtener URL de imagen de marca
+  getMarcaImageUrl(marca: Marca): string {
+    if (marca.imagen && marca.imagen !== 'null' && marca.imagen !== '') {
+      // Si la URL ya es completa, usarla directamente
+      if (marca.imagen.startsWith('http')) {
+        return marca.imagen;
+      }
+      // Si es una ruta relativa, ajustar según tu backend
+      return `http://localhost:3000/${marca.imagen}`;
+    }
+    // Fallback a UI Avatars
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(marca.nombre)}&background=0367A6&color=fff&size=128`;
   }
 
-  trackByProductId(index: number, product: Product): number {
-    return product.id;
+
+  // Método para ver detalles del producto
+  viewProduct(productId: number) {
+    this.router.navigate(['/product', productId]);
   }
 
-  testNotification() {
-    this.toastr.success('¡Bienvenido a Sport Center!', 'Éxito');
+  // Método para ver todas las marcas
+  viewAllMarcas() {
+    this.router.navigate(['/marcas']);
+  }
+
+  // Método para ver todos los productos
+  viewAllProducts() {
+    this.router.navigate(['/product']);
   }
 }

@@ -27,8 +27,8 @@
 }
 
 .custom-pagination ::ng-deep .ngx-pagination .current {
-  background: #3b82f6;
-  border-color: #3b82f6;
+  background: #0367A6;
+  border-color: #0367A6;
   color: white;
 }
 
@@ -44,45 +44,30 @@
   opacity: 0.5;
 }
 
-.custom-pagination ::ng-deep .ngx-pagination .disabled:hover {
-  background: white;
-  border-color: #e5e7eb;
-}
-
-/* Para móvil */
-@media (max-width: 640px) {
-  .custom-pagination ::ng-deep .ngx-pagination a,
-  .custom-pagination ::ng-deep .ngx-pagination button,
-  .custom-pagination ::ng-deep .ngx-pagination .current {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.75rem;
-  }
-  
-  .custom-pagination ::ng-deep .ngx-pagination .small-screen {
-    display: inline-block !important;
-  }
-}
-
 /* Rotación para flechas */
 .rotate-180 {
   transform: rotate(180deg);
 }
 
 /* Scroll personalizado */
+.max-h-48::-webkit-scrollbar,
 .max-h-60::-webkit-scrollbar {
   width: 4px;
 }
 
+.max-h-48::-webkit-scrollbar-track,
 .max-h-60::-webkit-scrollbar-track {
   background: #f1f1f1;
   border-radius: 10px;
 }
 
+.max-h-48::-webkit-scrollbar-thumb,
 .max-h-60::-webkit-scrollbar-thumb {
   background: #888;
   border-radius: 10px;
 }
 
+.max-h-48::-webkit-scrollbar-thumb:hover,
 .max-h-60::-webkit-scrollbar-thumb:hover {
   background: #555;
 }
@@ -93,4 +78,14 @@
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+/* Para móvil */
+@media (max-width: 640px) {
+  .custom-pagination ::ng-deep .ngx-pagination a,
+  .custom-pagination ::ng-deep .ngx-pagination button,
+  .custom-pagination ::ng-deep .ngx-pagination .current {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+  }
 }

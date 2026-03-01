@@ -482,4 +482,7 @@ export class Inventario implements OnInit {
     this.openEditModal(product);
   }
 
+    getMarcaImageUrl(product: InventoryProduct): string {
+      return product.imagen || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(product.imagen) + '&background=0367A6&color=fff&size=64';
+    }
 }
