@@ -487,7 +487,7 @@ export class NewProducts implements OnInit {
         error: (err) => {
           console.error('Error al crear variante:', err);
           this.saving = false;
-          this.toastr.error('Error al guardar las variantes', 'Error');
+          this.toastr.error('Error al guardar las variantes. '+err.error.message, 'Error');
         }
       });
     });

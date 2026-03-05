@@ -61,8 +61,8 @@ export class Login implements OnInit {
    */
   private initializeGoogle(): void {
     // Cliente ID configurado para Google OAuth
-    const googleClientId =
-      '637508139644-n30pocvh0corlgsv79bmu4joagg46nrv.apps.googleusercontent.com';
+    // const googleClientId ='637508139644-n30pocvh0corlgsv79bmu4joagg46nrv.apps.googleusercontent.com'; //ANTERIOR
+    const googleClientId ='791356083560-kg90udkq7qdpg7hq0g3r3coot85hqrgb.apps.googleusercontent.com';
 
     if (googleClientId && googleClientId.includes('.apps.googleusercontent.com')) {
       this.googleAuthService.initializeGoogle(googleClientId);
