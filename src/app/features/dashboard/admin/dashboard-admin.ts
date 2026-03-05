@@ -63,7 +63,7 @@ export class DashboardAdmin implements OnInit {
 
   constructor(public router: Router) {}
 
- @HostListener('window:scroll', [])
+  @HostListener('window:scroll', [])
   onWindowScroll() {
     const currentScroll = window.pageYOffset || document.documentElement.scrollTop;
     
@@ -82,7 +82,7 @@ export class DashboardAdmin implements OnInit {
 
   loadAllStats() {
     this.loadRecentUsers();
-    this.loadUserStats();
+    this.loadUserStats(); // Carga TODOS los usuarios para las stats
     this.loadProductStats();
     this.loadCategoryStats();
     this.loadBrandStats();
@@ -92,7 +92,7 @@ export class DashboardAdmin implements OnInit {
     this.authService.getRecentUsers().subscribe({
       next: (users: RecentUserCreated[]) => {
         this.recentUsers = users;
-        console.log('Usuarios recientes:', users);
+        // console.log('Usuarios recientes:', users);
       },
       error: (error) => {
         console.error('Error loading recent users:', error);
@@ -101,12 +101,19 @@ export class DashboardAdmin implements OnInit {
   }
 
   loadUserStats() {
-    this.authService.getRecentUsers().subscribe({
+    // Usar getUsers() en lugar de getRecentUsers() para obtener TODOS los usuarios
+    this.authService.getUsers().subscribe({
       next: (users: any[]) => {
         this.stats.totalUsuarios = users.length;
-        this.stats.usuariosActivos = users.filter(u => u.rol === 1 || u.activo === true).length;
+        
+        // Contar activos (activo === 1)
+        this.stats.usuariosActivos = users.filter(u => u.activo === 1).length;
+        
+        // Contar por rol
         this.stats.empleados = users.filter(u => u.rol === 2).length;
         this.stats.administradores = users.filter(u => u.rol === 3).length;
+        
+        console.log('Estadísticas de usuarios:', this.stats);
       },
       error: (error) => {
         console.error('Error loading user stats:', error);
@@ -137,7 +144,7 @@ export class DashboardAdmin implements OnInit {
     // Productos incompletos (sin atributos)
     this.productService.getProductsWithoutVariantsAttributes().subscribe({
       next: (products: any[]) => {
-        console.log(products);
+        // console.log(products);
         this.stats.productosIncompletos = products.length;
       },
       error: (error) => {
@@ -208,6 +215,8 @@ export class DashboardAdmin implements OnInit {
     });
   }
 
+  //mejor mieerda jajaja 
+
   // Métodos para obtener estadísticas formateadas
   getStockBajoPercentage(): number {
     if (this.stats.totalProductos === 0) return 0;
@@ -222,6 +231,4 @@ export class DashboardAdmin implements OnInit {
   isActive(route: string): boolean {
     return this.router.url === route;
   }
-
-  
 }

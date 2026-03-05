@@ -14,7 +14,9 @@ import {
   AuthState,
   UserRole,
   getDashboardRoute,
-  RecentUserCreated
+  UsersAdmin,
+  RecentUserCreated,
+  Roles
 } from '../models/user.model';
 import { TokenService } from './token.service';
 import { SessionService } from './session.service';
@@ -58,11 +60,30 @@ export class AuthService {
 
   private mapRecentUserCreatedFromApi(u: any): RecentUserCreated {
     return {
+      id: u.id,
       nombre: u.nombre,
       email: u.email,
       rol: u.rol,
       activo: u.activo,
       fecha_creacion: u.fecha_creacion
+    }
+  }
+
+  private mapUsersAdminFromApi(u: any): UsersAdmin {
+    return {
+      id_usuario: u.id_usuario,
+      nombre: u.nombre,
+      email: u.email,
+      rol: u.rol,
+      activo: u.activo,
+      fecha_creacion: u.fecha_creacion
+    }
+  }
+
+  private mapRolesFromApi(r: any): Roles {
+    return {
+      id_rol: r.id_rol,
+      rol: r.rol
     }
   }
 
@@ -557,7 +578,7 @@ export class AuthService {
     );
   }
 
-      getRecentUsers(): Observable<RecentUserCreated[]> {
+    getRecentUsers(): Observable<RecentUserCreated[]> {
       this.isLoading.set(true);
   
       return this.http
@@ -570,4 +591,45 @@ export class AuthService {
           })
         );
     }
+
+    getUsers(): Observable<UsersAdmin[]> {
+      this.isLoading.set(true);
+  
+      return this.http
+        .get<any[]>(`${this.API_URL}/users/get-users`)
+        .pipe(
+          map(response => {
+            const mapped = response.map(u => this.mapUsersAdminFromApi(u));
+            this.isLoading.set(false);
+            return mapped;
+          })
+        );
+    }
+
+    getRoles(): Observable<Roles[]> {
+      this.isLoading.set(true);
+  
+      return this.http
+        .get<any[]>(`${this.API_URL}/users/get-roles`)
+        .pipe(
+          map(response => {
+            const mapped = response.map(u => this.mapRolesFromApi(u));
+            this.isLoading.set(false);
+            return mapped;
+          })
+        );
+    }
+
+  updateUserFromAdmin(data: { id_usuario: number, activo: number, rol: number }): Observable<any> {
+
+    this.isLoading.set(true);
+
+    return this.http.patch(`${this.API_URL}/users/update-user`, data).pipe(
+      map(res => {
+        this.isLoading.set(false);
+        return res;
+      })
+    );
+
+  }
 }

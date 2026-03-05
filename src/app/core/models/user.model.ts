@@ -90,9 +90,24 @@ export function getDashboardRoute(rol: UserRole): string {
 }
 
 export interface RecentUserCreated {
+  id: number,
   nombre: string;
   email: string;
   rol: UserRole;
   activo: number;
   fecha_creacion: string;
+}
+
+export interface UsersAdmin {
+  id_usuario: number,
+  nombre: string;
+  email: string;
+  rol: UserRole;
+  activo: number;
+  fecha_creacion: string;
+}
+
+export interface Roles {
+  id_rol: number,
+  rol: string
 }
