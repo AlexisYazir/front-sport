@@ -57,7 +57,7 @@
                   <span class="material-symbols-outlined text-white text-xl">person</span>
                 </div>
                 <div class="hidden lg:block text-left">
-                  <p class="text-[#202020] text-sm font-medium max-w-[120px] truncate">{{ authServicePublic.currentUser()?.email || 'Usuario' }}</p>
+                  <p class="text-[#202020] text-sm font-medium max-w-[120px] truncate">{{ authServicePublic.currentUser()?.nombre || 'Usuario' }}</p>
                   <p class="text-[#666666] text-xs">{{ getRoleText() }}</p>
                 </div>
                 <span class="material-symbols-outlined text-[#666666] text-lg transition-transform duration-300" 
@@ -308,7 +308,7 @@
                 <span class="material-symbols-outlined text-white text-xl">shield</span>
               </div>
               <div class="hidden lg:block text-left">
-                <p class="text-white text-sm font-medium max-w-[120px] truncate">{{ authServicePublic.currentUser()?.email || 'Admin' }}</p>
+                <p class="text-white text-sm font-medium max-w-[120px] truncate">{{ authServicePublic.currentUser()?.nombre || 'Admin' }}</p>
                 <p class="text-white/60 text-xs">Administrador</p>
               </div>
               <span class="material-symbols-outlined text-white text-lg transition-transform duration-300"

@@ -16,6 +16,6 @@ export class App {
   private toastr = inject(ToastrService);
 
   testToast() {
-    this.toastr.success('¡Todo funciona correctamente! 🎉', 'Éxito');
+    this.toastr.success('¡Todo funciona correctamente!', 'Éxito');
   }
 }

@@ -131,7 +131,7 @@ export class TokenService {
         token += chars.charAt(Math.floor(Math.random() * chars.length));
       }
     }
-
+    console.log("token de token service"+ token);
     return token;
   }
 

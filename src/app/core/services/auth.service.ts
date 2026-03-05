@@ -3,6 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, BehaviorSubject, tap, catchError, throwError, map } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
+import { jwtDecode } from 'jwt-decode';
 import { environment } from '../../../environments/environment';
 import {
   User,
@@ -18,6 +19,17 @@ import {
 import { TokenService } from './token.service';
 import { SessionService } from './session.service';
 import { CsrfTokenService } from './csrf-token.service';
+
+interface JwtPayload {
+  id: number;
+  email: string;
+  rol: number;
+  nombre?: string;
+  aPaterno?: string;
+  aMaterno?: string;
+  telefono?: string;
+  exp: number;
+}
 
 @Injectable({
   providedIn: 'root',
@@ -36,7 +48,6 @@ export class AuthService {
 
   // Storage keys desde environment
   private readonly TOKEN_KEY = environment.storageKeys.token;
-  private readonly USER_KEY = environment.storageKeys.user;
 
   // Auth State usando BehaviorSubject para reactividad
   private authState$ = new BehaviorSubject<AuthState>({
@@ -45,15 +56,15 @@ export class AuthService {
     token: null,
   });
 
-    private mapRecentUserCreatedFromApi(u: any): RecentUserCreated {
-      return {
-        nombre: u.nombre,
-        email: u.email,
-        rol: u.rol,
-        activo: u.activo,
-        fecha_creacion: u.fecha_creacion
-      }
+  private mapRecentUserCreatedFromApi(u: any): RecentUserCreated {
+    return {
+      nombre: u.nombre,
+      email: u.email,
+      rol: u.rol,
+      activo: u.activo,
+      fecha_creacion: u.fecha_creacion
     }
+  }
 
   // Signals para estado reactivo (Angular 18+)
   public currentUser = signal<User | null>(null);
@@ -69,6 +80,7 @@ export class AuthService {
     this.loadAuthState();
   }
 
+  
   /**
    * Observable del usuario actual para reactividad
    */
@@ -82,24 +94,39 @@ export class AuthService {
   private loadAuthState(): void {
     try {
       const token = localStorage.getItem(this.TOKEN_KEY);
-      const userStr = localStorage.getItem(this.USER_KEY);
 
-      if (token && userStr) {
-        // Verificar si el token está expirado
-        if (this.isTokenExpired(token)) {
-          console.warn('Token expirado, limpiando sesión');
-          this.clearAuthState();
-          return;
-        }
+      if (!token) return;
 
-        const user = JSON.parse(userStr);
-        this.updateAuthState(true, user, token);
-
-        // Inicializar servicios de seguridad
-        this.tokenService.setAccessToken(token);
-        this.csrfTokenService.initializeCsrfProtection();
-        this.sessionService.startInactivityCountdown();
+      if (this.isTokenExpired(token)) {
+        console.warn('Token expirado, limpiando sesión');
+        this.clearAuthState();
+        return;
       }
+
+      const tokenData = this.decodeToken(token);
+
+      if (!tokenData) {
+        this.clearAuthState();
+        return;
+      }
+
+      const user: User = {
+        id: tokenData.id,
+        email: tokenData.email,
+        rol: tokenData.rol,
+        nombre: '',
+        aPaterno: '',
+        aMaterno: '',
+        telefono: '',
+        activo: 1
+      };
+
+      this.updateAuthState(true, user, token);
+
+      this.tokenService.setAccessToken(token);
+      this.csrfTokenService.initializeCsrfProtection();
+      this.sessionService.startInactivityCountdown();
+
     } catch (error) {
       console.error('Error loading auth state:', error);
       this.clearAuthState();
@@ -112,7 +139,10 @@ export class AuthService {
   private isTokenExpired(token: string): boolean {
     try {
       const decoded = this.decodeToken(token);
-      if (!decoded.exp) return false;
+
+      if (!decoded || !decoded.exp) {
+        return true;
+      }
 
       const expirationDate = new Date(decoded.exp * 1000);
       const now = new Date();
@@ -120,7 +150,7 @@ export class AuthService {
       return expirationDate < now;
     } catch (error) {
       console.error('Error checking token expiration:', error);
-      return true; // Si hay error, considerar como expirado
+      return true;
     }
   }
 
@@ -142,20 +172,18 @@ export class AuthService {
    */
   private saveAuthData(token: string, user: User): void {
     try {
-      // Guardar en localStorage
+
       localStorage.setItem(this.TOKEN_KEY, token);
-      localStorage.setItem(this.USER_KEY, JSON.stringify(user));
       localStorage.setItem('auth_timestamp', new Date().toISOString());
 
-      // Guardar en servicios de seguridad
       this.tokenService.setAccessToken(token);
       this.csrfTokenService.initializeCsrfProtection();
 
       this.updateAuthState(true, user, token);
 
-      // Iniciar monitoreo de sesión
       this.sessionService.startInactivityCountdown();
       this.sessionService.clearFailedAttempts(user.email);
+
     } catch (error) {
       console.error('Error al guardar la sesión:', error);
       this.toastr.error('Error al guardar la sesión', 'Error');
@@ -166,8 +194,8 @@ export class AuthService {
    * Limpiar estado de autenticación
    */
   private clearAuthState(): void {
+
     localStorage.removeItem(this.TOKEN_KEY);
-    localStorage.removeItem(this.USER_KEY);
     localStorage.removeItem('auth_timestamp');
 
     this.tokenService.clearTokens();
@@ -198,7 +226,11 @@ export class AuthService {
           // Decodificar el token JWT para obtener los datos del usuario
           const tokenData = this.decodeToken(response.token);
 
-          // Crear objeto User a partir de los datos del token
+          if (!tokenData) {
+            this.toastr.error('Token inválido', 'Error');
+            return;
+          }
+
           const user: User = {
             id: tokenData.id,
             nombre: tokenData.nombre || '',
@@ -207,7 +239,7 @@ export class AuthService {
             email: tokenData.email,
             telefono: tokenData.telefono || '',
             rol: tokenData.rol,
-            activo: 1, // Asumimos activo si logró hacer login
+            activo: 1
           };
 
           this.saveAuthData(response.token, user);
@@ -262,14 +294,23 @@ export class AuthService {
   /**
    * Decodificar JWT token (simple, sin validación)
    */
-  private decodeToken(token: string): any {
+  // private decodeToken(token: string): any {
+  //   try {
+  //     const payload = token.split('.')[1];
+  //     const decoded = atob(payload);
+  //     return JSON.parse(decoded);
+  //   } catch (error) {
+  //     console.error('Error decoding token:', error);
+  //     return {};
+  //   }
+  // }
+
+  private decodeToken(token: string): JwtPayload | null {
     try {
-      const payload = token.split('.')[1];
-      const decoded = atob(payload);
-      return JSON.parse(decoded);
+      return jwtDecode<JwtPayload>(token);
     } catch (error) {
       console.error('Error decoding token:', error);
-      return {};
+      return null;
     }
   }
 
@@ -375,16 +416,18 @@ export class AuthService {
    * Actualizar información del usuario actual
    */
   updateCurrentUser(user: User): void {
-    localStorage.setItem(this.USER_KEY, JSON.stringify(user));
+
     this.currentUser.set(user);
-    // 🔑 IMPORTANTE: También actualizar el signal de autenticación
+
     this.isAuthenticated.set(true);
+
     this.authState$.next({
       isAuthenticated: true,
       user: user,
       token: this.getToken(),
     });
-  }
+
+}
 
   /**
    * Obtener estado de sesión
