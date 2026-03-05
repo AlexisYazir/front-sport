@@ -117,3 +117,18 @@ export interface ProductVariant {
   stock: number;
   imagenes: string[];
 }
+
+export interface Orders {
+  id_orden: number;
+  id_usuario: number;
+  id_direccion_envio: number;
+  estado: string;
+  subtotal: number;
+  descuento: number;
+  total: number;
+  metodo_pago: string;
+  fecha_pago: string;
+  fecha_envio: string;
+  fecha_entrega: string;
+  fecha_creacion:string;
+}

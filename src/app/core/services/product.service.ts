@@ -2,7 +2,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { Product, Category, ProductFilters, ProductSearchResult, Categorie, Marca, Attibute, InventoryProduct, RecientProduct, ProductVariant } from '../models/product.model';
+import { Product, Category, ProductFilters, ProductSearchResult, Categorie, Marca, Attibute, Orders,InventoryProduct, RecientProduct, ProductVariant } from '../models/product.model';
 
 @Injectable({
   providedIn: 'root'
@@ -69,6 +69,23 @@ export class ProductService {
       id_categoria: c.id_categoria,
       nombre: c.nombre,
       id_padre: c.id_padre
+    };
+  }
+
+  private mapOrdersEmployeeFromApi(c: any): Orders {
+    return {
+        id_orden: c.id_orden,
+        id_usuario: c.id_usuario,
+        id_direccion_envio:c.id_direccion_envio,
+        estado: c.estado, 
+        subtotal: c.subtotal,
+        descuento: c.descuento, 
+        total: c.total, 
+        metodo_pago: c.metodo_pago, 
+        fecha_pago: c.fecha_pago,
+        fecha_envio: c.fecha_envio, 
+        fecha_entrega: c.fecha_entrega, 
+        fecha_creacion: c.fecha_creacion
     };
   }
 
@@ -237,20 +254,33 @@ export class ProductService {
           );
       }
 
-     getProductsWithoutVariantsAttributes(): Observable<any[]> {
-        this.isLoading.set(true);
-    
-        return this.http
-          .get<any[]>(`${this.API_URL}/products/get-products-without-variants-attributes`)
-          .pipe(
-            map(response => {
-              const mapped = response.map(u => this.mapRecentProductCreatedFromApi(u));
-              this.isLoading.set(false);
-              return mapped;
-            })
-          );
-      }
+  getProductsWithoutVariantsAttributes(): Observable<any[]> {
+    this.isLoading.set(true);
 
+    return this.http
+      .get<any[]>(`${this.API_URL}/products/get-products-without-variants-attributes`)
+      .pipe(
+        map(response => {
+          const mapped = response.map(u => this.mapRecentProductCreatedFromApi(u));
+          this.isLoading.set(false);
+          return mapped;
+        })
+      );
+  }
+
+  getOrdersEmployee(): Observable<any[]> {
+    this.isLoading.set(true);
+
+    return this.http
+      .get<any[]>(`${this.API_URL}/products/get-all-orders-employee`)
+      .pipe(
+        map(response => {
+          const mapped = response.map(u => this.mapOrdersEmployeeFromApi(u));
+          this.isLoading.set(false);
+          return mapped;
+        })
+      );
+  }
   
   /**
    * Obtener producto por ID

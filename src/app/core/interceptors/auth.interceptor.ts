@@ -64,20 +64,26 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     catchError((error) => {
       // Error 401 - No autorizado
       if (error.status === 401) {
-        toastr.error('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.', 'Sesión Expirada');
+        toastr.error('No tienes permisos para acceder a esta sección. Inicia sesión nuevamente', 'Acceso Denegado');
         tokenService.clearTokens();
         authService.logout();
         router.navigate(['/auth/login']);
       }
 
       // Error 403 - Prohibido (sin permisos o CSRF inválido)
+      // Error 403 - Prohibido (sin permisos o token manipulado)
       if (error.status === 403) {
-        toastr.error('No tienes permisos para realizar esta acción', 'Acceso Denegado');
-        const user = authService.getCurrentUser();
-        if (user) {
-          const dashboardRoute = getDashboardRoute(user.rol);
-          router.navigate([dashboardRoute]);
-        }
+
+        toastr.error('No tienes permisos para acceder a esta sección. Inicia sesión nuevamente', 'Acceso Denegado');
+
+        // limpiar tokens
+        tokenService.clearTokens();
+
+        // limpiar estado auth
+        authService.logout();
+
+        // redirigir
+        router.navigate(['/auth/login']);
       }
 
       // Error 419 - Token de sesión expirado

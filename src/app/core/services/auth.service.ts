@@ -98,7 +98,7 @@ export class AuthService {
       if (!token) return;
 
       if (this.isTokenExpired(token)) {
-        console.warn('Token expirado, limpiando sesión');
+        // console.warn('Token expirado, limpiando sesión');
         this.clearAuthState();
         return;
       }
@@ -128,7 +128,7 @@ export class AuthService {
       this.sessionService.startInactivityCountdown();
 
     } catch (error) {
-      console.error('Error loading auth state:', error);
+      // console.error('Error loading auth state:', error);
       this.clearAuthState();
     }
   }
@@ -149,7 +149,7 @@ export class AuthService {
 
       return expirationDate < now;
     } catch (error) {
-      console.error('Error checking token expiration:', error);
+      // console.error('Error checking token expiration:', error);
       return true;
     }
   }
@@ -185,7 +185,7 @@ export class AuthService {
       this.sessionService.clearFailedAttempts(user.email);
 
     } catch (error) {
-      console.error('Error al guardar la sesión:', error);
+      // console.error('Error al guardar la sesión:', error);
       this.toastr.error('Error al guardar la sesión', 'Error');
     }
   }
@@ -208,88 +208,101 @@ export class AuthService {
    * LOGIN - Iniciar sesión
    */
   login(credentials: LoginRequest): Observable<any> {
-    // Verificar si la cuenta está bloqueada
-    if (this.sessionService.checkAccountLock(credentials.email)) {
-      const remainingTime = this.sessionService.getRemainingLockTime(credentials.email);
-      const minutes = Math.ceil(remainingTime / 60000);
-      this.toastr.error(
-        `Tu cuenta está bloqueada por ${minutes} minuto(s) debido a múltiples intentos fallidos.`,
-        'Cuenta Bloqueada'
-      );
-      return throwError(() => new Error('Account locked'));
-    }
 
-    return this.http.post<any>(`${this.API_URL}/users/login-user`, credentials).pipe(
-      tap((response) => {
-        // El backend solo devuelve { "token": "..." }
-        if (response && response.token) {
-          // Decodificar el token JWT para obtener los datos del usuario
-          const tokenData = this.decodeToken(response.token);
+  if (this.sessionService.checkAccountLock(credentials.email)) {
+    const remainingTime = this.sessionService.getRemainingLockTime(credentials.email);
+    const minutes = Math.ceil(remainingTime / 60000);
 
-          if (!tokenData) {
-            this.toastr.error('Token inválido', 'Error');
-            return;
-          }
-
-          const user: User = {
-            id: tokenData.id,
-            nombre: tokenData.nombre || '',
-            aPaterno: tokenData.aPaterno || '',
-            aMaterno: tokenData.aMaterno || '',
-            email: tokenData.email,
-            telefono: tokenData.telefono || '',
-            rol: tokenData.rol,
-            activo: 1
-          };
-
-          this.saveAuthData(response.token, user);
-          this.toastr.success(`¡Bienvenido!`, 'Login Exitoso');
-
-          // Establecer flag: navegación iniciada por AuthService
-          this.setNavigationInProgress(true);
-
-          // Redireccionar según rol
-          const dashboardRoute = getDashboardRoute(user.rol);
-          this.router.navigate([dashboardRoute]).then(() => {
-            // Limpiar flag después de que la navegación se complete
-            setTimeout(() => {
-              this.setNavigationInProgress(false);
-            }, 100);
-          });
-        } else {
-          this.toastr.error('Respuesta inválida del servidor', 'Error');
-        }
-      }),
-      catchError((error) => {
-        console.error('Login error:', error);
-
-        // Registrar intento fallido
-        this.sessionService.recordFailedAttempt(credentials.email);
-
-        // Verificar si la cuenta debe bloquearse
-        if (this.sessionService.checkAccountLock(credentials.email)) {
-          this.sessionService.lockAccount(credentials.email);
-          this.toastr.error(
-            'Tu cuenta ha sido bloqueada por múltiples intentos fallidos. Intenta nuevamente en 5 minutos.',
-            'Cuenta Bloqueada'
-          );
-        } else {
-          const failedAttempts = this.sessionService.getFailedAttempts(credentials.email);
-          const remaining = 5 - failedAttempts;
-          const message =
-            error.error?.message ||
-            error.error?.error ||
-            'Error al iniciar sesión. Verifica tus credenciales.';
-          this.toastr.error(
-            `${message} (${remaining} intentos restantes)`,
-            'Error de Autenticación'
-          );
-        }
-
-        return throwError(() => error);
-      })
+    this.toastr.error(
+      `Tu cuenta está bloqueada por ${minutes} minuto(s) debido a múltiples intentos fallidos.`,
+      'Cuenta Bloqueada'
     );
+
+    return throwError(() => new Error('Account locked'));
   }
+
+  return this.http.post<any>(`${this.API_URL}/users/login-user`, credentials).pipe(
+    tap((response) => {
+
+      if (response && response.accessToken && response.refreshToken) {
+
+        const tokenData = this.decodeToken(response.accessToken);
+
+        if (!tokenData) {
+          this.toastr.error('Token inválido', 'Error');
+          return;
+        }
+
+        const user: User = {
+          id: tokenData.id,
+          nombre: tokenData.nombre || '',
+          aPaterno: tokenData.aPaterno || '',
+          aMaterno: tokenData.aMaterno || '',
+          email: tokenData.email,
+          telefono: tokenData.telefono || '',
+          rol: tokenData.rol,
+          activo: 1
+        };
+
+        // guardar tokens
+        this.tokenService.setAccessToken(response.accessToken);
+        this.tokenService.setRefreshToken(response.refreshToken);
+
+        this.saveAuthData(response.accessToken, user);
+
+        this.toastr.success(`¡Bienvenido!`, 'Login Exitoso');
+
+        this.setNavigationInProgress(true);
+
+        const dashboardRoute = getDashboardRoute(user.rol);
+
+        this.router.navigate([dashboardRoute]).then(() => {
+          setTimeout(() => {
+            this.setNavigationInProgress(false);
+          }, 100);
+        });
+
+      } else {
+        this.toastr.error('Respuesta inválida del servidor', 'Error');
+      }
+
+    }),
+    catchError((error) => {
+
+      // console.error('Login error:', error);
+
+      this.sessionService.recordFailedAttempt(credentials.email);
+
+      if (this.sessionService.checkAccountLock(credentials.email)) {
+
+        this.sessionService.lockAccount(credentials.email);
+
+        this.toastr.error(
+          'Tu cuenta ha sido bloqueada por múltiples intentos fallidos. Intenta nuevamente en 5 minutos.',
+          'Cuenta Bloqueada'
+        );
+
+      } else {
+
+        const failedAttempts = this.sessionService.getFailedAttempts(credentials.email);
+        const remaining = 5 - failedAttempts;
+
+        const message =
+          error.error?.message ||
+          error.error?.error ||
+          'Error al iniciar sesión. Verifica tus credenciales.';
+
+        this.toastr.error(
+          `${message} (${remaining} intentos restantes)`,
+          'Error de Autenticación'
+        );
+
+      }
+
+      return throwError(() => error);
+    })
+  );
+}
 
   /**
    * Decodificar JWT token (simple, sin validación)
@@ -300,7 +313,7 @@ export class AuthService {
   //     const decoded = atob(payload);
   //     return JSON.parse(decoded);
   //   } catch (error) {
-  //     console.error('Error decoding token:', error);
+      //console.error('Error decoding token:', error);
   //     return {};
   //   }
   // }
@@ -309,7 +322,7 @@ export class AuthService {
     try {
       return jwtDecode<JwtPayload>(token);
     } catch (error) {
-      console.error('Error decoding token:', error);
+      // console.error('Error decoding token:', error);
       return null;
     }
   }
@@ -339,7 +352,7 @@ export class AuthService {
         }
       }),
       catchError((error) => {
-        console.error('Register error:', error);
+        // console.error('Register error:', error);
         const message =
           error.error?.message ||
           error.error?.error ||
@@ -356,7 +369,8 @@ export class AuthService {
   logout(): void {
     const user = this.currentUser();
     this.clearAuthState();
-    this.toastr.success('Sesión cerrada correctamente', 'Hasta pronto');
+    this.tokenService.clearTokens();
+    // this.toastr.success('Sesión cerrada correctamente', 'Hasta pronto');
     this.router.navigate(['/home']);
   }
 
@@ -445,7 +459,7 @@ export class AuthService {
    */
   setAuthenticationInProgress(inProgress: boolean): void {
     this.authenticationInProgress = inProgress;
-    console.log(`🔄 Autenticación en progreso: ${inProgress}`);
+    // console.log(`🔄 Autenticación en progreso: ${inProgress}`);
   }
 
   /**
@@ -478,7 +492,7 @@ export class AuthService {
         this.toastr.success('Código enviado a tu email', 'Código Enviado');
       }),
       catchError((error) => {
-        console.error('Password reset request error:', error);
+        // console.error('Password reset request error:', error);
         const message =
           error.error?.message || 'Error al solicitar recuperación. Verifica que el email existe.';
         this.toastr.error(message, 'Error');
@@ -496,10 +510,10 @@ export class AuthService {
         this.toastr.success('Código verificado correctamente', 'Verificación exitosa');
         const base = this.API_URL?.replace(/\/+$/, '');
         const url = `${base}/users/verify-email`;
-        console.log('AuthService.verifyRecoveryCode ->', url, { email, token });
+        // console.log('AuthService.verifyRecoveryCode ->', url, { email, token });
       }),
       catchError((error) => {
-        console.error('Code verification error:', error);
+        // console.error('Code verification error:', error);
         const message = error.error?.message || 'Código inválido o expirado.';
         this.toastr.error(message, 'Error');
         return throwError(() => error);
@@ -519,7 +533,7 @@ export class AuthService {
         );
       }),
       catchError((error) => {
-        console.error('Password reset error:', error);
+        // console.error('Password reset error:', error);
         const message = error.error?.message || 'Error al restablecer la contraseña.';
         this.toastr.error(message, 'Error');
         return throwError(() => error);
@@ -535,7 +549,7 @@ export class AuthService {
         this.toastr.success('Código reenviado. Revisa tu bandeja de entrada.', 'Enviado');
       }),
       catchError((error) => {
-        console.error('resend-code error:', error);
+        // console.error('resend-code error:', error);
         const message = error?.error?.message || 'No se pudo reenviar el código.';
         this.toastr.error(message, 'Error');
         return throwError(() => error);

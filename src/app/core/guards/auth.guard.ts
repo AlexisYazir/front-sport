@@ -37,18 +37,18 @@ export const guestGuard: CanActivateFn = (route, state) => {
 
   // Si hay autenticación en progreso (ej: Google OAuth), permitir navegación sin redirigir
   if (authService.isAuthenticationInProgress()) {
-    console.log('🔐 Google OAuth en progreso - permitiendo navegación sin redirigir');
+    // console.log('🔐 Google OAuth en progreso - permitiendo navegación sin redirigir');
     return true;
   }
 
   // Si AuthService ya está navegando (login normal), permitir sin redirigir
   if (authService.isNavigationInProgress()) {
-    console.log('🚀 AuthService ya está redirigiendo - permitiendo navegación');
+    // console.log('🚀 AuthService ya está redirigiendo - permitiendo navegación');
     return true;
   }
 
   const isLoggedIn = authService.isLoggedIn();
-  console.log('🔍 guestGuard - isLoggedIn:', isLoggedIn, 'URL:', state.url);
+  // console.log('🔍 guestGuard - isLoggedIn:', isLoggedIn, 'URL:', state.url);
 
   if (!isLoggedIn) {
     return true;
@@ -57,7 +57,7 @@ export const guestGuard: CanActivateFn = (route, state) => {
   // Si ya está autenticado y NO hay navegación en progreso, redirigir
   const user = authService.getCurrentUser();
   if (user) {
-    console.log('⚠️ Usuario ya autenticado, redirigiendo a dashboard:', getDashboardRoute(user.rol));
+    // console.log('⚠️ Usuario ya autenticado, redirigiendo a dashboard:', getDashboardRoute(user.rol));
     const dashboardRoute = getDashboardRoute(user.rol);
     router.navigate([dashboardRoute]);
   }

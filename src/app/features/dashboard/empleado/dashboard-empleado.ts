@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { User } from '../../../core/models/user.model';
+import { ProductService } from '../../../core/services/product.service';
+import { Orders } from '../../../core/models/product.model';
 
 @Component({
   selector: 'app-dashboard-empleado',
@@ -13,6 +15,7 @@ import { User } from '../../../core/models/user.model';
 })
 export class DashboardEmpleado implements OnInit {
   private authService = inject(AuthService);
+  private productService = inject(ProductService);
   
   currentUser: User | null = null;
 
@@ -105,9 +108,22 @@ export class DashboardEmpleado implements OnInit {
     }
   ];
 
-  ngOnInit() {
-    this.currentUser = this.authService.currentUser();
-  }
+ngOnInit() {
+  this.currentUser = this.authService.currentUser();
+  this.loadOrders();
+}
+
+loadOrders() {
+  this.productService.getOrdersEmployee().subscribe({
+    next: (orders: Orders[]) => {
+      console.log('Órdenes recientes:', orders);
+    },
+    error: (error) => {
+      console.error('Error loading orders:', error);
+    }
+  });
+}
+
 
   getPrioridadClass(prioridad: string): string {
     switch (prioridad) {
