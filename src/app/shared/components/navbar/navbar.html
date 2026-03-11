@@ -9,7 +9,7 @@
         <div class="flex items-center gap-3">
           <a routerLink="/" class="flex items-center group">
             <img 
-              src="/assets/images/logo_sportcenter.png" 
+              [src]="logo" 
               alt="SportCenter" 
               class="h-10 w-auto transition-transform duration-300 group-hover:scale-105" 
             />
@@ -44,6 +44,79 @@
           </div>
         </div>
 
+        <!-- Navigation Links - SOLO VISIBLE EN DESKTOP -->
+<!-- Navigation Links - SOLO VISIBLE EN DESKTOP -->
+<div class="hidden lg:flex items-center space-x-1">
+  
+  <!-- Info - SOLO HOVER (sin click) -->
+  <div class="relative" 
+       (mouseenter)="onMouseEnter('info')" 
+       (mouseleave)="onMouseLeave('info')">
+    
+    <button class="flex items-center gap-1 px-3 py-2 text-[#666666] hover:text-[#0367A6] rounded-lg hover:bg-blue-50 transition-all cursor-default">
+      <span class="material-symbols-outlined text-lg">info</span>
+      <span class="text-sm font-medium">Información</span>
+      <span class="material-symbols-outlined text-base transition-transform duration-300"
+            [class.rotate-180]="shouldShowInfoMenu()">
+        expand_more
+      </span>
+    </button>
+
+    <!-- Dropdown Info -->
+    <div *ngIf="shouldShowInfoMenu()" 
+         class="absolute left-0 mt-2 w-56 bg-white rounded-xl shadow-2xl border border-gray-100 z-50"
+         (mouseenter)="cancelInfoClose()" 
+         (mouseleave)="onMouseLeave('info')">
+      <div class="p-2">
+        <a routerLink="/info/nosotros" (click)="closeAllMenus()"
+           class="flex items-center gap-3 px-4 py-3 text-sm text-[#666666] hover:text-[#0367A6] hover:bg-blue-50 rounded-lg cursor-pointer transition-colors">
+          <span class="material-symbols-outlined text-lg">business</span>
+          <span>Información de Empresa</span>
+        </a>
+        <a routerLink="/info/ubicacion" (click)="closeAllMenus()"
+           class="flex items-center gap-3 px-4 py-3 text-sm text-[#666666] hover:text-[#0367A6] hover:bg-blue-50 rounded-lg cursor-pointer transition-colors">
+          <span class="material-symbols-outlined text-lg">location_on</span>
+          <span>Ubicación</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Soporte - SOLO HOVER (sin click) -->
+  <div class="relative" 
+       (mouseenter)="onMouseEnter('support')" 
+       (mouseleave)="onMouseLeave('support')">
+    
+    <button class="flex items-center gap-1 px-3 py-2 text-[#666666] hover:text-[#0367A6] rounded-lg hover:bg-blue-50 transition-all cursor-default">
+      <span class="material-symbols-outlined text-lg">support_agent</span>
+      <span class="text-sm font-medium">Soporte</span>
+      <span class="material-symbols-outlined text-base transition-transform duration-300"
+            [class.rotate-180]="shouldShowSupportMenu()">
+        expand_more
+      </span>
+    </button>
+
+    <!-- Dropdown Soporte -->
+    <div *ngIf="shouldShowSupportMenu()" 
+         class="absolute left-0 mt-2 w-56 bg-white rounded-xl shadow-2xl border border-gray-100 z-50"
+         (mouseenter)="cancelSupportClose()" 
+         (mouseleave)="onMouseLeave('support')">
+      <div class="p-2">
+        <a routerLink="/support/contact" (click)="closeAllMenus()"
+           class="flex items-center gap-3 px-4 py-3 text-sm text-[#666666] hover:text-[#0367A6] hover:bg-blue-50 rounded-lg cursor-pointer transition-colors">
+          <span class="material-symbols-outlined text-lg">mail</span>
+          <span>Contacto</span>
+        </a>
+        <a routerLink="/support/preguntas-frecuentes" (click)="closeAllMenus()"
+           class="flex items-center gap-3 px-4 py-3 text-sm text-[#666666] hover:text-[#0367A6] hover:bg-blue-50 rounded-lg cursor-pointer transition-colors">
+          <span class="material-symbols-outlined text-lg">help</span>
+          <span>Preguntas Frecuentes</span>
+        </a>
+      </div>
+    </div>
+  </div>
+  
+</div>
         <!-- Auth Buttons con carrito integrado -->
         <div class="flex items-center space-x-2">
           <ng-container *ngIf="authServicePublic.isLoggedIn(); else loginButtons">
@@ -68,9 +141,7 @@
 
               <!-- Dropdown menu -->
               <div *ngIf="shouldShowUserMenu()" 
-                   class="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-2xl border border-gray-100 z-50"
-                   (mouseenter)="cancelUserClose()" 
-                   (mouseleave)="scheduleUserClose()">
+                   class="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-2xl border border-gray-100 z-50">
                 <div class="p-3 border-b border-gray-100">
                   <p class="text-xs text-[#666666] truncate">{{ authServicePublic.currentUser()?.email }}</p>
                 </div>
@@ -123,9 +194,7 @@
 
               <!-- Dropdown menu -->
               <div *ngIf="shouldShowGuestMenu()" 
-                   class="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-2xl border border-gray-100 z-50"
-                   (mouseenter)="cancelGuestClose()" 
-                   (mouseleave)="scheduleGuestClose()">
+                   class="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-2xl border border-gray-100 z-50">
                 <div class="p-2">
                   <a routerLink="/auth/login" (click)="closeAllMenus()"
                      class="flex items-center gap-3 px-4 py-3 text-sm text-[#666666] hover:text-[#0367A6] hover:bg-blue-50 rounded-lg cursor-pointer transition-colors">
@@ -176,10 +245,8 @@
     </div>
   </nav>
 
-  <!-- Mobile menu content (sin cambios) -->
+  <!-- Mobile menu content - las opciones siguen disponibles -->
   <div *ngIf="mobileMenuOpen()" class="md:hidden fixed inset-0 z-40 bg-black/20 backdrop-blur-sm transition-opacity duration-300" (click)="toggleMobileMenu()">
-    <!-- ... contenido del menú móvil ... -->
-     <div *ngIf="mobileMenuOpen()" class="md:hidden fixed inset-0 z-40 bg-black/20 backdrop-blur-sm transition-opacity duration-300" (click)="toggleMobileMenu()">
     <div class="absolute right-0 top-0 h-full w-80 bg-white shadow-2xl transform transition-transform duration-300" (click)="$event.stopPropagation()">
       <div class="p-6">
         <!-- Header del menú mobile -->
@@ -215,6 +282,36 @@
 
         <!-- Navigation links mobile -->
         <div class="space-y-1">
+          <!-- Información -->
+          <div class="border-b border-gray-100 pb-2 mb-2">
+            <p class="text-xs font-semibold text-[#666666] px-4 mb-1 uppercase tracking-wider">Información</p>
+            <a routerLink="/info/nosotros" (click)="toggleMobileMenu()"
+               class="flex items-center px-4 py-3 text-[#666666] hover:text-[#0367A6] hover:bg-blue-50/80 rounded-xl transition-all duration-200">
+              <span class="material-symbols-outlined mr-3 text-xl">business</span>
+              <span class="text-sm font-medium">Información de Empresa</span>
+            </a>
+            <a routerLink="/info/ubicacion" (click)="toggleMobileMenu()"
+               class="flex items-center px-4 py-3 text-[#666666] hover:text-[#0367A6] hover:bg-blue-50/80 rounded-xl transition-all duration-200">
+              <span class="material-symbols-outlined mr-3 text-xl">location_on</span>
+              <span class="text-sm font-medium">Ubicación</span>
+            </a>
+          </div>
+
+          <!-- Soporte -->
+          <div class="border-b border-gray-100 pb-2 mb-2">
+            <p class="text-xs font-semibold text-[#666666] px-4 mb-1 uppercase tracking-wider">Soporte</p>
+            <a routerLink="/support/contact" (click)="toggleMobileMenu()"
+               class="flex items-center px-4 py-3 text-[#666666] hover:text-[#0367A6] hover:bg-blue-50/80 rounded-xl transition-all duration-200">
+              <span class="material-symbols-outlined mr-3 text-xl">mail</span>
+              <span class="text-sm font-medium">Contacto</span>
+            </a>
+            <a routerLink="/support/preguntas-frecuentes" (click)="toggleMobileMenu()"
+               class="flex items-center px-4 py-3 text-[#666666] hover:text-[#0367A6] hover:bg-blue-50/80 rounded-xl transition-all duration-200">
+              <span class="material-symbols-outlined mr-3 text-xl">help</span>
+              <span class="text-sm font-medium">Preguntas Frecuentes</span>
+            </a>
+          </div>
+
           <a 
             routerLink="/cart" 
             (click)="toggleMobileMenu()"
@@ -273,7 +370,6 @@
       </div>
     </div>
   </div>
-  </div>
 </ng-container>
 
 <!-- Navbar especial para Administrador -->
@@ -287,7 +383,7 @@
         <div class="flex items-center gap-4">
           <a routerLink="/dashboard/admin" class="flex items-center group">
             <img 
-              src="/assets/images/logo_sportcenter.png" 
+              [src]="logo" 
               alt="SportCenter" 
               class="h-9 w-auto transition-transform duration-300 group-hover:scale-105" 
             />
@@ -319,9 +415,7 @@
 
             <!-- Dropdown menu -->
             <div *ngIf="shouldShowAdminMenu()" 
-                 class="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-2xl border border-gray-100 z-50"
-                 (mouseenter)="cancelAdminClose()" 
-                 (mouseleave)="scheduleAdminClose()">
+                 class="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-2xl border border-gray-100 z-50">
               <div class="p-3 border-b border-gray-100">
                 <p class="text-xs text-[#666666] truncate">{{ authServicePublic.currentUser()?.email }}</p>
               </div>

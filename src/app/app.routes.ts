@@ -161,6 +161,10 @@ export const routes: Routes = [
     loadComponent: () => import('./features/info/ubicacion/ubicacion').then((m) => m.Ubicacion),
   },
   {
+    path: 'info/nosotros',
+    loadComponent: () => import('./features/info/nosotros/nosotros').then((m) => m.Nosotros),
+  },
+  {
     path: 'legal/terms',
     loadComponent: () =>
       import('./features/legal/terms/terms').then((m) => m.TermsComponent),
@@ -232,6 +236,9 @@ export const routes: Routes = [
   {
     path: 'support/contact',
     loadComponent: () => import('./features/support/contact/contact').then((m) => m.ContactPage),
+  },
+  {  path: 'support/preguntas-frecuentes',
+    loadComponent: () => import('./features/support/faqs/faqs').then((m) => m.Faqs),
   },
   {
     path: '**',

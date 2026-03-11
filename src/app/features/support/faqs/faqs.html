@@ -1,0 +1,169 @@
+<section class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-8">
+  <!-- Header -->
+  <header class="space-y-2 text-center">
+    <p class="inline-flex items-center gap-2 text-sm font-semibold text-[#0367A6] bg-[#0367A6]/10 px-3 py-1 rounded-full">
+      <span class="material-symbols-outlined text-base">help</span>
+      Preguntas Frecuentes
+    </p>
+    <h1 class="text-3xl sm:text-4xl font-bold text-[#202020]">¿Cómo podemos ayudarte?</h1>
+    <p class="text-[#666666] max-w-2xl mx-auto">
+      Encuentra respuestas rápidas a las dudas más comunes sobre compras, envíos, devoluciones y más.
+    </p>
+  </header>
+
+  <!-- Buscador -->
+  <div class="max-w-2xl mx-auto">
+    <div class="relative">
+      <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#666666]">
+        <span class="material-symbols-outlined text-xl">search</span>
+      </span>
+      <input type="text"
+             (input)="onSearch($event)"
+             [ngModel]="searchTerm"
+             placeholder="Buscar pregunta (ej: envío, pago, devolución...)"
+             class="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 transition-all outline-none text-sm"
+             [class.pr-12]="searchTerm">
+      <button *ngIf="searchTerm"
+              (click)="clearSearch()"
+              class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#0367A6] transition-colors">
+        <span class="material-symbols-outlined text-xl">close</span>
+      </button>
+    </div>
+
+    <!-- Filtro rápido por sección -->
+    <div class="flex flex-wrap gap-2 mt-4 justify-center">
+      <button *ngFor="let seccion of secciones"
+              (click)="onSeccionChange(seccion)"
+              class="px-4 py-2 rounded-full text-sm font-medium transition-all"
+              [class.bg-[#0367A6]!]="selectedSeccion === seccion"
+              [class.text-white!]="selectedSeccion === seccion"
+              [class.bg-gray-100]="selectedSeccion !== seccion"
+              [class.text-[#666666]]="selectedSeccion !== seccion"
+              [class.hover:bg-gray-200]="selectedSeccion !== seccion">
+        {{ seccion === 'todas' ? 'Todas' : seccion }}
+      </button>
+    </div>
+
+    <!-- Resultados de búsqueda -->
+    <p *ngIf="searchTerm" class="text-sm text-[#666666] mt-2 text-center">
+      {{ filteredFaqs.length }} {{ filteredFaqs.length === 1 ? 'resultado encontrado' : 'resultados encontrados' }}
+    </p>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading()" class="flex flex-col items-center justify-center py-16">
+    <div class="relative">
+      <div class="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-[#0367A6]"></div>
+      <div class="absolute inset-0 flex items-center justify-center">
+        <span class="material-symbols-outlined text-[#0367A6] text-xl">help</span>
+      </div>
+    </div>
+    <p class="text-[#666666] mt-4">Cargando preguntas frecuentes...</p>
+  </div>
+
+  <!-- FAQs agrupadas por sección -->
+  <div *ngIf="!isLoading()" class="space-y-8">
+    <!-- Si hay filtro activo, mostrar resultados planos -->
+    <div *ngIf="searchTerm || selectedSeccion !== 'todas'" class="space-y-4">
+      <div *ngFor="let faq of filteredFaqs" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <details class="group">
+          <summary class="flex items-center justify-between gap-4 p-6 cursor-pointer list-none">
+            <div class="flex items-start gap-3">
+              <span class="material-symbols-outlined text-[#0367A6] text-sm mt-1">help</span>
+              <h3 class="text-lg font-semibold text-[#202020]">{{ faq.pregunta }}</h3>
+            </div>
+            <span class="material-symbols-outlined text-[#666666] group-open:rotate-180 transition-transform">
+              expand_more
+            </span>
+          </summary>
+          <div class="px-6 pb-6 pt-2 border-t border-gray-100">
+            <div class="flex items-start gap-3">
+              <span class="material-symbols-outlined text-[#0367A6] text-sm mt-1">description</span>
+              <div class="text-[#666666] text-sm leading-relaxed whitespace-pre-line">
+                {{ faq.respuesta }}
+              </div>
+            </div>
+            <div class="flex items-center justify-end gap-2 mt-4">
+              <span class="text-xs text-gray-400">¿Te fue útil?</span>
+              <button (click)="marcarComoUtil(faq.id_faq)" 
+                      class="px-3 py-1 bg-gray-100 text-gray-600 rounded-lg hover:bg-[#0367A6] hover:text-white transition-all text-xs flex items-center gap-1">
+                <span class="material-symbols-outlined text-sm">thumb_up</span>
+                {{ faq.contador_util || 0 }}
+              </button>
+            </div>
+          </div>
+        </details>
+      </div>
+    </div>
+
+    <!-- Si no hay filtros, mostrar agrupado por secciones -->
+    <div *ngIf="!searchTerm && selectedSeccion === 'todas'" class="space-y-8">
+      <div *ngFor="let seccion of secciones.slice(1)" class="space-y-4">
+        <h2 class="text-xl font-bold text-[#202020] flex items-center gap-2">
+          <span class="w-1 h-6 bg-[#0367A6] rounded-full"></span>
+          {{ seccion }}
+        </h2>
+        
+        <div class="grid gap-4">
+          <div *ngFor="let faq of getFaqsBySeccion(seccion)" 
+               class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <details class="group">
+              <summary class="flex items-center justify-between gap-4 p-6 cursor-pointer list-none">
+                <div class="flex items-start gap-3">
+                  <span class="material-symbols-outlined text-[#0367A6] text-sm mt-1">help</span>
+                  <h3 class="text-lg font-semibold text-[#202020]">{{ faq.pregunta }}</h3>
+                </div>
+                <span class="material-symbols-outlined text-[#666666] group-open:rotate-180 transition-transform">
+                  expand_more
+                </span>
+              </summary>
+              <div class="px-6 pb-6 pt-2 border-t border-gray-100">
+                <div class="flex items-start gap-3">
+                  <span class="material-symbols-outlined text-[#0367A6] text-sm mt-1">description</span>
+                  <div class="text-[#666666] text-sm leading-relaxed whitespace-pre-line">
+                    {{ faq.respuesta }}
+                  </div>
+                </div>
+                <div class="flex items-center justify-end gap-2 mt-4">
+                  <span class="text-xs text-gray-400">¿Te fue útil?</span>
+                  <button (click)="marcarComoUtil(faq.id_faq)" 
+                          class="px-3 py-1 bg-gray-100 text-gray-600 rounded-lg hover:bg-[#0367A6] hover:text-white transition-all text-xs flex items-center gap-1">
+                    <span class="material-symbols-outlined text-sm">thumb_up</span>
+                    {{ faq.contador_util || 0 }}
+                  </button>
+                </div>
+              </div>
+            </details>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mensaje cuando no hay resultados -->
+    <div *ngIf="filteredFaqs.length === 0 && (searchTerm || selectedSeccion !== 'todas')" 
+         class="text-center py-16 bg-white rounded-xl shadow-sm border border-gray-100">
+      <span class="material-symbols-outlined text-5xl text-gray-300">help_center</span>
+      <h3 class="text-xl font-semibold text-[#202020] mt-4">No encontramos resultados</h3>
+      <p class="text-[#666666] mt-2 max-w-md mx-auto">
+        Intenta con otros términos de búsqueda o explora nuestras categorías.
+      </p>
+      <button (click)="clearSearch()" 
+              class="mt-6 px-6 py-2 bg-[#0367A6] text-white rounded-lg hover:bg-[#035A91] transition-all">
+        Ver todas las preguntas
+      </button>
+    </div>
+  </div>
+
+  <!-- CTA para contacto -->
+  <div class="bg-gradient-to-r from-[#0367A6] to-[#035A91] rounded-xl p-8 text-white mt-12">
+    <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+      <div>
+        <h3 class="text-xl font-bold mb-2">¿No encuentras lo que buscas?</h3>
+        <p class="text-blue-100">Nuestro equipo de soporte está listo para ayudarte.</p>
+      </div>
+      <a routerLink="/support/contact" class="px-6 py-3 bg-white text-[#0367A6] rounded-lg hover:bg-gray-100 transition-all font-medium">
+        Contactar soporte
+      </a>
+    </div>
+  </div>
+</section>

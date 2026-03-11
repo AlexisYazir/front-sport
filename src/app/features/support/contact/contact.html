@@ -1,90 +1,151 @@
 <section class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-8">
+  <!-- Header -->
   <header class="space-y-2 text-center">
-    <p class="chip">
+    <p class="inline-flex items-center gap-2 text-sm font-semibold text-[#0367A6] bg-[#0367A6]/10 px-3 py-1 rounded-full mx-auto w-fit">
       <span class="material-symbols-outlined text-base">mail</span>
       Contáctanos
     </p>
-    <h1 class="text-3xl sm:text-4xl font-bold text-spurt-dark">Estamos aquí para ayudarte</h1>
-    <p class="text-spurt-gray max-w-2xl mx-auto">
+    <h1 class="text-3xl sm:text-4xl font-bold text-[#202020]">Estamos aquí para ayudarte</h1>
+    <p class="text-[#666666] max-w-2xl mx-auto">
       Resolvemos dudas sobre pedidos, cambios, facturación o soporte técnico. Tiempo medio de respuesta: 15 minutos.
     </p>
   </header>
 
-  <div class="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-    <form class="card" (ngSubmit)="onSubmit()" *ngIf="!submitted">
-      <label class="field">
-        <span>Nombre</span>
-        <input [(ngModel)]="form.nombre" name="nombre" type="text" placeholder="Tu nombre" required />
-      </label>
+  <!-- Verificación de autenticación -->
+  <div *ngIf="!isAuthenticated() && !submitted" class="bg-amber-50 border border-amber-200 rounded-xl p-6 text-center">
+    <span class="material-symbols-outlined text-amber-600 text-4xl mb-2">lock</span>
+    <h2 class="text-xl font-semibold text-[#202020] mb-2">Inicia sesión para contactarnos</h2>
+    <p class="text-[#666666] mb-4">Necesitas tener una cuenta para enviar mensajes a soporte.</p>
+    <button (click)="goToLogin()" 
+            class="px-6 py-2 bg-[#0367A6] text-white rounded-lg hover:bg-[#035A91] transition-all">
+      Iniciar sesión
+    </button>
+  </div>
 
-      <label class="field">
-        <span>Email</span>
-        <input [(ngModel)]="form.email" name="email" type="email" placeholder="nombre@correo.com" required />
-      </label>
+  <div class="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]" *ngIf="isAuthenticated() || submitted">
+    <!-- Formulario -->
+    <form class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-4" (ngSubmit)="onSubmit()" *ngIf="!submitted">
+      <div class="field">
+        <label class="block text-sm font-medium text-[#666666] mb-1">
+          Nombre <span class="text-red-500">*</span>
+        </label>
+        <input [(ngModel)]="form.nombre" name="nombre" type="text" 
+               placeholder="Tu nombre" 
+               class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none transition-all"
+               [class.border-red-500]="errors.nombre">
+        <p *ngIf="errors.nombre" class="text-red-500 text-xs mt-1">{{ errors.nombre }}</p>
+      </div>
 
-      <label class="field">
-        <span>Motivo</span>
-        <select [(ngModel)]="form.asunto" name="asunto">
+      <div class="field">
+        <label class="block text-sm font-medium text-[#666666] mb-1">
+          Email <span class="text-red-500">*</span>
+        </label>
+        <input [(ngModel)]="form.email" name="email" type="email" 
+               placeholder="nombre@correo.com" 
+               class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none transition-all"
+               [class.border-red-500]="errors.email">
+        <p *ngIf="errors.email" class="text-red-500 text-xs mt-1">{{ errors.email }}</p>
+      </div>
+
+      <div class="field">
+        <label class="block text-sm font-medium text-[#666666] mb-1">Motivo</label>
+        <select [(ngModel)]="form.asunto" name="asunto"
+                class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none transition-all">
           <option value="soporte">Soporte de pedido</option>
           <option value="pago">Pagos y facturación</option>
           <option value="devolucion">Devoluciones / cambios</option>
           <option value="cuenta">Cuenta y seguridad</option>
         </select>
-      </label>
+      </div>
 
-      <label class="field">
-        <span>Mensaje</span>
-        <textarea [(ngModel)]="form.mensaje" name="mensaje" rows="4" placeholder="Cuéntanos en qué podemos ayudarte" required></textarea>
-      </label>
+      <div class="field">
+        <label class="block text-sm font-medium text-[#666666] mb-1">
+          Mensaje <span class="text-red-500">*</span>
+        </label>
+        <textarea [(ngModel)]="form.mensaje" name="mensaje" rows="4" 
+                  placeholder="Cuéntanos en qué podemos ayudarte" 
+                  class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none transition-all resize-none"
+                  [class.border-red-500]="errors.mensaje"></textarea>
+        <p *ngIf="errors.mensaje" class="text-red-500 text-xs mt-1">{{ errors.mensaje }}</p>
+      </div>
 
-      <button class="btn-primary" type="submit">Enviar mensaje</button>
+      <button class="w-full px-6 py-3 bg-[#0367A6] text-white rounded-lg hover:bg-[#035A91] transition-all font-medium flex items-center justify-center gap-2 disabled:opacity-50"
+              type="submit" [disabled]="isLoading()">
+        <span *ngIf="!isLoading()">Enviar mensaje</span>
+        <span *ngIf="isLoading()" class="flex items-center gap-2">
+          <span class="material-symbols-outlined animate-spin text-sm">progress_activity</span>
+          Enviando...
+        </span>
+      </button>
     </form>
 
-    <div *ngIf="submitted" class="card success">
-      <div class="icon success">
-        <span class="material-symbols-outlined">check_circle</span>
+    <!-- Mensaje de éxito -->
+    <div *ngIf="submitted" class="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center">
+      <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <span class="material-symbols-outlined text-3xl text-green-600">check_circle</span>
       </div>
-      <h2>Mensaje enviado</h2>
-      <p>Gracias, <strong>{{ form.nombre || 'cliente' }}</strong>. Hemos recibido tu solicitud y te responderemos al correo <strong>{{ form.email }}</strong> en unos minutos.</p>
-      <a class="btn-secondary" routerLink="/home">Volver al inicio</a>
+      <h2 class="text-xl font-bold text-[#202020] mb-2">¡Mensaje enviado!</h2>
+      <p class="text-[#666666] mb-4">
+        Gracias, <strong class="text-[#202020]">{{ form.nombre || 'cliente' }}</strong>. 
+        Hemos recibido tu solicitud y te responderemos al correo 
+        <strong class="text-[#202020]">{{ form.email }}</strong> en unos minutos.
+      </p>
+      <button (click)="resetForm()" 
+              class="px-6 py-2 border border-[#0367A6] text-[#0367A6] rounded-lg hover:bg-[#0367A6] hover:text-white transition-all">
+        Enviar otro mensaje
+      </button>
     </div>
 
-    <div class="card info">
-      <h3 class="flex items-center gap-2 text-lg font-semibold text-spurt-dark">
-        <span class="material-symbols-outlined text-spurt-primary">schedule</span>
+    <!-- Información de contacto -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 h-fit">
+      <h3 class="flex items-center gap-2 text-lg font-semibold text-[#202020] mb-3">
+        <span class="material-symbols-outlined text-[#0367A6]">schedule</span>
         Horarios de atención
       </h3>
-      <p class="text-spurt-gray text-sm">Lunes a domingo, 8:00 - 22:00 (hora local).</p>
+      <p class="text-[#666666] text-sm mb-4">Lunes a domingo, 8:00 - 22:00 (hora local).</p>
 
-      <div class="divider"></div>
+      <div class="h-px bg-gray-200 my-4"></div>
 
-      <h3 class="flex items-center gap-2 text-lg font-semibold text-spurt-dark">
-        <span class="material-symbols-outlined text-spurt-primary">support_agent</span>
+      <h3 class="flex items-center gap-2 text-lg font-semibold text-[#202020] mb-3">
+        <span class="material-symbols-outlined text-[#0367A6]">support_agent</span>
         Canales rápidos
       </h3>
-      <ul class="list">
-        <li>
-          <span class="material-symbols-outlined">chat</span>
+      
+      <ul class="space-y-4">
+        <li class="flex gap-3">
+          <div class="w-8 h-8 bg-[#0367A6]/10 rounded-lg flex items-center justify-center shrink-0">
+            <span class="material-symbols-outlined text-[#0367A6] text-sm">chat</span>
+          </div>
           <div>
-            <p class="font-semibold text-spurt-dark">Chat en vivo</p>
-            <p class="text-sm text-spurt-gray">Disponible en la esquina inferior derecha.</p>
+            <p class="font-semibold text-[#202020]">Chat en vivo</p>
+            <p class="text-xs text-[#666666]">Disponible en la esquina inferior derecha.</p>
           </div>
         </li>
-        <li>
-          <span class="material-symbols-outlined">call</span>
+        <li class="flex gap-3">
+          <div class="w-8 h-8 bg-[#0367A6]/10 rounded-lg flex items-center justify-center shrink-0">
+            <span class="material-symbols-outlined text-[#0367A6] text-sm">call</span>
+          </div>
           <div>
-            <p class="font-semibold text-spurt-dark">Línea directa</p>
-            <p class="text-sm text-spurt-gray">+1 (800) 555-0199</p>
+            <p class="font-semibold text-[#202020]">Línea directa</p>
+            <p class="text-xs text-[#666666]">(55) 1234 5678</p>
           </div>
         </li>
-        <li>
-          <span class="material-symbols-outlined">mail</span>
+        <li class="flex gap-3">
+          <div class="w-8 h-8 bg-[#0367A6]/10 rounded-lg flex items-center justify-center shrink-0">
+            <span class="material-symbols-outlined text-[#0367A6] text-sm">mail</span>
+          </div>
           <div>
-            <p class="font-semibold text-spurt-dark">Correo</p>
-            <p class="text-sm text-spurt-gray">soporte@sportcenter.com</p>
+            <p class="font-semibold text-[#202020]">Correo</p>
+            <p class="text-xs text-[#666666]">soporte&#64;sportcenter.com</p>
           </div>
         </li>
       </ul>
+
+      <!-- Botón para FAQs -->
+      <a routerLink="/faqs" 
+         class="mt-6 block text-center px-4 py-2 bg-gray-100 text-[#666666] rounded-lg hover:bg-gray-200 transition-all text-sm">
+        Consultar preguntas frecuentes
+      </a>
     </div>
   </div>
 </section>
