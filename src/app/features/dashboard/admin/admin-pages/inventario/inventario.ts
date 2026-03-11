@@ -3,9 +3,9 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
 import { ProductService } from '../../../../../core/services/product.service';
-import { InventoryProduct } from '../../../../../core/models/product.model';
+import { InventoryProduct, ProductVariant } from '../../../../../core/models/product.model';
 
-// Interfaz para variantes existentes
+// Interfaz para variantes existentes (SOLO VISUALIZACIÓN)
 interface ExistingVariant {
   id_variante: number;
   id_producto: number;
@@ -13,17 +13,39 @@ interface ExistingVariant {
   precio: number;
   stock: number;
   imagenes: string[];
-  selected?: boolean;
 }
 
-// Interfaz para editar variante completa
-interface EditVariantFullData {
-  id_producto: number;
+// Interfaz para movimientos de inventario
+interface InventoryMovement {
+  id_movimiento: number;
   id_variante: number;
+  tipo: 'entrada' | 'salida' | 'ajuste';
+  cantidad: number;
+  costo_unitario: number;
+  referencia_tipo: string;
+  referencia_id: number;
+  fecha: string;
+}
+
+// Interfaz para nuevo movimiento
+interface NewMovement {
+  id_variante: number | null;
+  tipo: 'entrada' | 'salida' | 'ajuste';
+  cantidad: number;
+  costo_unitario: number;
+  referencia_tipo: string;
+  referencia_id: number | null;
+}
+
+// Interfaz para variante en búsqueda
+interface VariantSearchItem {
+  id_variante: number;
+  id_producto: number;
   sku: string;
+  producto: string;
+  marca: string;
+  stock_actual: number;
   precio: number;
-  stock: number;
-  imagenes: string[];
 }
 
 @Component({
@@ -37,6 +59,7 @@ export class Inventario implements OnInit {
   private productService = inject(ProductService);
   private toastr = inject(ToastrService);
   
+  // ===== APARTADO 1: PRODUCTOS (SIN CAMBIOS) =====
   products: InventoryProduct[] = [];
   filteredProducts: InventoryProduct[] = [];
   paginatedProducts: InventoryProduct[] = [];
@@ -53,49 +76,65 @@ export class Inventario implements OnInit {
   currentPage: number = 1;
   totalRecords: number = 0;
   
-  // Modal de edición de variantes
-  showEditModal: boolean = false;
+  // Modal de visualización de variantes (SOLO VER)
+  showVariantsModal: boolean = false;
   selectedProduct: InventoryProduct | null = null;
   productVariants: ExistingVariant[] = [];
   
-  // Variante seleccionada para editar
-  selectedVariant: ExistingVariant | null = null;
-  
-  // Datos para edición completa de variante
-  editVariantData: EditVariantFullData = {
-    id_producto: 0,
-    id_variante: 0,
-    sku: '',
-    precio: 0,
-    stock: 0,
-    imagenes: []
-  };
-  
-  // Guardar copia original para detectar cambios
-  originalVariantData: EditVariantFullData | null = null;
-  
-  // Input para nueva imagen
-  variantImageInput: string = '';
-  
   // Estados del modal
   loadingVariants: boolean = false;
-  saving: boolean = false;
-  
-  validationErrors = {
-    sku: '',
-    precio: '',
-    stock: ''
-  };
   
   // Estado para toggle de producto activo
   togglingActive: { [key: number]: boolean } = {};
   
+  // ===== APARTADO 2: MOVIMIENTOS =====
+  activeTab: 'productos' | 'movimientos' = 'productos';
+  
+  // Lista de movimientos
+  movements: InventoryMovement[] = [];
+  filteredMovements: InventoryMovement[] = [];
+  paginatedMovements: InventoryMovement[] = [];
+  searchMovementValue: string = '';
+  
+  // Filtros para movimientos
+  filterTipo: string = 'todos';
+  filterFechaInicio: string = '';
+  filterFechaFin: string = '';
+  
+  // Paginación para movimientos
+  movementsRowsPerPage: number = 10;
+  movementsFirst: number = 0;
+  movementsCurrentPage: number = 1;
+  movementsTotalRecords: number = 0;
+  
+  // Modal para registrar movimiento
+  showMovementModal: boolean = false;
+  newMovement: NewMovement = {
+    id_variante: null,
+    tipo: 'entrada',
+    cantidad: 1,
+    costo_unitario: 0,
+    referencia_tipo: 'manual',
+    referencia_id: null
+  };
+  
+  // Para búsqueda de variantes en modal
+  variantSearchTerm: string = '';
+  filteredVariantsForMovement: VariantSearchItem[] = [];
+  allVariants: VariantSearchItem[] = []; // Para cargar variantes disponibles
+  loadingVariantsForSearch: boolean = false;
+  
+  // Estados
   isLoading = signal<boolean>(false);
+  savingMovement: boolean = false;
+  loadingMovements: boolean = false;
 
   ngOnInit(): void {
     this.loadInventory();
+    this.loadMovements();
   }
 
+  // ===== MÉTODOS PARA APARTADO 1: PRODUCTOS (SIN CAMBIOS) =====
   loadInventory() {
     this.isLoading.set(true);
     this.productService.getInventoryProducts().subscribe({
@@ -177,9 +216,10 @@ export class Inventario implements OnInit {
     this.filterEstado = 'todos';
     this.filterStock = 'todos';
     this.applyFilters();
+    this.toastr.success('Búsqueda limpiada', 'Éxito');
   }
 
-  // Paginación
+  // Paginación productos
   updatePaginatedProducts() {
     const start = this.first;
     const end = this.first + this.rowsPerPage;
@@ -265,7 +305,7 @@ export class Inventario implements OnInit {
     return activo ? 'Activo' : 'Inactivo';
   }
 
-  // ===== FUNCIÓN PARA TOGGLE DE ESTADO CON TOASTR =====
+  // TOGGLE DE ESTADO (SIN CAMBIOS)
   toggleProductStatus(product: InventoryProduct) {
     const productId = product.id_producto;
     
@@ -298,11 +338,11 @@ export class Inventario implements OnInit {
     });
   }
 
-  // ===== FUNCIONES PARA EDITAR VARIANTES COMPLETAS =====
-  openEditModal(product: InventoryProduct) {
+  // VER VARIANTES (SOLO VISUALIZACIÓN)
+  openVariantsModal(product: InventoryProduct) {
     this.selectedProduct = product;
     this.loadingVariants = true;
-    this.variantImageInput = '';
+    this.showVariantsModal = true;
     
     this.productService.getProductVariants(product.id_producto).subscribe({
       next: (variants: any[]) => {
@@ -315,131 +355,23 @@ export class Inventario implements OnInit {
           imagenes: v.imagenes || [],
         }));
         this.loadingVariants = false;
-        this.showEditModal = true;
       },
       error: (err) => {
         console.error('Error al cargar variantes:', err);
         this.loadingVariants = false;
         this.toastr.error('Error al cargar las variantes', 'Error');
+        this.closeVariantsModal();
       }
     });
   }
 
-  closeEditModal() {
-    this.showEditModal = false;
+  closeVariantsModal() {
+    this.showVariantsModal = false;
     this.selectedProduct = null;
     this.productVariants = [];
-    this.selectedVariant = null;
-    this.originalVariantData = null;
-    this.variantImageInput = '';
-    this.validationErrors = { sku: '', precio: '', stock: '' };
   }
 
-  selectVariant(variant: ExistingVariant) {
-    this.selectedVariant = variant;
-    this.editVariantData = {
-      id_producto: variant.id_producto,
-      id_variante: variant.id_variante,
-      sku: variant.sku,
-      precio: variant.precio,
-      stock: variant.stock,
-      imagenes: [...variant.imagenes]
-    };
-    
-    // Guardar copia original para comparar cambios
-    this.originalVariantData = { ...this.editVariantData, imagenes: [...this.editVariantData.imagenes] };
-    
-    this.variantImageInput = '';
-    this.validationErrors = { sku: '', precio: '', stock: '' };
-  }
-
-  // Funciones para manejar imágenes
-  addVariantImage() {
-    if (this.variantImageInput && this.variantImageInput.trim()) {
-      this.editVariantData.imagenes.push(this.variantImageInput.trim());
-      this.variantImageInput = '';
-    }
-  }
-
-  removeVariantImage(index: number) {
-    this.editVariantData.imagenes.splice(index, 1);
-  }
-
-  // Validaciones
-  validateFields(): boolean {
-    let isValid = true;
-    this.validationErrors = { sku: '', precio: '', stock: '' };
-
-    if (!this.editVariantData.sku.trim()) {
-      this.validationErrors.sku = 'El SKU es obligatorio';
-      isValid = false;
-    }
-
-    if (this.editVariantData.precio <= 0) {
-      this.validationErrors.precio = 'El precio debe ser mayor a 0';
-      isValid = false;
-    }
-
-    if (this.editVariantData.stock < 0) {
-      this.validationErrors.stock = 'El stock no puede ser negativo';
-      isValid = false;
-    }
-
-    return isValid;
-  }
-
-  hasChanges(): boolean {
-    if (!this.selectedVariant || !this.originalVariantData) return false;
-    
-    return this.editVariantData.sku !== this.originalVariantData.sku ||
-           this.editVariantData.precio !== this.originalVariantData.precio ||
-           this.editVariantData.stock !== this.originalVariantData.stock ||
-           JSON.stringify(this.editVariantData.imagenes) !== JSON.stringify(this.originalVariantData.imagenes);
-  }
-
-  // Guardar cambios de la variante
-  guardarCambios() {
-    if (!this.selectedVariant || !this.selectedProduct) return;
-    
-    if (!this.validateFields()) {
-      this.toastr.warning('Corrige los errores en el formulario', 'Validación');
-      return;
-    }
-    
-    if (!this.hasChanges()) {
-      this.toastr.info('No se detectaron cambios', 'Información');
-      return;
-    }
-
-    this.saving = true;
-
-    this.productService.updateProductVariantAttributes(this.editVariantData).subscribe({
-      next: () => {
-        this.saving = false;
-        this.toastr.success('Variante actualizada correctamente', 'Éxito');
-        
-        // Actualizar datos locales
-        if (this.selectedVariant) {
-          this.selectedVariant.sku = this.editVariantData.sku;
-          this.selectedVariant.precio = this.editVariantData.precio;
-          this.selectedVariant.stock = this.editVariantData.stock;
-          this.selectedVariant.imagenes = [...this.editVariantData.imagenes];
-        }
-        
-        setTimeout(() => {
-          this.closeEditModal();
-          this.loadInventory();
-        }, 1500);
-      },
-      error: (err) => {
-        console.error('Error al guardar cambios:', err);
-        this.saving = false;
-        this.toastr.error(err.error?.message || 'Error al guardar los cambios', 'Error');
-      }
-    });
-  }
-
-  // ===== FUNCIÓN PARA DETECTAR WARNINGS EN VARIANTES =====
+  // DETECTAR WARNINGS EN VARIANTES
   hasVariantWarnings(variant: ExistingVariant): boolean {
     if (variant.stock <= 5) return true;
     if (variant.precio < 10) return true;
@@ -471,18 +403,359 @@ export class Inventario implements OnInit {
   // Acciones
   refreshData() {
     this.loadInventory();
-    // this.toastr.success('Datos actualizados', 'Éxito');
+    this.loadMovements();
+    this.toastr.success('Datos actualizados', 'Éxito');
   }
 
-  viewDetails(product: InventoryProduct) {
-    console.log('Ver detalles:', product);
+  viewVariants(product: InventoryProduct) {
+    this.openVariantsModal(product);
   }
 
-  editProduct(product: InventoryProduct) {
-    this.openEditModal(product);
+  getMarcaImageUrl(product: InventoryProduct): string {
+    return product.imagen || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(product.producto) + '&background=0367A6&color=fff&size=64';
   }
 
-    getMarcaImageUrl(product: InventoryProduct): string {
-      return product.imagen || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(product.imagen) + '&background=0367A6&color=fff&size=64';
+  // Función para previsualizar imagen
+  openImagePreview(imageUrl: string) {
+    window.open(imageUrl, '_blank');
+  }
+
+  // ===== MÉTODOS PARA APARTADO 2: MOVIMIENTOS =====
+  
+  // Cambiar de pestaña
+  changeTab(tab: 'productos' | 'movimientos') {
+    this.activeTab = tab;
+    if (tab === 'movimientos' && this.movements.length === 0) {
+      this.loadMovements();
     }
+  }
+
+  // Cargar movimientos
+  loadMovements() {
+    this.loadingMovements = true;
+    this.productService.getInventoryMovements().subscribe({
+      next: (response: any) => {
+        // Si la respuesta es un array directamente
+        if (Array.isArray(response)) {
+          this.movements = response;
+        } 
+        // Si la respuesta tiene propiedad data
+        else if (response && response.data) {
+          this.movements = response.data;
+        } else {
+          this.movements = [];
+        }
+        
+        this.applyMovementsFilters();
+        this.loadingMovements = false;
+      },
+      error: (error) => {
+        console.error('Error loading movements:', error);
+        this.toastr.error('Error al cargar movimientos', 'Error');
+        this.movements = [];
+        this.loadingMovements = false;
+      }
+    });
+  }
+
+  // Aplicar filtros a movimientos
+  applyMovementsFilters() {
+    let filtered = [...this.movements];
+
+    // Filtro por tipo
+    if (this.filterTipo !== 'todos') {
+      filtered = filtered.filter(m => m.tipo === this.filterTipo);
+    }
+
+    // Filtro por fecha inicio
+    if (this.filterFechaInicio) {
+      const fechaInicio = new Date(this.filterFechaInicio);
+      fechaInicio.setHours(0, 0, 0, 0);
+      filtered = filtered.filter(m => new Date(m.fecha) >= fechaInicio);
+    }
+
+    // Filtro por fecha fin
+    if (this.filterFechaFin) {
+      const fechaFin = new Date(this.filterFechaFin);
+      fechaFin.setHours(23, 59, 59, 999);
+      filtered = filtered.filter(m => new Date(m.fecha) <= fechaFin);
+    }
+
+    // Búsqueda por texto (ID, referencia, etc.)
+    if (this.searchMovementValue) {
+      const term = this.searchMovementValue.toLowerCase();
+      filtered = filtered.filter(m => 
+        m.id_movimiento.toString().includes(term) ||
+        m.referencia_tipo.toLowerCase().includes(term) ||
+        m.referencia_id?.toString().includes(term) ||
+        m.id_variante.toString().includes(term)
+      );
+    }
+
+    this.filteredMovements = filtered;
+    this.movementsTotalRecords = filtered.length;
+    this.movementsFirst = 0;
+    this.updatePaginatedMovements();
+  }
+
+  // Filtros de movimientos
+  onMovementTipoChange(event: any) {
+    this.filterTipo = event.target.value;
+    this.applyMovementsFilters();
+  }
+
+  onMovementSearch(event: any) {
+    this.searchMovementValue = event.target.value;
+    this.applyMovementsFilters();
+  }
+
+  onFechaInicioChange(event: any) {
+    this.filterFechaInicio = event.target.value;
+    this.applyMovementsFilters();
+  }
+
+  onFechaFinChange(event: any) {
+    this.filterFechaFin = event.target.value;
+    this.applyMovementsFilters();
+  }
+
+  clearMovementFilters() {
+    this.searchMovementValue = '';
+    this.filterTipo = 'todos';
+    this.filterFechaInicio = '';
+    this.filterFechaFin = '';
+    this.applyMovementsFilters();
+    this.toastr.success('Filtros limpiados', 'Éxito');
+  }
+
+  // Paginación movimientos
+  updatePaginatedMovements() {
+    const start = this.movementsFirst;
+    const end = this.movementsFirst + this.movementsRowsPerPage;
+    this.paginatedMovements = this.filteredMovements.slice(start, end);
+    this.movementsTotalRecords = this.filteredMovements.length;
+    this.movementsCurrentPage = Math.floor(this.movementsFirst / this.movementsRowsPerPage) + 1;
+  }
+
+  onMovementsRowsPerPageChange() {
+    this.movementsFirst = 0;
+    this.updatePaginatedMovements();
+  }
+
+  changeMovementsPage(action: 'first' | 'prev' | 'next' | 'last') {
+    switch (action) {
+      case 'first': this.movementsFirst = 0; break;
+      case 'prev': if (this.movementsFirst > 0) this.movementsFirst -= this.movementsRowsPerPage; break;
+      case 'next': if (this.movementsFirst + this.movementsRowsPerPage < this.movementsTotalRecords) this.movementsFirst += this.movementsRowsPerPage; break;
+      case 'last': this.movementsFirst = Math.floor((this.movementsTotalRecords - 1) / this.movementsRowsPerPage) * this.movementsRowsPerPage; break;
+    }
+    this.updatePaginatedMovements();
+  }
+
+  goToMovementsPage(page: number) {
+    this.movementsFirst = (page - 1) * this.movementsRowsPerPage;
+    this.updatePaginatedMovements();
+  }
+
+  get movementsLast(): number {
+    return Math.min(this.movementsFirst + this.movementsRowsPerPage, this.movementsTotalRecords);
+  }
+
+  get movementsPageNumbers(): number[] {
+    const totalPages = Math.ceil(this.movementsTotalRecords / this.movementsRowsPerPage);
+    const current = this.movementsCurrentPage;
+    const pages: number[] = [];
+    
+    if (totalPages <= 5) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      if (current <= 3) for (let i = 1; i <= 5; i++) pages.push(i);
+      else if (current >= totalPages - 2) for (let i = totalPages - 4; i <= totalPages; i++) pages.push(i);
+      else for (let i = current - 2; i <= current + 2; i++) pages.push(i);
+    }
+    return pages;
+  }
+
+  // Utilidades para movimientos
+  getTipoClass(tipo: string): string {
+    switch(tipo) {
+      case 'entrada': return 'bg-green-100 text-green-800 border-green-200';
+      case 'salida': return 'bg-red-100 text-red-800 border-red-200';
+      case 'ajuste': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  }
+
+  getTipoIcon(tipo: string): string {
+    switch(tipo) {
+      case 'entrada': return 'pi pi-arrow-down';
+      case 'salida': return 'pi pi-arrow-up';
+      case 'ajuste': return 'pi pi-pencil';
+      default: return 'pi pi-question';
+    }
+  }
+
+  formatDate(dateString: string): string {
+    const date = new Date(dateString);
+    return date.toLocaleString('es-ES', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
+  // ===== MÉTODOS PARA REGISTRAR MOVIMIENTO =====
+  
+  openMovementModal() {
+    this.showMovementModal = true;
+    this.newMovement = {
+      id_variante: null,
+      tipo: 'entrada',
+      cantidad: 1,
+      costo_unitario: 0,
+      referencia_tipo: 'manual',
+      referencia_id: null
+    };
+    this.variantSearchTerm = '';
+    this.filteredVariantsForMovement = [];
+    this.loadVariantsForSearch();
+  }
+
+  closeMovementModal() {
+    this.showMovementModal = false;
+    this.newMovement = {
+      id_variante: null,
+      tipo: 'entrada',
+      cantidad: 1,
+      costo_unitario: 0,
+      referencia_tipo: 'manual',
+      referencia_id: null
+    };
+    this.variantSearchTerm = '';
+    this.filteredVariantsForMovement = [];
+  }
+
+  loadVariantsForSearch() {
+    this.loadingVariantsForSearch = true;
+    
+    // Necesitamos cargar todas las variantes de todos los productos
+    // Esto podría ser ineficiente si hay muchos productos, pero funciona
+    const variantPromises = this.products.map(product => 
+      this.productService.getProductVariants(product.id_producto).toPromise()
+    );
+    
+    Promise.all(variantPromises)
+      .then(results => {
+        const allVariants: VariantSearchItem[] = [];
+        
+        results.forEach((variants: any, index) => {
+          const product = this.products[index];
+          
+          if (variants && Array.isArray(variants)) {
+            variants.forEach((v: any) => {
+              allVariants.push({
+                id_variante: v.id_variante,
+                id_producto: v.id_producto,
+                sku: v.sku,
+                producto: product.producto,
+                marca: product.marca || '',
+                stock_actual: v.stock || 0,
+                precio: v.precio || 0
+              });
+            });
+          }
+        });
+        
+        this.allVariants = allVariants;
+        this.filterVariantsForMovement();
+        this.loadingVariantsForSearch = false;
+      })
+      .catch(error => {
+        console.error('Error loading variants for search:', error);
+        this.toastr.error('Error al cargar variantes', 'Error');
+        this.loadingVariantsForSearch = false;
+      });
+  }
+
+  filterVariantsForMovement() {
+    if (!this.allVariants || this.allVariants.length === 0) {
+      this.filteredVariantsForMovement = [];
+      return;
+    }
+    
+    if (!this.variantSearchTerm || this.variantSearchTerm.trim() === '') {
+      this.filteredVariantsForMovement = this.allVariants.slice(0, 10);
+    } else {
+      const term = this.variantSearchTerm.toLowerCase().trim();
+      this.filteredVariantsForMovement = this.allVariants.filter(v => 
+        v.sku.toLowerCase().includes(term) ||
+        v.producto.toLowerCase().includes(term) ||
+        v.marca.toLowerCase().includes(term) ||
+        v.id_variante.toString().includes(term)
+      ).slice(0, 20);
+    }
+  }
+
+  selectVariantForMovement(variant: VariantSearchItem) {
+    this.newMovement.id_variante = variant.id_variante;
+    this.variantSearchTerm = `${variant.sku} - ${variant.producto} (Stock: ${variant.stock_actual})`;
+    this.filteredVariantsForMovement = [];
+  }
+
+  validateMovement(): boolean {
+    if (!this.newMovement.id_variante) {
+      this.toastr.warning('Debes seleccionar una variante', 'Validación');
+      return false;
+    }
+    
+    if (this.newMovement.cantidad <= 0) {
+      this.toastr.warning('La cantidad debe ser mayor a 0', 'Validación');
+      return false;
+    }
+    
+    if (this.newMovement.costo_unitario < 0) {
+      this.toastr.warning('El costo unitario no puede ser negativo', 'Validación');
+      return false;
+    }
+    
+    return true;
+  }
+
+  saveMovement() {
+    if (!this.validateMovement()) return;
+    
+    this.savingMovement = true;
+    
+    const movementData = {
+      id_variante: this.newMovement.id_variante!,
+      tipo: this.newMovement.tipo,
+      cantidad: this.newMovement.cantidad,
+      costo_unitario: this.newMovement.costo_unitario,
+      referencia_tipo: this.newMovement.referencia_tipo,
+      referencia_id: this.newMovement.referencia_id || 0
+    };
+    
+    this.productService.createInventoryMovement(movementData).subscribe({
+      next: (response) => {
+        this.savingMovement = false;
+        this.toastr.success('Movimiento registrado correctamente', 'Éxito');
+        this.closeMovementModal();
+        this.loadMovements();
+        this.loadInventory();
+      },
+      error: (error) => {
+        console.error('Error al crear movimiento:', error);
+        this.savingMovement = false;
+        this.toastr.error(error.error?.message || 'Error al registrar movimiento', 'Error');
+      }
+    });
+  }
+
+  clearVariantSelection() {
+    this.newMovement.id_variante = null;
+    this.variantSearchTerm = '';
+    this.filterVariantsForMovement();
+  }
 }

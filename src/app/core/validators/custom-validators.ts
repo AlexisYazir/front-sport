@@ -366,3 +366,8 @@ export function isSecureInput(input: string): boolean {
   if (input.length > VALIDATOR_CONFIG.input.maxLength) return false;
   return !detectXSS(input) && !detectSQLInjection(input);
 }
+// Validar teléfono (10 dígitos)
+export function validatePhone(phone: string): boolean {
+  const phoneRegex = /^\d{10}$/;
+  return phoneRegex.test(phone);
+}

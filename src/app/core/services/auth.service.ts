@@ -16,17 +16,19 @@ import {
   getDashboardRoute,
   UsersAdmin,
   RecentUserCreated,
-  Roles
+  Roles,
+  UpdateProfileData,
+  UpdateProfileResponse
 } from '../models/user.model';
 import { TokenService } from './token.service';
 import { SessionService } from './session.service';
 import { CsrfTokenService } from './csrf-token.service';
 
 interface JwtPayload {
-  id: number;
+  id_usuario: number;
   email: string;
   rol: number;
-  nombre?: string;
+  nombre: string;
   aPaterno?: string;
   aMaterno?: string;
   telefono?: string;
@@ -132,10 +134,10 @@ export class AuthService {
       }
 
       const user: User = {
-        id: tokenData.id,
+        id: tokenData.id_usuario,
         email: tokenData.email,
         rol: tokenData.rol,
-        nombre: '',
+        nombre: tokenData.nombre,
         aPaterno: '',
         aMaterno: '',
         telefono: '',
@@ -210,20 +212,56 @@ export class AuthService {
       this.toastr.error('Error al guardar la sesión', 'Error');
     }
   }
-
+private clearAllStorage(): void {
+  // Limpiar TODAS las keys relacionadas con auth
+  const keysToRemove = [
+    this.TOKEN_KEY,
+    'auth_timestamp',
+    'auth:token',
+    'auth:user',
+    'auth:access_token',
+    'auth:refresh_token',
+    'auth:csrf_token',
+    'auth:last_activity',
+    'auth:failed_attempts',
+    'auth:lock_time'
+  ];
+  
+  keysToRemove.forEach(key => {
+    localStorage.removeItem(key);
+  });
+  
+  // También limpiar cualquier key que empiece con 'auth:'
+  Object.keys(localStorage).forEach(key => {
+    if (key.startsWith('auth:') || key.includes('failed_attempts') || key.includes('lock_time')) {
+      localStorage.removeItem(key);
+    }
+  });
+  
+  // Limpiar sessionStorage también por si acaso
+  sessionStorage.clear();
+}
   /**
    * Limpiar estado de autenticación
    */
-  private clearAuthState(): void {
+public clearAuthState(): void {
+  // Limpiar TODO el storage
+  this.clearAllStorage();
 
-    localStorage.removeItem(this.TOKEN_KEY);
-    localStorage.removeItem('auth_timestamp');
+  // Limpiar tokens en servicios
+  this.tokenService.clearTokens();
+  this.csrfTokenService.clearToken();
+  
+  // Limpiar timers de sesión
+  this.sessionService.clearSession();
 
-    this.tokenService.clearTokens();
-    this.csrfTokenService.clearToken();
-
-    this.updateAuthState(false, null, null);
-  }
+  // Resetear signals
+  this.updateAuthState(false, null, null);
+  
+  // Forzar actualización del signal
+  this.currentUser.set(null);
+  this.isAuthenticated.set(false);
+}
 
   /**
    * LOGIN - Iniciar sesión
@@ -255,7 +293,7 @@ export class AuthService {
         }
 
         const user: User = {
-          id: tokenData.id,
+          id: tokenData.id_usuario,
           nombre: tokenData.nombre || '',
           aPaterno: tokenData.aPaterno || '',
           aMaterno: tokenData.aMaterno || '',
@@ -387,13 +425,16 @@ export class AuthService {
   /**
    * LOGOUT - Cerrar sesión
    */
-  logout(): void {
-    const user = this.currentUser();
-    this.clearAuthState();
-    this.tokenService.clearTokens();
-    // this.toastr.success('Sesión cerrada correctamente', 'Hasta pronto');
-    this.router.navigate(['/home']);
-  }
+logout(): void {
+  console.log('Cerrando sesión...');
+  
+  // Limpiar todo
+  this.clearAuthState();
+  
+  // Redirigir al home
+  this.router.navigate(['/home']).then(() => {
+  });
+}
 
   /**
    * Obtener token actual
@@ -619,6 +660,15 @@ export class AuthService {
           })
         );
     }
+
+getProfile(): Observable<any> {
+  return this.http.get(`${this.API_URL}/users/profile`);
+}
+
+ // Actualizar perfil del usuario (usa PATCH como en tu backend)
+  updateProfile(data: UpdateProfileData): Observable<UpdateProfileResponse> {
+    return this.http.patch<UpdateProfileResponse>(`${this.API_URL}/users/update-profile`, data);
+  }
 
   updateUserFromAdmin(data: { id_usuario: number, activo: number, rol: number }): Observable<any> {
 

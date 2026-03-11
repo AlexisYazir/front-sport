@@ -5,16 +5,17 @@ import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
 import { ProductService } from '../../../core/services/product.service';
 import { RecentUserCreated, getRoleName } from '../../../core/models/user.model';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
   selector: 'app-dashboard-admin',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
+  imports: [CommonModule, RouterModule, FormsModule, MatTooltipModule],
   templateUrl: './dashboard-admin.html',
   styleUrl: './dashboard-admin.css'
 })
 export class DashboardAdmin implements OnInit {
-  private authService = inject(AuthService);
+  public authService = inject(AuthService);
   private productService = inject(ProductService);
   
   // Estado del menú lateral (inicialmente abierto)
@@ -27,10 +28,9 @@ export class DashboardAdmin implements OnInit {
   lastScrollTop = 0;
   scrollThreshold = 50;
 
+  
   // Datos del usuario actual
-  currentUser = {
-    nombre: 'Administrador'
-  };
+  currentUser: { nombre: string } | null = null;
 
   // Estadísticas del sistema
   stats = {
@@ -54,8 +54,11 @@ export class DashboardAdmin implements OnInit {
     { icon: 'category', label: 'Categorías', route: '/dashboard/admin/categories' },
     { icon: 'branding_watermark', label: 'Marcas', route: '/dashboard/admin/marcas' },
     { icon: 'people', label: 'Usuarios', route: '/dashboard/admin/users' },
+    { icon: 'database', label: 'Respaldos', route: '/dashboard/admin/backups' },
+    { icon: 'domain', label: 'Perfil Empresa', route: '/dashboard/admin/empresa' },
+    { icon: 'bar_chart', label: 'Reportes', route: '/dashboard/admin/reports' },
     { icon: 'person', label: 'Perfil', route: '/dashboard/admin/profile' },
-    { icon: 'settings', label: 'Configuración', route: '/dashboard/admin/settings' }
+    { icon: 'settings', label: 'Configuración', route: '/dashboard/admin/settings' },
   ];
 
   // Lista de usuarios RECIENTES desde la API
@@ -77,6 +80,9 @@ export class DashboardAdmin implements OnInit {
   }
 
   ngOnInit(): void {
+     const user = this.authService.currentUser(); // Obtener el valor del signal
+    this.currentUser = user ? { nombre: user.nombre || 'Administrador' } : { nombre: 'Administrador' };
+    console.log('Usuario actual:', this.currentUser); // Para verificar
     this.loadAllStats();
   }
 
@@ -231,4 +237,22 @@ export class DashboardAdmin implements OnInit {
   isActive(route: string): boolean {
     return this.router.url === route;
   }
+  // En tu dashboard-admin.ts, agrega:
+
+// Propiedades que faltan
+recentProducts: any[] = []; // O crea una interfaz Producto
+
+// Métodos que faltan
+getStockClass(stock: number): string {
+  if (stock <= 0) return 'bg-red-100 text-red-800';
+  if (stock <= 5) return 'bg-yellow-100 text-yellow-800';
+  return 'bg-green-100 text-green-800';
+}
+
+getStockStatus(stock: number): string {
+  if (stock <= 0) return 'Agotado';
+  if (stock <= 5) return 'Bajo stock';
+  return 'Disponible';
+}
+
 }

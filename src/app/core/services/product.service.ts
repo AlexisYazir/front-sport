@@ -106,6 +106,7 @@ export class ProductService {
     return {
       id_atributo: a.id_atributo,
       nombre: a.nombre,
+      id_padre: a.id_padre
     };
   }
 
@@ -126,13 +127,10 @@ export class ProductService {
       sku: v.sku,
       precio: v.precio,
       stock: v.stock,
-      imagenes: v.imagenes
+      imagenes: v.imagenes,
+      atributos: v.atributos
     }
   }
-
-  /* =====================================================
-     CRUD REAL CON API
-  ====================================================== */
 
   /**
    * Obtener todos los productos desde la API
@@ -151,10 +149,11 @@ export class ProductService {
       .get<any[]>(`${this.API_URL}/products/get-all-products`)
       .pipe(
         map(response => {
+           console.log('📦 RESPUESTA CRUDA DE LA API:', response);
           const mapped = response.map(p => this.mapProductFromApi(p));
           this.productsSubject.next(mapped);
           this.isLoading.set(false);
-          // console.log("prods", mapped);
+          console.log("prods", mapped);
           return mapped;
         })
       );
@@ -230,15 +229,16 @@ export class ProductService {
         })
       );
   }
-  getProductVariants(id_producto: number): Observable<ProductVariant[]> {
-    this.isLoading.set(true);
-    return this.http.get<any[]>(`${this.API_URL}/products/get-variants-by-product/${id_producto}`).pipe(
-      map(response => {
-        this.isLoading.set(false);
-        return response.map(v => this.mapProductVariantFromApi(v));
-      })
-    );
-  }
+getProductVariants(id_producto: number): Observable<ProductVariant[]> {
+  this.isLoading.set(true);
+  return this.http.get<any[]>(`${this.API_URL}/products/get-variants-by-product/${id_producto}`).pipe(
+    map(response => {
+      console.log('📦 Respuesta de variantes (SERVICE):', response); // ← Debug
+      this.isLoading.set(false);
+      return response.map(v => this.mapProductVariantFromApi(v));
+    })
+  );
+}
 
     getReceientProducts(): Observable<any[]> {
         this.isLoading.set(true);
@@ -322,15 +322,18 @@ createBaseProduct(data: { nombre: string, descripcion: string, id_marca: number,
  * PASO 2: Crear la variante del producto
  * POST: /products/create-product-variant
  */
-createProductVariant(data: { id_producto: number, sku: string, precio: number, stock: number, imagenes: string[] }): Observable<any> {
+createProductVariant(data: {id_producto: number, sku: string, precio: number, imagenes: string[], atributos: Record<string, any> }): Observable<any> {
   this.isLoading.set(true);
-  return this.http.post(`${this.API_URL}/products/create-product-variant`, data).pipe(
-    map(res => {
-      this.isLoading.set(false);
-      return res; // Retorna el objeto que contiene el id_variante creado
-    })
-  );
+  return this.http
+    .post(`${this.API_URL}/products/create-product-variant`, data)
+    .pipe(
+      map((res) => {
+        this.isLoading.set(false);
+        return res;
+      })
+    );
 }
+
 
 createProductVariantValues(data: { id_variante: number, id_atributo: number, valor: string }): Observable<any> {
   this.isLoading.set(true);
@@ -340,6 +343,39 @@ createProductVariantValues(data: { id_variante: number, id_atributo: number, val
       return res; // Retorna el objeto creado
     })
   );
+}
+
+createInventoryMovement(data: {
+  id_variante: number;
+  tipo: string;
+  cantidad: number;
+  costo_unitario: number;
+  referencia_tipo: string;
+  referencia_id: number;
+}): Observable<any> {
+
+  this.isLoading.set(true);
+
+  return this.http.post(`${this.API_URL}/products/create-inventory-movement`, data).pipe(
+    map(res => {
+      this.isLoading.set(false);
+      return res;
+    })
+  );
+}
+
+
+getInventoryMovements(): Observable<any> {
+  this.isLoading.set(true);
+
+  return this.http
+    .get(`${this.API_URL}/products/inventory-movements`)
+    .pipe(
+      map((res) => {
+        this.isLoading.set(false);
+        return res;
+      })
+    );
 }
 
 createCatetorie(data: { nombre: string, id_padre: number | null }): Observable<any> {
@@ -375,25 +411,6 @@ updateProductInv(data: { id_producto: number, estado: boolean }): Observable<any
   );
 }
 
-//datos para actualzar un producto completo
-/*
-{
-  "id_producto": 1,
-  "id_marca": 1,
-  "id_categoria": 3,
-  "nombre": "Producto simple",
-  "descripcion": "Solo una variante",
-
-  "id_variante": 1,
-  "sku": "SKU-TEST",
-  "imagenes": [
-    "img1.jpg"
-  ],
-
-  "id_atributo": 1,
-  "valor": "XL"
-}
-*/
 updateProductFull(data: { id_producto: number, id_marca: number, id_categoria: number, nombre: string, descripcion: string}): Observable<any> {
   this.isLoading.set(true);
   //
@@ -405,10 +422,17 @@ updateProductFull(data: { id_producto: number, id_marca: number, id_categoria: n
   );
 }
 
-updateProductVariantAttributes(data: { id_producto: number, id_variante: number, sku: string, imagenes: string[], stock: number, precio: number }): Observable<any> {
+updateProductVariant(data: {
+  id_producto: number;
+  id_variante: number;
+  sku: string;
+  precio: number;
+  imagenes: string[];
+  atributos: Record<string, any>;
+}): Observable<any> {
   this.isLoading.set(true);
   
-  return this.http.put(`${this.API_URL}/products/update-product-variant-attributes`, data).pipe(
+  return this.http.put(`${this.API_URL}/products/update-product-variant`, data).pipe(
     map(res => {
       this.isLoading.set(false);
       return res;

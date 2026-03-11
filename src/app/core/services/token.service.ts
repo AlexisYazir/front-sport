@@ -147,7 +147,6 @@ export class TokenService {
    * Limpiar todos los tokens
    */
   clearTokens() {
-
     this.accessToken.next(null);
     this.refreshToken.next(null);
     this.csrfToken.next(null);

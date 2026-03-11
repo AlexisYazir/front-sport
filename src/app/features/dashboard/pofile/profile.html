@@ -1,156 +1,337 @@
-<div class="min-h-screen bg-gradient-to-br from-[#F2F2F2] via-[#F8F9FA] to-[#E9ECEF] py-8">
-  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+  <!-- Toolbar -->
+  <div class="mb-6 p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="bg-[#0367A6]/10 p-3 rounded-xl">
+        <span class="material-symbols-outlined text-[#0367A6] text-2xl">account_circle</span>
+      </div>
+      <div>
+        <h2 class="text-2xl font-bold text-[#202020]">Mi Perfil</h2>
+        <p class="text-sm text-[#666666] mt-0.5">Gestiona tu información personal</p>
+      </div>
+    </div>
+    <div class="flex gap-3">
+      <button *ngIf="!isEditing()" 
+              (click)="toggleEdit()"
+              class="px-4 py-2 bg-[#0367A6] hover:bg-[#035A91] text-white rounded-lg flex items-center gap-2">
+        <span class="material-symbols-outlined text-base">edit</span>
+        Editar Perfil
+      </button>
+      <div *ngIf="isEditing()" class="flex gap-2">
+        <button (click)="saveProfile()"
+                class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg flex items-center gap-2">
+          <span class="material-symbols-outlined text-base">save</span>
+          Guardar
+        </button>
+        <button (click)="cancelEdit()"
+                class="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg flex items-center gap-2">
+          <span class="material-symbols-outlined text-base">close</span>
+          Cancelar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading()" class="flex flex-col items-center justify-center py-16">
+    <div class="relative">
+      <div class="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-[#0367A6]"></div>
+      <div class="absolute inset-0 flex items-center justify-center">
+        <span class="material-symbols-outlined text-[#0367A6] text-xl">account_circle</span>
+      </div>
+    </div>
+    <p class="text-[#666666] mt-4">Cargando perfil...</p>
+  </div>
+
+  <!-- Contenido principal -->
+  <ng-container *ngIf="!isLoading() && user()">
     
-    <!-- Header -->
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-[#202020]">Mi Perfil</h1>
-      <p class="text-[#666666] mt-2">Gestiona tu información personal</p>
-    </div>
-
-    <!-- Loading State -->
-    <div *ngIf="isLoading()" class="flex justify-center py-12">
-      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0367A6]"></div>
-    </div>
-
-    <!-- Profile Content -->
-    <div *ngIf="!isLoading() && user()" class="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-      
-      <!-- Profile Header con icono dinámico según rol -->
-      <div class="bg-gradient-to-r from-[#0367A6] to-[#035A91] px-8 py-6">
-        <div class="flex items-center gap-4">
-          <!-- Icono dinámico según el rol -->
-          <div class="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
-            <span class="material-symbols-outlined text-5xl text-white">
-              {{ getRoleIcon() }}
+    <!-- Header del perfil -->
+    <div class="flex flex-col md:flex-row gap-6 mb-8 p-6 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-200">
+      <div class="flex items-center gap-4">
+        <div class="w-20 h-20 bg-[#0367A6] rounded-xl flex items-center justify-center text-white text-3xl font-bold shadow-md">
+          {{ getInitials() }}
+        </div>
+        <div>
+          <h3 class="text-xl font-bold text-[#202020]">{{ profileForm.nombre }} {{ profileForm.aPaterno }} {{ profileForm.aMaterno }}</h3>
+          <p class="text-[#666666] text-sm">{{ profileForm.email }}</p>
+          <div class="flex gap-2 mt-2">
+            <span [class]="getRoleClass() + ' px-3 py-1 rounded-full text-xs font-semibold inline-flex items-center gap-1'">
+              <span class="material-symbols-outlined text-xs">{{ getRoleIcon() }}</span>
+              {{ getRoleName() }}
+            </span>
+            <span *ngIf="user()?.activo === 1" 
+                  class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-semibold inline-flex items-center gap-1">
+              <span class="material-symbols-outlined text-xs">check_circle</span>
+              Activo
             </span>
           </div>
-          <div class="flex-1">
-            <h2 class="text-2xl font-bold text-white">
-              {{ user()?.nombre }} {{ user()?.aPaterno }} {{ user()?.aMaterno }}
-            </h2>
-            <p class="text-white/80">{{ user()?.email }}</p>
+        </div>
+      </div>
+      
+      <div class="md:ml-auto flex items-center">
+        <div class="bg-blue-50 px-4 py-2 rounded-xl border border-blue-100 flex items-center gap-2">
+          <span class="material-symbols-outlined text-[#0367A6] text-sm">calendar_today</span>
+          <span class="text-sm text-[#666666]">{{ currentDate | date:'dd/MM/yyyy' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Formulario de perfil -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 mb-1">Nombre</label>
+        <input type="text" 
+               [(ngModel)]="profileForm.nombre"
+               [disabled]="!isEditing()"
+               (input)="onNameChange('nombre', profileForm.nombre)"
+               [ngClass]="{'bg-gray-50 border-gray-200': !isEditing(), 'bg-white border-[#0367A6] ring-2 ring-[#0367A6]/20': isEditing()}"
+               class="w-full px-4 py-2.5 border-2 rounded-lg outline-none transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+               placeholder="Tu nombre">
+        <p *ngIf="nombreError()" class="text-red-500 text-xs mt-1">{{ nombreError() }}</p>
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 mb-1">Apellido Paterno</label>
+        <input type="text" 
+               [(ngModel)]="profileForm.aPaterno"
+               [disabled]="!isEditing()"
+               (input)="onNameChange('aPaterno', profileForm.aPaterno)"
+               [ngClass]="{'bg-gray-50 border-gray-200': !isEditing(), 'bg-white border-[#0367A6] ring-2 ring-[#0367A6]/20': isEditing()}"
+               class="w-full px-4 py-2.5 border-2 rounded-lg outline-none transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+               placeholder="Apellido paterno">
+        <p *ngIf="aPaternoError()" class="text-red-500 text-xs mt-1">{{ aPaternoError() }}</p>
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 mb-1">Apellido Materno</label>
+        <input type="text" 
+               [(ngModel)]="profileForm.aMaterno"
+               [disabled]="!isEditing()"
+               (input)="onNameChange('aMaterno', profileForm.aMaterno)"
+               [ngClass]="{'bg-gray-50 border-gray-200': !isEditing(), 'bg-white border-[#0367A6] ring-2 ring-[#0367A6]/20': isEditing()}"
+               class="w-full px-4 py-2.5 border-2 rounded-lg outline-none transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+               placeholder="Apellido materno">
+        <p *ngIf="aMaternoError()" class="text-red-500 text-xs mt-1">{{ aMaternoError() }}</p>
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 mb-1">Email</label>
+        <input type="email" 
+               [(ngModel)]="profileForm.email"
+               [disabled]="!isEditing()"
+               (input)="onEmailChange(profileForm.email)"
+               [ngClass]="{'bg-gray-50 border-gray-200': !isEditing(), 'bg-white border-[#0367A6] ring-2 ring-[#0367A6]/20': isEditing()}"
+               class="w-full px-4 py-2.5 border-2 rounded-lg outline-none transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+               placeholder="correo@ejemplo.com">
+        <p *ngIf="emailError()" class="text-red-500 text-xs mt-1">{{ emailError() }}</p>
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 mb-1">Teléfono</label>
+        <input type="tel" 
+               [(ngModel)]="profileForm.telefono"
+               [disabled]="!isEditing()"
+               (input)="onTelefonoChange(profileForm.telefono)"
+               [ngClass]="{'bg-gray-50 border-gray-200': !isEditing(), 'bg-white border-[#0367A6] ring-2 ring-[#0367A6]/20': isEditing()}"
+               class="w-full px-4 py-2.5 border-2 rounded-lg outline-none transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+               placeholder="Número telefónico">
+        <p *ngIf="telefonoError()" class="text-red-500 text-xs mt-1">{{ telefonoError() }}</p>
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 mb-1">Ubicación</label>
+        <div class="w-full px-4 py-2.5 bg-gray-50 border-2 border-gray-200 rounded-lg flex items-center justify-between">
+          <span class="text-[#666666]">Pendiente</span>
+          <span class="material-symbols-outlined text-sm text-gray-400">pending</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Separador -->
+    <div class="my-6 border-t border-gray-200"></div>
+
+    <!-- Sección de cambio de contraseña -->
+    <div *ngIf="isEditing()" class="mb-6">
+      <button (click)="togglePasswordChange()" 
+              class="flex items-center gap-2 text-[#0367A6] hover:text-[#035A91] font-medium transition-colors">
+        <span class="material-symbols-outlined">{{ isChangingPassword() ? 'expand_less' : 'expand_more' }}</span>
+        <span>{{ isChangingPassword() ? 'Ocultar cambio de contraseña' : 'Cambiar contraseña' }}</span>
+      </button>
+
+      <div *ngIf="isChangingPassword()" class="mt-4 space-y-4">
+        <!-- Nueva contraseña y Confirmar -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Nueva contraseña -->
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1">
+              Nueva contraseña <span class="text-red-500">*</span>
+            </label>
+            <div class="relative">
+              <input [type]="showNewPassword ? 'text' : 'password'" 
+                     [(ngModel)]="passwordForm.nuevaContrasena"
+                     (input)="onPasswordChange(passwordForm.nuevaContrasena)"
+                     (keydown)="preventSpace($event)"
+                     [ngClass]="{'border-red-500 ring-1 ring-red-500': passwordErrors.nuevaContrasena}"
+                     class="w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none transition-all pr-12"
+                     placeholder="••••••••">
+              <button type="button" 
+                      (click)="toggleNewPassword()"
+                      class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-[#0367A6] transition-colors">
+                <span class="material-symbols-outlined text-base">{{ showNewPassword ? 'visibility_off' : 'visibility' }}</span>
+              </button>
+            </div>
+            <p *ngIf="passwordErrors.nuevaContrasena" class="text-red-500 text-xs mt-1">{{ passwordErrors.nuevaContrasena }}</p>
+          </div>
+
+          <!-- Confirmar nueva contraseña -->
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1">
+              Confirmar nueva contraseña <span class="text-red-500">*</span>
+            </label>
+            <div class="relative">
+              <input [type]="showConfirmNewPassword ? 'text' : 'password'" 
+                     [(ngModel)]="passwordForm.confirmarContrasena"
+                     (input)="onConfirmPasswordChange(passwordForm.confirmarContrasena)"
+                     (keydown)="preventSpace($event)"
+                     [ngClass]="{'border-red-500 ring-1 ring-red-500': passwordErrors.confirmarContrasena}"
+                     class="w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none transition-all pr-12"
+                     placeholder="••••••••">
+              <button type="button" 
+                      (click)="toggleConfirmNewPassword()"
+                      class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-[#0367A6] transition-colors">
+                <span class="material-symbols-outlined text-base">{{ showConfirmNewPassword ? 'visibility_off' : 'visibility' }}</span>
+              </button>
+            </div>
+            <p *ngIf="passwordErrors.confirmarContrasena" class="text-red-500 text-xs mt-1">{{ passwordErrors.confirmarContrasena }}</p>
+          </div>
+        </div>
+
+        <!-- Contraseña actual -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="md:col-span-2 md:max-w-md md:mx-auto w-full">
+            <label class="block text-sm font-semibold text-gray-700 mb-1">
+              Contraseña actual <span class="text-red-500">*</span>
+            </label>
+            <div class="relative">
+              <input [type]="showCurrentPassword ? 'text' : 'password'" 
+                     [(ngModel)]="passwordForm.contrasenaActual"
+                     (keydown)="preventSpace($event)"
+                     [ngClass]="{'border-red-500 ring-1 ring-red-500': passwordErrors.contrasenaActual}"
+                     class="w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none transition-all pr-12"
+                     placeholder="••••••••">
+              <button type="button" 
+                      (click)="toggleCurrentPassword()"
+                      class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-[#0367A6] transition-colors">
+                <span class="material-symbols-outlined text-base">{{ showCurrentPassword ? 'visibility_off' : 'visibility' }}</span>
+              </button>
+            </div>
+            <p *ngIf="passwordErrors.contrasenaActual" class="text-red-500 text-xs mt-1">{{ passwordErrors.contrasenaActual }}</p>
+          </div>
+        </div>
+
+        <!-- Requisitos de contraseña -->
+        <div *ngIf="passwordForm.nuevaContrasena" class="p-3 bg-gray-50 rounded-lg border border-gray-200">
+          <p class="text-xs font-semibold text-gray-700 mb-2">La contraseña debe tener:</p>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-sm" 
+                    [class.text-green-500]="passwordChecks.minLength"
+                    [class.text-gray-400]="!passwordChecks.minLength">
+                {{ passwordChecks.minLength ? 'check_circle' : 'radio_button_unchecked' }}
+              </span>
+              <span class="text-xs">Mínimo 8 caracteres</span>
+            </div>
             
-            <!-- Badge del rol y estado - EN LA MISMA LÍNEA -->
-            <div class="mt-2 flex items-center gap-2 flex-wrap">
-              <span [class]="getRoleClass() + ' px-3 py-1 rounded-full text-xs font-semibold inline-flex items-center gap-1'">
-                <span class="material-symbols-outlined text-xs">{{ getRoleIcon() }}</span>
-                {{ getRoleName() }}
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-sm" 
+                    [class.text-green-500]="passwordChecks.hasUpper"
+                    [class.text-gray-400]="!passwordChecks.hasUpper">
+                {{ passwordChecks.hasUpper ? 'check_circle' : 'radio_button_unchecked' }}
               </span>
-              
-              <span *ngIf="user()?.activo === 1" 
-                    class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-semibold inline-flex items-center gap-1">
-                <span class="material-symbols-outlined text-xs">check_circle</span>
-                Activo
+              <span class="text-xs">Una mayúscula</span>
+            </div>
+            
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-sm" 
+                    [class.text-green-500]="passwordChecks.hasLower"
+                    [class.text-gray-400]="!passwordChecks.hasLower">
+                {{ passwordChecks.hasLower ? 'check_circle' : 'radio_button_unchecked' }}
               </span>
-              <span *ngIf="user()?.activo === 0" 
-                    class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-semibold inline-flex items-center gap-1">
-                <span class="material-symbols-outlined text-xs">cancel</span>
-                Inactivo
+              <span class="text-xs">Una minúscula</span>
+            </div>
+            
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-sm" 
+                    [class.text-green-500]="passwordChecks.hasNumber"
+                    [class.text-gray-400]="!passwordChecks.hasNumber">
+                {{ passwordChecks.hasNumber ? 'check_circle' : 'radio_button_unchecked' }}
               </span>
+              <span class="text-xs">Un número</span>
             </div>
-          </div>
-          
-          <!-- BOTONES A LA DERECHA DEL HEADER - EN EL ESPACIO BLANCO -->
-          <div class="ml-auto">
-            <button *ngIf="!isEditing()" 
-                    (click)="toggleEdit()"
-                    class="bg-white hover:bg-gray-100 text-[#0367A6] px-6 py-2.5 rounded-xl font-semibold flex items-center gap-2 transition-all duration-200 shadow-md hover:shadow-lg border border-white/20">
-              <span class="material-symbols-outlined">edit</span>
-              Editar Perfil
-            </button>
-            <div *ngIf="isEditing()" class="flex gap-3">
-              <button (click)="saveProfile()"
-                      class="bg-green-600 hover:bg-green-700 text-white px-6 py-2.5 rounded-xl font-semibold flex items-center gap-2 transition-all duration-200 shadow-md hover:shadow-lg">
-                <span class="material-symbols-outlined">save</span>
-                Guardar
-              </button>
-              <button (click)="cancelEdit()"
-                      class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2.5 rounded-xl font-semibold flex items-center gap-2 transition-all duration-200 shadow-md hover:shadow-lg">
-                <span class="material-symbols-outlined">close</span>
-                Cancelar
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Profile Form (sin botones) -->
-      <div class="p-8">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <!-- Nombre -->
-          <div>
-            <label class="block text-sm font-semibold text-[#202020] mb-2">Nombre</label>
-            <input type="text" 
-                   [(ngModel)]="profileForm.nombre"
-                   [disabled]="!isEditing()"
-                   class="w-full px-4 py-3 bg-[#F8F9FA] border-2 border-gray-200 rounded-xl focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed">
-          </div>
-
-          <!-- Apellido Paterno -->
-          <div>
-            <label class="block text-sm font-semibold text-[#202020] mb-2">Apellido Paterno</label>
-            <input type="text" 
-                   [(ngModel)]="profileForm.aPaterno"
-                   [disabled]="!isEditing()"
-                   class="w-full px-4 py-3 bg-[#F8F9FA] border-2 border-gray-200 rounded-xl focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed">
-          </div>
-
-          <!-- Apellido Materno -->
-          <div>
-            <label class="block text-sm font-semibold text-[#202020] mb-2">Apellido Materno</label>
-            <input type="text" 
-                   [(ngModel)]="profileForm.aMaterno"
-                   [disabled]="!isEditing()"
-                   class="w-full px-4 py-3 bg-[#F8F9FA] border-2 border-gray-200 rounded-xl focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed">
-          </div>
-
-          <!-- Email -->
-          <div>
-            <label class="block text-sm font-semibold text-[#202020] mb-2">Email</label>
-            <input type="email" 
-                   [(ngModel)]="profileForm.email"
-                   [disabled]="!isEditing()"
-                   class="w-full px-4 py-3 bg-[#F8F9FA] border-2 border-gray-200 rounded-xl focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed">
-          </div>
-
-          <!-- Teléfono -->
-          <div class="md:col-span-2">
-            <label class="block text-sm font-semibold text-[#202020] mb-2">Teléfono</label>
-            <input type="tel" 
-                   [(ngModel)]="profileForm.telefono"
-                   [disabled]="!isEditing()"
-                   class="w-full px-4 py-3 bg-[#F8F9FA] border-2 border-gray-200 rounded-xl focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed">
-          </div>
-        </div>
-
-        <!-- Información de seguridad -->
-        <div class="mt-8 pt-6 border-t border-gray-200">
-          <h3 class="text-lg font-semibold text-[#202020] mb-4">Información de Seguridad</h3>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div class="bg-gray-50 p-4 rounded-xl flex items-center gap-3">
-              <span class="material-symbols-outlined text-[#0367A6] text-2xl">schedule</span>
-              <div>
-                <p class="text-sm text-[#666666] mb-1">Último acceso</p>
-                <p class="font-medium text-[#202020]">{{ currentDate | date:'dd/MM/yyyy HH:mm' }}</p>
-              </div>
-            </div>
-            <div class="bg-gray-50 p-4 rounded-xl flex items-center gap-3">
-              <span class="material-symbols-outlined text-[#0367A6] text-2xl">devices</span>
-              <div>
-                <p class="text-sm text-[#666666] mb-1">Dispositivos activos</p>
-                <p class="font-medium text-[#202020]">1 sesión activa</p>
-              </div>
+            
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-sm" 
+                    [class.text-green-500]="passwordChecks.hasSpecial"
+                    [class.text-gray-400]="!passwordChecks.hasSpecial">
+                {{ passwordChecks.hasSpecial ? 'check_circle' : 'radio_button_unchecked' }}
+              </span>
+              <span class="text-xs">Un carácter especial</span>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Estado vacío -->
-    <div *ngIf="!user()" class="text-center py-12 bg-white rounded-2xl shadow-xl">
-      <span class="material-symbols-outlined text-6xl text-[#A6A6A6]">person_off</span>
-      <p class="text-[#666666] mt-4 text-lg">No hay información de usuario disponible</p>
-      <p class="text-[#A6A6A6] text-sm mt-2">Inicia sesión para ver tu perfil</p>
+    <!-- Separador -->
+    <div class="my-6 border-t border-gray-200"></div>
+
+    <!-- Información de seguridad -->
+    <h3 class="text-lg font-semibold text-[#202020] mb-4">Información de Seguridad</h3>
+    
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 flex items-center gap-3">
+        <div class="bg-[#0367A6]/10 p-2 rounded-lg">
+          <span class="material-symbols-outlined text-[#0367A6]">schedule</span>
+        </div>
+        <div>
+          <p class="text-xs text-[#666666]">Último acceso</p>
+          <p class="font-medium text-[#202020] text-sm">{{ currentDate | date:'dd/MM/yyyy HH:mm' }}</p>
+        </div>
+      </div>
+      
+      <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 flex items-center gap-3">
+        <div class="bg-[#0367A6]/10 p-2 rounded-lg">
+          <span class="material-symbols-outlined text-[#0367A6]">devices</span>
+        </div>
+        <div>
+          <p class="text-xs text-[#666666]">Dispositivos activos</p>
+          <p class="font-medium text-[#202020] text-sm">1 sesión activa</p>
+        </div>
+      </div>
+      
+      <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 flex items-center gap-3">
+        <div class="bg-[#0367A6]/10 p-2 rounded-lg">
+          <span class="material-symbols-outlined text-[#0367A6]">calendar_month</span>
+        </div>
+        <div>
+          <p class="text-xs text-[#666666]">Miembro desde</p>
+          <p class="font-medium text-[#202020] text-sm">{{ getFechaCreacion() }}</p>
+        </div>
+      </div>
     </div>
+
+    <!-- Nota informativa -->
+    <div *ngIf="isEditing()" class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-2">
+      <span class="material-symbols-outlined text-blue-500 text-sm">info</span>
+      <p class="text-xs text-blue-700">Los cambios se guardarán y serán visibles en toda la plataforma.</p>
+    </div>
+  </ng-container>
+
+  <!-- Estado vacío -->
+  <div *ngIf="!isLoading() && !user()" class="text-center py-16">
+    <span class="material-symbols-outlined text-6xl text-[#A6A6A6]">person_off</span>
+    <p class="text-[#666666] mt-4 text-lg font-medium">No hay información de usuario disponible</p>
+    <p class="text-[#A6A6A6] text-sm mt-2">Inicia sesión para ver tu perfil</p>
   </div>
 </div>

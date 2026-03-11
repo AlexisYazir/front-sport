@@ -35,8 +35,8 @@ export class Users implements OnInit {
   roles: Roles[] = [];
   
   // Filtros adicionales
-  filterRol: string = 'todos'; // 'todos', '1', '2', '3'
-  filterEstado: string = 'todos'; // 'todos', 'activo', 'inactivo'
+  filterRol: string = 'todos';
+  filterEstado: string = 'todos';
   
   // Contadores
   totalUsuarios: number = 0;
@@ -57,9 +57,10 @@ export class Users implements OnInit {
   togglingActive: { [key: number]: boolean } = {};
 
   ngOnInit(): void {
-    // Obtener ID del usuario actual
-    const currentUser = this.authService.currentUser();
+    // ✅ CORREGIDO: Llamar al signal como función
+    const currentUser = this.authService.currentUser(); // 👈 AHORA SÍ
     this.currentUserId = currentUser?.id || null;
+    console.log('Usuario actual ID:', this.currentUserId); // Para verificar
     
     this.loadUsers();
     this.loadRoles();
@@ -69,8 +70,6 @@ export class Users implements OnInit {
     this.isLoading.set(true);
     this.authService.getUsers().subscribe({
       next: (users: UsersAdmin[]) => {
-        // console.log('Usuarios completos:', users);
-        
         // Filtrar para NO mostrar el usuario actual
         const filteredUsers = users.filter(user => user.id_usuario !== this.currentUserId);
         
@@ -88,7 +87,6 @@ export class Users implements OnInit {
         this.isLoading.set(false);
       },
       error: (error) => {
-        // console.error('Error loading users:', error);
         this.toastr.error('Error al cargar usuarios', 'Error');
         this.isLoading.set(false);
       }
@@ -108,10 +106,8 @@ export class Users implements OnInit {
     this.authService.getRoles().subscribe({
       next: (roles: Roles[]) => {
         this.roles = roles;
-        // console.log('Roles:', roles);
       },
       error: (error) => {
-        // console.error('Error loading roles:', error);
         this.toastr.error('Error al cargar roles', 'Error');
       }
     });
@@ -121,7 +117,6 @@ export class Users implements OnInit {
   applyFilters() {
     let filtered = [...this.users];
 
-    // Filtro por búsqueda
     if (this.searchValue) {
       const term = this.searchValue.toLowerCase();
       filtered = filtered.filter(user => 
@@ -131,12 +126,10 @@ export class Users implements OnInit {
       );
     }
 
-    // Filtro por rol
     if (this.filterRol !== 'todos') {
       filtered = filtered.filter(user => user.rol === Number(this.filterRol));
     }
 
-    // Filtro por estado
     if (this.filterEstado !== 'todos') {
       filtered = filtered.filter(user => 
         this.filterEstado === 'activo' ? user.activo === 1 : user.activo === 0
@@ -246,7 +239,6 @@ export class Users implements OnInit {
     const previousState = user.activo;
     const newState = user.activo === 1 ? 0 : 1;
     
-    // Cambiar visualmente primero (optimista)
     user.activo = newState;
 
     const updateData = {
@@ -261,10 +253,9 @@ export class Users implements OnInit {
         user.originalActivo = newState;
         user.hasChanges = false;
         this.toastr.success(`Estado de ${user.email} actualizado a ${newState === 1 ? 'activo' : 'inactivo'}`, 'Éxito');
-        this.calcularContadores(); // Actualizar contadores
+        this.calcularContadores();
       },
       error: (err) => {
-        // console.error('Error al actualizar estado:', err);
         user.activo = previousState;
         this.togglingActive[user.id_usuario] = false;
         this.toastr.error('Error al actualizar el estado', 'Error');
@@ -298,10 +289,9 @@ export class Users implements OnInit {
         user.originalActivo = user.activo;
         user.hasChanges = false;
         this.toastr.success(`Usuario ${user.email} actualizado correctamente`, 'Éxito');
-        this.calcularContadores(); // Actualizar contadores
+        this.calcularContadores();
       },
       error: (err) => {
-        // console.error('Error al actualizar usuario:', err);
         user.saving = false;
         this.toastr.error(err.error?.message || 'Error al actualizar usuario', 'Error');
       }

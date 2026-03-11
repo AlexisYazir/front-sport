@@ -15,7 +15,7 @@ export interface User {
   telefono: string;
   rol: UserRole;
   activo: number;
-  createdAt?: string;
+  fecha_creacion?: string;
   updatedAt?: string;
 }
 
@@ -110,4 +110,19 @@ export interface UsersAdmin {
 export interface Roles {
   id_rol: number,
   rol: string
+}
+
+export interface UpdateProfileData {
+  nombre?: string;
+  aPaterno?: string;
+  aMaterno?: string;
+  email?: string;
+  telefono?: string;
+  contrasenaActual?: string;
+  passw?: string; // Nueva contraseña
+}
+
+export interface UpdateProfileResponse {
+  message: string;
+  user: User;
 }

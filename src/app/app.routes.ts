@@ -130,7 +130,21 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/dashboard/admin/admin-pages/settings/settings').then((m) => m.Settings),
       },
-      
+      {
+        path: 'backups',
+        loadComponent: () =>
+          import('./features/dashboard/admin/admin-pages/backups/backups').then((m) => m.Backups),
+      },
+      {
+        path: 'empresa',
+        loadComponent: () =>
+          import('./features/dashboard/admin/admin-pages/empresa/empresa').then((m) => m.Empresa),
+      },
+      {
+        path: 'reports',
+        loadComponent: () =>
+          import('./features/dashboard/admin/admin-pages/reports/reports').then((m) => m.Reports),
+      },
     ],
   },
   {
@@ -141,6 +155,10 @@ export const routes: Routes = [
   {
     path: 'ofertas',
     loadComponent: () => import('./features/offers/offers').then((m) => m.Offers),
+  },
+   {
+    path: 'info/ubicacion',
+    loadComponent: () => import('./features/info/ubicacion/ubicacion').then((m) => m.Ubicacion),
   },
   {
     path: 'legal/terms',

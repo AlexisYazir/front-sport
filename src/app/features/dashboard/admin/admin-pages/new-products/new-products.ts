@@ -6,34 +6,23 @@ import { RecientProduct, Attibute } from '../../../../../core/models/product.mod
 import { RouterModule } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 
-// Interfaz para variantes
+// Interfaz para variantes - AHORA INCLUYE ATRIBUTOS
 interface ProductVariant {
   sku: string;
   precio: number;
-  stock: number;
   imagenes: string[];
   imagenInput?: string;
+  atributos: {
+    [key: string]: string; // Ej: { "talla": "M", "color": "negro" }
+  };
 }
 
-// Interfaz para variantes existentes
-interface ExistingVariant {
-  id_variante: number;
-  id_producto: number;
-  sku: string;
-  precio: string;
-  stock: number;
-  imagenes: string[];
-  selected?: boolean;
-}
-
-// Interfaz para productos incompletos (sin atributos)
-interface IncompleteProduct {
-  id_producto: number;
-  nombre: string;
-  descripcion?: string;
-  activo: boolean;
-  fecha_creacion: string;
-  estado_completado: 'incompleto';
+// Interfaz para la selección de atributos en el formulario
+interface AttributeField {
+  id_atributo_padre: number;
+  id_atributo_hijo: number;
+  nombre_padre?: string;
+  nombre_hijo?: string;
 }
 
 @Component({
@@ -52,13 +41,8 @@ export class NewProducts implements OnInit {
   filteredProducts: RecientProduct[] = [];
   paginatedProducts: RecientProduct[] = [];
   
-  // Productos incompletos
-  incompleteProducts: IncompleteProduct[] = [];
-  filteredIncompleteProducts: IncompleteProduct[] = [];
-  paginatedIncompleteProducts: IncompleteProduct[] = [];
-  
   searchValue: string = '';
-  activeTab: 'recientes' | 'incompletos' = 'recientes';
+  activeTab: 'recientes' = 'recientes'; // Solo una pestaña ahora
   
   // Paginación
   rowsPerPage: number = 10;
@@ -67,43 +51,41 @@ export class NewProducts implements OnInit {
   currentPage: number = 1;
   totalRecords: number = 0;
   
-  // Modal de completar producto
-  showCompleteModal: boolean = false;
-  currentStep: number = 1;
-  selectedProduct: RecientProduct | IncompleteProduct | null = null;
-  isIncompleteProduct: boolean = false;
+  // Modal de crear variantes
+  showModal: boolean = false;
+  selectedProduct: RecientProduct | null = null;
   
-  // Paso 1: Datos básicos
+  // Datos del formulario
   variantes: ProductVariant[] = [];
   varianteActualIndex: number = 0;
   
-  // Paso 2: Variantes existentes
-  existingVariants: ExistingVariant[] = [];
-  
   // Estados
-  loadingVariants: boolean = false;
   saving: boolean = false;
-  step1Completed: boolean = false;
   
-  // Validaciones paso 1
+  // Validaciones
   validationErrors = {
     sku: '',
     precio: '',
-    stock: '',
     imagenes: ''
   };
   
   isLoading = signal<boolean>(false);
-  isLoadingIncomplete = signal<boolean>(false);
 
   // ===== PROPIEDADES PARA ATRIBUTOS =====
   availableAttributes: Attibute[] = [];
-  variantAttributeValues: { id_variante: number; valores: { id_atributo: number; valor: string }[] }[] = [];
+  parentAttributes: Attibute[] = [];
+  childAttributesByParent: Map<number, Attibute[]> = new Map();
+  
+  // Atributos temporales para la variante actual (para la UI)
+  currentVariantAttributes: AttributeField[] = [];
+  
+  // Array para rastrear errores de atributos duplicados
+  attributeErrors: boolean[] = [];
+  
   loadingAttributes: boolean = false;
 
   ngOnInit(): void {
     this.loadRecentProducts();
-    this.loadIncompleteProducts();
     this.loadAttributes(); 
   }
 
@@ -125,42 +107,30 @@ export class NewProducts implements OnInit {
     });
   }
 
-  // Cargar productos incompletos (sin atributos)
-  loadIncompleteProducts() {
-    this.isLoadingIncomplete.set(true);
-    this.productService.getProductsWithoutVariantsAttributes().subscribe({
-      next: (data: any[]) => {
-        this.incompleteProducts = data.map(p => ({
-          id_producto: p.id_producto,
-          nombre: p.nombre,
-          descripcion: p.descripcion,
-          activo: p.activo,
-          fecha_creacion: p.fecha_creacion,
-          estado_completado: 'incompleto' as const
-        }));
-        console.log('Productos incompletos:', this.incompleteProducts);
-        
-        if (this.activeTab === 'incompletos') {
-          this.applyFilters();
-        }
-        
-        this.isLoadingIncomplete.set(false);
-      },
-      error: (error) => {
-        console.error('Error al cargar productos incompletos:', error);
-        this.isLoadingIncomplete.set(false);
-        this.toastr.error('Error al cargar productos incompletos', 'Error');
-      }
-    });
-  }
-
-  // Cargar atributos
+  // Cargar atributos y organizarlos por padre/hijo
   loadAttributes() {
     this.loadingAttributes = true;
     this.productService.getAttributes().subscribe({
-      next: (data) => {
+      next: (data: Attibute[]) => {
         this.availableAttributes = data;
+        
+        // Filtrar atributos padre (id_padre = null)
+        this.parentAttributes = data.filter(attr => attr.id_padre === null);
+        
+        // Organizar atributos hijos por id_padre
+        this.childAttributesByParent.clear();
+        data.forEach(attr => {
+          if (attr.id_padre !== null) {
+            if (!this.childAttributesByParent.has(attr.id_padre)) {
+              this.childAttributesByParent.set(attr.id_padre, []);
+            }
+            this.childAttributesByParent.get(attr.id_padre)!.push(attr);
+          }
+        });
+        
         this.loadingAttributes = false;
+        console.log('Atributos padre:', this.parentAttributes);
+        console.log('Atributos hijos por padre:', this.childAttributesByParent);
       },
       error: (err) => {
         console.error('Error al cargar atributos:', err);
@@ -170,64 +140,39 @@ export class NewProducts implements OnInit {
     });
   }
 
-  // Cambiar entre pestañas
-  switchTab(tab: 'recientes' | 'incompletos') {
+  // Cambiar entre pestañas (solo hay una ahora)
+  switchTab(tab: 'recientes') {
     this.activeTab = tab;
     this.first = 0;
     this.searchValue = '';
     this.applyFilters();
   }
 
-  // APLICAR FILTROS según pestaña activa
+  // Aplicar filtros
   applyFilters() {
-    if (this.activeTab === 'recientes') {
-      let filtered = [...this.products];
+    let filtered = [...this.products];
 
-      if (this.searchValue) {
-        const term = this.searchValue.toLowerCase();
-        filtered = filtered.filter(product => 
-          product.nombre.toLowerCase().includes(term) ||
-          product.id_producto?.toString().includes(term)
-        );
-      }
-
-      this.filteredProducts = filtered;
-      this.totalRecords = filtered.length;
-    } else {
-      let filtered = this.incompleteProducts && this.incompleteProducts.length > 0 
-        ? [...this.incompleteProducts] 
-        : [];
-
-      if (this.searchValue && filtered.length > 0) {
-        const term = this.searchValue.toLowerCase();
-        filtered = filtered.filter(product => 
-          product.nombre.toLowerCase().includes(term) ||
-          product.id_producto?.toString().includes(term)
-        );
-      }
-
-      this.filteredIncompleteProducts = filtered;
-      this.totalRecords = filtered.length;
+    if (this.searchValue) {
+      const term = this.searchValue.toLowerCase();
+      filtered = filtered.filter(product => 
+        product.nombre.toLowerCase().includes(term) ||
+        product.id_producto?.toString().includes(term)
+      );
     }
+
+    this.filteredProducts = filtered;
+    this.totalRecords = filtered.length;
     
     this.first = 0;
     this.updatePaginatedData();
   }
 
   updatePaginatedData() {
-    if (this.activeTab === 'recientes') {
-      const start = this.first;
-      const end = this.first + this.rowsPerPage;
-      this.paginatedProducts = this.filteredProducts.slice(start, end);
-      this.totalRecords = this.filteredProducts.length;
-    } else {
-      const start = this.first;
-      const end = this.first + this.rowsPerPage;
-      this.paginatedIncompleteProducts = this.filteredIncompleteProducts && this.filteredIncompleteProducts.length > 0
-        ? this.filteredIncompleteProducts.slice(start, end)
-        : [];
-      this.totalRecords = this.filteredIncompleteProducts ? this.filteredIncompleteProducts.length : 0;
-    }
+    const start = this.first;
+    const end = this.first + this.rowsPerPage;
+    this.paginatedProducts = this.filteredProducts.slice(start, end);
+    this.totalRecords = this.filteredProducts.length;
+    
     this.currentPage = Math.floor(this.first / this.rowsPerPage) + 1;
   }
 
@@ -294,18 +239,6 @@ export class NewProducts implements OnInit {
     return activo ? 'Activo' : 'Inactivo';
   }
 
-  getCompletionStatusClass(estado: 'incompleto'): string {
-    return 'bg-yellow-100 text-yellow-700 border-yellow-200';
-  }
-
-  getCompletionStatusText(estado: 'incompleto'): string {
-    return 'Incompleto';
-  }
-
-  getCompletionStatusIcon(estado: 'incompleto'): string {
-    return 'pi pi-exclamation-triangle';
-  }
-
   formatDate(dateString: string): string {
     const date = new Date(dateString);
     return date.toLocaleDateString('es-MX', {
@@ -320,82 +253,75 @@ export class NewProducts implements OnInit {
   // Acciones
   refreshData() {
     this.loadRecentProducts();
-    this.loadIncompleteProducts();
     this.loadAttributes(); 
   }
 
-  // ===== FUNCIONES DEL MODAL DE COMPLETAR PRODUCTO =====
-  completeProduct(product: RecientProduct | IncompleteProduct) {
+  // ===== FUNCIONES DEL MODAL =====
+  createVariants(product: RecientProduct) {
     this.selectedProduct = product;
-    this.isIncompleteProduct = 'estado_completado' in product;
-    this.currentStep = this.isIncompleteProduct ? 2 : 1;
-    this.step1Completed = this.isIncompleteProduct;
-    
-    if (!this.isIncompleteProduct) {
-      this.variantes = [];
-      this.agregarVariante();
-    }
-    
-    this.checkExistingVariants(product.id_producto);
-    
-    this.showCompleteModal = true;
-  }
-
-  checkExistingVariants(id_producto: number) {
-    this.loadingVariants = true;
-    this.productService.getProductVariants(id_producto).subscribe({
-      next: (variants: any[]) => {
-        if (variants && variants.length > 0) {
-          this.step1Completed = true;
-          this.existingVariants = variants.map(v => ({
-            id_variante: v.id_variante,
-            id_producto: v.id_producto,
-            sku: v.sku,
-            precio: v.precio,
-            stock: v.stock,
-            imagenes: v.imagenes || [],
-            selected: false
-          }));
-        } else {
-          this.existingVariants = [];
-        }
-        this.loadingVariants = false;
-      },
-      error: (err) => {
-        console.error('Error al verificar variantes:', err);
-        this.loadingVariants = false;
-        this.existingVariants = [];
-        this.toastr.error('Error al cargar variantes', 'Error');
-      }
-    });
-  }
-
-  closeCompleteModal() {
-    this.showCompleteModal = false;
-    this.selectedProduct = null;
-    this.currentStep = 1;
     this.variantes = [];
-    this.existingVariants = [];
-    this.isIncompleteProduct = false;
-    this.variantAttributeValues = [];
+    this.currentVariantAttributes = [];
+    this.attributeErrors = [];
+    this.agregarVariante();
+    this.showModal = true;
+  }
+
+  closeModal() {
+    this.showModal = false;
+    this.selectedProduct = null;
+    this.variantes = [];
+    this.currentVariantAttributes = [];
+    this.attributeErrors = [];
+    this.validationErrors = { sku: '', precio: '', imagenes: '' };
     this.refreshData();
   }
 
-  // ===== FUNCIONES PASO 1 =====
+  // ===== FUNCIONES DEL FORMULARIO =====
   agregarVariante() {
     const nuevaVariante: ProductVariant = {
       sku: '',
       precio: 0,
-      stock: 0,
       imagenes: [],
-      imagenInput: ''
+      imagenInput: '',
+      atributos: {}
     };
     this.variantes.push(nuevaVariante);
     this.varianteActualIndex = this.variantes.length - 1;
+    
+    // Reiniciar atributos temporales para la nueva variante
+    this.currentVariantAttributes = [];
+    this.attributeErrors = [];
   }
 
   seleccionarVariante(index: number) {
     this.varianteActualIndex = index;
+    
+    // Cargar los atributos de la variante seleccionada al editor temporal
+    this.currentVariantAttributes = [];
+    const variante = this.variantes[index];
+    
+    // Convertir el objeto de atributos a array para la UI
+    if (variante.atributos && Object.keys(variante.atributos).length > 0) {
+      Object.keys(variante.atributos).forEach(key => {
+        const padre = this.parentAttributes.find(p => p.nombre.toLowerCase() === key.toLowerCase());
+        if (padre) {
+          const hijo = this.getChildAttributes(padre.id_atributo)
+            .find(h => h.nombre.toLowerCase() === variante.atributos[key].toLowerCase());
+          
+          if (hijo) {
+            this.currentVariantAttributes.push({
+              id_atributo_padre: padre.id_atributo,
+              id_atributo_hijo: hijo.id_atributo,
+              nombre_padre: padre.nombre,
+              nombre_hijo: hijo.nombre
+            });
+          }
+        }
+      });
+    }
+    
+    // Reiniciar errores
+    this.attributeErrors = new Array(this.currentVariantAttributes.length).fill(false);
   }
 
   eliminarVariante(index: number) {
@@ -404,6 +330,9 @@ export class NewProducts implements OnInit {
       if (this.varianteActualIndex >= index) {
         this.varianteActualIndex = Math.max(0, this.varianteActualIndex - 1);
       }
+      
+      // Actualizar atributos temporales
+      this.seleccionarVariante(this.varianteActualIndex);
     }
   }
 
@@ -419,9 +348,152 @@ export class NewProducts implements OnInit {
     this.variantes[this.varianteActualIndex].imagenes.splice(index, 1);
   }
 
+  // ===== FUNCIONES DE ATRIBUTOS =====
+  
+  // Método mejorado para agregar campo de atributo
+  agregarCampoAtributo() {
+    this.currentVariantAttributes.push({
+      id_atributo_padre: 0,
+      id_atributo_hijo: 0
+    });
+    // Extender el array de errores
+    this.attributeErrors.push(false);
+  }
+
+  // Método mejorado para eliminar campo de atributo
+  eliminarCampoAtributo(index: number) {
+    this.currentVariantAttributes.splice(index, 1);
+    this.attributeErrors.splice(index, 1);
+    this.actualizarAtributosVariante();
+  }
+
+  // Método mejorado para cuando cambia el atributo padre
+  onPadreChange(attrIndex: number) {
+    const atributoPadreId = this.currentVariantAttributes[attrIndex].id_atributo_padre;
+    
+    // Resetear hijo cuando cambia el padre
+    this.currentVariantAttributes[attrIndex].id_atributo_hijo = 0;
+    delete this.currentVariantAttributes[attrIndex].nombre_padre;
+    delete this.currentVariantAttributes[attrIndex].nombre_hijo;
+    
+    // Actualizar nombre del padre si está seleccionado
+    if (atributoPadreId > 0) {
+      const padre = this.parentAttributes.find(
+        p => p.id_atributo === atributoPadreId
+      );
+      if (padre) {
+        this.currentVariantAttributes[attrIndex].nombre_padre = padre.nombre;
+      }
+      
+      // Verificar si está duplicado
+      if (this.isAtributoDuplicado(atributoPadreId, attrIndex)) {
+        this.attributeErrors[attrIndex] = true;
+        this.toastr.warning(
+          `El atributo "${padre?.nombre}" ya está asignado a esta variante. No puedes repetirlo.`, 
+          'Atributo duplicado'
+        );
+      } else {
+        this.attributeErrors[attrIndex] = false;
+      }
+    }
+    
+    this.actualizarAtributosVariante();
+  }
+
+  onHijoChange(attrIndex: number) {
+    if (this.currentVariantAttributes[attrIndex].id_atributo_hijo > 0) {
+      const hijo = this.availableAttributes.find(
+        a => a.id_atributo === this.currentVariantAttributes[attrIndex].id_atributo_hijo
+      );
+      if (hijo) {
+        this.currentVariantAttributes[attrIndex].nombre_hijo = hijo.nombre;
+      }
+    }
+    this.actualizarAtributosVariante();
+  }
+
+  actualizarAtributosVariante() {
+    // Construir objeto de atributos para la variante actual
+    const atributosObj: { [key: string]: string } = {};
+    
+    this.currentVariantAttributes.forEach(attr => {
+      if (attr.id_atributo_padre > 0 && attr.id_atributo_hijo > 0 && attr.nombre_padre && attr.nombre_hijo) {
+        atributosObj[attr.nombre_padre] = attr.nombre_hijo;
+      }
+    });
+    
+    this.variantes[this.varianteActualIndex].atributos = atributosObj;
+  }
+
+  getChildAttributes(id_padre: number): Attibute[] {
+    return this.childAttributesByParent.get(id_padre) || [];
+  }
+
+  // Método para verificar si un atributo está duplicado en la variante actual
+  isAtributoDuplicado(atributoPadreId: number, indexActual: number): boolean {
+    if (!atributoPadreId || atributoPadreId === 0) return false;
+    
+    // Contar cuántas veces aparece este atributo padre en la lista actual
+    const count = this.currentVariantAttributes.filter(
+      (attr, idx) => attr.id_atributo_padre === atributoPadreId && idx !== indexActual
+    ).length;
+    
+    return count > 0;
+  }
+
+  // Método para verificar si un atributo padre está siendo usado en otras filas (para el HTML)
+  isAtributoPadreUsado(atributoPadreId: number, indexActual: number): boolean {
+    if (!atributoPadreId || atributoPadreId === 0) return false;
+    
+    return this.currentVariantAttributes.some(
+      (attr, idx) => idx !== indexActual && attr.id_atributo_padre === atributoPadreId
+    );
+  }
+
+  // Método para obtener el nombre del atributo padre por ID
+  getNombreAtributoPadre(id: number): string {
+    const padre = this.parentAttributes.find(p => p.id_atributo === id);
+    return padre ? padre.nombre : '';
+  }
+
+  // Validar todos los atributos antes de guardar
+  validarAtributosAntesDeGuardar(): boolean {
+    // Reiniciar errores
+    this.attributeErrors = new Array(this.currentVariantAttributes.length).fill(false);
+    
+    const atributosPadreVistos = new Set<number>();
+    let hayDuplicados = false;
+    
+    for (let i = 0; i < this.currentVariantAttributes.length; i++) {
+      const attr = this.currentVariantAttributes[i];
+      
+      if (attr.id_atributo_padre > 0) {
+        if (atributosPadreVistos.has(attr.id_atributo_padre)) {
+          // Atributo duplicado
+          this.attributeErrors[i] = true;
+          hayDuplicados = true;
+          
+          const padre = this.parentAttributes.find(p => p.id_atributo === attr.id_atributo_padre);
+          this.toastr.error(
+            `Atributo duplicado: "${padre?.nombre || 'Desconocido'}" no puede repetirse en la misma variante`,
+            'Error de validación'
+          );
+        } else {
+          atributosPadreVistos.add(attr.id_atributo_padre);
+        }
+      }
+    }
+    
+    return !hayDuplicados;
+  }
+
+  // ===== VALIDACIONES =====
   validateVariant(index: number): boolean {
     const v = this.variantes[index];
     let isValid = true;
+    
+    // Resetear errores
+    this.validationErrors = { sku: '', precio: '', imagenes: '' };
     
     if (!v.sku?.trim()) {
       this.validationErrors.sku = 'El SKU es obligatorio';
@@ -433,201 +505,120 @@ export class NewProducts implements OnInit {
       isValid = false;
     }
     
-    if (v.stock < 0) {
-      this.validationErrors.stock = 'El stock no puede ser negativo';
-      isValid = false;
-    }
-    
     return isValid;
   }
 
   validateAllVariants(): boolean {
+    // Validar que no haya SKUs duplicados
+    const skus = this.variantes.map(v => v.sku?.trim()).filter(sku => sku);
+    const skuDuplicados = skus.filter((sku, index) => skus.indexOf(sku) !== index);
+    
+    if (skuDuplicados.length > 0) {
+      this.toastr.warning('No puedes tener SKUs duplicados en las variantes', 'Advertencia');
+      
+      // Encontrar el índice de la primera variante con SKU duplicado
+      const primerSkuDuplicado = skuDuplicados[0];
+      const indexDuplicado = this.variantes.findIndex(v => v.sku?.trim() === primerSkuDuplicado);
+      if (indexDuplicado !== -1) {
+        this.varianteActualIndex = indexDuplicado;
+        this.validationErrors.sku = 'Este SKU ya existe en otra variante';
+        this.seleccionarVariante(indexDuplicado);
+      }
+      return false;
+    }
+    
+    // Validar cada variante individualmente
     for (let i = 0; i < this.variantes.length; i++) {
       if (!this.validateVariant(i)) {
         this.varianteActualIndex = i;
+        this.seleccionarVariante(i);
         return false;
       }
     }
+    
     return true;
   }
 
-  guardarPaso1() {
+  // ===== FUNCIÓN PRINCIPAL PARA GUARDAR =====
+  guardarVariantes() {
     if (!this.selectedProduct) return;
     
+    // Actualizar atributos de la variante actual
+    this.actualizarAtributosVariante();
+    
+    // Validar atributos de la variante actual antes de cambiar de variante
+    if (!this.validarAtributosAntesDeGuardar()) {
+      return; // Detener si hay atributos duplicados
+    }
+    
     if (!this.validateAllVariants()) return;
-
-    this.saving = true;
     
-    let completadas = 0;
-    
-    this.variantes.forEach(variante => {
-      const variantData = {
-        id_producto: this.selectedProduct!.id_producto,
-        sku: variante.sku,
-        precio: Number(variante.precio),
-        stock: Number(variante.stock),
-        imagenes: variante.imagenes
-      };
-      
-      this.productService.createProductVariant(variantData).subscribe({
-        next: () => {
-          completadas++;
-          if (completadas === this.variantes.length) {
-            this.saving = false;
-            this.step1Completed = true;
-            this.toastr.success('Paso 1 completado exitosamente', 'Éxito');
-            
-            this.checkExistingVariants(this.selectedProduct!.id_producto);
-            
-            setTimeout(() => {
-              this.currentStep = 2;
-            }, 1500);
-          }
-        },
-        error: (err) => {
-          console.error('Error al crear variante:', err);
-          this.saving = false;
-          this.toastr.error('Error al guardar las variantes. '+err.error.message, 'Error');
-        }
-      });
-    });
-  }
-
-  // ===== FUNCIONES PASO 2 =====
-  irAlPaso2() {
-    this.currentStep = 2;
-  }
-
-  volverAlPaso1() {
-    this.currentStep = 1;
-  }
-
-  seleccionarTodasVariantes(checked: boolean) {
-    this.existingVariants.forEach(v => v.selected = checked);
-  }
-
-  hayVariantesSeleccionadas(): boolean {
-    return this.existingVariants.some(v => v.selected);
-  }
-
-  isAllSelected(): boolean {
-    return this.existingVariants.length > 0 && this.existingVariants.every(v => v.selected);
-  }
-
-  formatPrecio(precio: string): string {
-    return Number(precio).toFixed(2);
-  }
-
-  continuarConAtributos() {
-    const seleccionadas = this.existingVariants.filter(v => v.selected);
-    
-    if (seleccionadas.length === 0) {
-      this.toastr.warning('Selecciona al menos una variante', 'Advertencia');
-      return;
-    }
-
-    this.variantAttributeValues = seleccionadas.map(v => ({
-      id_variante: v.id_variante,
-      valores: []
-    }));
-
-    console.log('Variantes seleccionadas para atributos:', seleccionadas.length);
-    
-    this.currentStep = 3;
-  }
-
-  agregarCampoAtributo(varianteIndex: number) {
-    this.variantAttributeValues[varianteIndex].valores.push({
-      id_atributo: 0,
-      valor: ''
-    });
-  }
-
-  eliminarCampoAtributo(varianteIndex: number, attrIndex: number) {
-    this.variantAttributeValues[varianteIndex].valores.splice(attrIndex, 1);
-  }
-
-  // ===== FUNCIÓN PARA GUARDAR ATRIBUTOS CON TOASTR =====
-  guardarValoresAtributos() {
-    // Filtrar solo atributos válidos
-    const atributosValidos: { id_variante: number; id_atributo: number; valor: string }[] = [];
-    
-    for (const item of this.variantAttributeValues) {
-      for (const attr of item.valores) {
-        if (attr.id_atributo && attr.id_atributo > 0 && attr.valor?.trim()) {
-          atributosValidos.push({
-            id_variante: item.id_variante,
-            id_atributo: attr.id_atributo,
-            valor: attr.valor.trim()
-          });
-        }
+    // Validar atributos duplicados en TODAS las variantes
+    for (let i = 0; i < this.variantes.length; i++) {
+      this.seleccionarVariante(i);
+      if (!this.validarAtributosAntesDeGuardar()) {
+        this.varianteActualIndex = i;
+        return;
       }
-    }
-
-    const totalAtributosValidos = atributosValidos.length;
-
-    if (totalAtributosValidos === 0) {
-      this.toastr.warning('No hay atributos válidos para guardar', 'Advertencia');
-      return;
     }
 
     this.saving = true;
     
     let completadas = 0;
     let exitosas = 0;
-    let errores: { id_atributo: number; error: string }[] = [];
-
-    // Procesar cada atributo válido
-    atributosValidos.forEach((attr) => {
-      this.productService.createProductVariantValues(attr).subscribe({
-        next: () => {
+    let errores: string[] = [];
+    
+    this.variantes.forEach(variante => {
+      const variantData = {
+        id_producto: this.selectedProduct!.id_producto,
+        sku: variante.sku,
+        precio: Number(variante.precio),
+        imagenes: variante.imagenes,
+        atributos: variante.atributos
+      };
+      
+      console.log('Enviando variante:', variantData);
+      
+      this.productService.createProductVariant(variantData).subscribe({
+        next: (res) => {
           completadas++;
           exitosas++;
-          console.log(`✅ Atributo ${attr.id_atributo} guardado (${completadas}/${totalAtributosValidos})`);
+          console.log(`✅ Variante guardada:`, res);
           
-          if (completadas === totalAtributosValidos) {
-            this.procesarResultadoAtributos(exitosas, totalAtributosValidos, errores);
+          if (completadas === this.variantes.length) {
+            this.procesarResultado(exitosas, this.variantes.length, errores);
           }
         },
         error: (err) => {
-          console.error(`❌ Error en atributo ${attr.id_atributo}:`, err);
+          console.error('❌ Error al crear variante:', err);
           completadas++;
-          errores.push({ 
-            id_atributo: attr.id_atributo, 
-            error: err.error?.message || 'Error desconocido' 
-          });
+          errores.push(`SKU ${variante.sku}: ${err.error?.message || 'Error desconocido'}`);
           
-          if (completadas === totalAtributosValidos) {
-            this.procesarResultadoAtributos(exitosas, totalAtributosValidos, errores);
+          if (completadas === this.variantes.length) {
+            this.procesarResultado(exitosas, this.variantes.length, errores);
           }
         }
       });
     });
   }
 
-  private procesarResultadoAtributos(
-    exitosas: number, 
-    total: number, 
-    errores: { id_atributo: number; error: string }[]
-  ) {
+  private procesarResultado(exitosas: number, total: number, errores: string[]) {
     this.saving = false;
     
     if (errores.length > 0) {
-      const erroresMsg = errores.map(e => e.error).join('. ');
-      this.toastr.error(`Se guardaron ${exitosas} de ${total} atributos. Errores: ${erroresMsg}`, 'Error');
+      const erroresMsg = errores.join('. ');
+      this.toastr.error(`Se guardaron ${exitosas} de ${total} variantes. Errores: ${erroresMsg}`, 'Error');
     } else {
-      this.toastr.success('Atributos asignados correctamente', 'Éxito');
+      this.toastr.success(`${total} variante(s) creada(s) correctamente con sus atributos`, 'Éxito');
       
-      // Cerrar modal y recargar datos después de 1 segundo
       setTimeout(() => {
-        this.closeCompleteModal();
-      }, 1000);
+        this.closeModal();
+      }, 1500);
     }
   }
 
-  // ===== MÉTODO AUXILIAR =====
-  getVariantSku(id_variante: number): string {
-    const variant = this.existingVariants.find(v => v.id_variante === id_variante);
-    return variant ? variant.sku : 'Variante no encontrada';
+  // Método auxiliar para verificar si un objeto de atributos tiene propiedades
+  hasAtributos(atributos: any): boolean {
+    return atributos && Object.keys(atributos).length > 0;
   }
 }

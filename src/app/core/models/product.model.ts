@@ -1,5 +1,3 @@
-import { Categories } from "../../features/dashboard/admin/admin-pages/categories/categories";
-
 // Modelo de Variante
 export interface Variante {
   id_variante: number;
@@ -77,6 +75,7 @@ export interface Marca {
 export interface Attibute {
   id_atributo: number;
   nombre: string;
+  id_padre: number | null;
 }
 
 // product.model.ts - Agrega esta interfaz
@@ -116,6 +115,7 @@ export interface ProductVariant {
   precio: number;
   stock: number;
   imagenes: string[];
+  atributos: Record<string, any>; // ← Esto es un objeto, no un array
 }
 
 export interface Orders {

@@ -67,6 +67,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         toastr.error('No tienes permisos para acceder a esta sección. Inicia sesión nuevamente', 'Acceso Denegado');
         tokenService.clearTokens();
         authService.logout();
+        authService.clearAuthState();
         router.navigate(['/auth/login']);
       }
 

@@ -11,7 +11,7 @@ export class SessionService {
   private router = inject(Router);
 
   // Configuración de sesión
-  private readonly INACTIVITY_TIMEOUT = 15 * 60 * 1000; // 15 minutos
+  private readonly INACTIVITY_TIMEOUT = 24 * 60 * 60 * 1000; // 1 día
   private readonly LOCK_TIME = 5 * 60 * 1000; // 5 minutos de bloqueo
   private readonly MAX_FAILED_ATTEMPTS = 5;
   private readonly TOKEN_KEY = 'auth:token';
@@ -128,7 +128,7 @@ export class SessionService {
   /**
    * Limpia timers de sesión
    */
-  private clearSession() {
+  public clearSession() {
     if (this.inactivityTimer) clearTimeout(this.inactivityTimer);
     if (this.countdownTimer) clearInterval(this.countdownTimer);
     if (this.lockTimer) clearTimeout(this.lockTimer);

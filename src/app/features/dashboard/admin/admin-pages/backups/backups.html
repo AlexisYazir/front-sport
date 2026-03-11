@@ -1,0 +1,258 @@
+<div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+  <!-- Toolbar - IGUAL QUE EN MARCAS -->
+  <div class="mb-6 p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="bg-[#0367A6]/10 p-3 rounded-xl">
+        <span class="material-symbols-outlined text-[#0367A6] text-2xl">backup</span>
+      </div>
+      <div>
+        <h2 class="text-2xl font-bold text-[#202020]">Gestión de Backups</h2>
+        <p class="text-sm text-[#666666] mt-0.5">Protege y restaura la información del sistema</p>
+      </div>
+    </div>
+    <div class="flex gap-3">
+      <button class="px-4 py-2 bg-[#0367A6] hover:bg-[#035A91] text-white rounded-lg flex items-center gap-2"
+              (click)="createFullBackup()" [disabled]="isCreatingBackup()">
+        <span class="material-symbols-outlined text-sm">database</span>
+        Backup Completo
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading()" class="flex flex-col items-center justify-center py-16">
+    <div class="relative">
+      <div class="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-[#0367A6]"></div>
+      <div class="absolute inset-0 flex items-center justify-center">
+        <span class="material-symbols-outlined text-[#0367A6] text-xl">backup</span>
+      </div>
+    </div>
+    <p class="text-[#666666] mt-4">Cargando backups...</p>
+  </div>
+
+  <!-- Contenido principal -->
+  <ng-container *ngIf="!isLoading()">
+    <!-- Barra de búsqueda -->
+    <div class="flex flex-col gap-4 mb-6">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div class="relative w-full sm:w-96">
+          <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#666666]">
+            <span class="material-symbols-outlined text-lg">search</span>
+          </span>
+          <input type="text" 
+                 (input)="onSearch($event)" 
+                 [ngModel]="searchValue"
+                 placeholder="Buscar backup..." 
+                 class="w-full pl-10 pr-10 py-3 border-2 border-gray-200 rounded-xl focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 transition-all outline-none text-sm"/>
+          <button *ngIf="searchValue" 
+                  (click)="clearSearch()"
+                  class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#0367A6] transition-colors">
+            <span class="material-symbols-outlined text-lg">close</span>
+          </button>
+        </div>
+        
+        <div class="flex items-center gap-4">
+          <div class="bg-blue-50 px-4 py-2 rounded-xl border border-blue-100">
+            <span class="text-[#0367A6] font-semibold text-lg">{{ totalRecords }}</span>
+            <span class="text-[#666666] text-sm ml-2">backups</span>
+          </div>
+         <button class="w-10 h-10 rounded-full border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all"
+                  (click)="refreshData()" title="Actualizar datos">
+            <i class="pi pi-refresh text-lg"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Botones de acción - 2 botones principales -->
+      <div class="flex gap-3 mt-2">
+       <button (click)="createFullBackup()" [disabled]="isCreatingBackup()"
+        class="px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-lg flex items-center gap-2 text-sm font-medium transition-all shadow-md hover:shadow-lg disabled:opacity-50">
+        <span class="material-symbols-outlined text-sm">database</span>
+        Backup Completo DB
+        </button>
+
+                <button (click)="createCriticalBackup()" [disabled]="isCreatingBackup()"
+                class="px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-lg flex items-center gap-2 text-sm font-medium transition-all shadow-md hover:shadow-lg disabled:opacity-50">
+        <span class="material-symbols-outlined text-sm">security</span>
+        Backup Tablas Críticas
+        </button>
+      </div>
+    </div>
+
+    <!-- Tabla de backups -->
+    <div class="overflow-x-auto rounded-xl border border-gray-200">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 border-b-2 border-gray-200">
+          <tr>
+            <th class="px-4 py-4 text-left font-semibold text-[#202020]">Tipo</th>
+            <th class="px-4 py-4 text-left font-semibold text-[#202020]">Nombre del Backup</th>
+            <th class="px-4 py-4 text-left font-semibold text-[#202020]">Fecha</th>
+            <th class="px-4 py-4 text-left font-semibold text-[#202020]">Hora</th>
+            <th class="px-4 py-4 text-left font-semibold text-[#202020]">Tamaño</th>
+            <th class="px-4 py-4 text-center font-semibold text-[#202020]">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let backup of paginatedBackups" 
+              class="border-b border-gray-100 hover:bg-gray-50 transition-colors group">
+            <td class="px-4 py-4">
+              <div class="flex items-center gap-2">
+                <div [class]="'p-2 rounded-lg ' + getBackupColor(backup)">
+                  <span class="material-symbols-outlined text-sm">{{ getBackupIcon(backup) }}</span>
+                </div>
+              </div>
+            </td>
+            <td class="px-4 py-4">
+              <span class="font-mono text-sm text-[#202020]">{{ backup }}</span>
+            </td>
+            <td class="px-4 py-4 text-[#666666]">{{ formatBackupDate(backup) }}</td>
+            <td class="px-4 py-4">
+              <span class="px-3 py-1 bg-gray-100 rounded-full text-sm text-[#666666]">
+                {{ formatBackupTime(backup) }}
+              </span>
+            </td>
+            <td class="px-4 py-4">
+              <span class="font-mono text-sm text-[#0367A6] font-medium">{{ getBackupSize(backup) }}</span>
+            </td>
+            <td class="px-4 py-4">
+              <div class="flex gap-2 justify-center">
+                <button class="w-9 h-9 rounded-full border-2 border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white transition-all"
+                        (click)="downloadBackup(backup)" title="Descargar">
+                  <span class="material-symbols-outlined text-lg">download</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+          
+          <!-- Fila vacía -->
+          <tr *ngIf="filteredBackups.length === 0">
+            <td colspan="6" class="text-center py-12">
+              <div class="flex flex-col items-center gap-3">
+                <span class="material-symbols-outlined text-5xl text-gray-300">backup</span>
+                <span class="text-[#666666] text-lg font-medium">No se encontraron backups</span>
+                <span class="text-sm text-gray-400">Crea un nuevo backup para comenzar</span>
+                <button class="px-4 py-2 bg-[#0367A6] text-white rounded-lg hover:bg-[#035A91] transition-all text-sm font-medium mt-2"
+                        (click)="createFullBackup()">
+                  Crear Backup
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Paginación (IGUAL QUE EN MARCAS) -->
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
+      <div class="flex items-center gap-3">
+        <span class="text-sm text-[#666666]">Mostrar</span>
+        <select class="px-3 py-2 border border-gray-300 rounded-lg text-sm text-[#202020] focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none"
+                [(ngModel)]="rowsPerPage" (change)="onRowsPerPageChange()">
+          <option *ngFor="let option of rowsPerPageOptions" [value]="option">{{ option }}</option>
+        </select>
+        <span class="text-sm text-[#666666]">resultados</span>
+      </div>
+
+      <div class="text-sm text-[#666666] order-first sm:order-none">
+        Mostrando {{ first + 1 }} a {{ last }} de {{ totalRecords }} backups
+      </div>
+
+      <div class="flex gap-2">
+        <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50"
+                (click)="changePage('first')" [disabled]="first === 0">
+          <span class="material-symbols-outlined text-lg">first_page</span>
+        </button>
+        <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50"
+                (click)="changePage('prev')" [disabled]="first === 0">
+          <span class="material-symbols-outlined text-lg">chevron_left</span>
+        </button>
+        
+        <div class="flex gap-1">
+          <button *ngFor="let page of pageNumbers" 
+                  class="min-w-[2.5rem] h-10 rounded-lg transition-all font-medium"
+                  [ngClass]="page === currentPage ? 'bg-[#0367A6] text-white hover:bg-[#035A91]' : 'border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6]'"
+                  (click)="goToPage(page)">
+            {{ page }}
+          </button>
+        </div>
+
+        <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50"
+                (click)="changePage('next')" [disabled]="last >= totalRecords">
+          <span class="material-symbols-outlined text-lg">chevron_right</span>
+        </button>
+        <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50"
+                (click)="changePage('last')" [disabled]="last >= totalRecords">
+          <span class="material-symbols-outlined text-lg">last_page</span>
+        </button>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- Loading overlay mientras se crea backup -->
+  <div *ngIf="isCreatingBackup()" class="fixed inset-0 bg-black/30 z-50 flex items-center justify-center backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-sm text-center">
+      <div class="relative mb-6">
+        <div class="animate-spin rounded-full h-20 w-20 border-4 border-gray-200 border-t-[#0367A6] mx-auto"></div>
+        <div class="absolute inset-0 flex items-center justify-center">
+          <span class="material-symbols-outlined text-3xl text-[#0367A6]">backup</span>
+        </div>
+      </div>
+      <h3 class="text-xl font-bold text-[#202020] mb-2">Creando Backup</h3>
+      <p class="text-[#666666]">Por favor espera, esto puede tomar unos momentos...</p>
+    </div>
+  </div>
+  <!-- Modal de Confirmación para Backup -->
+<div *ngIf="showConfirmModal" class="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4" (click)="closeConfirmModal()">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md" (click)="$event.stopPropagation()">
+    
+    <div class="bg-gradient-to-r from-[#0367A6] to-[#035A91] text-white px-6 py-4 rounded-t-2xl">
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined">warning</span>
+        <h3 class="text-xl font-bold">Confirmar Backup</h3>
+      </div>
+    </div>
+
+    <div class="p-8">
+      <div class="text-center mb-6">
+        <div [class]="'w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 ' + getModalIconColor()">
+          <span [class]="'material-symbols-outlined text-4xl ' + getModalIconTextColor()">
+            {{ getModalIcon() }}
+          </span>
+        </div>
+        
+        <h4 class="text-lg font-semibold text-[#202020] mb-2">
+          {{ getModalTitle() }}
+        </h4>
+        
+        <p class="text-[#666666] mb-4">
+          ¿Estás seguro de crear este backup?
+        </p>
+        
+        <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 text-left">
+          <p class="text-sm text-blue-800 flex items-start gap-2">
+            <span class="material-symbols-outlined text-blue-600 text-sm mt-0.5">info</span>
+            <span>{{ getModalDescription() }}</span>
+          </p>
+        </div>
+        
+       <p class="text-xs text-green-600 mt-4 flex items-center justify-center gap-1">
+  <span class="material-symbols-outlined text-green-600 text-sm">schedule</span>
+  Tiempo estimado: {{ confirmAction === 'full' ? '2-5 minutos' : '30-60 segundos' }}
+</p>
+      </div>
+    </div>
+
+    <div class="bg-gray-50 px-8 py-5 rounded-b-2xl border-t border-gray-200 flex justify-end gap-3">
+      <button (click)="closeConfirmModal()" [disabled]="isConfirming"
+              class="px-6 py-2.5 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-100 transition-all font-medium disabled:opacity-50">
+        Cancelar
+      </button>
+      <button (click)="executeBackup()" [disabled]="isConfirming"
+              class="px-6 py-2.5 bg-gradient-to-r from-[#0367A6] to-[#035A91] text-white rounded-xl hover:from-[#035A91] hover:to-[#024c7a] transition-all disabled:opacity-50 font-medium flex items-center gap-2">
+        <span *ngIf="isConfirming" class="material-symbols-outlined animate-spin text-sm">progress_activity</span>
+        {{ isConfirming ? 'Procesando...' : 'Sí, crear backup' }}
+      </button>
+    </div>
+  </div>
+</div>
+</div>
