@@ -54,7 +54,7 @@ npm install
 Ir a: `Settings > Environment Variables`
 
 ```env
-API_URL=https://back-sport.vercel.app
+API_URL=https://back-sport-ghxk.onrender.com
 NODE_ENV=production
 ```
 
