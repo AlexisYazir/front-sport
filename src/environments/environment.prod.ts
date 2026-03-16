@@ -3,7 +3,7 @@
 
 export const environment = {
   production: true,
-  apiUrl: 'https://back-sport.vercel.app',
+  apiUrl: 'https://back-sport-ghxk.onrender.com',
   appName: 'Sport Center',
   appVersion: '1.0.0',
   storageKeys: {
