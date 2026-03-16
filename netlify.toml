@@ -35,7 +35,7 @@
       style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
       font-src 'self' https://fonts.gstatic.com data:;
       img-src 'self' data: https: blob:;
-      connect-src 'self' https://back-sport.vercel.app https://accounts.google.com https://www.googleapis.com https://oauthaccountmanager.googleapis.com;
+      connect-src 'self' https://back-sport-ghxk.onrender.com https://accounts.google.com https://www.googleapis.com https://oauthaccountmanager.googleapis.com;
       frame-src 'self' https://accounts.google.com;
       object-src 'none';
       base-uri 'self';
