@@ -364,6 +364,17 @@ createInventoryMovement(data: {
   );
 }
 
+// Importación masiva desde Excel
+bulkCreateInventoryMovements(movements: any[]): Observable<any> {
+  this.isLoading.set(true);
+  return this.http.post(`${this.API_URL}/products/inventory-movements/bulk`, { movements }).pipe(
+    map(res => {
+      this.isLoading.set(false);
+      return res;
+    })
+  );
+}
+
 
 getInventoryMovements(): Observable<any> {
   this.isLoading.set(true);

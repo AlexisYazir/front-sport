@@ -111,7 +111,7 @@ export const routes: Routes = [
           import('./features/dashboard/admin/admin-pages/categories/categories').then((m) => m.Categories),
       },
       {
-        path: 'marcas',
+        path: 'marcas-categorias',
         loadComponent: () =>
           import('./features/dashboard/admin/admin-pages/marcas/marcas').then((m) => m.Marcas),
       },

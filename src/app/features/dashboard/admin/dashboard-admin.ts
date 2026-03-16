@@ -51,13 +51,13 @@ export class DashboardAdmin implements OnInit {
     { icon: 'dashboard', label: 'Dashboard', route: '/dashboard/admin' },
     { icon: 'inventory_2', label: 'Productos', route: '/dashboard/admin/products' },
     { icon: 'inventory', label: 'Inventario', route: '/dashboard/admin/inventory' },
-    { icon: 'category', label: 'Categorías', route: '/dashboard/admin/categories' },
-    { icon: 'branding_watermark', label: 'Marcas', route: '/dashboard/admin/marcas' },
+    // { icon: 'category', label: 'Categorías', route: '/dashboard/admin/categories' },
+    { icon: 'branding_watermark', label: 'Marcas & Categ', route: '/dashboard/admin/marcas-categorias' },
     { icon: 'people', label: 'Usuarios', route: '/dashboard/admin/users' },
     { icon: 'database', label: 'Respaldos', route: '/dashboard/admin/backups' },
-    { icon: 'domain', label: 'Perfil Empresa', route: '/dashboard/admin/empresa' },
-    { icon: 'bar_chart', label: 'Reportes', route: '/dashboard/admin/reports' },
-    { icon: 'person', label: 'Perfil', route: '/dashboard/admin/profile' },
+    // { icon: 'domain', label: 'Perfil Empresa', route: '/dashboard/admin/empresa' },
+    { icon: 'bar_chart', label: 'Rendimiento', route: '/dashboard/admin/reports' },
+    // { icon: 'person', label: 'Perfil', route: '/dashboard/admin/profile' },
     { icon: 'settings', label: 'Configuración', route: '/dashboard/admin/settings' },
   ];
 

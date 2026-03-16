@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
 import { ProductService } from '../../../../../core/services/product.service';
 import { InventoryProduct, ProductVariant } from '../../../../../core/models/product.model';
+import * as XLSX from 'xlsx';
 
 // Interfaz para variantes existentes (SOLO VISUALIZACIÓN)
 interface ExistingVariant {
@@ -19,6 +20,7 @@ interface ExistingVariant {
 interface InventoryMovement {
   id_movimiento: number;
   id_variante: number;
+  sku: string;
   tipo: 'entrada' | 'salida' | 'ajuste';
   cantidad: number;
   costo_unitario: number;
@@ -48,6 +50,39 @@ interface VariantSearchItem {
   precio: number;
 }
 
+// ===== NUEVAS INTERFACES PARA EXCEL =====
+interface ExcelRow {
+  sku: string;
+  tipo: string;
+  cantidad: number;
+  costo_unitario?: number;
+  referencia_tipo?: string;
+  referencia_id?: number;
+}
+
+interface ExcelImportPreview {
+  validRows: ExcelRow[];
+  invalidRows: Array<{
+    row: number;
+    sku: string;
+    tipo: string;
+    cantidad: any;
+    error: string;
+  }>;
+  totalRows: number;
+}
+
+interface ExcelImportResult {
+  success: number;
+  errors: Array<{
+    row: number;
+    sku: string;
+    error: string;
+    data: any;
+  }>;
+  total: number;
+}
+
 @Component({
   selector: 'app-inventario',
   standalone: true,
@@ -71,7 +106,7 @@ export class Inventario implements OnInit {
   
   // Paginación
   rowsPerPage: number = 10;
-  rowsPerPageOptions: number[] = [5, 10, 20, 50, 100];
+  rowsPerPageOptions: number[] = [10];
   first: number = 0;
   currentPage: number = 1;
   totalRecords: number = 0;
@@ -123,6 +158,12 @@ export class Inventario implements OnInit {
   filteredVariantsForMovement: VariantSearchItem[] = [];
   allVariants: VariantSearchItem[] = []; // Para cargar variantes disponibles
   loadingVariantsForSearch: boolean = false;
+  
+  // ===== NUEVAS PROPIEDADES PARA IMPORTACIÓN EXCEL =====
+  showImportModal: boolean = false;
+  selectedFile: File | null = null;
+  importPreview: ExcelImportPreview | null = null;
+  importing: boolean = false;
   
   // Estados
   isLoading = signal<boolean>(false);
@@ -351,7 +392,7 @@ export class Inventario implements OnInit {
           id_producto: v.id_producto,
           sku: v.sku,
           precio: Number(v.precio),
-          stock: v.stock,
+          stock: v.stock || 0,
           imagenes: v.imagenes || [],
         }));
         this.loadingVariants = false;
@@ -431,72 +472,82 @@ export class Inventario implements OnInit {
   }
 
   // Cargar movimientos
-  loadMovements() {
-    this.loadingMovements = true;
-    this.productService.getInventoryMovements().subscribe({
-      next: (response: any) => {
-        // Si la respuesta es un array directamente
-        if (Array.isArray(response)) {
-          this.movements = response;
-        } 
-        // Si la respuesta tiene propiedad data
-        else if (response && response.data) {
-          this.movements = response.data;
-        } else {
-          this.movements = [];
-        }
-        
-        this.applyMovementsFilters();
-        this.loadingMovements = false;
-      },
-      error: (error) => {
-        console.error('Error loading movements:', error);
-        this.toastr.error('Error al cargar movimientos', 'Error');
+loadMovements() {
+  this.loadingMovements = true;
+  this.productService.getInventoryMovements().subscribe({
+    next: (response: any) => {
+      // Si la respuesta es un array directamente
+      if (Array.isArray(response)) {
+        this.movements = response;
+        console.log('Primer movimiento:', response[0]); // 👈 VERIFICA AQUÍ
+      } 
+      // Si la respuesta tiene propiedad data
+      else if (response && response.data) {
+        this.movements = response.data;
+        console.log('Primer movimiento:', response.data[0]); // 👈 VERIFICA AQUÍ
+      } else {
         this.movements = [];
-        this.loadingMovements = false;
       }
+      
+      this.applyMovementsFilters();
+      this.loadingMovements = false;
+    },
+    error: (error) => {
+      console.error('Error loading movements:', error);
+      this.toastr.error('Error al cargar movimientos', 'Error');
+      this.movements = [];
+      this.loadingMovements = false;
+    }
+  });
+}
+  // Aplicar filtros a movimientos
+// Aplicar filtros a movimientos - CORREGIDO
+applyMovementsFilters() {
+  let filtered = [...this.movements];
+
+  // Filtro por tipo
+  if (this.filterTipo !== 'todos') {
+    filtered = filtered.filter(m => m.tipo === this.filterTipo);
+  }
+
+  // Filtro por fecha inicio - CORREGIDO
+  if (this.filterFechaInicio) {
+    const fechaInicio = new Date(this.filterFechaInicio);
+    fechaInicio.setHours(0, 0, 0, 0);
+    
+    filtered = filtered.filter(m => {
+      const fechaMovimiento = new Date(m.fecha);
+      fechaMovimiento.setHours(0, 0, 0, 0); // Ignorar hora para comparar solo fecha
+      return fechaMovimiento >= fechaInicio;
     });
   }
 
-  // Aplicar filtros a movimientos
-  applyMovementsFilters() {
-    let filtered = [...this.movements];
-
-    // Filtro por tipo
-    if (this.filterTipo !== 'todos') {
-      filtered = filtered.filter(m => m.tipo === this.filterTipo);
-    }
-
-    // Filtro por fecha inicio
-    if (this.filterFechaInicio) {
-      const fechaInicio = new Date(this.filterFechaInicio);
-      fechaInicio.setHours(0, 0, 0, 0);
-      filtered = filtered.filter(m => new Date(m.fecha) >= fechaInicio);
-    }
-
-    // Filtro por fecha fin
-    if (this.filterFechaFin) {
-      const fechaFin = new Date(this.filterFechaFin);
-      fechaFin.setHours(23, 59, 59, 999);
-      filtered = filtered.filter(m => new Date(m.fecha) <= fechaFin);
-    }
-
-    // Búsqueda por texto (ID, referencia, etc.)
-    if (this.searchMovementValue) {
-      const term = this.searchMovementValue.toLowerCase();
-      filtered = filtered.filter(m => 
-        m.id_movimiento.toString().includes(term) ||
-        m.referencia_tipo.toLowerCase().includes(term) ||
-        m.referencia_id?.toString().includes(term) ||
-        m.id_variante.toString().includes(term)
-      );
-    }
-
-    this.filteredMovements = filtered;
-    this.movementsTotalRecords = filtered.length;
-    this.movementsFirst = 0;
-    this.updatePaginatedMovements();
+  // Filtro por fecha fin - CORREGIDO
+  if (this.filterFechaFin) {
+    const fechaFin = new Date(this.filterFechaFin);
+    fechaFin.setHours(23, 59, 59, 999);
+    
+    filtered = filtered.filter(m => {
+      const fechaMovimiento = new Date(m.fecha);
+      return fechaMovimiento <= fechaFin;
+    });
   }
+
+if (this.searchMovementValue) {
+  const term = this.searchMovementValue.toLowerCase();
+  filtered = filtered.filter(m => 
+    m.id_movimiento.toString().includes(term) ||
+    m.sku.toLowerCase().includes(term) ||
+    m.referencia_tipo.toLowerCase().includes(term) ||
+    m.referencia_id?.toString().includes(term) ||
+    m.id_variante.toString().includes(term)
+  );
+}
+  this.filteredMovements = filtered;
+  this.movementsTotalRecords = filtered.length;
+  this.movementsFirst = 0;
+  this.updatePaginatedMovements();
+}
 
   // Filtros de movimientos
   onMovementTipoChange(event: any) {
@@ -509,15 +560,18 @@ export class Inventario implements OnInit {
     this.applyMovementsFilters();
   }
 
-  onFechaInicioChange(event: any) {
-    this.filterFechaInicio = event.target.value;
-    this.applyMovementsFilters();
-  }
+// Filtros de movimientos - CORREGIDOS
+onFechaInicioChange(value: string) {  // Cambiado de event a value
+  this.filterFechaInicio = value;
+  console.log('Fecha inicio seleccionada:', this.filterFechaInicio);
+  this.applyMovementsFilters();
+}
 
-  onFechaFinChange(event: any) {
-    this.filterFechaFin = event.target.value;
-    this.applyMovementsFilters();
-  }
+onFechaFinChange(value: string) {  // Cambiado de event a value
+  this.filterFechaFin = value;
+  console.log('Fecha fin seleccionada:', this.filterFechaFin);
+  this.applyMovementsFilters();
+}
 
   clearMovementFilters() {
     this.searchMovementValue = '';
@@ -758,4 +812,309 @@ export class Inventario implements OnInit {
     this.variantSearchTerm = '';
     this.filterVariantsForMovement();
   }
+
+  // ===== NUEVOS MÉTODOS PARA IMPORTACIÓN EXCEL =====
+
+  // Abrir modal de importación
+  openImportModal() {
+    this.showImportModal = true;
+    this.selectedFile = null;
+    this.importPreview = null;
+  }
+
+  // Cerrar modal de importación
+  closeImportModal() {
+    this.showImportModal = false;
+    this.selectedFile = null;
+    this.importPreview = null;
+  }
+
+  // Descargar plantilla Excel
+  downloadTemplate() {
+    // Crear datos de ejemplo para la plantilla
+    const data = [
+      ['sku', 'tipo', 'cantidad', 'costo_unitario', 'referencia_tipo', 'referencia_id'],
+      ['PROD-001', 'entrada', 10, 150.50, 'compra', 1001],
+      ['PROD-002', 'salida', 5, '', 'venta', 2001],
+      ['PROD-003', 'ajuste', 2, '', 'inventario', ''],
+    ];
+
+    // Crear libro de Excel
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    
+    // Ajustar ancho de columnas
+    ws['!cols'] = [
+      { wch: 15 }, // sku
+      { wch: 10 }, // tipo
+      { wch: 10 }, // cantidad
+      { wch: 15 }, // costo_unitario
+      { wch: 15 }, // referencia_tipo
+      { wch: 12 }, // referencia_id
+    ];
+
+    XLSX.utils.book_append_sheet(wb, ws, 'Movimientos');
+    
+    // Generar archivo y descargar
+    XLSX.writeFile(wb, 'plantilla_movimientos.xlsx');
+    
+    this.toastr.success('Plantilla descargada', 'Éxito');
+  }
+
+  // Manejar selección de archivo
+  onFileSelected(event: any) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Validar tipo de archivo
+    const allowedTypes = [
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.oasis.opendocument.spreadsheet',
+      'text/csv'
+    ];
+
+    if (!allowedTypes.includes(file.type) && !file.name.endsWith('.xlsx') && !file.name.endsWith('.xls') && !file.name.endsWith('.csv')) {
+      this.toastr.error('El archivo debe ser Excel (.xls, .xlsx) o CSV', 'Error');
+      return;
+    }
+
+    this.selectedFile = file;
+    this.previewExcelFile(file);
+  }
+
+  // Previsualizar archivo Excel
+  previewExcelFile(file: File) {
+    const reader = new FileReader();
+    
+    reader.onload = (e: any) => {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        
+        // Convertir a JSON (array de arrays)
+        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 }) as any[][];
+        
+        if (rows.length < 2) {
+          this.toastr.error('El archivo está vacío', 'Error');
+          return;
+        }
+
+        // Obtener headers (primera fila)
+        const headers = rows[0].map(h => String(h).toLowerCase().trim());
+        
+        // Validar headers requeridos
+        const requiredHeaders = ['sku', 'tipo', 'cantidad'];
+        const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
+        
+        if (missingHeaders.length > 0) {
+          this.toastr.error(`Faltan columnas requeridas: ${missingHeaders.join(', ')}`, 'Error');
+          return;
+        }
+
+        // Procesar filas (desde la fila 2)
+        const preview: ExcelImportPreview = {
+          validRows: [],
+          invalidRows: [],
+          totalRows: rows.length - 1
+        };
+
+        for (let i = 1; i < rows.length; i++) {
+          const row = rows[i];
+          
+          // Saltar filas vacías
+          if (!row || row.length === 0 || !row[0]) continue;
+
+          // Crear objeto con los valores
+          const rowData: any = {};
+          headers.forEach((header, index) => {
+            rowData[header] = row[index];
+          });
+
+          // Validar fila
+          const errors: string[] = [];
+          
+          // Validar SKU
+          if (!rowData.sku) {
+            errors.push('SKU requerido');
+          }
+          
+          // Validar tipo
+          if (!rowData.tipo) {
+            errors.push('Tipo requerido');
+          } else if (!['entrada', 'salida', 'ajuste'].includes(String(rowData.tipo).toLowerCase())) {
+            errors.push('Tipo debe ser entrada, salida o ajuste');
+          }
+          
+          // Validar cantidad
+          const cantidad = Number(rowData.cantidad);
+          if (isNaN(cantidad) || cantidad <= 0) {
+            errors.push('Cantidad debe ser un número mayor a 0');
+          }
+
+          if (errors.length > 0) {
+            preview.invalidRows.push({
+              row: i + 1,
+              sku: rowData.sku || 'N/A',
+              tipo: rowData.tipo || 'N/A',
+              cantidad: rowData.cantidad,
+              error: errors.join(', ')
+            });
+          } else {
+            preview.validRows.push({
+              sku: String(rowData.sku).trim(),
+              tipo: String(rowData.tipo).toLowerCase().trim() as any,
+              cantidad: cantidad,
+              costo_unitario: rowData.costo_unitario ? Number(rowData.costo_unitario) : undefined,
+              referencia_tipo: rowData.referencia_tipo ? String(rowData.referencia_tipo).trim() : undefined,
+              referencia_id: rowData.referencia_id ? Number(rowData.referencia_id) : undefined
+            });
+          }
+        }
+
+        this.importPreview = preview;
+        
+        if (preview.invalidRows.length > 0) {
+          this.toastr.warning(`${preview.invalidRows.length} filas con errores. Revisa la vista previa.`, 'Validación');
+        } else {
+          this.toastr.success(`${preview.validRows.length} filas válidas para importar`, 'Listo');
+        }
+
+      } catch (error) {
+        console.error('Error al leer Excel:', error);
+        this.toastr.error('Error al leer el archivo Excel', 'Error');
+      }
+    };
+
+    reader.readAsArrayBuffer(file);
+  }
+
+  // Importar datos
+  importData() {
+    if (!this.importPreview || this.importPreview.validRows.length === 0) {
+      this.toastr.warning('No hay datos válidos para importar', 'Validación');
+      return;
+    }
+
+    this.importing = true;
+
+    this.productService.bulkCreateInventoryMovements(this.importPreview.validRows).subscribe({
+      next: (result: ExcelImportResult) => {
+        this.importing = false;
+        
+        if (result.success > 0) {
+          this.toastr.success(
+            `Importación completada: ${result.success} de ${result.total} exitosos`,
+            'Éxito'
+          );
+        }
+        
+        if (result.errors && result.errors.length > 0) {
+          console.warn('Errores en importación:', result.errors);
+          this.toastr.warning(
+            `${result.errors.length} registros con errores. Revisa la consola.`,
+            'Importación con errores'
+          );
+        }
+
+        this.closeImportModal();
+        this.loadMovements();
+        this.loadInventory();
+      },
+      error: (error) => {
+        console.error('Error al importar:', error);
+        this.importing = false;
+        this.toastr.error(error.error?.message || 'Error al importar datos', 'Error');
+      }
+    });
+  }
+
+  // Agrega este método a tu componente
+resetFileSelection() {
+  this.selectedFile = null;
+  this.importPreview = null;
+  // Resetear el input file
+  const fileInput = document.getElementById('excelFile') as HTMLInputElement;
+  if (fileInput) {
+    fileInput.value = '';
+  }
+}
+
+// Exportar todos los movimientos
+exportAllMovements() {
+  this.exportToExcel(this.movements, 'todos_los_movimientos');
+}
+
+// Exportar solo los movimientos filtrados
+exportFilteredMovements() {
+  if (this.filteredMovements.length === 0) {
+    this.toastr.warning('No hay movimientos para exportar', 'Información');
+    return;
+  }
+  this.exportToExcel(this.filteredMovements, 'movimientos_filtrados');
+}
+
+// Método genérico para exportar a Excel
+private exportToExcel(data: any[], filename: string) {
+  try {
+    // Preparar los datos para Excel
+    const excelData = data.map(m => ({
+      'ID Movimiento': m.id_movimiento,
+      'Fecha': this.formatDateForExport(m.fecha),
+      'Tipo': m.tipo,
+      'ID Variante': m.id_variante,
+      'Cantidad': m.cantidad,
+      'Costo Unitario': m.costo_unitario,
+      'Referencia Tipo': m.referencia_tipo,
+      'Referencia ID': m.referencia_id || 'N/A'
+    }));
+
+    // Crear hoja de Excel
+    const ws = XLSX.utils.json_to_sheet(excelData);
+    
+    // Ajustar ancho de columnas
+    const colWidths = [
+      { wch: 15 }, // ID Movimiento
+      { wch: 20 }, // Fecha
+      { wch: 10 }, // Tipo
+      { wch: 15 }, // ID Variante
+      { wch: 10 }, // Cantidad
+      { wch: 15 }, // Costo Unitario
+      { wch: 15 }, // Referencia Tipo
+      { wch: 12 }, // Referencia ID
+    ];
+    ws['!cols'] = colWidths;
+
+    // Crear libro y agregar la hoja
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Movimientos');
+
+    // Generar nombre de archivo con fecha
+    const date = new Date();
+    const dateStr = `${date.getFullYear()}-${(date.getMonth()+1).toString().padStart(2,'0')}-${date.getDate().toString().padStart(2,'0')}`;
+    const fileName = `${filename}_${dateStr}.xlsx`;
+
+    // Descargar archivo
+    XLSX.writeFile(wb, fileName);
+    
+    this.toastr.success(`Exportados ${data.length} movimientos`, 'Éxito');
+  } catch (error) {
+    console.error('Error al exportar:', error);
+    this.toastr.error('Error al exportar los datos', 'Error');
+  }
+}
+
+// Formatear fecha para export
+private formatDateForExport(dateString: string): string {
+  const date = new Date(dateString);
+  return date.toLocaleString('es-ES', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+}
 }

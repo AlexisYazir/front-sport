@@ -17,3 +17,14 @@
 ::-webkit-scrollbar-thumb:hover {
   background: transparent;
 }
+
+/* Transición suave para el overlay */
+.fixed.inset-0.bg-black\/50 {
+  backdrop-filter: blur(2px);
+  transition: opacity 0.3s ease;
+}
+
+/* Prevenir scroll del body cuando el sidebar está abierto en móvil */
+body.sidebar-open-mobile {
+  overflow: hidden;
+}

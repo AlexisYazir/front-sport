@@ -2,7 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
-import { Marca } from '../../../../../core/models/product.model';
+import { Marca, Categorie } from '../../../../../core/models/product.model';
 import { ProductService } from '../../../../../core/services/product.service';
 
 @Component({
@@ -16,61 +16,119 @@ export class Marcas implements OnInit {
   private productService = inject(ProductService);
   private toastr = inject(ToastrService);
   
+  // ===== PESTAÑA ACTIVA =====
+  activeTab: 'marcas' | 'categorias' = 'marcas';
+  
+  // ===== PROPIEDADES PARA MARCAS =====
   marcas: Marca[] = [];
   filteredMarcas: Marca[] = [];
   paginatedMarcas: Marca[] = [];
-  searchValue: string = '';
+  searchMarcasValue: string = '';
   
-  // Paginación
-  rowsPerPage: number = 10;
-  rowsPerPageOptions: number[] = [5, 10, 20, 50, 100];
-  first: number = 0;
-  currentPage: number = 1;
-  totalRecords: number = 0;
+  // Paginación para marcas
+  marcasRowsPerPage: number = 10;
+  marcasFirst: number = 0;
+  marcasCurrentPage: number = 1;
+  marcasTotalRecords: number = 0;
   
-  // Modal creación
-  showCreateModal: boolean = false;
+  // Modal creación marca
+  showCreateMarcaModal: boolean = false;
   nuevaMarca = {
     nombre: '',
-    imagen: '' // Aquí se guardará la URL de la imagen
+    imagen: ''
   };
   
-  validationErrors = {
+  marcaValidationErrors = {
     nombre: '',
-    imagen: '' // Para validar la URL de la imagen
+    imagen: ''
   };
   
   creatingMarca: boolean = false;
   
-  // Modal edición
-  showEditModal: boolean = false;
+  // Modal edición marca
+  showEditMarcaModal: boolean = false;
   marcaEditando: Marca | null = null;
-  
-  // Guardar copia original para detectar cambios
   marcaOriginalData = {
     nombre: '',
     imagen: ''
   };
   
-  editValidationErrors = {
+  marcaEditValidationErrors = {
     nombre: '',
     imagen: ''
   };
   
   editingMarca: boolean = false;
   
+  // ===== PROPIEDADES PARA CATEGORÍAS =====
+  categorias: Categorie[] = [];
+  filteredCategorias: Categorie[] = [];
+  paginatedCategorias: Categorie[] = [];
+  searchCategoriasValue: string = '';
+  
+  // Filtro para categorías
+  filterTipo: string = 'todas'; // 'todas', 'padre', 'hija'
+  
+  // Paginación para categorías
+  categoriasRowsPerPage: number = 10;
+  categoriasFirst: number = 0;
+  categoriasCurrentPage: number = 1;
+  categoriasTotalRecords: number = 0;
+  
+  // Modal creación categoría
+  showCreateCategoriaModal: boolean = false;
+  nuevaCategoria = {
+    nombre: '',
+    id_padre: null as number | null,
+    tipo: 'padre' as 'padre' | 'hija'
+  };
+  
+  categoriaValidationErrors = {
+    nombre: '',
+    id_padre: ''
+  };
+  
+  creatingCategoria: boolean = false;
+  
+  // Modal edición categoría
+  showEditCategoriaModal: boolean = false;
+  categoriaEditando: Categorie | null = null;
+  categoriaOriginalData = {
+    nombre: '',
+    id_padre: null as number | null
+  };
+  
+  categoriaEditValidationErrors = {
+    nombre: '',
+    id_padre: ''
+  };
+  
+  editingCategoria: boolean = false;
+  
+  // Categorías padre para el select
+  categoriasPadre: Categorie[] = [];
+  
+  // Estado de carga general
   isLoading = signal<boolean>(false);
 
   ngOnInit(): void {
     this.loadMarcas();
+    this.loadCategorias();
   }
 
+  // ===== CAMBIAR PESTAÑA =====
+  changeTab(tab: 'marcas' | 'categorias') {
+    this.activeTab = tab;
+  }
+
+  // ===== MÉTODOS PARA MARCAS =====
+  
   loadMarcas() {
     this.isLoading.set(true);
     this.productService.getMarcas().subscribe({
       next: (data: Marca[]) => {
         this.marcas = data;
-        this.applyFilters();
+        this.applyMarcasFilters();
         this.isLoading.set(false);
       },
       error: (error) => {
@@ -81,12 +139,11 @@ export class Marcas implements OnInit {
     });
   }
 
-  // APLICAR FILTROS
-  applyFilters() {
+  applyMarcasFilters() {
     let filtered = [...this.marcas];
 
-    if (this.searchValue) {
-      const term = this.searchValue.toLowerCase();
+    if (this.searchMarcasValue) {
+      const term = this.searchMarcasValue.toLowerCase();
       filtered = filtered.filter(marca => 
         marca.nombre.toLowerCase().includes(term) ||
         marca.id_marca?.toString().includes(term) ||
@@ -95,58 +152,55 @@ export class Marcas implements OnInit {
     }
 
     this.filteredMarcas = filtered;
-    this.totalRecords = filtered.length;
-    this.first = 0;
+    this.marcasTotalRecords = filtered.length;
+    this.marcasFirst = 0;
     this.updatePaginatedMarcas();
   }
 
-  onSearch(event: any) {
-    this.searchValue = event.target.value;
-    this.applyFilters();
+  onMarcasSearch(event: any) {
+    this.searchMarcasValue = event.target.value;
+    this.applyMarcasFilters();
   }
 
-  clearSearch() {
-    this.searchValue = '';
-    this.applyFilters();
-    this.toastr.success('Filtros limpiados', 'Éxito');
+  clearMarcasSearch() {
+    this.searchMarcasValue = '';
+    this.applyMarcasFilters();
   }
 
-  // Paginación
   updatePaginatedMarcas() {
-    const start = this.first;
-    const end = this.first + this.rowsPerPage;
+    const start = this.marcasFirst;
+    const end = this.marcasFirst + this.marcasRowsPerPage;
     this.paginatedMarcas = this.filteredMarcas.slice(start, end);
-    this.totalRecords = this.filteredMarcas.length;
-    this.currentPage = Math.floor(this.first / this.rowsPerPage) + 1;
+    this.marcasCurrentPage = Math.floor(this.marcasFirst / this.marcasRowsPerPage) + 1;
   }
 
-  onRowsPerPageChange() {
-    this.first = 0;
+  onMarcasRowsPerPageChange() {
+    this.marcasFirst = 0;
     this.updatePaginatedMarcas();
   }
 
-  changePage(action: 'first' | 'prev' | 'next' | 'last') {
+  changeMarcasPage(action: 'first' | 'prev' | 'next' | 'last') {
     switch (action) {
-      case 'first': this.first = 0; break;
-      case 'prev': if (this.first > 0) this.first -= this.rowsPerPage; break;
-      case 'next': if (this.first + this.rowsPerPage < this.totalRecords) this.first += this.rowsPerPage; break;
-      case 'last': this.first = Math.floor((this.totalRecords - 1) / this.rowsPerPage) * this.rowsPerPage; break;
+      case 'first': this.marcasFirst = 0; break;
+      case 'prev': if (this.marcasFirst > 0) this.marcasFirst -= this.marcasRowsPerPage; break;
+      case 'next': if (this.marcasFirst + this.marcasRowsPerPage < this.marcasTotalRecords) this.marcasFirst += this.marcasRowsPerPage; break;
+      case 'last': this.marcasFirst = Math.floor((this.marcasTotalRecords - 1) / this.marcasRowsPerPage) * this.marcasRowsPerPage; break;
     }
     this.updatePaginatedMarcas();
   }
 
-  goToPage(page: number) {
-    this.first = (page - 1) * this.rowsPerPage;
+  goToMarcasPage(page: number) {
+    this.marcasFirst = (page - 1) * this.marcasRowsPerPage;
     this.updatePaginatedMarcas();
   }
 
-  get last(): number {
-    return Math.min(this.first + this.rowsPerPage, this.totalRecords);
+  get marcasLast(): number {
+    return Math.min(this.marcasFirst + this.marcasRowsPerPage, this.marcasTotalRecords);
   }
 
-  get pageNumbers(): number[] {
-    const totalPages = Math.ceil(this.totalRecords / this.rowsPerPage);
-    const current = this.currentPage;
+  get marcasPageNumbers(): number[] {
+    const totalPages = Math.ceil(this.marcasTotalRecords / this.marcasRowsPerPage);
+    const current = this.marcasCurrentPage;
     const pages: number[] = [];
     
     if (totalPages <= 5) {
@@ -160,36 +214,36 @@ export class Marcas implements OnInit {
   }
 
   // ===== FUNCIONES PARA CREAR MARCA =====
-  openCreateModal() {
+  openCreateMarcaModal() {
     this.nuevaMarca = {
       nombre: '',
       imagen: ''
     };
-    this.validationErrors = {
+    this.marcaValidationErrors = {
       nombre: '',
       imagen: ''
     };
-    this.showCreateModal = true;
+    this.showCreateMarcaModal = true;
   }
 
-  closeCreateModal() {
-    this.showCreateModal = false;
+  closeCreateMarcaModal() {
+    this.showCreateMarcaModal = false;
   }
 
-  validateFields(): boolean {
+  validateMarcaFields(): boolean {
     let isValid = true;
-    this.validationErrors = {
+    this.marcaValidationErrors = {
       nombre: '',
       imagen: ''
     };
 
     if (!this.nuevaMarca.nombre?.trim()) {
-      this.validationErrors.nombre = 'El nombre de la marca es obligatorio';
+      this.marcaValidationErrors.nombre = 'El nombre de la marca es obligatorio';
       isValid = false;
     }
 
     if (this.nuevaMarca.imagen && !this.isValidUrl(this.nuevaMarca.imagen)) {
-      this.validationErrors.imagen = 'Ingresa una URL válida para la imagen';
+      this.marcaValidationErrors.imagen = 'Ingresa una URL válida para la imagen';
       isValid = false;
     }
 
@@ -207,7 +261,7 @@ export class Marcas implements OnInit {
   }
 
   guardarMarca() {
-    if (!this.validateFields()) {
+    if (!this.validateMarcaFields()) {
       this.toastr.warning('Corrige los errores en el formulario', 'Validación');
       return;
     }
@@ -219,14 +273,12 @@ export class Marcas implements OnInit {
       imagen: this.nuevaMarca.imagen?.trim() || ''
     };
 
-    console.log('Enviando marca:', marcaData);
-
     this.productService.createMarca(marcaData).subscribe({
       next: () => {
         this.creatingMarca = false;
         this.toastr.success('Marca creada exitosamente', 'Éxito');
         setTimeout(() => {
-          this.closeCreateModal();
+          this.closeCreateMarcaModal();
           this.loadMarcas();
         }, 1500);
       },
@@ -239,49 +291,48 @@ export class Marcas implements OnInit {
   }
 
   // ===== FUNCIONES PARA EDITAR MARCA =====
-  openEditModal(marca: Marca) {
+  openEditMarcaModal(marca: Marca) {
     this.marcaEditando = JSON.parse(JSON.stringify(marca));
     
-    // Guardar datos originales para comparar cambios
     this.marcaOriginalData = {
       nombre: marca.nombre,
       imagen: marca.imagen || ''
     };
     
-    this.editValidationErrors = {
+    this.marcaEditValidationErrors = {
       nombre: '',
       imagen: ''
     };
     
-    this.showEditModal = true;
+    this.showEditMarcaModal = true;
   }
 
-  closeEditModal() {
-    this.showEditModal = false;
+  closeEditMarcaModal() {
+    this.showEditMarcaModal = false;
     this.marcaEditando = null;
   }
 
-  validateEditFields(): boolean {
+  validateEditMarcaFields(): boolean {
     let isValid = true;
-    this.editValidationErrors = {
+    this.marcaEditValidationErrors = {
       nombre: '',
       imagen: ''
     };
 
     if (!this.marcaEditando?.nombre?.trim()) {
-      this.editValidationErrors.nombre = 'El nombre de la marca es obligatorio';
+      this.marcaEditValidationErrors.nombre = 'El nombre de la marca es obligatorio';
       isValid = false;
     }
 
     if (this.marcaEditando?.imagen && !this.isValidUrl(this.marcaEditando.imagen)) {
-      this.editValidationErrors.imagen = 'Ingresa una URL válida para la imagen';
+      this.marcaEditValidationErrors.imagen = 'Ingresa una URL válida para la imagen';
       isValid = false;
     }
 
     return isValid;
   }
 
-  hasChanges(): boolean {
+  hasMarcaChanges(): boolean {
     if (!this.marcaEditando) return false;
     
     return this.marcaEditando.nombre !== this.marcaOriginalData.nombre ||
@@ -289,14 +340,12 @@ export class Marcas implements OnInit {
   }
 
   actualizarMarca() {
-    // Validar campos
-    if (!this.validateEditFields()) {
+    if (!this.validateEditMarcaFields()) {
       this.toastr.warning('Corrige los errores en el formulario', 'Validación');
       return;
     }
     
-    // Verificar si hay cambios
-    if (!this.hasChanges()) {
+    if (!this.hasMarcaChanges()) {
       this.toastr.info('No se detectaron cambios en la marca', 'Información');
       return;
     }
@@ -309,14 +358,12 @@ export class Marcas implements OnInit {
       imagen: this.marcaEditando!.imagen?.trim() || ''
     };
 
-    console.log('Actualizando marca:', marcaData);
-
     this.productService.updateMarca(marcaData).subscribe({
       next: () => {
         this.editingMarca = false;
         this.toastr.success('Marca actualizada exitosamente', 'Éxito');
         setTimeout(() => {
-          this.closeEditModal();
+          this.closeEditMarcaModal();
           this.loadMarcas();
         }, 1500);
       },
@@ -328,22 +375,289 @@ export class Marcas implements OnInit {
     });
   }
 
-  // ===== FUNCIÓN PARA OBTENER IMAGEN DE LA MARCA =====
   getMarcaImageUrl(marca: Marca): string {
     return marca.imagen || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(marca.nombre) + '&background=0367A6&color=fff&size=64';
   }
 
-  // Acciones existentes
+  // ===== MÉTODOS PARA CATEGORÍAS =====
+  
+  loadCategorias() {
+    this.isLoading.set(true);
+    this.productService.getCategorias().subscribe({
+      next: (data: Categorie[]) => {
+        this.categorias = data;
+        this.categoriasPadre = data.filter(c => c.id_padre === null);
+        this.applyCategoriasFilters();
+        this.isLoading.set(false);
+      },
+      error: (error) => {
+        console.error('Error loading categorias:', error);
+        this.toastr.error('Error al cargar categorías', 'Error');
+        this.isLoading.set(false);
+      }
+    });
+  }
+
+  applyCategoriasFilters() {
+    let filtered = [...this.categorias];
+
+    if (this.searchCategoriasValue) {
+      const term = this.searchCategoriasValue.toLowerCase();
+      filtered = filtered.filter(cat => 
+        cat.nombre.toLowerCase().includes(term) ||
+        cat.id_categoria?.toString().includes(term)
+      );
+    }
+
+    if (this.filterTipo !== 'todas') {
+      filtered = filtered.filter(cat => 
+        this.filterTipo === 'padre' ? cat.id_padre === null : cat.id_padre !== null
+      );
+    }
+
+    this.filteredCategorias = filtered;
+    this.categoriasTotalRecords = filtered.length;
+    this.categoriasFirst = 0;
+    this.updatePaginatedCategorias();
+  }
+
+  onFilterTipoChange(event: any) {
+    this.filterTipo = event.target.value;
+    this.applyCategoriasFilters();
+  }
+
+  onCategoriasSearch(event: any) {
+    this.searchCategoriasValue = event.target.value;
+    this.applyCategoriasFilters();
+  }
+
+  clearCategoriasSearch() {
+    this.searchCategoriasValue = '';
+    this.filterTipo = 'todas';
+    this.applyCategoriasFilters();
+  }
+
+  updatePaginatedCategorias() {
+    const start = this.categoriasFirst;
+    const end = this.categoriasFirst + this.categoriasRowsPerPage;
+    this.paginatedCategorias = this.filteredCategorias.slice(start, end);
+    this.categoriasCurrentPage = Math.floor(this.categoriasFirst / this.categoriasRowsPerPage) + 1;
+  }
+
+  onCategoriasRowsPerPageChange() {
+    this.categoriasFirst = 0;
+    this.updatePaginatedCategorias();
+  }
+
+  changeCategoriasPage(action: 'first' | 'prev' | 'next' | 'last') {
+    switch (action) {
+      case 'first': this.categoriasFirst = 0; break;
+      case 'prev': if (this.categoriasFirst > 0) this.categoriasFirst -= this.categoriasRowsPerPage; break;
+      case 'next': if (this.categoriasFirst + this.categoriasRowsPerPage < this.categoriasTotalRecords) this.categoriasFirst += this.categoriasRowsPerPage; break;
+      case 'last': this.categoriasFirst = Math.floor((this.categoriasTotalRecords - 1) / this.categoriasRowsPerPage) * this.categoriasRowsPerPage; break;
+    }
+    this.updatePaginatedCategorias();
+  }
+
+  goToCategoriasPage(page: number) {
+    this.categoriasFirst = (page - 1) * this.categoriasRowsPerPage;
+    this.updatePaginatedCategorias();
+  }
+
+  get categoriasLast(): number {
+    return Math.min(this.categoriasFirst + this.categoriasRowsPerPage, this.categoriasTotalRecords);
+  }
+
+  get categoriasPageNumbers(): number[] {
+    const totalPages = Math.ceil(this.categoriasTotalRecords / this.categoriasRowsPerPage);
+    const current = this.categoriasCurrentPage;
+    const pages: number[] = [];
+    
+    if (totalPages <= 5) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      if (current <= 3) for (let i = 1; i <= 5; i++) pages.push(i);
+      else if (current >= totalPages - 2) for (let i = totalPages - 4; i <= totalPages; i++) pages.push(i);
+      else for (let i = current - 2; i <= current + 2; i++) pages.push(i);
+    }
+    return pages;
+  }
+
+  getNombreCategoriaPadre(id_padre: number | null): string {
+    if (id_padre === null) return '-';
+    const padre = this.categorias.find(c => c.id_categoria === id_padre);
+    return padre ? padre.nombre : 'Desconocida';
+  }
+
+  // ===== FUNCIONES PARA CREAR CATEGORÍA =====
+  openCreateCategoriaModal() {
+    this.nuevaCategoria = {
+      nombre: '',
+      id_padre: null,
+      tipo: 'padre'
+    };
+    this.categoriaValidationErrors = {
+      nombre: '',
+      id_padre: ''
+    };
+    this.showCreateCategoriaModal = true;
+  }
+
+  closeCreateCategoriaModal() {
+    this.showCreateCategoriaModal = false;
+  }
+
+  onCategoriaTipoChange() {
+    if (this.nuevaCategoria.tipo === 'padre') {
+      this.nuevaCategoria.id_padre = null;
+      this.categoriaValidationErrors.id_padre = '';
+    }
+  }
+
+  validateCategoriaFields(): boolean {
+    let isValid = true;
+    this.categoriaValidationErrors = {
+      nombre: '',
+      id_padre: ''
+    };
+
+    if (!this.nuevaCategoria.nombre?.trim()) {
+      this.categoriaValidationErrors.nombre = 'El nombre es obligatorio';
+      isValid = false;
+    }
+
+    if (this.nuevaCategoria.tipo === 'hija' && !this.nuevaCategoria.id_padre) {
+      this.categoriaValidationErrors.id_padre = 'Debes seleccionar una categoría padre';
+      isValid = false;
+    }
+
+    return isValid;
+  }
+
+  guardarCategoria() {
+    if (!this.validateCategoriaFields()) {
+      this.toastr.warning('Corrige los errores en el formulario', 'Validación');
+      return;
+    }
+
+    this.creatingCategoria = true;
+
+    const categoriaData = {
+      nombre: this.nuevaCategoria.nombre,
+      id_padre: this.nuevaCategoria.tipo === 'padre' ? null : this.nuevaCategoria.id_padre!
+    };
+
+    this.productService.createCatetorie(categoriaData).subscribe({
+      next: () => {
+        this.creatingCategoria = false;
+        this.toastr.success('Categoría creada exitosamente', 'Éxito');
+        setTimeout(() => {
+          this.closeCreateCategoriaModal();
+          this.loadCategorias();
+        }, 1500);
+      },
+      error: (err) => {
+        console.error('Error al crear categoría:', err);
+        this.creatingCategoria = false;
+        this.toastr.error(err.error?.message || 'Error al crear la categoría', 'Error');
+      }
+    });
+  }
+
+  // ===== FUNCIONES PARA EDITAR CATEGORÍA =====
+  openEditCategoriaModal(categoria: Categorie) {
+    this.categoriaEditando = JSON.parse(JSON.stringify(categoria));
+    
+    this.categoriaOriginalData = {
+      nombre: categoria.nombre,
+      id_padre: categoria.id_padre
+    };
+    
+    this.categoriaEditValidationErrors = {
+      nombre: '',
+      id_padre: ''
+    };
+    this.showEditCategoriaModal = true;
+  }
+
+  closeEditCategoriaModal() {
+    this.showEditCategoriaModal = false;
+    this.categoriaEditando = null;
+  }
+
+  validateEditCategoriaFields(): boolean {
+    let isValid = true;
+    this.categoriaEditValidationErrors = {
+      nombre: '',
+      id_padre: ''
+    };
+
+    if (!this.categoriaEditando?.nombre?.trim()) {
+      this.categoriaEditValidationErrors.nombre = 'El nombre es obligatorio';
+      isValid = false;
+    }
+
+    return isValid;
+  }
+
+  hasCategoriaChanges(): boolean {
+    if (!this.categoriaEditando || !this.categoriaOriginalData) return false;
+    
+    return this.categoriaEditando.nombre !== this.categoriaOriginalData.nombre ||
+           this.categoriaEditando.id_padre !== this.categoriaOriginalData.id_padre;
+  }
+
+  actualizarCategoria() {
+    if (!this.validateEditCategoriaFields()) {
+      this.toastr.warning('Corrige los errores en el formulario', 'Validación');
+      return;
+    }
+    
+    if (!this.hasCategoriaChanges()) {
+      this.toastr.info('No se detectaron cambios en la categoría', 'Información');
+      return;
+    }
+
+    this.editingCategoria = true;
+
+    const categoriaData = {
+      id_categoria: this.categoriaEditando!.id_categoria,
+      nombre: this.categoriaEditando!.nombre.trim(),
+      id_padre: this.categoriaEditando!.id_padre === null ? null : this.categoriaEditando!.id_padre
+    };
+
+    this.productService.updateCatetorie(categoriaData).subscribe({
+      next: () => {
+        this.editingCategoria = false;
+        this.toastr.success('Categoría actualizada exitosamente', 'Éxito');
+        setTimeout(() => {
+          this.closeEditCategoriaModal();
+          this.loadCategorias();
+        }, 1500);
+      },
+      error: (err) => {
+        this.editingCategoria = false;
+        this.toastr.error(err.error?.message || 'Error al actualizar la categoría', 'Error');
+      }
+    });
+  }
+
+  // ===== MÉTODOS GENERALES =====
   refreshData() {
-    this.loadMarcas();
-    //this.toastr.success('Datos actualizados', 'Éxito');
+    if (this.activeTab === 'marcas') {
+      this.loadMarcas();
+    } else {
+      this.loadCategorias();
+    }
   }
 
-  viewDetails(marca: Marca) {
-    console.log('Ver detalles:', marca);
-  }
-
+  // Métodos para mantener compatibilidad con el HTML (opcional)
   editMarca(marca: Marca) {
-    this.openEditModal(marca);
+    this.openEditMarcaModal(marca);
   }
+
+  editCategoria(categoria: Categorie) {
+    this.openEditCategoriaModal(categoria);
+  }
+  rowsPerPageOptions: number[] = [5, 10, 20, 50, 100];
 }

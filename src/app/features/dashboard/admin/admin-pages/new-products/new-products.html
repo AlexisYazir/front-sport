@@ -70,7 +70,6 @@
       <table class="w-full text-sm">
         <thead class="bg-gray-50 border-b-2 border-gray-200">
           <tr>
-            <th class="px-4 py-4 text-left font-semibold text-[#202020]">ID</th>
             <th class="px-4 py-4 text-left font-semibold text-[#202020]">Nombre</th>
             <th class="px-4 py-4 text-left font-semibold text-[#202020]">Descripción</th>
             <th class="px-4 py-4 text-left font-semibold text-[#202020]">Fecha Creación</th>
@@ -79,7 +78,6 @@
         </thead>
         <tbody>
           <tr *ngFor="let product of paginatedProducts" class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-            <td class="px-4 py-4 font-mono font-medium text-[#0367A6]">#{{ product.id_producto }}</td>
             <td class="px-4 py-4">
               <div class="font-semibold text-[#202020]">{{ product.nombre }}</div>
             </td>
@@ -126,13 +124,7 @@
     <!-- Paginación -->
     <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
       <div class="flex items-center gap-3">
-        <span class="text-sm text-[#666666]">Mostrar</span>
-        <select class="px-3 py-2 border border-gray-300 rounded-lg text-sm text-[#202020] focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none"
-                [(ngModel)]="rowsPerPage"
-                (change)="onRowsPerPageChange()">
-          <option *ngFor="let option of rowsPerPageOptions" [value]="option">{{ option }}</option>
-        </select>
-        <span class="text-sm text-[#666666]">resultados por página</span>
+        <span class="text-sm text-[#666666]">Mostrando 10 resultados por página</span>
       </div>
 
       <div class="text-sm text-[#666666] order-first sm:order-none">

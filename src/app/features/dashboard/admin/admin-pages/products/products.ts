@@ -57,7 +57,7 @@ export class Products implements OnInit {
   filterEstado: string = 'todos';
   
   rowsPerPage: number = 10;
-  rowsPerPageOptions: number[] = [5, 10, 20, 50, 100];
+  rowsPerPageOptions: number[] = [10];
   first: number = 0;
   currentPage: number = 1;
   totalRecords: number = 0;

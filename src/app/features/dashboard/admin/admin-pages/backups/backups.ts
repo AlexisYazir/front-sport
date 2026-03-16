@@ -2,7 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
-import { BackupService } from '../../../../../core/services/backup.service';
+import { BackupService, BackupInfo } from '../../../../../core/services/backup.service';
 
 @Component({
   selector: 'app-backups',
@@ -15,10 +15,9 @@ export class Backups implements OnInit {
   private backupService = inject(BackupService);
   private toastr = inject(ToastrService);
   
-  backups: string[] = [];
-  filteredBackups: string[] = [];
-  paginatedBackups: string[] = [];
-  backupSizes: Record<string, string> = {};
+  backups: BackupInfo[] = [];
+  filteredBackups: BackupInfo[] = [];
+  paginatedBackups: BackupInfo[] = [];
   searchValue: string = '';
   
   rowsPerPage: number = 10;
@@ -29,11 +28,17 @@ export class Backups implements OnInit {
   
   isLoading = signal<boolean>(false);
   isCreatingBackup = signal<boolean>(false);
+  isDeleting = signal<Record<string, boolean>>({});
+  isDownloading = signal<Record<string, boolean>>({}); // 👈 AGREGADO AQUÍ (junto con los otros signals)
   
   // Propiedades para el modal de confirmación
   showConfirmModal: boolean = false;
-  confirmAction: 'full' | 'critical' = 'full'; // Cambié 'inventory' por 'critical'
+  confirmAction: 'full' | 'critical' = 'full';
   isConfirming: boolean = false;
+
+  // Modal para confirmar eliminación
+  showDeleteModal: boolean = false;
+  backupToDelete: BackupInfo | null = null;
 
   ngOnInit(): void {
     this.loadBackups();
@@ -43,31 +48,16 @@ export class Backups implements OnInit {
     this.isLoading.set(true);
     this.backupService.listBackups().subscribe({
       next: (res) => {
-        this.backups = res.backups;
-        this.loadBackupSizes();
+        // Ordenar por fecha descendente (más reciente primero)
+        this.backups = res.sort((a, b) => {
+          return new Date(b.lastModified).getTime() - new Date(a.lastModified).getTime();
+        });
+        this.applyFilters();
+        this.isLoading.set(false);
       },
-      error: () => {
+      error: (err) => {
+        console.error('Error cargando backups:', err);
         this.toastr.error('Error al cargar los backups', 'Error');
-        this.isLoading.set(false);
-      }
-    });
-  }
-
-  loadBackupSizes() {
-    if (this.backups.length === 0) {
-      this.applyFilters();
-      this.isLoading.set(false);
-      return;
-    }
-
-    this.backupService.getBackupSizes().subscribe({
-      next: (sizes) => {
-        this.backupSizes = sizes;
-        this.applyFilters();
-        this.isLoading.set(false);
-      },
-      error: () => {
-        this.applyFilters();
         this.isLoading.set(false);
       }
     });
@@ -75,10 +65,14 @@ export class Backups implements OnInit {
 
   applyFilters() {
     let filtered = [...this.backups];
+    
     if (this.searchValue) {
       const term = this.searchValue.toLowerCase();
-      filtered = filtered.filter(backup => backup.toLowerCase().includes(term));
+      filtered = filtered.filter(backup => 
+        backup.name.toLowerCase().includes(term)
+      );
     }
+    
     this.filteredBackups = filtered;
     this.totalRecords = filtered.length;
     this.first = 0;
@@ -142,13 +136,15 @@ export class Backups implements OnInit {
     return pages;
   }
 
-  // Abrir modal de confirmación con mensaje personalizado
+  // ===== FUNCIONES PARA BACKUPS =====
+
+  // Abrir modal de confirmación para crear backup
   openConfirmModal(action: 'full' | 'critical') {
     this.confirmAction = action;
     this.showConfirmModal = true;
   }
 
-  // Cerrar modal
+  // Cerrar modal de creación
   closeConfirmModal() {
     this.showConfirmModal = false;
     this.isConfirming = false;
@@ -164,8 +160,8 @@ export class Backups implements OnInit {
   // Obtener descripción del modal según la acción
   getModalDescription(): string {
     return this.confirmAction === 'full'
-      ? 'Este backup incluye TODA la base de datos: productos, usuarios, órdenes, pagos, inventario y configuraciones. Puede tomar varios minutos dependiendo del tamaño total de los datos.'
-      : 'Este backup incluye solo las tablas más importantes: usuarios, órdenes, pagos, productos, variantes e inventario. Es más rápido y ocupa menos espacio.';
+      ? 'Este backup incluye TODA la base de datos y se guardará en Cloudflare R2. Puede tomar varios minutos dependiendo del tamaño.'
+      : 'Este backup incluye solo las tablas más importantes: usuarios, órdenes, pagos, productos, variantes e inventario.';
   }
 
   // Obtener icono según la acción
@@ -173,13 +169,13 @@ export class Backups implements OnInit {
     return this.confirmAction === 'full' ? 'database' : 'security';
   }
 
-getModalIconColor(): string {
-  return this.confirmAction === 'full' ? 'bg-green-100' : 'bg-red-100'; // Cambiado de purple a green
-}
+  getModalIconColor(): string {
+    return this.confirmAction === 'full' ? 'bg-green-100' : 'bg-red-100';
+  }
 
-getModalIconTextColor(): string {
-  return this.confirmAction === 'full' ? 'text-green-600' : 'text-red-600'; // Cambiado de purple a green
-}
+  getModalIconTextColor(): string {
+    return this.confirmAction === 'full' ? 'text-green-600' : 'text-red-600';
+  }
 
   // Ejecutar backup después de confirmar
   executeBackup() {
@@ -188,26 +184,29 @@ getModalIconTextColor(): string {
     this.closeConfirmModal();
 
     const backupObservable = this.confirmAction === 'full' 
-      ? this.backupService.backupFullDatabase()
-      : this.backupService.backupCriticalTables(); // Cambié a criticalTables
+      ? this.backupService.createBackupFull()
+      : this.backupService.createCriticalTablesBackup();
 
     backupObservable.subscribe({
       next: (res) => {
-        this.toastr.success(res.message, 'Backup Completado', {
-          timeOut: 3000,
-          progressBar: true,
-          closeButton: true
-        });
+        if (res.success) {
+          this.toastr.success('Backup creado exitosamente', 'Éxito', {
+            timeOut: 3000,
+            progressBar: true,
+            closeButton: true
+          });
+          this.loadBackups();
+        } else {
+          this.toastr.error(res.error || 'Error al crear backup', 'Error');
+        }
         this.isCreatingBackup.set(false);
-        this.loadBackups();
+        this.isConfirming = false;
       },
-      error: () => {
-        this.toastr.error('Error al crear backup', 'Error', {
-          timeOut: 3000,
-          progressBar: true,
-          closeButton: true
-        });
+      error: (err) => {
+        console.error('Error creando backup:', err);
+        this.toastr.error('Error al crear backup', 'Error');
         this.isCreatingBackup.set(false);
+        this.isConfirming = false;
       }
     });
   }
@@ -217,61 +216,129 @@ getModalIconTextColor(): string {
     this.openConfirmModal('full');
   }
 
-  createCriticalBackup() { // Cambié de createInventoryBackup a createCriticalBackup
+  createCriticalBackup() {
     this.openConfirmModal('critical');
   }
 
-  downloadBackup(filename: string) {
-    this.backupService.downloadBackup(filename).subscribe({
+  // ===== FUNCIONES PARA ELIMINAR =====
+
+  // Abrir modal de confirmación para eliminar
+  openDeleteModal(backup: BackupInfo) {
+    this.backupToDelete = backup;
+    this.showDeleteModal = true;
+  }
+
+  // Cerrar modal de eliminación
+  closeDeleteModal() {
+    this.showDeleteModal = false;
+    this.backupToDelete = null;
+  }
+
+  // Eliminar backup
+  deleteBackup() {
+    if (!this.backupToDelete) return;
+
+    const key = this.backupToDelete.name;
+    const [type, ...nameParts] = key.split('/');
+    const fileName = nameParts.join('/');
+
+    this.isDeleting.update(val => ({ ...val, [key]: true }));
+
+    this.backupService.deleteBackup(type, fileName).subscribe({
+      next: () => {
+        this.toastr.success('Backup eliminado correctamente', 'Éxito');
+        this.closeDeleteModal();
+        this.loadBackups();
+      },
+      error: (err) => {
+        console.error('Error eliminando backup:', err);
+        this.toastr.error('Error al eliminar el backup', 'Error');
+        this.isDeleting.update(val => ({ ...val, [key]: false }));
+        this.closeDeleteModal();
+      }
+    });
+  }
+
+  // ===== FUNCIONES PARA DESCARGAR CON ANIMACIÓN =====
+  downloadBackup(backup: BackupInfo) {
+    const key = backup.name;
+    const [type, ...nameParts] = key.split('/');
+    const fileName = nameParts.join('/');
+
+    // Activar animación de carga
+    this.isDownloading.update(val => ({ ...val, [key]: true }));
+
+    this.backupService.downloadBackup(type, fileName).subscribe({
       next: (blob) => {
+        // Crear URL y descargar
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = filename;
+        a.download = fileName;
         a.click();
         window.URL.revokeObjectURL(url);
-        this.toastr.success('Descarga iniciada', 'Éxito', {
-          timeOut: 2000,
-          progressBar: true
-        });
+        
+        // Desactivar animación
+        this.isDownloading.update(val => ({ ...val, [key]: false }));
+        this.toastr.success('Descarga completada', 'Éxito');
       },
-      error: () => {
+      error: (err) => {
+        console.error('Error descargando backup:', err);
+        this.isDownloading.update(val => ({ ...val, [key]: false }));
         this.toastr.error('Error al descargar el backup', 'Error');
       }
     });
   }
 
-  getBackupIcon(backup: string): string {
-    if (backup.includes('full')) return 'database';
-    if (backup.includes('critical')) return 'security'; // Cambié inventory por critical
+  // ===== UTILIDADES PARA LA TABLA =====
+
+  getBackupType(backup: BackupInfo): 'full' | 'critical' | 'other' {
+    if (backup.name.startsWith('full/')) return 'full';
+    if (backup.name.startsWith('critical/')) return 'critical';
+    return 'other';
+  }
+
+  getBackupIcon(backup: BackupInfo): string {
+    const type = this.getBackupType(backup);
+    if (type === 'full') return 'database';
+    if (type === 'critical') return 'security';
     return 'backup';
   }
 
-getBackupColor(backup: string): string {
-  if (backup.includes('full')) return 'bg-green-100 text-green-600'; // Cambiado de purple a green
-  if (backup.includes('critical')) return 'bg-red-100 text-red-600';
-  return 'bg-gray-100 text-gray-600';
-}
-  formatBackupDate(filename: string): string {
-    const match = filename.match(/\d{4}-\d{2}-\d{2}/);
-    if (match) {
-      const [year, month, day] = match[0].split('-');
-      return `${day}/${month}/${year}`;
-    }
-    return 'Fecha desconocida';
+  getBackupColor(backup: BackupInfo): string {
+    const type = this.getBackupType(backup);
+    if (type === 'full') return 'bg-green-100 text-green-600';
+    if (type === 'critical') return 'bg-red-100 text-red-600';
+    return 'bg-gray-100 text-gray-600';
   }
 
-  formatBackupTime(filename: string): string {
-    const parts = filename.split('_');
-    if (parts.length >= 2) {
-      const timePart = parts[parts.length - 1].split('.')[0];
-      return timePart.replace('-', ':');
-    }
-    return '--:--';
+  formatBackupDate(backup: BackupInfo): string {
+    const date = new Date(backup.lastModified);
+    return date.toLocaleDateString('es-MX', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
   }
 
-  getBackupSize(filename: string): string {
-    return this.backupSizes[filename] || 'Calculando...';
+  formatBackupTime(backup: BackupInfo): string {
+    const date = new Date(backup.lastModified);
+    return date.toLocaleTimeString('es-MX', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
+  formatBackupSize(backup: BackupInfo): string {
+    const size = backup.size;
+    if (size < 1024) return size + ' B';
+    if (size < 1024 * 1024) return (size / 1024).toFixed(2) + ' KB';
+    if (size < 1024 * 1024 * 1024) return (size / (1024 * 1024)).toFixed(2) + ' MB';
+    return (size / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
+  }
+
+  getFileName(backup: BackupInfo): string {
+    return backup.name.split('/').pop() || backup.name;
   }
 
   refreshData() {

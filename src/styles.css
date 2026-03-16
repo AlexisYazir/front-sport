@@ -133,42 +133,137 @@ body {
 
 html, body { height: 100%; }
 body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
-/* contenedor del tooltip */
-.admin-tooltip.mat-mdc-tooltip {
-  background: linear-gradient(135deg, #1f2937, #111827) !important;
-  color: #f9fafb !important;
-
-  font-size: 12px;
-  font-weight: 500;
-
-  padding: 6px 12px;
-  border-radius: 10px;
-
-  border: 1px solid rgba(255,255,255,0.05);
-
-  box-shadow:
-    0 8px 20px rgba(0,0,0,0.25),
-    0 2px 6px rgba(0,0,0,0.15);
-
-  letter-spacing: 0.02em;
-
-  position: relative;
+/* Reset total de estilos por defecto */
+.mat-mdc-tooltip,
+.mdc-tooltip,
+.mat-mdc-tooltip-panel,
+.cdk-overlay-pane {
+  background: transparent !important;
+  --mdc-plain-tooltip-container-color: transparent !important;
+  --mdc-plain-tooltip-supporting-text-color: #f9fafb !important;
 }
 
-/* flechita */
-.admin-tooltip.mat-mdc-tooltip::after {
-  content: "";
-  position: absolute;
+/* Animaciones para el tooltip */
+@keyframes tooltipFadeIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.95) translateY(5px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
 
-  left: -4px;
-  top: 50%;
-  transform: translateY(-50%) rotate(45deg);
+@keyframes tooltipSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
 
-  width: 8px;
-  height: 8px;
+@keyframes tooltipPopIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  80% {
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
 
-  background: #111827;
+/* Estilo del contenido con animación */
+.mat-mdc-tooltip .mdc-tooltip__surface {
+  background: linear-gradient(135deg, #1f2937, #111827) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.4) !important;
+  padding: 6px 12px !important;
+  border-radius: 8px !important;
+  font-family: 'Inter', sans-serif !important;
+  position: relative !important;
+  margin: 0 !important;
+  background-color: #1f2937 !important;
+  
+  /* Animación por defecto - fade in */
+  animation: tooltipFadeIn 0.2s ease-out !important;
+}
 
-  border-left: 1px solid rgba(255,255,255,0.05);
-  border-bottom: 1px solid rgba(255,255,255,0.05);
+/* Animación específica para posición right (sidebar) */
+[data-popper-placement="right"] .mdc-tooltip__surface {
+  animation: tooltipSlideIn 0.2s ease-out !important;
+}
+
+/* Animación específica para posición left */
+[data-popper-placement="left"] .mdc-tooltip__surface {
+  animation: tooltipSlideIn 0.2s ease-out reverse !important;
+}
+
+/* Animación específica para posición top */
+[data-popper-placement="top"] .mdc-tooltip__surface {
+  animation: tooltipPopIn 0.2s ease-out !important;
+}
+
+/* Animación específica para posición bottom */
+[data-popper-placement="bottom"] .mdc-tooltip__surface {
+  animation: tooltipPopIn 0.2s ease-out !important;
+}
+
+/* Contenedor de la flecha */
+.cdk-overlay-pane {
+  background: transparent !important;
+}
+
+/* Flecha con animación suave */
+.mat-mdc-tooltip-panel .mat-mdc-tooltip::before {
+  content: '' !important;
+  position: absolute !important;
+  left: -6px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  width: 0 !important;
+  height: 0 !important;
+  border-style: solid !important;
+  border-width: 6px 8px 6px 0 !important;
+  border-color: transparent #1f2937 transparent transparent !important;
+  filter: drop-shadow(-2px 0 3px rgba(0, 0, 0, 0.2)) !important;
+  z-index: 1000 !important;
+  
+  /* Animación para la flecha */
+  animation: tooltipFadeIn 0.2s ease-out !important;
+}
+
+/* Asegurar que no haya bordes redondeados que dejen ver fondo blanco */
+.mat-mdc-tooltip {
+  border-radius: 0 !important;
+  background: transparent !important;
+  overflow: visible !important;
+}
+
+/* Eliminar cualquier borde o sombra del contenedor */
+.mat-mdc-tooltip-panel {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Transición suave al desaparecer */
+.mat-mdc-tooltip-panel.cdk-overlay-pane-hidden {
+  opacity: 1 !important; /* Forzar opacidad 1 para que no se vuelva transparente */
+  animation: tooltipPopOut 0.15s ease-out forwards !important;
+}
+
+
+/* Efecto hover sutil (opcional) */
+.mat-mdc-tooltip .mdc-tooltip__surface:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 10px 20px -4px rgba(0, 0, 0, 0.5) !important;
+  transition: all 0.2s ease !important;
 }

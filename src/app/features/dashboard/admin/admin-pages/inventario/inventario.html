@@ -1,5 +1,5 @@
 <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
-  <!-- Toolbar con diseño mejorado -->
+  <!-- Toolbar con diseño mejorado - BOTONES CONDICIONALES -->
   <div class="mb-6 p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
     <div class="flex items-center gap-3">
       <div class="bg-[#0367A6]/10 p-3 rounded-xl">
@@ -10,12 +10,43 @@
         <p class="text-sm text-[#666666] mt-0.5">Control de stock y movimientos</p>
       </div>
     </div>
+    
+    <!-- Botones que cambian según la pestaña activa -->
     <div class="flex gap-3">
-     <button class="px-4 py-2 bg-[#0367A6] hover:bg-[#035A91] text-white rounded-lg flex items-center gap-2"
-                  (click)="openMovementModal()">
-            <i class="pi pi-plus"></i>
-            Nuevo Movimiento
-          </button>
+      <!-- BOTONES PARA PESTAÑA DE MOVIMIENTOS -->
+      <ng-container *ngIf="activeTab === 'movimientos'">
+        <!-- Descargar Plantilla - Verde -->
+        <button class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg flex items-center gap-2"
+                (click)="downloadTemplate()"
+                title="Descargar plantilla de Excel para cargar movimientos">
+          <span class="material-symbols-outlined text-base">download</span>
+          Plantilla
+        </button>
+        
+        <!-- Importar Excel - Rojo -->
+        <button class="px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-lg flex items-center gap-2 shadow-md hover:shadow-lg"
+                (click)="openImportModal()"
+                title="Cargar movimientos al sistema mediante un archivo de Excel">
+          <span class="material-symbols-outlined text-base">upload</span>
+          Importar CSV
+        </button>
+
+        <!-- Exportar Filtrados - Verde claro -->
+        <button class="px-3 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-all flex items-center gap-1 text-sm font-medium"
+                (click)="exportFilteredMovements()"
+                title="Descargar los movimientos filtrados en un archivo de Excel">
+          <span class="material-symbols-outlined text-base">file_download</span>
+          Exportar Filtrados
+        </button>
+           <!-- Nuevo Movimiento - Azul (SIEMPRE VISIBLE) -->
+      <button class="px-4 py-2 bg-[#0367A6] hover:bg-[#035A91] text-white rounded-lg flex items-center gap-2"
+              (click)="openMovementModal()">
+        <span class="material-symbols-outlined text-base">add</span>
+        Nuevo Movimiento
+      </button>
+      </ng-container>
+      
+   
     </div>
   </div>
 
@@ -25,7 +56,7 @@
             [ngClass]="activeTab === 'productos' ? 'text-[#0367A6] border-b-2 border-[#0367A6]' : 'text-[#666666] hover:text-[#202020]'"
             (click)="changeTab('productos')">
       <i class="pi pi-box mr-2"></i>
-      Productos
+      Inventario
     </button>
     <button class="px-6 py-3 text-sm font-medium transition-all relative"
             [ngClass]="activeTab === 'movimientos' ? 'text-[#0367A6] border-b-2 border-[#0367A6]' : 'text-[#666666] hover:text-[#202020]'"
@@ -34,7 +65,6 @@
       Movimientos
     </button>
   </div>
-  
 
   <!-- Loading State -->
   <div *ngIf="isLoading() && activeTab === 'productos'" class="flex flex-col items-center justify-center py-16">
@@ -123,7 +153,6 @@
       <table class="w-full text-sm">
         <thead class="bg-gray-50 border-b-2 border-gray-200">
           <tr>
-            <th class="px-4 py-4 text-left font-semibold text-[#202020]">ID</th>
             <th class="px-4 py-4 text-left font-semibold text-[#202020]">Producto</th>
             <th class="px-4 py-4 text-left font-semibold text-[#202020]">Marca</th>
             <th class="px-4 py-4 text-left font-semibold text-[#202020]">Stock</th>
@@ -133,7 +162,6 @@
         </thead>
         <tbody>
           <tr *ngFor="let product of paginatedProducts" class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-            <td class="px-4 py-4 font-mono font-medium text-[#0367A6]">#{{ product.id_producto }}</td>
            
             <td class="px-4 py-4">
               <div class="font-semibold text-[#202020]">{{ product.producto }}</div>
@@ -205,14 +233,8 @@
     <!-- Paginación productos -->
     <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
       <!-- Selector de resultados por página -->
-      <div class="flex items-center gap-3">
-        <span class="text-sm text-[#666666]">Mostrar</span>
-        <select class="px-3 py-2 border border-gray-300 rounded-lg text-sm text-[#202020] focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none"
-                [(ngModel)]="rowsPerPage"
-                (change)="onRowsPerPageChange()">
-          <option *ngFor="let option of rowsPerPageOptions" [value]="option">{{ option }}</option>
-        </select>
-        <span class="text-sm text-[#666666]">resultados por página</span>
+       <div class="flex items-center gap-3">
+        <span class="text-sm text-[#666666]">Mostrando 10 resultados por página</span>
       </div>
 
       <!-- Información de paginación -->
@@ -299,23 +321,23 @@
           </select>
         </div>
 
-        <!-- Filtro por Fecha Inicio -->
-        <div class="flex items-center gap-2">
-          <label class="text-sm font-medium text-[#666666]">Desde:</label>
-          <input type="date" 
-                 [ngModel]="filterFechaInicio"
-                 (ngModelChange)="onFechaInicioChange($event)"
-                 class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none">
-        </div>
+<!-- Filtro por Fecha Inicio -->
+<div class="flex items-center gap-2">
+  <label class="text-sm font-medium text-[#666666]">Desde:</label>
+  <input type="date" 
+         [ngModel]="filterFechaInicio"
+         (ngModelChange)="onFechaInicioChange($event)"
+         class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none">
+</div>
 
-        <!-- Filtro por Fecha Fin -->
-        <div class="flex items-center gap-2">
-          <label class="text-sm font-medium text-[#666666]">Hasta:</label>
-          <input type="date" 
-                 [ngModel]="filterFechaFin"
-                 (ngModelChange)="onFechaFinChange($event)"
-                 class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none">
-        </div>
+<!-- Filtro por Fecha Fin -->
+<div class="flex items-center gap-2">
+  <label class="text-sm font-medium text-[#666666]">Hasta:</label>
+  <input type="date" 
+         [ngModel]="filterFechaFin"
+         (ngModelChange)="onFechaFinChange($event)"
+         class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none">
+</div>
 
         <!-- Botón para limpiar filtros -->
         <button *ngIf="filterTipo !== 'todos' || searchMovementValue || filterFechaInicio || filterFechaFin"
@@ -337,38 +359,36 @@
       <table class="w-full text-sm">
         <thead class="bg-gray-50 border-b-2 border-gray-200">
           <tr>
-            <th class="px-4 py-4 text-left font-semibold text-[#202020]">ID</th>
             <th class="px-4 py-4 text-left font-semibold text-[#202020]">Fecha</th>
-            <th class="px-4 py-4 text-left font-semibold text-[#202020]">Tipo</th>
-            <th class="px-4 py-4 text-left font-semibold text-[#202020]">ID Variante</th>
-            <th class="px-4 py-4 text-right font-semibold text-[#202020]">Cantidad</th>
-            <th class="px-4 py-4 text-right font-semibold text-[#202020]">Costo Unit.</th>
-            <th class="px-4 py-4 text-left font-semibold text-[#202020]">Referencia</th>
+            <th class="px-4 py-4 text-left font-semibold text-[#202020]">SKU</th>
             <th class="px-4 py-4 text-left font-semibold text-[#202020]">ID Ref.</th>
+            <th class="px-4 py-4 text-left font-semibold text-[#202020]">Referencia</th>
+            <th class="px-4 py-4 text-left font-semibold text-[#202020]">Tipo</th>
+            <th class="px-4 py-4 text-right font-semibold text-[#202020]">Cantidad</th>
+            <th class="px-4 py-4 text-right font-semibold text-[#202020]">Costo</th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let movement of paginatedMovements" class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-            <td class="px-4 py-4 font-mono font-medium text-[#0367A6]">#{{ movement.id_movimiento }}</td>
             <td class="px-4 py-4 text-[#202020]">{{ formatDate(movement.fecha) }}</td>
+            <td class="px-4 py-4 font-mono text-[#666666]">{{ movement.sku }}</td>
+            <td class="px-4 py-4 font-mono text-[#666666]">{{ movement.referencia_id || 'N/A' }}</td>
+            <td class="px-4 py-4">
+              <span class="px-2 py-1 bg-gray-100 rounded-md text-xs">
+                {{ movement.referencia_tipo }}
+              </span>
+            </td>
             <td class="px-4 py-4">
               <span [class]="getTipoClass(movement.tipo) + ' px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm inline-flex items-center gap-1'">
                 <i [class]="getTipoIcon(movement.tipo)"></i>
                 {{ movement.tipo | titlecase }}
               </span>
             </td>
-            <td class="px-4 py-4 font-mono text-[#666666]">{{ movement.id_variante }}</td>
             <td class="px-4 py-4 text-right font-semibold" 
                 [ngClass]="movement.tipo === 'entrada' ? 'text-green-600' : movement.tipo === 'salida' ? 'text-red-600' : 'text-yellow-600'">
               {{ movement.cantidad }}
             </td>
             <td class="px-4 py-4 text-right text-[#202020]">${{ movement.costo_unitario | number:'1.2-2' }}</td>
-            <td class="px-4 py-4">
-              <span class="px-2 py-1 bg-gray-100 rounded-md text-xs">
-                {{ movement.referencia_tipo }}
-              </span>
-            </td>
-            <td class="px-4 py-4 font-mono text-[#666666]">{{ movement.referencia_id || 'N/A' }}</td>
           </tr>
           
           <!-- Fila vacía movimientos -->
@@ -394,13 +414,7 @@
     <div *ngIf="!loadingMovements && filteredMovements.length > 0" class="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
       <!-- Selector de resultados por página -->
       <div class="flex items-center gap-3">
-        <span class="text-sm text-[#666666]">Mostrar</span>
-        <select class="px-3 py-2 border border-gray-300 rounded-lg text-sm text-[#202020] focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none"
-                [(ngModel)]="movementsRowsPerPage"
-                (change)="onMovementsRowsPerPageChange()">
-          <option *ngFor="let option of rowsPerPageOptions" [value]="option">{{ option }}</option>
-        </select>
-        <span class="text-sm text-[#666666]">resultados por página</span>
+        <span class="text-sm text-[#666666]">Mostrando 10 resultados por página</span>
       </div>
 
       <!-- Información de paginación -->
@@ -702,4 +716,173 @@
       </div>
     </div>
   </div>
+  <!-- MODAL DE IMPORTACIÓN EXCEL - CORREGIDO -->
+<div *ngIf="showImportModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" (click)="closeImportModal()">
+  <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto" (click)="$event.stopPropagation()">
+    
+    <!-- Cabecera con color azul en lugar de naranja -->
+    <div class="sticky top-0 bg-gradient-to-r from-[#0367A6] to-[#035A91] text-white px-6 py-4 rounded-t-xl flex justify-between items-center z-10">
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined">upload_file</span>
+        <div>
+          <h3 class="text-xl font-bold">Importar Movimientos desde Excel</h3>
+          <p class="text-sm text-white/80">Selecciona un archivo y previsualiza los datos</p>
+        </div>
+      </div>
+      <button (click)="closeImportModal()" class="hover:bg-white/20 p-2 rounded-lg transition-colors">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+
+    <div class="p-6">
+      <!-- Área de carga de archivo -->
+      <div class="mb-6 p-6 border-2 border-dashed border-gray-300 rounded-xl text-center hover:border-[#0367A6] transition-colors">
+        <input type="file" 
+               #fileInput
+               id="excelFile"
+               accept=".xlsx,.xls,.csv"
+               (change)="onFileSelected($event)"
+               class="hidden">
+        
+        <div *ngIf="!selectedFile" class="space-y-3">
+          <span class="material-symbols-outlined text-5xl text-gray-400">cloud_upload</span>
+          <p class="text-lg font-medium text-[#202020]">Selecciona un archivo Excel</p>
+          <p class="text-sm text-gray-500">Archivos soportados: .xlsx, .xls, .csv</p>
+          <button (click)="fileInput.click()" 
+                  class="px-6 py-2 bg-[#0367A6] text-white rounded-lg hover:bg-[#035A91] transition-all">
+            <i class="pi pi-upload mr-2"></i>
+            Elegir Archivo
+          </button>
+        </div>
+
+        <div *ngIf="selectedFile" class="text-left">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2">
+              <i class="pi pi-file-excel text-green-600 text-2xl"></i>
+              <span class="font-medium">{{ selectedFile.name }}</span>
+              <span class="text-xs text-gray-500">({{ (selectedFile.size / 1024).toFixed(2) }} KB)</span>
+            </div>
+            <button (click)="resetFileSelection()" 
+                    class="text-red-500 hover:text-red-700 text-sm flex items-center gap-1">
+              <i class="pi pi-times"></i>
+              Cambiar archivo
+            </button>
+          </div>
+          
+          <!-- Loading indicator -->
+          <div *ngIf="!importPreview" class="flex items-center justify-center gap-3 py-4">
+            <i class="pi pi-spin pi-spinner text-[#0367A6] text-2xl"></i>
+            <p class="text-gray-600">Procesando archivo...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vista previa de datos - SOLO se muestra cuando hay preview -->
+      <div *ngIf="importPreview" class="space-y-4">
+        <!-- Resumen -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <div class="bg-blue-50 p-4 rounded-lg border border-blue-100">
+            <p class="text-xs text-gray-500 mb-1">Total de filas</p>
+            <p class="text-2xl font-bold text-[#0367A6]">{{ importPreview.totalRows }}</p>
+          </div>
+          <div class="bg-green-50 p-4 rounded-lg border border-green-100">
+            <p class="text-xs text-gray-500 mb-1">Filas válidas</p>
+            <p class="text-2xl font-bold text-green-600">{{ importPreview.validRows.length }}</p>
+          </div>
+          <div class="bg-red-50 p-4 rounded-lg border border-red-100">
+            <p class="text-xs text-gray-500 mb-1">Filas con errores</p>
+            <p class="text-2xl font-bold text-red-600">{{ importPreview.invalidRows.length }}</p>
+          </div>
+        </div>
+
+        <!-- Tabla de vista previa (filas válidas) -->
+        <div *ngIf="importPreview.validRows.length > 0">
+          <h4 class="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+            <i class="pi pi-check-circle text-green-600"></i>
+            Vista previa de datos a importar ({{ importPreview.validRows.length }} filas)
+          </h4>
+          <div class="overflow-x-auto border border-gray-200 rounded-lg max-h-60">
+            <table class="w-full text-sm">
+              <thead class="bg-gray-50 sticky top-0">
+                <tr>
+                  <th class="px-3 py-2 text-left text-xs font-semibold text-gray-600">SKU</th>
+                  <th class="px-3 py-2 text-left text-xs font-semibold text-gray-600">Tipo</th>
+                  <th class="px-3 py-2 text-right text-xs font-semibold text-gray-600">Cantidad</th>
+                  <th class="px-3 py-2 text-right text-xs font-semibold text-gray-600">Costo Unit.</th>
+                  <th class="px-3 py-2 text-left text-xs font-semibold text-gray-600">Ref. Tipo</th>
+                  <th class="px-3 py-2 text-right text-xs font-semibold text-gray-600">Ref. ID</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let row of importPreview.validRows.slice(0, 5)" class="border-t border-gray-100">
+                  <td class="px-3 py-2 font-mono text-xs text-[#0367A6]">{{ row.sku }}</td>
+                  <td class="px-3 py-2">
+                    <span [class]="'px-2 py-0.5 rounded-full text-xs ' + (
+                      row.tipo === 'entrada' ? 'bg-green-100 text-green-700' : 
+                      row.tipo === 'salida' ? 'bg-red-100 text-red-700' : 
+                      'bg-yellow-100 text-yellow-700'
+                    )">
+                      {{ row.tipo }}
+                    </span>
+                  </td>
+                  <td class="px-3 py-2 text-right font-mono">{{ row.cantidad }}</td>
+                  <td class="px-3 py-2 text-right">${{ (row.costo_unitario || 0).toFixed(2) }}</td>
+                  <td class="px-3 py-2">{{ row.referencia_tipo || '-' }}</td>
+                  <td class="px-3 py-2 text-right">{{ row.referencia_id || '-' }}</td>
+                </tr>
+                <tr *ngIf="importPreview.validRows.length > 5">
+                  <td colspan="6" class="px-3 py-2 text-center text-xs text-gray-500">
+                    ... y {{ importPreview.validRows.length - 5 }} filas más
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Tabla de errores -->
+        <div *ngIf="importPreview.invalidRows.length > 0">
+          <h4 class="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+            <i class="pi pi-exclamation-triangle text-red-600"></i>
+            Filas con errores ({{ importPreview.invalidRows.length }})
+          </h4>
+          <div class="overflow-x-auto border border-red-200 rounded-lg max-h-40">
+            <table class="w-full text-sm">
+              <thead class="bg-red-50 sticky top-0">
+                <tr>
+                  <th class="px-3 py-2 text-left text-xs font-semibold text-red-800">Fila</th>
+                  <th class="px-3 py-2 text-left text-xs font-semibold text-red-800">SKU</th>
+                  <th class="px-3 py-2 text-left text-xs font-semibold text-red-800">Error</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let err of importPreview.invalidRows" class="border-t border-red-100">
+                  <td class="px-3 py-2 text-xs text-red-600">{{ err.row }}</td>
+                  <td class="px-3 py-2 font-mono text-xs">{{ err.sku }}</td>
+                  <td class="px-3 py-2 text-xs text-red-600">{{ err.error }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Footer del modal con botón azul -->
+        <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200">
+          <button type="button" 
+                  (click)="closeImportModal()"
+                  class="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition-all font-medium">
+            Cancelar
+          </button>
+          <button type="button" 
+                  (click)="importData()" 
+                  [disabled]="importing || importPreview.validRows.length === 0"
+                  class="px-6 py-2.5 bg-[#0367A6] text-white rounded-lg hover:bg-[#035A91] transition-all disabled:opacity-50 font-medium flex items-center gap-2">
+            <i *ngIf="importing" class="pi pi-spin pi-spinner"></i>
+            {{ importing ? 'Importando...' : 'Importar ' + importPreview.validRows.length + ' movimientos' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>  
 </div>

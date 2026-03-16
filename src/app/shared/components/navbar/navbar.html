@@ -426,6 +426,11 @@
                   <span class="material-symbols-outlined text-lg">account_circle</span>
                   <span>Mi Perfil</span>
                 </a>
+                 <a [routerLink]="getDashboardLink()" (click)="closeAllMenus()"
+                     class="flex items-center gap-3 px-4 py-3 text-sm text-[#666666] hover:text-[#0367A6] hover:bg-blue-50 rounded-lg cursor-pointer transition-colors">
+                    <span class="material-symbols-outlined text-lg">dashboard</span>
+                    <span>Mi Dashboard</span>
+                  </a>
                 
                 <a (click)="goToSettings(); closeAllMenus()"
                    class="flex items-center gap-3 px-4 py-3 text-sm text-[#666666] hover:text-[#0367A6] hover:bg-blue-50 rounded-lg cursor-pointer transition-colors">

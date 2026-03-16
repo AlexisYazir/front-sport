@@ -1,5 +1,5 @@
 <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
-  <!-- Toolbar - IGUAL QUE EN MARCAS -->
+  <!-- Toolbar -->
   <div class="mb-6 p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
     <div class="flex items-center gap-3">
       <div class="bg-[#0367A6]/10 p-3 rounded-xl">
@@ -11,10 +11,18 @@
       </div>
     </div>
     <div class="flex gap-3">
-      <button class="px-4 py-2 bg-[#0367A6] hover:bg-[#035A91] text-white rounded-lg flex items-center gap-2"
+      <!-- Botón Backup Completo (verde) -->
+      <button class="px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-lg flex items-center gap-2 text-sm font-medium transition-all shadow-md hover:shadow-lg"
               (click)="createFullBackup()" [disabled]="isCreatingBackup()">
         <span class="material-symbols-outlined text-sm">database</span>
         Backup Completo
+      </button>
+
+      <!-- Botón Backup Tablas Críticas (rojo) -->
+      <button class="px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-lg flex items-center gap-2 text-sm font-medium transition-all shadow-md hover:shadow-lg"
+              (click)="createCriticalBackup()" [disabled]="isCreatingBackup()">
+        <span class="material-symbols-outlined text-sm">security</span>
+        Backup Tablas Críticas
       </button>
     </div>
   </div>
@@ -56,26 +64,11 @@
             <span class="text-[#0367A6] font-semibold text-lg">{{ totalRecords }}</span>
             <span class="text-[#666666] text-sm ml-2">backups</span>
           </div>
-         <button class="w-10 h-10 rounded-full border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all"
+          <button class="w-10 h-10 rounded-full border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all"
                   (click)="refreshData()" title="Actualizar datos">
-            <i class="pi pi-refresh text-lg"></i>
+            <span class="material-symbols-outlined text-lg">refresh</span>
           </button>
         </div>
-      </div>
-
-      <!-- Botones de acción - 2 botones principales -->
-      <div class="flex gap-3 mt-2">
-       <button (click)="createFullBackup()" [disabled]="isCreatingBackup()"
-        class="px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-lg flex items-center gap-2 text-sm font-medium transition-all shadow-md hover:shadow-lg disabled:opacity-50">
-        <span class="material-symbols-outlined text-sm">database</span>
-        Backup Completo DB
-        </button>
-
-                <button (click)="createCriticalBackup()" [disabled]="isCreatingBackup()"
-                class="px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-lg flex items-center gap-2 text-sm font-medium transition-all shadow-md hover:shadow-lg disabled:opacity-50">
-        <span class="material-symbols-outlined text-sm">security</span>
-        Backup Tablas Críticas
-        </button>
       </div>
     </div>
 
@@ -94,7 +87,7 @@
         </thead>
         <tbody>
           <tr *ngFor="let backup of paginatedBackups" 
-              class="border-b border-gray-100 hover:bg-gray-50 transition-colors group">
+              class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
             <td class="px-4 py-4">
               <div class="flex items-center gap-2">
                 <div [class]="'p-2 rounded-lg ' + getBackupColor(backup)">
@@ -103,7 +96,7 @@
               </div>
             </td>
             <td class="px-4 py-4">
-              <span class="font-mono text-sm text-[#202020]">{{ backup }}</span>
+              <span class="font-mono text-sm text-[#202020]">{{ getFileName(backup) }}</span>
             </td>
             <td class="px-4 py-4 text-[#666666]">{{ formatBackupDate(backup) }}</td>
             <td class="px-4 py-4">
@@ -112,13 +105,26 @@
               </span>
             </td>
             <td class="px-4 py-4">
-              <span class="font-mono text-sm text-[#0367A6] font-medium">{{ getBackupSize(backup) }}</span>
+              <span class="font-mono text-sm text-[#0367A6] font-medium">{{ formatBackupSize(backup) }}</span>
             </td>
             <td class="px-4 py-4">
               <div class="flex gap-2 justify-center">
-                <button class="w-9 h-9 rounded-full border-2 border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white transition-all"
-                        (click)="downloadBackup(backup)" title="Descargar">
-                  <span class="material-symbols-outlined text-lg">download</span>
+                <!-- Botón Descargar -->
+                <button class="w-9 h-9 rounded-full border-2 border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white transition-all flex items-center justify-center"
+                        (click)="downloadBackup(backup)" 
+                        title="Descargar"
+                        [disabled]="isDownloading()[backup.name]">
+                  <span *ngIf="!isDownloading()[backup.name]" class="material-symbols-outlined text-lg">download</span>
+                  <span *ngIf="isDownloading()[backup.name]" class="material-symbols-outlined text-lg animate-spin">progress_activity</span>
+                </button>
+
+                <!-- Botón Eliminar -->
+                <button class="w-9 h-9 rounded-full border-2 border-red-500 text-red-500 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center"
+                        (click)="openDeleteModal(backup)" 
+                        title="Eliminar"
+                        [disabled]="isDeleting()[backup.name]">
+                  <span *ngIf="!isDeleting()[backup.name]" class="material-symbols-outlined text-lg">delete</span>
+                  <span *ngIf="isDeleting()[backup.name]" class="material-symbols-outlined text-lg animate-spin">progress_activity</span>
                 </button>
               </div>
             </td>
@@ -142,15 +148,10 @@
       </table>
     </div>
 
-    <!-- Paginación (IGUAL QUE EN MARCAS) -->
+    <!-- Paginación -->
     <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
       <div class="flex items-center gap-3">
-        <span class="text-sm text-[#666666]">Mostrar</span>
-        <select class="px-3 py-2 border border-gray-300 rounded-lg text-sm text-[#202020] focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none"
-                [(ngModel)]="rowsPerPage" (change)="onRowsPerPageChange()">
-          <option *ngFor="let option of rowsPerPageOptions" [value]="option">{{ option }}</option>
-        </select>
-        <span class="text-sm text-[#666666]">resultados</span>
+        <span class="text-sm text-[#666666]">Mostrando 10 resultados por página</span>
       </div>
 
       <div class="text-sm text-[#666666] order-first sm:order-none">
@@ -201,58 +202,109 @@
       <p class="text-[#666666]">Por favor espera, esto puede tomar unos momentos...</p>
     </div>
   </div>
-  <!-- Modal de Confirmación para Backup -->
-<div *ngIf="showConfirmModal" class="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4" (click)="closeConfirmModal()">
-  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md" (click)="$event.stopPropagation()">
-    
-    <div class="bg-gradient-to-r from-[#0367A6] to-[#035A91] text-white px-6 py-4 rounded-t-2xl">
-      <div class="flex items-center gap-2">
-        <span class="material-symbols-outlined">warning</span>
-        <h3 class="text-xl font-bold">Confirmar Backup</h3>
-      </div>
-    </div>
 
-    <div class="p-8">
-      <div class="text-center mb-6">
-        <div [class]="'w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 ' + getModalIconColor()">
-          <span [class]="'material-symbols-outlined text-4xl ' + getModalIconTextColor()">
-            {{ getModalIcon() }}
-          </span>
+  <!-- ===================================================== -->
+  <!-- MODAL DE CONFIRMACIÓN PARA CREAR BACKUP -->
+  <!-- ===================================================== -->
+  <div *ngIf="showConfirmModal" class="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4" (click)="closeConfirmModal()">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md" (click)="$event.stopPropagation()">
+      
+      <div class="bg-gradient-to-r from-[#0367A6] to-[#035A91] text-white px-6 py-4 rounded-t-2xl">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined">warning</span>
+          <h3 class="text-xl font-bold">Confirmar Backup</h3>
         </div>
-        
-        <h4 class="text-lg font-semibold text-[#202020] mb-2">
-          {{ getModalTitle() }}
-        </h4>
-        
-        <p class="text-[#666666] mb-4">
-          ¿Estás seguro de crear este backup?
-        </p>
-        
-        <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 text-left">
-          <p class="text-sm text-blue-800 flex items-start gap-2">
-            <span class="material-symbols-outlined text-blue-600 text-sm mt-0.5">info</span>
-            <span>{{ getModalDescription() }}</span>
+      </div>
+
+      <div class="p-8">
+        <div class="text-center mb-6">
+          <div [class]="'w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 ' + getModalIconColor()">
+            <span [class]="'material-symbols-outlined text-4xl ' + getModalIconTextColor()">
+              {{ getModalIcon() }}
+            </span>
+          </div>
+          
+          <h4 class="text-lg font-semibold text-[#202020] mb-2">
+            {{ getModalTitle() }}
+          </h4>
+          
+          <p class="text-[#666666] mb-4">
+            ¿Estás seguro de crear este backup?
+          </p>
+          
+          <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 text-left">
+            <p class="text-sm text-blue-800 flex items-start gap-2">
+              <span class="material-symbols-outlined text-blue-600 text-sm mt-0.5">info</span>
+              <span>{{ getModalDescription() }}</span>
+            </p>
+          </div>
+          
+          <p class="text-xs text-green-600 mt-4 flex items-center justify-center gap-1">
+            <span class="material-symbols-outlined text-green-600 text-sm">schedule</span>
+            Tiempo estimado: {{ confirmAction === 'full' ? '2-5 minutos' : '30-60 segundos' }}
           </p>
         </div>
-        
-       <p class="text-xs text-green-600 mt-4 flex items-center justify-center gap-1">
-  <span class="material-symbols-outlined text-green-600 text-sm">schedule</span>
-  Tiempo estimado: {{ confirmAction === 'full' ? '2-5 minutos' : '30-60 segundos' }}
-</p>
+      </div>
+
+      <div class="bg-gray-50 px-8 py-5 rounded-b-2xl border-t border-gray-200 flex justify-end gap-3">
+        <button (click)="closeConfirmModal()" [disabled]="isConfirming"
+                class="px-6 py-2.5 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-100 transition-all font-medium disabled:opacity-50">
+          Cancelar
+        </button>
+        <button (click)="executeBackup()" [disabled]="isConfirming"
+                class="px-6 py-2.5 bg-gradient-to-r from-[#0367A6] to-[#035A91] text-white rounded-xl hover:from-[#035A91] hover:to-[#024c7a] transition-all disabled:opacity-50 font-medium flex items-center gap-2">
+          <span *ngIf="isConfirming" class="material-symbols-outlined animate-spin text-sm">progress_activity</span>
+          {{ isConfirming ? 'Procesando...' : 'Sí, crear backup' }}
+        </button>
       </div>
     </div>
+  </div>
 
-    <div class="bg-gray-50 px-8 py-5 rounded-b-2xl border-t border-gray-200 flex justify-end gap-3">
-      <button (click)="closeConfirmModal()" [disabled]="isConfirming"
-              class="px-6 py-2.5 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-100 transition-all font-medium disabled:opacity-50">
-        Cancelar
-      </button>
-      <button (click)="executeBackup()" [disabled]="isConfirming"
-              class="px-6 py-2.5 bg-gradient-to-r from-[#0367A6] to-[#035A91] text-white rounded-xl hover:from-[#035A91] hover:to-[#024c7a] transition-all disabled:opacity-50 font-medium flex items-center gap-2">
-        <span *ngIf="isConfirming" class="material-symbols-outlined animate-spin text-sm">progress_activity</span>
-        {{ isConfirming ? 'Procesando...' : 'Sí, crear backup' }}
-      </button>
+  <!-- Modal de confirmación para eliminar -->
+  <div *ngIf="showDeleteModal && backupToDelete" class="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4" (click)="closeDeleteModal()">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md" (click)="$event.stopPropagation()">
+      
+      <div class="bg-gradient-to-r from-red-600 to-red-700 text-white px-6 py-4 rounded-t-2xl">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined">warning</span>
+          <h3 class="text-xl font-bold">Eliminar Backup</h3>
+        </div>
+      </div>
+
+      <div class="p-8">
+        <div class="text-center mb-6">
+          <div class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span class="material-symbols-outlined text-4xl text-red-600">delete_forever</span>
+          </div>
+          
+          <h4 class="text-lg font-semibold text-[#202020] mb-2">¿Eliminar este backup?</h4>
+          
+          <p class="text-[#666666] mb-4">
+            Esta acción no se puede deshacer.
+          </p>
+          
+          <div class="bg-gray-50 border border-gray-200 rounded-xl p-4">
+            <p class="text-sm font-mono text-[#202020] break-all">
+              {{ getFileName(backupToDelete) }}
+            </p>
+            <p class="text-xs text-gray-500 mt-2">
+              Tipo: {{ getBackupType(backupToDelete) === 'full' ? 'Backup Completo' : 'Backup Crítico' }}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-gray-50 px-8 py-5 rounded-b-2xl border-t border-gray-200 flex justify-end gap-3">
+        <button (click)="closeDeleteModal()" [disabled]="isDeleting()[backupToDelete.name]"
+                class="px-6 py-2.5 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-100 transition-all font-medium disabled:opacity-50">
+          Cancelar
+        </button>
+        <button (click)="deleteBackup()" [disabled]="isDeleting()[backupToDelete.name]"
+                class="px-6 py-2.5 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-xl hover:from-red-700 hover:to-red-800 transition-all disabled:opacity-50 font-medium flex items-center gap-2">
+          <span *ngIf="isDeleting()[backupToDelete.name]" class="material-symbols-outlined animate-spin text-sm">progress_activity</span>
+          {{ isDeleting()[backupToDelete.name] ? 'Eliminando...' : 'Sí, eliminar' }}
+        </button>
+      </div>
     </div>
   </div>
-</div>
 </div>
