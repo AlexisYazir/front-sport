@@ -1,0 +1,43 @@
+name: SonarQube Analysis - Frontend
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  sonarqube:
+    name: SonarQube Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install dependencies
+        run: npm install
+      
+      - name: Run tests with coverage
+        run: npm run test -- --code-coverage --watch=false --browsers=ChromeHeadless
+        continue-on-error: true  # Para que no falle si no hay pruebas
+      
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v5.0.0
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.organization=alexisyazir
+            -Dsonar.projectKey=AlexisYazir_front-sport
+            -Dsonar.host.url=https://sonarcloud.io
+            -Dsonar.sources=src
+            -Dsonar.exclusions=node_modules/**,dist/**,**/*.spec.ts
+            -Dsonar.inclusions=src/**/*.ts,src/**/*.html
