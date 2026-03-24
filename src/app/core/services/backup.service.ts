@@ -10,6 +10,27 @@ export interface BackupInfo {
   lastModified: string;
 }
 
+export interface ConnectionStat {
+  state: string;
+  total: number;
+}
+
+export interface LockStat {
+  mode: string;
+  total: number;
+}
+
+export interface ActiveConnection {
+  pid: number;
+  usename: string;
+  state: string;
+  query: string;
+}
+
+export interface ExplainResult {
+  "QUERY PLAN": string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -104,4 +125,58 @@ export class BackupService {
   private getFileNameFromPath(fullPath: string): string {
     return fullPath.split('/').pop() || 'backup.dump';
   }
+
+  //! conexiones activas
+  getActiveConnections(): Observable<ActiveConnection[]> {
+    return this.http.get<ActiveConnection[]>(
+      `${this.API_URL}/backup/monitor/connections`
+    );
+  }
+
+  //! locks detalle
+  getDetailedLocks(): Observable<any[]> {
+    return this.http.get<any[]>(
+      `${this.API_URL}/backup/monitor/locks`
+    );
+  }
+
+  getBlockLocks(): Observable<any[]> {
+    return this.http.get<any[]>(
+      `${this.API_URL}/backup/monitor/block-locks`
+    );
+  }
+
+  //! querys lentas
+  getLongQueries(): Observable<any[]> {
+    return this.http.get<any[]>(
+      `${this.API_URL}/backup/monitor/long-queries`
+    );
+  }
+
+  //! explain
+  getExplain(): Observable<ExplainResult[]> {
+    return this.http.get<ExplainResult[]>(
+      `${this.API_URL}/backup/monitor/explain`
+    );
+  }
+   getMostQueriedTables(): Observable<any> {
+    return this.http.get(`${this.API_URL}/backup/stats/most-queried`);
+  }
+
+  getTableSizes(): Observable<any> {
+    return this.http.get(`${this.API_URL}/backup/stats/table-sizes`);
+  }
+
+  getIndexInfo(): Observable<any> {
+    return this.http.get(`${this.API_URL}/backup/stats/index-info`);
+  }
+
+  getTableLockStats(): Observable<any> {
+    return this.http.get(`${this.API_URL}/backup/stats/lock-stats`);
+  }
+
+  getTableScanStats(): Observable<any> {
+    return this.http.get(`${this.API_URL}/backup/stats/scan-stats`);
+  }
+  
 }

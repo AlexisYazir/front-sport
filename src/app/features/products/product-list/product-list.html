@@ -323,7 +323,7 @@
           <!-- Productos paginados -->
           <div *ngFor="let product of searchResults().products | paginate: { itemsPerPage: itemsPerPage(), currentPage: currentPage() }" 
                class="group bg-white rounded-lg sm:rounded-xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border border-gray-100 overflow-hidden"
-               [routerLink]="['/product', product.id_producto || product.id]">
+               [routerLink]="['/product', getProductSlug(product), product.id_producto || product.id]">
             
             <!-- Imagen -->
             <div class="w-full pt-[75%] relative overflow-hidden bg-white">

@@ -1,6 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, BehaviorSubject, map } from 'rxjs';
+import { Observable, BehaviorSubject, of } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { Product, Category, ProductFilters, ProductSearchResult, Categorie, Marca, Attibute, Orders,InventoryProduct, RecientProduct, ProductVariant } from '../models/product.model';
 
@@ -272,7 +273,7 @@ getProductVariants(id_producto: number): Observable<ProductVariant[]> {
     this.isLoading.set(true);
 
     return this.http
-      .get<any[]>(`${this.API_URL}/products/get-all-orders-employee`)
+      .get<any[]>(`${this.API_URL}/products/get-all-orders`)
       .pipe(
         map(response => {
           const mapped = response.map(u => this.mapOrdersEmployeeFromApi(u));
@@ -285,21 +286,56 @@ getProductVariants(id_producto: number): Observable<ProductVariant[]> {
   /**
    * Obtener producto por ID
    */
-  getProductById(id: number): Observable<Product | null> {
-    this.isLoading.set(true);
-    
-    return this.http
-      .get<any[]>(`${this.API_URL}/products/get-all-products`)
-      .pipe(
-        map(products => {
-          const found = products.find(p => p.id_producto === id);
-          this.isLoading.set(false);
-          console.log(found);
-          return found ? this.mapProductFromApi(found) : null;
-        })
-      );
-  }
+// product.service.ts
 
+/**
+ * Obtener producto por ID usando el endpoint específico
+ */
+getProductById(id: number): Observable<Product | null> {
+  this.isLoading.set(true);
+  
+  // Usar el endpoint específico en lugar de filtrar todos los productos
+  return this.http
+    .get<any>(`${this.API_URL}/products/get-product-details/${id}`)  // 👈 Endpoint correcto
+    .pipe(
+      map(response => {
+        this.isLoading.set(false);
+        console.log('Producto encontrado:', response);
+        
+        // Si el endpoint devuelve un array con un solo producto
+        if (Array.isArray(response) && response.length > 0) {
+          return this.mapProductFromApi(response[0]);
+        }
+        // Si devuelve un objeto directamente
+        else if (response && typeof response === 'object') {
+          return this.mapProductFromApi(response);
+        }
+        
+        return null;
+      }),
+      catchError(error => {
+        console.error('Error fetching product details:', error);
+        this.isLoading.set(false);
+        return of(null); // Retorna null en caso de error
+      })
+    );
+}
+
+// product.service.ts
+
+/**
+ * Genera un slug amigable para URL
+ */
+generateSlug(nombre: string): string {
+  if (!nombre) return '';
+  
+  return nombre
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
 /* =====================================================
     CREACIÓN PASO A PASO (SEGÚN BACKEND)
 ====================================================== */
@@ -688,4 +724,30 @@ createAttribute(nombre: string): Observable<Attibute> {
     }
     return product.precio;
   }
+
+  // product.service.ts - Agrega estos métodos
+
+// Obtener categorías por padre (ropa, accesorios)
+getCategoriesByParent(parentId: number): Observable<Category[]> {
+  return this.http.get<Category[]>(`${this.API_URL}/products/menu/categories-by-parent/${parentId}`);
+}
+
+// Obtener deportes
+getSports(): Observable<any[]> {
+  return this.http.get<any[]>(`${this.API_URL}/products/menu/sports`);
+}
+
+// Obtener menú completo
+getCompleteMenu(): Observable<any> {
+  return this.http.get(`${this.API_URL}/products/menu/complete-menu`);
+}
+
+getAllOrders(): Observable<any[]> {
+  return this.http.get<any[]>(`${this.API_URL}/products/get-all-orders`);
+}
+
+getOrdersById(id: number): Observable<any> {
+  return this.http.get<any[]>(`${this.API_URL}/products/get-order-details/${id}`);
+}
+
 }

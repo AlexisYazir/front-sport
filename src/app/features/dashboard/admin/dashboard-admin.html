@@ -80,9 +80,9 @@
     <!-- Main Content -->
     <main [class.ml-52]="sidebarOpen()" 
           [class.ml-16]="!sidebarOpen()"
-          [class.pt-4]="!navbarOculto()"
+          [class.pt-2]="!navbarOculto()"
           [class.pt-0]="navbarOculto()"
-          class="flex-1 p-4 transition-all duration-300 overflow-y-auto h-screen">
+          class="flex-1 p-2 transition-all duration-300 overflow-y-auto h-screen">
       
       <!-- Ruta principal del dashboard -->
       <ng-container *ngIf="router.url === '/dashboard/admin' || router.url === '/dashboard/admin/'">
@@ -210,12 +210,12 @@
               <span class="text-xs font-medium text-[#202020]">Nuevo Usuario</span>
             </a>
 
-            <a routerLink="/dashboard/admin/reports" 
+            <a routerLink="/dashboard/admin/predictions" 
                class="flex flex-col items-center gap-2 p-3 bg-gradient-to-br from-amber-50 to-white rounded-xl border border-amber-100 hover:shadow-md hover:border-amber-300 transition-all">
               <div class="bg-amber-600 p-2 rounded-lg">
-                <span class="material-symbols-outlined text-white text-xl">bar_chart</span>
+                <span class="material-symbols-outlined text-white text-xl">monitoring</span>
               </div>
-              <span class="text-xs font-medium text-[#202020]">Reportes</span>
+              <span class="text-xs font-medium text-[#202020]">Predicción ventas</span>
             </a>
           </div>
         </div>

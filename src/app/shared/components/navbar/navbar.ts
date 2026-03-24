@@ -4,6 +4,7 @@ import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
 import { CartService } from '../../../core/services/cart.service';
+import { ProductService } from '../../../core/services/product.service';
 
 @Component({
   selector: 'app-navbar',
@@ -18,10 +19,12 @@ export class Navbar {
   private authService = inject(AuthService);
   private cartService = inject(CartService);
   private router = inject(Router);
+  private productService = inject(ProductService);
   private closeTimeout: any;
   private infoTimeout: any;
   private supportTimeout: any;
   private isMobile = window.innerWidth < 768;
+  
 
   // Estados de los dropdowns (por click) - para móvil
   userMenuOpen = signal<boolean>(false);
@@ -320,4 +323,139 @@ export class Navbar {
     }
     this.closeAllMenus();
   }
+  menuData = signal<any>(null);
+menuLoading = signal<boolean>(false);
+
+// Estados para los submenús (hover)
+hombresHovered = false;
+mujeresHovered = false;
+ninosHovered = false;
+accesoriosHovered = false;
+deportesHovered = false;
+marcasHovered = false;
+
+// Estados para los timeouts de cierre
+private hombresTimeout: any;
+private mujeresTimeout: any;
+private ninosTimeout: any;
+private accesoriosTimeout: any;
+private deportesTimeout: any;
+private marcasTimeout: any;
+
+// Getters para mostrar submenús
+shouldShowHombresMenu(): boolean {
+  return !this.isMobile && this.hombresHovered;
+}
+
+shouldShowMujeresMenu(): boolean {
+  return !this.isMobile && this.mujeresHovered;
+}
+
+shouldShowNinosMenu(): boolean {
+  return !this.isMobile && this.ninosHovered;
+}
+
+shouldShowAccesoriosMenu(): boolean {
+  return !this.isMobile && this.accesoriosHovered;
+}
+
+shouldShowDeportesMenu(): boolean {
+  return !this.isMobile && this.deportesHovered;
+}
+
+shouldShowMarcasMenu(): boolean {
+  return !this.isMobile && this.marcasHovered;
+}
+
+// Métodos para manejar hover de los nuevos menús
+onMenuMouseEnter(menu: 'hombres' | 'mujeres' | 'ninos' | 'accesorios' | 'deportes' | 'marcas') {
+  const timeoutMap = {
+    hombres: this.hombresTimeout,
+    mujeres: this.mujeresTimeout,
+    ninos: this.ninosTimeout,
+    accesorios: this.accesoriosTimeout,
+    deportes: this.deportesTimeout,
+    marcas: this.marcasTimeout
+  };
+  
+  const timeout = timeoutMap[menu];
+  if (timeout) {
+    clearTimeout(timeout);
+  }
+  
+  switch(menu) {
+    case 'hombres': this.hombresHovered = true; break;
+    case 'mujeres': this.mujeresHovered = true; break;
+    case 'ninos': this.ninosHovered = true; break;
+    case 'accesorios': this.accesoriosHovered = true; break;
+    case 'deportes': this.deportesHovered = true; break;
+    case 'marcas': this.marcasHovered = true; break;
+  }
+}
+
+onMenuMouseLeave(menu: 'hombres' | 'mujeres' | 'ninos' | 'accesorios' | 'deportes' | 'marcas') {
+  const timeoutSetter = (setter: any, clear: any) => {
+    const timeout = setTimeout(() => {
+      setter(false);
+    }, 300);
+    return timeout;
+  };
+  
+  switch(menu) {
+    case 'hombres':
+      this.hombresTimeout = setTimeout(() => { this.hombresHovered = false; }, 300);
+      break;
+    case 'mujeres':
+      this.mujeresTimeout = setTimeout(() => { this.mujeresHovered = false; }, 300);
+      break;
+    case 'ninos':
+      this.ninosTimeout = setTimeout(() => { this.ninosHovered = false; }, 300);
+      break;
+    case 'accesorios':
+      this.accesoriosTimeout = setTimeout(() => { this.accesoriosHovered = false; }, 300);
+      break;
+    case 'deportes':
+      this.deportesTimeout = setTimeout(() => { this.deportesHovered = false; }, 300);
+      break;
+    case 'marcas':
+      this.marcasTimeout = setTimeout(() => { this.marcasHovered = false; }, 300);
+      break;
+  }
+}
+
+cancelMenuClose(menu: 'hombres' | 'mujeres' | 'ninos' | 'accesorios' | 'deportes' | 'marcas') {
+  const timeoutMap = {
+    hombres: this.hombresTimeout,
+    mujeres: this.mujeresTimeout,
+    ninos: this.ninosTimeout,
+    accesorios: this.accesoriosTimeout,
+    deportes: this.deportesTimeout,
+    marcas: this.marcasTimeout
+  };
+  
+  const timeout = timeoutMap[menu];
+  if (timeout) {
+    clearTimeout(timeout);
+  }
+}
+
+// Cargar menú en ngOnInit
+ngOnInit() {
+  this.loadMenuData();
+  // ... resto de tu código existente
+}
+
+loadMenuData() {
+  this.menuLoading.set(true);
+  this.productService.getCompleteMenu().subscribe({
+    next: (data) => {
+      this.menuData.set(data);
+      this.menuLoading.set(false);
+    },
+    error: (error) => {
+      console.error('Error loading menu:', error);
+      this.menuLoading.set(false);
+    }
+  });
+}
 }

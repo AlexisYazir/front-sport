@@ -18,7 +18,7 @@ export const routes: Routes = [
       import('./features/products/product-list/product-list').then((m) => m.ProductList),
   },
   {
-    path: 'product/:id',
+    path: 'product/:nombre/:id',
     loadComponent: () =>
       import('./features/products/product-detail/product-detail').then((m) => m.ProductDetail),
   },
@@ -130,6 +130,11 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/dashboard/admin/admin-pages/settings/settings').then((m) => m.Settings),
       },
+       {
+        path: 'predictions',
+        loadComponent: () =>
+          import('./features/dashboard/admin/admin-pages/prediction/prediction').then((m) => m.Prediction),
+      },
       {
         path: 'backups',
         loadComponent: () =>
@@ -141,7 +146,7 @@ export const routes: Routes = [
           import('./features/dashboard/admin/admin-pages/empresa/empresa').then((m) => m.Empresa),
       },
       {
-        path: 'reports',
+        path: 'performance',
         loadComponent: () =>
           import('./features/dashboard/admin/admin-pages/reports/reports').then((m) => m.Reports),
       },

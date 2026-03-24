@@ -382,4 +382,10 @@ export class ProductList implements OnInit {
   isProductAvailable(product: Product): boolean {
     return this.getAvailableVariants(product) > 0;
   }
+
+// Método para obtener el slug del producto
+getProductSlug(product: Product): string {
+  const nombre = product.nombre || product.producto || '';
+  return this.productService.generateSlug(nombre);
+}
 }

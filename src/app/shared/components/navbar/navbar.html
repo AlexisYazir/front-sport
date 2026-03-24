@@ -48,70 +48,315 @@
 <!-- Navigation Links - SOLO VISIBLE EN DESKTOP -->
 <div class="hidden lg:flex items-center space-x-1">
   
-  <!-- Info - SOLO HOVER (sin click) -->
+  <!-- HOMBRES -->
   <div class="relative" 
-       (mouseenter)="onMouseEnter('info')" 
-       (mouseleave)="onMouseLeave('info')">
+       (mouseenter)="onMenuMouseEnter('hombres')" 
+       (mouseleave)="onMenuMouseLeave('hombres')">
     
     <button class="flex items-center gap-1 px-3 py-2 text-[#666666] hover:text-[#0367A6] rounded-lg hover:bg-blue-50 transition-all cursor-default">
-      <span class="material-symbols-outlined text-lg">info</span>
-      <span class="text-sm font-medium">Información</span>
+      <span class="text-sm font-medium">Hombres</span>
       <span class="material-symbols-outlined text-base transition-transform duration-300"
-            [class.rotate-180]="shouldShowInfoMenu()">
+            [class.rotate-180]="shouldShowHombresMenu()">
         expand_more
       </span>
     </button>
 
-    <!-- Dropdown Info -->
-    <div *ngIf="shouldShowInfoMenu()" 
-         class="absolute left-0 mt-2 w-56 bg-white rounded-xl shadow-2xl border border-gray-100 z-50"
-         (mouseenter)="cancelInfoClose()" 
-         (mouseleave)="onMouseLeave('info')">
-      <div class="p-2">
-        <a routerLink="/info/nosotros" (click)="closeAllMenus()"
-           class="flex items-center gap-3 px-4 py-3 text-sm text-[#666666] hover:text-[#0367A6] hover:bg-blue-50 rounded-lg cursor-pointer transition-colors">
-          <span class="material-symbols-outlined text-lg">business</span>
-          <span>Información de Empresa</span>
-        </a>
-        <a routerLink="/info/ubicacion" (click)="closeAllMenus()"
-           class="flex items-center gap-3 px-4 py-3 text-sm text-[#666666] hover:text-[#0367A6] hover:bg-blue-50 rounded-lg cursor-pointer transition-colors">
-          <span class="material-symbols-outlined text-lg">location_on</span>
-          <span>Ubicación</span>
-        </a>
+    <!-- Dropdown Hombres - 3 columnas -->
+    <div *ngIf="shouldShowHombresMenu()" 
+         class="absolute left-0 mt-2 w-[700px] bg-white rounded-xl shadow-2xl border border-gray-100 z-50"
+         (mouseenter)="cancelMenuClose('hombres')" 
+         (mouseleave)="onMenuMouseLeave('hombres')">
+      <div class="p-6">
+        <div class="grid grid-cols-3 gap-8">
+          
+          <!-- Columna Ropa -->
+          <div>
+            <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider mb-3">Ropa</h3>
+            <div class="space-y-2">
+              <a *ngFor="let cat of menuData()?.clothing || []" 
+                 [routerLink]="['/products', { search: cat.nombre }]"
+                 (click)="closeAllMenus()"
+                 class="block text-sm text-gray-600 hover:text-[#0367A6] transition-colors">
+                {{ cat.nombre }}
+              </a>
+            </div>
+          </div>
+          
+          <!-- Columna Accesorios -->
+          <div>
+            <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider mb-3">Accesorios</h3>
+            <div class="space-y-2">
+              <a *ngFor="let acc of menuData()?.accessories || []" 
+                 [routerLink]="['/products', { search: acc.nombre }]"
+                 (click)="closeAllMenus()"
+                 class="block text-sm text-gray-600 hover:text-[#0367A6] transition-colors">
+                {{ acc.nombre }}
+              </a>
+            </div>
+          </div>
+          
+          <!-- Columna Deportes -->
+          <div>
+            <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider mb-3">Deportes</h3>
+            <div class="space-y-2">
+              <a *ngFor="let sport of menuData()?.sports || []" 
+                 [routerLink]="['/products', { sport: sport.nombre }]"
+                 (click)="closeAllMenus()"
+                 class="block text-sm text-gray-600 hover:text-[#0367A6] transition-colors">
+                {{ sport.nombre }}
+              </a>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Ver todo -->
+        <div class="mt-6 pt-4 border-t border-gray-100">
+          <a [routerLink]="['/products', { search: 'hombres' }]" 
+             (click)="closeAllMenus()"
+             class="text-sm font-medium text-[#0367A6] hover:underline">
+            Ver todos los productos para Hombre →
+          </a>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Soporte - SOLO HOVER (sin click) -->
+  <!-- MUJERES -->
   <div class="relative" 
-       (mouseenter)="onMouseEnter('support')" 
-       (mouseleave)="onMouseLeave('support')">
+       (mouseenter)="onMenuMouseEnter('mujeres')" 
+       (mouseleave)="onMenuMouseLeave('mujeres')">
     
     <button class="flex items-center gap-1 px-3 py-2 text-[#666666] hover:text-[#0367A6] rounded-lg hover:bg-blue-50 transition-all cursor-default">
-      <span class="material-symbols-outlined text-lg">support_agent</span>
-      <span class="text-sm font-medium">Soporte</span>
+      <span class="text-sm font-medium">Mujeres</span>
       <span class="material-symbols-outlined text-base transition-transform duration-300"
-            [class.rotate-180]="shouldShowSupportMenu()">
+            [class.rotate-180]="shouldShowMujeresMenu()">
         expand_more
       </span>
     </button>
 
-    <!-- Dropdown Soporte -->
-    <div *ngIf="shouldShowSupportMenu()" 
-         class="absolute left-0 mt-2 w-56 bg-white rounded-xl shadow-2xl border border-gray-100 z-50"
-         (mouseenter)="cancelSupportClose()" 
-         (mouseleave)="onMouseLeave('support')">
-      <div class="p-2">
-        <a routerLink="/support/contact" (click)="closeAllMenus()"
-           class="flex items-center gap-3 px-4 py-3 text-sm text-[#666666] hover:text-[#0367A6] hover:bg-blue-50 rounded-lg cursor-pointer transition-colors">
-          <span class="material-symbols-outlined text-lg">mail</span>
-          <span>Contacto</span>
-        </a>
-        <a routerLink="/support/preguntas-frecuentes" (click)="closeAllMenus()"
-           class="flex items-center gap-3 px-4 py-3 text-sm text-[#666666] hover:text-[#0367A6] hover:bg-blue-50 rounded-lg cursor-pointer transition-colors">
-          <span class="material-symbols-outlined text-lg">help</span>
-          <span>Preguntas Frecuentes</span>
-        </a>
+    <!-- Dropdown Mujeres - 3 columnas -->
+    <div *ngIf="shouldShowMujeresMenu()" 
+         class="absolute left-0 mt-2 w-[700px] bg-white rounded-xl shadow-2xl border border-gray-100 z-50"
+         (mouseenter)="cancelMenuClose('mujeres')" 
+         (mouseleave)="onMenuMouseLeave('mujeres')">
+      <div class="p-6">
+        <div class="grid grid-cols-3 gap-8">
+          
+          <!-- Columna Ropa -->
+          <div>
+            <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider mb-3">Ropa</h3>
+            <div class="space-y-2">
+              <a *ngFor="let cat of menuData()?.clothing || []" 
+                 [routerLink]="['/products', { search: cat.nombre }]"
+                 (click)="closeAllMenus()"
+                 class="block text-sm text-gray-600 hover:text-[#0367A6] transition-colors">
+                {{ cat.nombre }}
+              </a>
+            </div>
+          </div>
+          
+          <!-- Columna Accesorios -->
+          <div>
+            <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider mb-3">Accesorios</h3>
+            <div class="space-y-2">
+              <a *ngFor="let acc of menuData()?.accessories || []" 
+                 [routerLink]="['/products', { search: acc.nombre }]"
+                 (click)="closeAllMenus()"
+                 class="block text-sm text-gray-600 hover:text-[#0367A6] transition-colors">
+                {{ acc.nombre }}
+              </a>
+            </div>
+          </div>
+          
+          <!-- Columna Deportes -->
+          <div>
+            <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider mb-3">Deportes</h3>
+            <div class="space-y-2">
+              <a *ngFor="let sport of menuData()?.sports || []" 
+                 [routerLink]="['/products', { sport: sport.nombre }]"
+                 (click)="closeAllMenus()"
+                 class="block text-sm text-gray-600 hover:text-[#0367A6] transition-colors">
+                {{ sport.nombre }}
+              </a>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Ver todo -->
+        <div class="mt-6 pt-4 border-t border-gray-100">
+          <a [routerLink]="['/products', { search: 'mujeres' }]" 
+             (click)="closeAllMenus()"
+             class="text-sm font-medium text-[#0367A6] hover:underline">
+            Ver todos los productos para Mujer →
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NIÑOS -->
+  <div class="relative" 
+       (mouseenter)="onMenuMouseEnter('ninos')" 
+       (mouseleave)="onMenuMouseLeave('ninos')">
+    
+    <button class="flex items-center gap-1 px-3 py-2 text-[#666666] hover:text-[#0367A6] rounded-lg hover:bg-blue-50 transition-all cursor-default">
+      <span class="text-sm font-medium">Niños</span>
+      <span class="material-symbols-outlined text-base transition-transform duration-300"
+            [class.rotate-180]="shouldShowNinosMenu()">
+        expand_more
+      </span>
+    </button>
+
+    <!-- Dropdown Niños - 3 columnas -->
+    <div *ngIf="shouldShowNinosMenu()" 
+         class="absolute left-0 mt-2 w-[700px] bg-white rounded-xl shadow-2xl border border-gray-100 z-50"
+         (mouseenter)="cancelMenuClose('ninos')" 
+         (mouseleave)="onMenuMouseLeave('ninos')">
+      <div class="p-6">
+        <div class="grid grid-cols-3 gap-8">
+          
+          <!-- Columna Ropa -->
+          <div>
+            <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider mb-3">Ropa</h3>
+            <div class="space-y-2">
+              <a *ngFor="let cat of menuData()?.clothing || []" 
+                 [routerLink]="['/products', { search: cat.nombre }]"
+                 (click)="closeAllMenus()"
+                 class="block text-sm text-gray-600 hover:text-[#0367A6] transition-colors">
+                {{ cat.nombre }}
+              </a>
+            </div>
+          </div>
+          
+          <!-- Columna Accesorios -->
+          <div>
+            <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider mb-3">Accesorios</h3>
+            <div class="space-y-2">
+              <a *ngFor="let acc of menuData()?.accessories || []" 
+                 [routerLink]="['/products', { search: acc.nombre }]"
+                 (click)="closeAllMenus()"
+                 class="block text-sm text-gray-600 hover:text-[#0367A6] transition-colors">
+                {{ acc.nombre }}
+              </a>
+            </div>
+          </div>
+          
+          <!-- Columna Deportes -->
+          <div>
+            <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider mb-3">Deportes</h3>
+            <div class="space-y-2">
+              <a *ngFor="let sport of menuData()?.sports || []" 
+                 [routerLink]="['/products', { sport: sport.nombre }]"
+                 (click)="closeAllMenus()"
+                 class="block text-sm text-gray-600 hover:text-[#0367A6] transition-colors">
+                {{ sport.nombre }}
+              </a>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Ver todo -->
+        <div class="mt-6 pt-4 border-t border-gray-100">
+          <a [routerLink]="['/products', { search: 'ninos' }]" 
+             (click)="closeAllMenus()"
+             class="text-sm font-medium text-[#0367A6] hover:underline">
+            Ver todos los productos para Niños →
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ACCESORIOS -->
+  <div class="relative" 
+       (mouseenter)="onMenuMouseEnter('accesorios')" 
+       (mouseleave)="onMenuMouseLeave('accesorios')">
+    
+    <button class="flex items-center gap-1 px-3 py-2 text-[#666666] hover:text-[#0367A6] rounded-lg hover:bg-blue-50 transition-all cursor-default">
+      <span class="text-sm font-medium">Accesorios</span>
+      <span class="material-symbols-outlined text-base transition-transform duration-300"
+            [class.rotate-180]="shouldShowAccesoriosMenu()">
+        expand_more
+      </span>
+    </button>
+
+    <!-- Dropdown Accesorios -->
+    <div *ngIf="shouldShowAccesoriosMenu()" 
+         class="absolute left-0 mt-2 w-64 bg-white rounded-xl shadow-2xl border border-gray-100 z-50"
+         (mouseenter)="cancelMenuClose('accesorios')" 
+         (mouseleave)="onMenuMouseLeave('accesorios')">
+      <div class="p-4">
+        <div class="space-y-2">
+          <a *ngFor="let acc of menuData()?.accessories || []" 
+             [routerLink]="['/products', { search: acc.nombre }]"
+             (click)="closeAllMenus()"
+             class="block px-3 py-2 text-sm text-gray-600 hover:text-[#0367A6] hover:bg-gray-50 rounded-lg transition-colors">
+            {{ acc.nombre }}
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DEPORTES -->
+  <div class="relative" 
+       (mouseenter)="onMenuMouseEnter('deportes')" 
+       (mouseleave)="onMenuMouseLeave('deportes')">
+    
+    <button class="flex items-center gap-1 px-3 py-2 text-[#666666] hover:text-[#0367A6] rounded-lg hover:bg-blue-50 transition-all cursor-default">
+      <span class="text-sm font-medium">Deportes</span>
+      <span class="material-symbols-outlined text-base transition-transform duration-300"
+            [class.rotate-180]="shouldShowDeportesMenu()">
+        expand_more
+      </span>
+    </button>
+
+    <!-- Dropdown Deportes -->
+    <div *ngIf="shouldShowDeportesMenu()" 
+         class="absolute left-0 mt-2 w-64 bg-white rounded-xl shadow-2xl border border-gray-100 z-50"
+         (mouseenter)="cancelMenuClose('deportes')" 
+         (mouseleave)="onMenuMouseLeave('deportes')">
+      <div class="p-4 max-h-80 overflow-y-auto">
+        <div class="space-y-2">
+          <a *ngFor="let sport of menuData()?.sports || []" 
+             [routerLink]="['/products', { sport: sport.nombre }]"
+             (click)="closeAllMenus()"
+             class="block px-3 py-2 text-sm text-gray-600 hover:text-[#0367A6] hover:bg-gray-50 rounded-lg transition-colors">
+            {{ sport.nombre }}
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MARCAS -->
+  <div class="relative" 
+       (mouseenter)="onMenuMouseEnter('marcas')" 
+       (mouseleave)="onMenuMouseLeave('marcas')">
+    
+    <button class="flex items-center gap-1 px-3 py-2 text-[#666666] hover:text-[#0367A6] rounded-lg hover:bg-blue-50 transition-all cursor-default">
+      <span class="text-sm font-medium">Marcas</span>
+      <span class="material-symbols-outlined text-base transition-transform duration-300"
+            [class.rotate-180]="shouldShowMarcasMenu()">
+        expand_more
+      </span>
+    </button>
+
+    <!-- Dropdown Marcas -->
+    <div *ngIf="shouldShowMarcasMenu()" 
+         class="absolute left-0 mt-2 w-64 bg-white rounded-xl shadow-2xl border border-gray-100 z-50"
+         (mouseenter)="cancelMenuClose('marcas')" 
+         (mouseleave)="onMenuMouseLeave('marcas')">
+      <div class="p-4 max-h-80 overflow-y-auto">
+        <div class="space-y-2">
+          <a *ngFor="let brand of menuData()?.brands || []" 
+             [routerLink]="['/products', { brand: brand.nombre }]"
+             (click)="closeAllMenus()"
+             class="flex items-center gap-3 px-3 py-2 text-sm text-gray-600 hover:text-[#0367A6] hover:bg-gray-50 rounded-lg transition-colors">
+            <img [src]="brand.imagen" [alt]="brand.nombre" class="w-5 h-5 object-contain">
+            {{ brand.nombre }}
+          </a>
+        </div>
       </div>
     </div>
   </div>
