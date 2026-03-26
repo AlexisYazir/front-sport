@@ -75,6 +75,7 @@ export class AuthService {
 
   constructor() {
     this.loadAuthState();
+    this.initializeStorageSync();
   }
 
   currentUser$(): Observable<User | null> {
@@ -131,6 +132,25 @@ export class AuthService {
     } catch {
       return null;
     }
+  }
+
+  private initializeStorageSync(): void {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    window.addEventListener('storage', (event) => {
+      const relevantKeys = new Set([
+        this.USER_KEY,
+        'auth:access_token',
+        'auth:refresh_token',
+        'auth:session_id',
+      ]);
+
+      if (!event.key || relevantKeys.has(event.key)) {
+        this.loadAuthState();
+      }
+    });
   }
 
   private buildUserFromToken(tokenData: JwtPayload, fallback?: Partial<User>): User {

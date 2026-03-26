@@ -56,8 +56,8 @@ export class SessionService {
    * Verifica si el usuario está logueado (sin inyectar AuthService)
    */
   private isLoggedIn(): boolean {
-    if (typeof sessionStorage === 'undefined') return false;
-    return !!sessionStorage.getItem(this.TOKEN_KEY);
+    if (typeof localStorage === 'undefined') return false;
+    return !!localStorage.getItem(this.TOKEN_KEY);
   }
 
   /**
@@ -112,6 +112,13 @@ export class SessionService {
     this.clearSession();
     
     // Limpiar localStorage sin inyectar AuthService
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem(this.TOKEN_KEY);
+      localStorage.removeItem('auth:access_token');
+      localStorage.removeItem('auth:refresh_token');
+      localStorage.removeItem('auth:session_id');
+    }
+
     if (typeof sessionStorage !== 'undefined') {
       sessionStorage.removeItem(this.TOKEN_KEY);
       sessionStorage.removeItem('auth:access_token');
