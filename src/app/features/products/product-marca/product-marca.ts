@@ -293,7 +293,11 @@ export class ProductMarca implements OnInit {
   }
 
   viewProduct(productId: number) {
-    this.router.navigate(['/product', productId]);
+    const product = this.filteredBySelection().find(item => (item.id_producto || item.id) === productId);
+    if (!product) {
+      return;
+    }
+    this.router.navigate(this.productService.buildProductDetailRoute(product));
   }
 
   goBack() {

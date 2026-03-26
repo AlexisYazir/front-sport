@@ -84,8 +84,8 @@ export class Home implements OnInit {
 
 
   // Método para ver detalles del producto
-  viewProduct(productId: number) {
-    this.router.navigate(['/product', productId]);
+  viewProduct(product: Product) {
+    this.router.navigate(this.productService.buildProductDetailRoute(product));
   }
 
   // Método para ver todas las marcas
@@ -95,6 +95,10 @@ export class Home implements OnInit {
 
   // Método para ver todos los productos
   viewAllProducts() {
-    this.router.navigate(['/product']);
+    this.router.navigate(['/products']);
+  }
+
+  getProductLink(product: Product): string[] {
+    return this.productService.buildProductDetailRoute(product);
   }
 }

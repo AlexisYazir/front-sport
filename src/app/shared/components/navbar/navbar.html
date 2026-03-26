@@ -46,37 +46,34 @@
 
         <!-- Navigation Links - SOLO VISIBLE EN DESKTOP -->
 <!-- Navigation Links - SOLO VISIBLE EN DESKTOP -->
-<div class="hidden lg:flex items-center space-x-1">
+<div class="hidden lg:flex items-center gap-0.5">
   
   <!-- HOMBRES -->
   <div class="relative" 
        (mouseenter)="onMenuMouseEnter('hombres')" 
        (mouseleave)="onMenuMouseLeave('hombres')">
     
-    <button class="flex items-center gap-1 px-3 py-2 text-[#666666] hover:text-[#0367A6] rounded-lg hover:bg-blue-50 transition-all cursor-default">
+    <button class="nav-menu-trigger"
+            [class.nav-menu-trigger-active]="shouldShowHombresMenu()">
       <span class="text-sm font-medium">Hombres</span>
-      <span class="material-symbols-outlined text-base transition-transform duration-300"
-            [class.rotate-180]="shouldShowHombresMenu()">
-        expand_more
-      </span>
     </button>
 
     <!-- Dropdown Hombres - 3 columnas -->
     <div *ngIf="shouldShowHombresMenu()" 
-         class="absolute left-0 mt-2 w-[700px] bg-white rounded-xl shadow-2xl border border-gray-100 z-50"
+         class="mega-menu-panel"
          (mouseenter)="cancelMenuClose('hombres')" 
          (mouseleave)="onMenuMouseLeave('hombres')">
-      <div class="p-6">
-        <div class="grid grid-cols-3 gap-8">
+      <div class="mega-menu-content mega-menu-content--three">
+        <div class="mega-menu-grid mega-menu-grid--three">
           
           <!-- Columna Ropa -->
           <div>
-            <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider mb-3">Ropa</h3>
-            <div class="space-y-2">
+            <h3 class="mega-menu-title">Ropa</h3>
+            <div class="mega-menu-links">
               <a *ngFor="let cat of menuData()?.clothing || []" 
-                 [routerLink]="['/products', { search: cat.nombre }]"
+                 [routerLink]="getAudienceRoute('hombres', 'ropa', cat.nombre)"
                  (click)="closeAllMenus()"
-                 class="block text-sm text-gray-600 hover:text-[#0367A6] transition-colors">
+                 class="mega-menu-link">
                 {{ cat.nombre }}
               </a>
             </div>
@@ -84,12 +81,12 @@
           
           <!-- Columna Accesorios -->
           <div>
-            <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider mb-3">Accesorios</h3>
-            <div class="space-y-2">
+            <h3 class="mega-menu-title">Accesorios</h3>
+            <div class="mega-menu-links">
               <a *ngFor="let acc of menuData()?.accessories || []" 
-                 [routerLink]="['/products', { search: acc.nombre }]"
+                 [routerLink]="getAudienceRoute('hombres', 'accesorios', acc.nombre)"
                  (click)="closeAllMenus()"
-                 class="block text-sm text-gray-600 hover:text-[#0367A6] transition-colors">
+                 class="mega-menu-link">
                 {{ acc.nombre }}
               </a>
             </div>
@@ -97,12 +94,12 @@
           
           <!-- Columna Deportes -->
           <div>
-            <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider mb-3">Deportes</h3>
-            <div class="space-y-2">
+            <h3 class="mega-menu-title">Deportes</h3>
+            <div class="mega-menu-links">
               <a *ngFor="let sport of menuData()?.sports || []" 
-                 [routerLink]="['/products', { sport: sport.nombre }]"
+                 [routerLink]="getSportRoute(sport.nombre)"
                  (click)="closeAllMenus()"
-                 class="block text-sm text-gray-600 hover:text-[#0367A6] transition-colors">
+                 class="mega-menu-link">
                 {{ sport.nombre }}
               </a>
             </div>
@@ -110,10 +107,10 @@
         </div>
         
         <!-- Ver todo -->
-        <div class="mt-6 pt-4 border-t border-gray-100">
-          <a [routerLink]="['/products', { search: 'hombres' }]" 
+        <div class="mega-menu-footer">
+          <a [routerLink]="getAudienceRoute('hombres')" 
              (click)="closeAllMenus()"
-             class="text-sm font-medium text-[#0367A6] hover:underline">
+             class="mega-menu-cta">
             Ver todos los productos para Hombre →
           </a>
         </div>
@@ -126,30 +123,27 @@
        (mouseenter)="onMenuMouseEnter('mujeres')" 
        (mouseleave)="onMenuMouseLeave('mujeres')">
     
-    <button class="flex items-center gap-1 px-3 py-2 text-[#666666] hover:text-[#0367A6] rounded-lg hover:bg-blue-50 transition-all cursor-default">
+    <button class="nav-menu-trigger"
+            [class.nav-menu-trigger-active]="shouldShowMujeresMenu()">
       <span class="text-sm font-medium">Mujeres</span>
-      <span class="material-symbols-outlined text-base transition-transform duration-300"
-            [class.rotate-180]="shouldShowMujeresMenu()">
-        expand_more
-      </span>
     </button>
 
     <!-- Dropdown Mujeres - 3 columnas -->
     <div *ngIf="shouldShowMujeresMenu()" 
-         class="absolute left-0 mt-2 w-[700px] bg-white rounded-xl shadow-2xl border border-gray-100 z-50"
+         class="mega-menu-panel"
          (mouseenter)="cancelMenuClose('mujeres')" 
          (mouseleave)="onMenuMouseLeave('mujeres')">
-      <div class="p-6">
-        <div class="grid grid-cols-3 gap-8">
+      <div class="mega-menu-content mega-menu-content--three">
+        <div class="mega-menu-grid mega-menu-grid--three">
           
           <!-- Columna Ropa -->
           <div>
-            <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider mb-3">Ropa</h3>
-            <div class="space-y-2">
+            <h3 class="mega-menu-title">Ropa</h3>
+            <div class="mega-menu-links">
               <a *ngFor="let cat of menuData()?.clothing || []" 
-                 [routerLink]="['/products', { search: cat.nombre }]"
+                 [routerLink]="getAudienceRoute('mujeres', 'ropa', cat.nombre)"
                  (click)="closeAllMenus()"
-                 class="block text-sm text-gray-600 hover:text-[#0367A6] transition-colors">
+                 class="mega-menu-link">
                 {{ cat.nombre }}
               </a>
             </div>
@@ -157,12 +151,12 @@
           
           <!-- Columna Accesorios -->
           <div>
-            <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider mb-3">Accesorios</h3>
-            <div class="space-y-2">
+            <h3 class="mega-menu-title">Accesorios</h3>
+            <div class="mega-menu-links">
               <a *ngFor="let acc of menuData()?.accessories || []" 
-                 [routerLink]="['/products', { search: acc.nombre }]"
+                 [routerLink]="getAudienceRoute('mujeres', 'accesorios', acc.nombre)"
                  (click)="closeAllMenus()"
-                 class="block text-sm text-gray-600 hover:text-[#0367A6] transition-colors">
+                 class="mega-menu-link">
                 {{ acc.nombre }}
               </a>
             </div>
@@ -170,12 +164,12 @@
           
           <!-- Columna Deportes -->
           <div>
-            <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider mb-3">Deportes</h3>
-            <div class="space-y-2">
+            <h3 class="mega-menu-title">Deportes</h3>
+            <div class="mega-menu-links">
               <a *ngFor="let sport of menuData()?.sports || []" 
-                 [routerLink]="['/products', { sport: sport.nombre }]"
+                 [routerLink]="getSportRoute(sport.nombre)"
                  (click)="closeAllMenus()"
-                 class="block text-sm text-gray-600 hover:text-[#0367A6] transition-colors">
+                 class="mega-menu-link">
                 {{ sport.nombre }}
               </a>
             </div>
@@ -183,10 +177,10 @@
         </div>
         
         <!-- Ver todo -->
-        <div class="mt-6 pt-4 border-t border-gray-100">
-          <a [routerLink]="['/products', { search: 'mujeres' }]" 
+        <div class="mega-menu-footer">
+          <a [routerLink]="getAudienceRoute('mujeres')" 
              (click)="closeAllMenus()"
-             class="text-sm font-medium text-[#0367A6] hover:underline">
+             class="mega-menu-cta">
             Ver todos los productos para Mujer →
           </a>
         </div>
@@ -199,30 +193,27 @@
        (mouseenter)="onMenuMouseEnter('ninos')" 
        (mouseleave)="onMenuMouseLeave('ninos')">
     
-    <button class="flex items-center gap-1 px-3 py-2 text-[#666666] hover:text-[#0367A6] rounded-lg hover:bg-blue-50 transition-all cursor-default">
+    <button class="nav-menu-trigger"
+            [class.nav-menu-trigger-active]="shouldShowNinosMenu()">
       <span class="text-sm font-medium">Niños</span>
-      <span class="material-symbols-outlined text-base transition-transform duration-300"
-            [class.rotate-180]="shouldShowNinosMenu()">
-        expand_more
-      </span>
     </button>
 
     <!-- Dropdown Niños - 3 columnas -->
     <div *ngIf="shouldShowNinosMenu()" 
-         class="absolute left-0 mt-2 w-[700px] bg-white rounded-xl shadow-2xl border border-gray-100 z-50"
+         class="mega-menu-panel"
          (mouseenter)="cancelMenuClose('ninos')" 
          (mouseleave)="onMenuMouseLeave('ninos')">
-      <div class="p-6">
-        <div class="grid grid-cols-3 gap-8">
+      <div class="mega-menu-content mega-menu-content--three">
+        <div class="mega-menu-grid mega-menu-grid--three">
           
           <!-- Columna Ropa -->
           <div>
-            <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider mb-3">Ropa</h3>
-            <div class="space-y-2">
+            <h3 class="mega-menu-title">Ropa</h3>
+            <div class="mega-menu-links">
               <a *ngFor="let cat of menuData()?.clothing || []" 
-                 [routerLink]="['/products', { search: cat.nombre }]"
+                 [routerLink]="getAudienceRoute('ninos', 'ropa', cat.nombre)"
                  (click)="closeAllMenus()"
-                 class="block text-sm text-gray-600 hover:text-[#0367A6] transition-colors">
+                 class="mega-menu-link">
                 {{ cat.nombre }}
               </a>
             </div>
@@ -230,12 +221,12 @@
           
           <!-- Columna Accesorios -->
           <div>
-            <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider mb-3">Accesorios</h3>
-            <div class="space-y-2">
+            <h3 class="mega-menu-title">Accesorios</h3>
+            <div class="mega-menu-links">
               <a *ngFor="let acc of menuData()?.accessories || []" 
-                 [routerLink]="['/products', { search: acc.nombre }]"
+                 [routerLink]="getAudienceRoute('ninos', 'accesorios', acc.nombre)"
                  (click)="closeAllMenus()"
-                 class="block text-sm text-gray-600 hover:text-[#0367A6] transition-colors">
+                 class="mega-menu-link">
                 {{ acc.nombre }}
               </a>
             </div>
@@ -243,12 +234,12 @@
           
           <!-- Columna Deportes -->
           <div>
-            <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider mb-3">Deportes</h3>
-            <div class="space-y-2">
+            <h3 class="mega-menu-title">Deportes</h3>
+            <div class="mega-menu-links">
               <a *ngFor="let sport of menuData()?.sports || []" 
-                 [routerLink]="['/products', { sport: sport.nombre }]"
+                 [routerLink]="getSportRoute(sport.nombre)"
                  (click)="closeAllMenus()"
-                 class="block text-sm text-gray-600 hover:text-[#0367A6] transition-colors">
+                 class="mega-menu-link">
                 {{ sport.nombre }}
               </a>
             </div>
@@ -256,10 +247,10 @@
         </div>
         
         <!-- Ver todo -->
-        <div class="mt-6 pt-4 border-t border-gray-100">
-          <a [routerLink]="['/products', { search: 'ninos' }]" 
+        <div class="mega-menu-footer">
+          <a [routerLink]="getAudienceRoute('ninos')" 
              (click)="closeAllMenus()"
-             class="text-sm font-medium text-[#0367A6] hover:underline">
+             class="mega-menu-cta">
             Ver todos los productos para Niños →
           </a>
         </div>
@@ -272,25 +263,22 @@
        (mouseenter)="onMenuMouseEnter('accesorios')" 
        (mouseleave)="onMenuMouseLeave('accesorios')">
     
-    <button class="flex items-center gap-1 px-3 py-2 text-[#666666] hover:text-[#0367A6] rounded-lg hover:bg-blue-50 transition-all cursor-default">
+    <button class="nav-menu-trigger"
+            [class.nav-menu-trigger-active]="shouldShowAccesoriosMenu()">
       <span class="text-sm font-medium">Accesorios</span>
-      <span class="material-symbols-outlined text-base transition-transform duration-300"
-            [class.rotate-180]="shouldShowAccesoriosMenu()">
-        expand_more
-      </span>
     </button>
 
     <!-- Dropdown Accesorios -->
     <div *ngIf="shouldShowAccesoriosMenu()" 
-         class="absolute left-0 mt-2 w-64 bg-white rounded-xl shadow-2xl border border-gray-100 z-50"
+         class="mega-menu-panel mega-menu-panel--compact"
          (mouseenter)="cancelMenuClose('accesorios')" 
          (mouseleave)="onMenuMouseLeave('accesorios')">
-      <div class="p-4">
-        <div class="space-y-2">
+      <div class="mega-menu-content mega-menu-content--compact">
+        <div class="mega-menu-links">
           <a *ngFor="let acc of menuData()?.accessories || []" 
-             [routerLink]="['/products', { search: acc.nombre }]"
+             [routerLink]="getAccessoryRoute(acc.nombre)"
              (click)="closeAllMenus()"
-             class="block px-3 py-2 text-sm text-gray-600 hover:text-[#0367A6] hover:bg-gray-50 rounded-lg transition-colors">
+             class="mega-menu-link mega-menu-link--compact">
             {{ acc.nombre }}
           </a>
         </div>
@@ -303,25 +291,22 @@
        (mouseenter)="onMenuMouseEnter('deportes')" 
        (mouseleave)="onMenuMouseLeave('deportes')">
     
-    <button class="flex items-center gap-1 px-3 py-2 text-[#666666] hover:text-[#0367A6] rounded-lg hover:bg-blue-50 transition-all cursor-default">
+    <button class="nav-menu-trigger"
+            [class.nav-menu-trigger-active]="shouldShowDeportesMenu()">
       <span class="text-sm font-medium">Deportes</span>
-      <span class="material-symbols-outlined text-base transition-transform duration-300"
-            [class.rotate-180]="shouldShowDeportesMenu()">
-        expand_more
-      </span>
     </button>
 
     <!-- Dropdown Deportes -->
     <div *ngIf="shouldShowDeportesMenu()" 
-         class="absolute left-0 mt-2 w-64 bg-white rounded-xl shadow-2xl border border-gray-100 z-50"
+         class="mega-menu-panel mega-menu-panel--compact"
          (mouseenter)="cancelMenuClose('deportes')" 
          (mouseleave)="onMenuMouseLeave('deportes')">
-      <div class="p-4 max-h-80 overflow-y-auto">
-        <div class="space-y-2">
+      <div class="mega-menu-content mega-menu-content--compact max-h-80 overflow-y-auto">
+        <div class="mega-menu-links">
           <a *ngFor="let sport of menuData()?.sports || []" 
-             [routerLink]="['/products', { sport: sport.nombre }]"
+             [routerLink]="getSportRoute(sport.nombre)"
              (click)="closeAllMenus()"
-             class="block px-3 py-2 text-sm text-gray-600 hover:text-[#0367A6] hover:bg-gray-50 rounded-lg transition-colors">
+             class="mega-menu-link mega-menu-link--compact">
             {{ sport.nombre }}
           </a>
         </div>
@@ -334,25 +319,22 @@
        (mouseenter)="onMenuMouseEnter('marcas')" 
        (mouseleave)="onMenuMouseLeave('marcas')">
     
-    <button class="flex items-center gap-1 px-3 py-2 text-[#666666] hover:text-[#0367A6] rounded-lg hover:bg-blue-50 transition-all cursor-default">
+    <button class="nav-menu-trigger"
+            [class.nav-menu-trigger-active]="shouldShowMarcasMenu()">
       <span class="text-sm font-medium">Marcas</span>
-      <span class="material-symbols-outlined text-base transition-transform duration-300"
-            [class.rotate-180]="shouldShowMarcasMenu()">
-        expand_more
-      </span>
     </button>
 
     <!-- Dropdown Marcas -->
     <div *ngIf="shouldShowMarcasMenu()" 
-         class="absolute left-0 mt-2 w-64 bg-white rounded-xl shadow-2xl border border-gray-100 z-50"
+         class="mega-menu-panel mega-menu-panel--compact"
          (mouseenter)="cancelMenuClose('marcas')" 
          (mouseleave)="onMenuMouseLeave('marcas')">
-      <div class="p-4 max-h-80 overflow-y-auto">
-        <div class="space-y-2">
+      <div class="mega-menu-content mega-menu-content--compact max-h-80 overflow-y-auto">
+        <div class="mega-menu-links">
           <a *ngFor="let brand of menuData()?.brands || []" 
-             [routerLink]="['/products', { brand: brand.nombre }]"
+             [routerLink]="getBrandRoute(brand.nombre)"
              (click)="closeAllMenus()"
-             class="flex items-center gap-3 px-3 py-2 text-sm text-gray-600 hover:text-[#0367A6] hover:bg-gray-50 rounded-lg transition-colors">
+             class="mega-menu-link mega-menu-link--brand">
             <img [src]="brand.imagen" [alt]="brand.nombre" class="w-5 h-5 object-contain">
             {{ brand.nombre }}
           </a>

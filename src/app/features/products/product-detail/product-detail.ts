@@ -153,13 +153,13 @@ export class ProductDetail implements OnInit {
 
   ngOnInit() {
     this.route.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
-      const productId = Number(params['id']);
-      if (!Number.isFinite(productId) || productId <= 0) {
+      const extractedProductId = this.productService.extractRealProductId(params['id']);
+      if (extractedProductId === null || !Number.isFinite(extractedProductId) || extractedProductId <= 0) {
         this.toastr.error('ID de producto inválido', 'Error');
         this.router.navigate(['/error/400']);
         return;
       }
-      this.loadProduct(productId);
+      this.loadProduct(extractedProductId);
     });
   }
 

@@ -33,6 +33,7 @@ export interface Product {
   activo?: boolean;
   fecha_creacion?: string;
   categoria_padre?: string;
+  deportes?: string[];
   variantes?: Variante[];
 }
 
@@ -46,7 +47,11 @@ export interface Category {
 // Filtros de búsqueda
 export interface ProductFilters {
   categoria?: string;
+  categoriaPadre?: string;
+  subcategoria?: string;
   marca?: string;
+  deporte?: string;
+  genero?: string;
   precioMin?: number;
   precioMax?: number;
   disponible?: boolean;

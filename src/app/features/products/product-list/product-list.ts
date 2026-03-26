@@ -1,12 +1,13 @@
-import { Component, inject, OnInit, signal, computed, HostListener, effect } from '@angular/core';
+import { Component, inject, OnInit, signal, computed, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterModule, ActivatedRoute, Router } from '@angular/router';
+import { RouterModule, ActivatedRoute, Router, UrlSegment } from '@angular/router';
 import { NgxPaginationModule } from 'ngx-pagination';
 import { ProductService } from '../../../core/services/product.service';
 import { Product, Category, ProductFilters } from '../../../core/models/product.model';
 import { Breadcrumbs, BreadcrumbItem } from '../../../shared/components/breadcrumbs/breadcrumbs';
 import { ToastrService } from 'ngx-toastr';
+import { combineLatest } from 'rxjs';
 
 @Component({
   selector: 'app-product-list',
@@ -29,6 +30,10 @@ export class ProductList implements OnInit {
   maxPrice = signal<number | null>(null);
   sortBy = signal<string>('');
   showOnlyAvailable = signal<boolean>(false);
+  routeGenero = signal<string>('');
+  routeCategoriaPadre = signal<string>('');
+  routeSubcategoria = signal<string>('');
+  routeDeporte = signal<string>('');
 
   // Estado de UI
   showFilters = signal<boolean>(true);
@@ -83,6 +88,22 @@ export class ProductList implements OnInit {
       { label: 'Productos', url: '/products', icon: 'storefront' }
     ];
 
+    if (this.routeGenero()) {
+      items.push({ label: this.formatSlugLabel(this.routeGenero()) });
+    }
+
+    if (this.routeCategoriaPadre()) {
+      items.push({ label: this.formatSlugLabel(this.routeCategoriaPadre()) });
+    }
+
+    if (this.routeSubcategoria()) {
+      items.push({ label: this.formatSlugLabel(this.routeSubcategoria()) });
+    }
+
+    if (this.routeDeporte()) {
+      items.push({ label: `Deporte: ${this.formatSlugLabel(this.routeDeporte())}` });
+    }
+
     if (this.searchTerm()) {
       items.push({ label: `Búsqueda: "${this.searchTerm()}"` });
     }
@@ -100,16 +121,6 @@ export class ProductList implements OnInit {
     return items;
   });
 
-  constructor() {
-    // Efecto para cargar productos cuando cambian los filtros
-    effect(() => {
-      // Solo ejecutar si no estamos en la carga inicial
-      if (this.categories().length > 0) {
-        this.onSearch();
-      }
-    });
-  }
-
   @HostListener('window:resize', ['$event'])
   onResize(event: any) {
     const mobile = event.target.innerWidth < 768;
@@ -124,18 +135,99 @@ export class ProductList implements OnInit {
   }
 
   ngOnInit() {
-    this.route.queryParams.subscribe(params => {
-      if (!this.parseQueryParams(params)) {
+    this.loadFilterMetadata();
+
+    combineLatest([this.route.url, this.route.queryParams]).subscribe(([segments, params]) => {
+      if (!this.parseRouteSegments(segments) || !this.parseQueryParams(params)) {
         this.router.navigate(['/error/400']);
         return;
       }
-      this.loadInitialData();
+      this.onSearch();
     });
   }
 
+  private loadFilterMetadata() {
+    this.isLoading.set(true);
+    
+    this.productService.getCategories().subscribe({
+      next: (categories) => {
+        this.categories.set(categories);
+      },
+      error: (error) => {
+        console.error('Error cargando categorías:', error);
+        this.toastr.error('Error al cargar categorías', 'Error');
+      }
+    });
+
+    this.productService.getBrands().subscribe({
+      next: (brands) => {
+        this.brands.set(brands);
+      },
+      error: (error) => {
+        console.error('Error cargando marcas:', error);
+        this.toastr.error('Error al cargar marcas', 'Error');
+      }
+    });
+  }
+
+  private parseRouteSegments(segments: UrlSegment[]): boolean {
+    this.routeGenero.set('');
+    this.routeCategoriaPadre.set('');
+    this.routeSubcategoria.set('');
+    this.routeDeporte.set('');
+
+    const values = segments.map(segment => segment.path);
+    const [first, second, third] = values;
+
+    if (!first || first === 'products') {
+      return true;
+    }
+
+    if (['hombres', 'mujeres', 'ninos'].includes(first)) {
+      this.routeGenero.set(first);
+      if (second) {
+        this.routeCategoriaPadre.set(second);
+      }
+      if (third) {
+        this.routeSubcategoria.set(third);
+        this.selectedCategory.set(this.formatSlugLabel(third));
+      } else {
+        this.selectedCategory.set('');
+      }
+      return true;
+    }
+
+    if (first === 'accesorios') {
+      this.routeCategoriaPadre.set('accesorios');
+      if (second) {
+        this.routeSubcategoria.set(second);
+        this.selectedCategory.set(this.formatSlugLabel(second));
+      } else {
+        this.selectedCategory.set('');
+      }
+      return true;
+    }
+
+    if (first === 'deporte' && second) {
+      this.routeDeporte.set(second);
+      return true;
+    }
+
+    return false;
+  }
+
   private parseQueryParams(params: Record<string, any>): boolean {
+    this.searchTerm.set('');
+    this.selectedCategory.set(this.routeSubcategoria() ? this.formatSlugLabel(this.routeSubcategoria()) : '');
+    this.selectedBrand.set('');
+    this.minPrice.set(null);
+    this.maxPrice.set(null);
+    this.sortBy.set('');
+    this.showOnlyAvailable.set(false);
+    this.currentPage.set(1);
+
     if (params['search']) this.searchTerm.set(String(params['search']));
-    if (params['category']) this.selectedCategory.set(String(params['category']));
+    if (params['category'] && !this.routeSubcategoria()) this.selectedCategory.set(String(params['category']));
     if (params['brand']) this.selectedBrand.set(String(params['brand']));
     if (params['page']) this.currentPage.set(Number(params['page']) || 1);
 
@@ -195,35 +287,6 @@ export class ProductList implements OnInit {
     return true;
   }
 
-  private loadInitialData() {
-    this.isLoading.set(true);
-    
-    // Cargar categorías
-    this.productService.getCategories().subscribe({
-      next: (categories) => {
-        this.categories.set(categories);
-      },
-      error: (error) => {
-        console.error('Error cargando categorías:', error);
-        this.toastr.error('Error al cargar categorías', 'Error');
-      }
-    });
-
-    // Cargar marcas
-    this.productService.getBrands().subscribe({
-      next: (brands) => {
-        this.brands.set(brands);
-      },
-      error: (error) => {
-        console.error('Error cargando marcas:', error);
-        this.toastr.error('Error al cargar marcas', 'Error');
-      }
-    });
-
-    // Carga inicial de productos
-    this.onSearch();
-  }
-
   onSearch() {
     // Validar precios antes de buscar
     if (this.minPrice() !== null && this.maxPrice() !== null) {
@@ -238,7 +301,11 @@ export class ProductList implements OnInit {
 
     const filters: ProductFilters = {
       categoria: this.selectedCategory() || undefined,
+      categoriaPadre: this.routeCategoriaPadre() || undefined,
+      subcategoria: this.routeSubcategoria() || undefined,
       marca: this.selectedBrand() || undefined,
+      deporte: this.routeDeporte() || undefined,
+      genero: this.routeGenero() || undefined,
       precioMin: this.minPrice() || undefined,
       precioMax: this.maxPrice() || undefined,
       disponible: this.showOnlyAvailable() ? true : undefined,
@@ -387,5 +454,15 @@ export class ProductList implements OnInit {
 getProductSlug(product: Product): string {
   const nombre = product.nombre || product.producto || '';
   return this.productService.generateSlug(nombre);
+}
+
+getProductLink(product: Product): string[] {
+  return this.productService.buildProductDetailRoute(product);
+}
+
+private formatSlugLabel(value: string): string {
+  return value
+    .replace(/-/g, ' ')
+    .replace(/\b\w/g, letter => letter.toUpperCase());
 }
 }

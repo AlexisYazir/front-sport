@@ -382,6 +382,13 @@ onMenuMouseEnter(menu: 'hombres' | 'mujeres' | 'ninos' | 'accesorios' | 'deporte
   if (timeout) {
     clearTimeout(timeout);
   }
+
+  this.hombresHovered = false;
+  this.mujeresHovered = false;
+  this.ninosHovered = false;
+  this.accesoriosHovered = false;
+  this.deportesHovered = false;
+  this.marcasHovered = false;
   
   switch(menu) {
     case 'hombres': this.hombresHovered = true; break;
@@ -403,22 +410,22 @@ onMenuMouseLeave(menu: 'hombres' | 'mujeres' | 'ninos' | 'accesorios' | 'deporte
   
   switch(menu) {
     case 'hombres':
-      this.hombresTimeout = setTimeout(() => { this.hombresHovered = false; }, 300);
+      this.hombresTimeout = setTimeout(() => { this.hombresHovered = false; }, 90);
       break;
     case 'mujeres':
-      this.mujeresTimeout = setTimeout(() => { this.mujeresHovered = false; }, 300);
+      this.mujeresTimeout = setTimeout(() => { this.mujeresHovered = false; }, 90);
       break;
     case 'ninos':
-      this.ninosTimeout = setTimeout(() => { this.ninosHovered = false; }, 300);
+      this.ninosTimeout = setTimeout(() => { this.ninosHovered = false; }, 90);
       break;
     case 'accesorios':
-      this.accesoriosTimeout = setTimeout(() => { this.accesoriosHovered = false; }, 300);
+      this.accesoriosTimeout = setTimeout(() => { this.accesoriosHovered = false; }, 90);
       break;
     case 'deportes':
-      this.deportesTimeout = setTimeout(() => { this.deportesHovered = false; }, 300);
+      this.deportesTimeout = setTimeout(() => { this.deportesHovered = false; }, 90);
       break;
     case 'marcas':
-      this.marcasTimeout = setTimeout(() => { this.marcasHovered = false; }, 300);
+      this.marcasTimeout = setTimeout(() => { this.marcasHovered = false; }, 90);
       break;
   }
 }
@@ -445,7 +452,7 @@ ngOnInit() {
   // ... resto de tu código existente
 }
 
-loadMenuData() {
+  loadMenuData() {
   this.menuLoading.set(true);
   this.productService.getCompleteMenu().subscribe({
     next: (data) => {
@@ -457,5 +464,31 @@ loadMenuData() {
       this.menuLoading.set(false);
     }
   });
+}
+
+getAudienceRoute(genero: 'hombres' | 'mujeres' | 'ninos', categoriaPadre?: string, subcategoria?: string): string[] {
+  const route = [`/${genero}`];
+
+  if (categoriaPadre) {
+    route.push(this.productService.generateSlug(categoriaPadre));
+  }
+
+  if (subcategoria) {
+    route.push(this.productService.generateSlug(subcategoria));
+  }
+
+  return route;
+}
+
+getSportRoute(sport: string): string[] {
+  return ['/deporte', this.productService.generateSlug(sport)];
+}
+
+getAccessoryRoute(accessory: string): string[] {
+  return ['/accesorios', this.productService.generateSlug(accessory)];
+}
+
+getBrandRoute(brand: string): string[] {
+  return ['/marca', brand];
 }
 }

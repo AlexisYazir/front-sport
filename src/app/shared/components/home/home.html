@@ -112,7 +112,7 @@
         <!-- Tarjeta de Producto -->
         <div *ngFor="let product of products.slice(0, 8)" 
              class="flex-shrink-0 w-56 group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer border border-gray-100 overflow-hidden"
-             [routerLink]="['/product', product.id]"
+             [routerLink]="getProductLink(product)"
              [title]="product.nombre">
           <!-- Imagen del Producto -->
           <div class="w-full pt-[75%] relative overflow-hidden bg-white">

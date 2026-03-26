@@ -18,6 +18,61 @@ export const routes: Routes = [
       import('./features/products/product-list/product-list').then((m) => m.ProductList),
   },
   {
+    path: 'hombres',
+    loadComponent: () =>
+      import('./features/products/product-list/product-list').then((m) => m.ProductList),
+  },
+  {
+    path: 'hombres/:categoriaPadre',
+    loadComponent: () =>
+      import('./features/products/product-list/product-list').then((m) => m.ProductList),
+  },
+  {
+    path: 'hombres/:categoriaPadre/:subcategoria',
+    loadComponent: () =>
+      import('./features/products/product-list/product-list').then((m) => m.ProductList),
+  },
+  {
+    path: 'mujeres',
+    loadComponent: () =>
+      import('./features/products/product-list/product-list').then((m) => m.ProductList),
+  },
+  {
+    path: 'mujeres/:categoriaPadre',
+    loadComponent: () =>
+      import('./features/products/product-list/product-list').then((m) => m.ProductList),
+  },
+  {
+    path: 'mujeres/:categoriaPadre/:subcategoria',
+    loadComponent: () =>
+      import('./features/products/product-list/product-list').then((m) => m.ProductList),
+  },
+  {
+    path: 'ninos',
+    loadComponent: () =>
+      import('./features/products/product-list/product-list').then((m) => m.ProductList),
+  },
+  {
+    path: 'ninos/:categoriaPadre',
+    loadComponent: () =>
+      import('./features/products/product-list/product-list').then((m) => m.ProductList),
+  },
+  {
+    path: 'ninos/:categoriaPadre/:subcategoria',
+    loadComponent: () =>
+      import('./features/products/product-list/product-list').then((m) => m.ProductList),
+  },
+  {
+    path: 'accesorios/:subcategoria',
+    loadComponent: () =>
+      import('./features/products/product-list/product-list').then((m) => m.ProductList),
+  },
+  {
+    path: 'deporte/:deporte',
+    loadComponent: () =>
+      import('./features/products/product-list/product-list').then((m) => m.ProductList),
+  },
+  {
     path: 'product/:nombre/:id',
     loadComponent: () =>
       import('./features/products/product-detail/product-detail').then((m) => m.ProductDetail),

@@ -4,6 +4,7 @@ import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CartService } from '../../core/services/cart.service';
 import { CartItem } from '../../core/models/cart.model';
+import { ProductService } from '../../core/services/product.service';
 
 @Component({
   selector: 'app-cart',
@@ -15,6 +16,7 @@ import { CartItem } from '../../core/models/cart.model';
 export class Cart {
   private cartService = inject(CartService);
   private router = inject(Router);
+  private productService = inject(ProductService);
 
   // Signals del servicio
   cartItems = this.cartService.cartItems;
@@ -119,6 +121,10 @@ export class Cart {
 
   hasStockWarning(item: CartItem): boolean {
     return this.getStockWarning(item) !== null;
+  }
+
+  getProductLink(item: CartItem): string[] {
+    return this.productService.buildProductDetailRoute(item.product);
   }
 
   isStockCritical(item: CartItem): boolean {

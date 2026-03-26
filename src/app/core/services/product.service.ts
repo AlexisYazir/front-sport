@@ -53,7 +53,8 @@ export class ProductService {
       producto: p.producto,
       activo: p.activo,
       fecha_creacion: p.fecha_creacion,
-      categoria_padre: p.categoria_padre
+      categoria_padre: p.categoria_padre,
+      deportes: Array.isArray(p.deportes) ? p.deportes : []
     };
   }
 
@@ -336,6 +337,55 @@ generateSlug(nombre: string): string {
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
+}
+
+normalizeGenderSlug(value: string): string {
+  const slug = this.generateSlug(value);
+  const genderMap: Record<string, string> = {
+    hombre: 'hombre',
+    hombres: 'hombre',
+    mujer: 'mujer',
+    mujeres: 'mujer',
+    nino: 'nino',
+    ninos: 'nino',
+    nina: 'nina',
+    ninas: 'nina',
+    unisex: 'unisex'
+  };
+
+  return genderMap[slug] || slug;
+}
+
+buildProductRouteId(id: number): string {
+  const safeId = Number(id);
+  if (!Number.isInteger(safeId) || safeId <= 0) {
+    return '';
+  }
+
+  const stablePrefix = ((safeId * 7919) % 9000) + 1000;
+  return `${stablePrefix}${safeId}`;
+}
+
+extractRealProductId(routeId: string | number): number | null {
+  const value = String(routeId ?? '').trim();
+
+  if (!/^\d+$/.test(value)) {
+    return null;
+  }
+
+  if (value.length <= 4) {
+    const directId = Number(value);
+    return Number.isInteger(directId) && directId > 0 ? directId : null;
+  }
+
+  const extractedId = Number(value.slice(4));
+  return Number.isInteger(extractedId) && extractedId > 0 ? extractedId : null;
+}
+
+buildProductDetailRoute(product: Pick<Product, 'id' | 'id_producto' | 'nombre' | 'producto'>): string[] {
+  const id = Number(product.id_producto ?? product.id);
+  const name = product.nombre || product.producto || 'producto';
+  return ['/product', this.generateSlug(name), this.buildProductRouteId(id)];
 }
 /* =====================================================
     CREACIÓN PASO A PASO (SEGÚN BACKEND)
@@ -633,13 +683,62 @@ createAttribute(nombre: string): Observable<Attibute> {
 
           // Filtro por categoría
           if (filters.categoria && filters.categoria !== 'todos') {
-            products = products.filter(p => p.categoria === filters.categoria);
+            const categorySlug = this.generateSlug(filters.categoria);
+            products = products.filter(p => this.generateSlug(p.categoria || '') === categorySlug);
+          }
+
+          if (filters.categoriaPadre) {
+            const parentSlug = this.generateSlug(filters.categoriaPadre);
+            products = products.filter(p =>
+              this.generateSlug(p.categoria_padre || '') === parentSlug
+            );
+          }
+
+          if (filters.subcategoria) {
+            const subcategorySlug = this.generateSlug(filters.subcategoria);
+            products = products.filter(p =>
+              this.generateSlug(p.categoria || '') === subcategorySlug
+            );
           }
 
           // Filtro por marca
           if (filters.marca) {
             products = products.filter(p =>
               p.marca?.toLowerCase() === filters.marca?.toLowerCase()
+            );
+          }
+
+          if (filters.deporte) {
+            const sportSlug = this.generateSlug(filters.deporte);
+            products = products.filter(p =>
+              (p.deportes || []).some(deporte => this.generateSlug(deporte) === sportSlug) ||
+              (p.variantes || []).some(variant => {
+                const atributos = variant.atributos || {};
+                const deporte =
+                  atributos['Deporte'] ||
+                  atributos['deporte'] ||
+                  atributos['Sport'] ||
+                  atributos['sport'];
+
+                return this.generateSlug(String(deporte || '')) === sportSlug;
+              })
+            );
+          }
+
+          if (filters.genero) {
+            const genderSlug = this.normalizeGenderSlug(filters.genero);
+            products = products.filter(product =>
+              (product.variantes || []).some(variant => {
+                const atributos = variant.atributos || {};
+                const genero =
+                  atributos['Genero'] ||
+                  atributos['Género'] ||
+                  atributos['genero'] ||
+                  atributos['género'] ||
+                  atributos['sexo'];
+
+                return this.normalizeGenderSlug(String(genero || '')) === genderSlug;
+              })
             );
           }
 
