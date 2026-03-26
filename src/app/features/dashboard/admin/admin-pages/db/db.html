@@ -1,0 +1,1075 @@
+<div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+  <div class="mb-6 p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-100 shadow-sm">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="bg-[#0367A6]/10 p-3 rounded-xl">
+          <span class="material-symbols-outlined text-[#0367A6] text-2xl">storage</span>
+        </div>
+        <div>
+          <h2 class="text-2xl font-bold text-[#202020]">Administración de Base de Datos</h2>
+          <p class="text-sm text-[#666666] mt-0.5">Backups, monitoreo y mantenimiento en una sola vista</p>
+        </div>
+      </div>
+      <button class="w-10 h-10 rounded-full border border-[#0367A6]/20 bg-white text-[#0367A6] hover:bg-[#0367A6] hover:text-white transition-all flex items-center justify-center" (click)="loadCurrentTab()" title="Actualizar vista" aria-label="Actualizar vista">
+        <span class="material-symbols-outlined text-lg">refresh</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="flex border-b border-gray-200 mb-6 overflow-x-auto">
+    <button
+      *ngFor="let tab of tabOrder"
+      class="px-5 py-3 text-sm font-medium transition-all whitespace-nowrap flex items-center gap-2"
+      [ngClass]="activeTab() === tab.key ? 'text-[#0367A6] border-b-2 border-[#0367A6]' : 'text-[#666666] hover:text-[#202020]'"
+      (click)="changeTab(tab.key)">
+      <span class="material-symbols-outlined text-base">{{ tab.icon }}</span>
+      {{ tab.label }}
+    </button>
+  </div>
+
+  <ng-container *ngIf="activeTab() === 'backups'">
+    <div class="hidden">
+      <div class="hidden border rounded-xl p-5">
+        <h3 class="text-lg font-semibold text-[#202020] mb-4">Programar Backups</h3>
+        <div class="space-y-3">
+          <input [(ngModel)]="backupScheduleForm.name" class="w-full border rounded-lg px-3 py-2" placeholder="Nombre de la tarea" />
+          <select [(ngModel)]="backupScheduleForm.type" class="w-full border rounded-lg px-3 py-2">
+            <option value="full">Backup completo</option>
+            <option value="critical">Backup crítico</option>
+          </select>
+          <select [(ngModel)]="backupScheduleForm.scheduleType" class="w-full border rounded-lg px-3 py-2">
+            <option value="daily">Diario</option>
+            <option value="weekly">Semanal</option>
+            <option value="datetime">Fecha exacta</option>
+          </select>
+          <input *ngIf="backupScheduleForm.scheduleType !== 'datetime'" [(ngModel)]="backupScheduleForm.time" type="time" class="w-full border rounded-lg px-3 py-2" />
+          <select *ngIf="backupScheduleForm.scheduleType === 'weekly'" [(ngModel)]="backupScheduleForm.dayOfWeek" class="w-full border rounded-lg px-3 py-2">
+            <option *ngFor="let day of weekDays" [ngValue]="day.value">{{ day.label }}</option>
+          </select>
+          <mat-form-field *ngIf="backupScheduleForm.scheduleType === 'datetime'" appearance="outline" class="w-full">
+            <mat-label>Fecha de ejecución</mat-label>
+            <input matInput [matDatepicker]="backupRunAtPicker" [(ngModel)]="backupScheduleForm.runAt" />
+            <mat-datepicker-toggle matIconSuffix [for]="backupRunAtPicker"></mat-datepicker-toggle>
+            <mat-datepicker #backupRunAtPicker></mat-datepicker>
+          </mat-form-field>
+          <input *ngIf="backupScheduleForm.scheduleType === 'datetime'" [(ngModel)]="backupScheduleForm.time" type="time" class="w-full border rounded-lg px-3 py-2" />
+          <input [(ngModel)]="backupScheduleForm.retentionDays" type="number" min="1" class="w-full border rounded-lg px-3 py-2" placeholder="Retención en días" />
+          <button class="w-full px-4 py-2 rounded-lg bg-[#0367A6] text-white hover:bg-[#035A91]" (click)="createBackupSchedule()">Guardar programación</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="border rounded-xl p-5 mb-2 relative overflow-hidden">
+      <div *ngIf="isCreatingBackup()" class="absolute inset-0 db-overlay z-10 flex items-center justify-center">
+        <div class="db-loader-card">
+          <div class="db-loader-badge">
+            <span class="material-symbols-outlined spin text-4xl text-[#0367A6]">sync</span>
+          </div>
+          <div class="text-center">
+            <p class="text-base font-semibold text-[#202020]">Creando backup</p>
+            <p class="text-sm text-[#4b5563] mt-1">Generando el dump y preparando el log para mostrarlo en la vista.</p>
+          </div>
+        </div>
+      </div>
+      <div class="flex flex-col gap-4 mb-4">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div class="flex flex-wrap gap-3">
+            <button class="db-action-button bg-green-600 text-white hover:bg-green-700" (click)="openBackupConfirmModal('full')" [disabled]="isCreatingBackup()">
+              <span class="material-symbols-outlined">database</span>
+              Backup completo
+            </button>
+            <button class="db-action-button bg-red-600 text-white hover:bg-red-700" (click)="openBackupConfirmModal('critical')" [disabled]="isCreatingBackup()">
+              <span class="material-symbols-outlined">security</span>
+              Backup crítico
+            </button>
+          </div>
+        </div>
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div class="relative w-full sm:w-96">
+            <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#666666]">
+              <i class="pi pi-search text-lg"></i>
+            </span>
+            <input [(ngModel)]="searchBackups" (ngModelChange)="onSectionSearch('backups')" placeholder="Buscar backup por tipo, archivo o carpeta..." class="w-full pl-10 pr-10 py-3 border-2 border-gray-200 rounded-xl focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 transition-all outline-none text-sm"/>
+            <button *ngIf="searchBackups" (click)="clearSectionSearch('backups')" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#0367A6] transition-colors">
+              <i class="pi pi-times-circle text-lg"></i>
+            </button>
+          </div>
+          <div class="flex items-center gap-4">
+            <div class="bg-blue-50 px-4 py-2 rounded-xl border border-blue-100">
+              <span class="text-[#0367A6] font-semibold text-lg">{{ backupHistoryCount() }}</span>
+              <span class="text-[#666666] text-sm ml-2">backups</span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold text-[#202020]">Lista de Backups</h3>
+          <p class="text-sm text-[#666666]">Visualiza el dump y su log desde la misma carpeta</p>
+        </div>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 border-b-2 border-gray-200">
+            <tr>
+              <th class="px-4 py-3 text-left">Tipo</th>
+              <th class="px-4 py-3 text-left">Dump</th>
+              <th class="px-4 py-3 text-left">Tamaño</th>
+              <th class="px-4 py-3 text-left">Fecha</th>
+              <th class="px-4 py-3 text-center">Acción</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let backup of paginatedBackups" class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+              <td class="px-4 py-3">
+                <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold" [ngClass]="backup.type === 'full' ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700'">
+                  <span class="material-symbols-outlined text-base">{{ backupTypeIcon(backup.type) }}</span>
+                  {{ backup.type === 'full' ? 'Completo' : 'Crítico' }}
+                </span>
+              </td>
+              <td class="px-4 py-3 font-mono text-xs">{{ backup.dumpFileName }}</td>
+              <td class="px-4 py-3">{{ formatBytes(backup.dumpSize) }}</td>
+              <td class="px-4 py-3">{{ formatDate(backup.lastModified) }}</td>
+              <td class="px-4 py-3">
+                <div class="flex items-center justify-center gap-2 flex-wrap">
+                  <button class="db-icon-button db-icon-download" (click)="downloadBackup(backup)" [disabled]="isDownloadingBackup()[backup.key]" title="Descargar backup" aria-label="Descargar backup">
+                    <span class="material-symbols-outlined" [class.spin]="isDownloadingBackup()[backup.key]">
+                      {{ isDownloadingBackup()[backup.key] ? 'sync' : 'download' }}
+                    </span>
+                  </button>
+                  <button class="db-icon-button db-icon-log" (click)="openBackupLog(backup)" title="Ver log" aria-label="Ver log">
+                    <span class="material-symbols-outlined">description</span>
+                  </button>
+                  <button class="db-icon-button db-icon-delete" (click)="openDeleteBackupModal(backup)" [disabled]="isDeletingBackup()[backup.key]" title="Eliminar backup" aria-label="Eliminar backup">
+                    <span class="material-symbols-outlined" [class.spin]="isDeletingBackup()[backup.key]">
+                      {{ isDeletingBackup()[backup.key] ? 'sync' : 'delete' }}
+                    </span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="!filteredBackups.length"><td colspan="5" class="px-4 py-6 text-center text-gray-500">No hay backups disponibles.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
+        <div class="flex items-center gap-3"><span class="text-sm text-[#666666]">Mostrando 10 resultados por página</span></div>
+        <div class="text-sm text-[#666666] order-first sm:order-none">{{ sectionRangeLabel('backups') }} backups</div>
+        <div class="flex gap-2">
+          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('backups', 'first')" [disabled]="currentPages.backups === 1"><i class="pi pi-angle-double-left"></i></button>
+          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('backups', 'prev')" [disabled]="currentPages.backups === 1"><i class="pi pi-angle-left"></i></button>
+          <div class="flex gap-1">
+            <button *ngFor="let page of sectionPageNumbers('backups')" class="min-w-[2.5rem] h-10 rounded-lg transition-all font-medium" [ngClass]="page === currentPages.backups ? 'bg-[#0367A6] text-white hover:bg-[#035A91]' : 'border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6]'" (click)="goToSectionPage('backups', page)">{{ page }}</button>
+          </div>
+          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('backups', 'next')" [disabled]="currentPages.backups === sectionPageNumbers('backups').length"><i class="pi pi-angle-right"></i></button>
+          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('backups', 'last')" [disabled]="currentPages.backups === sectionPageNumbers('backups').length"><i class="pi pi-angle-double-right"></i></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="border rounded-xl p-5 mb-6">
+      <div class="flex flex-col gap-4 mb-4">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h3 class="text-lg font-semibold text-[#202020]">Programaciones activas</h3>
+            <p class="text-sm text-[#666666]">Administra los backups automáticos diarios, semanales o por fecha exacta.</p>
+          </div>
+          <button class="db-action-button bg-[#0367A6] text-white hover:bg-[#035A91]" (click)="openBackupScheduleModal()">
+            <span class="material-symbols-outlined">schedule</span>
+            Programar backups
+          </button>
+        </div>
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div class="relative w-full sm:w-96">
+            <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#666666]">
+              <i class="pi pi-search text-lg"></i>
+            </span>
+            <input [(ngModel)]="searchBackupSchedules" (ngModelChange)="onSectionSearch('backupSchedules')" placeholder="Buscar programación por nombre, tipo o frecuencia..." class="w-full pl-10 pr-10 py-3 border-2 border-gray-200 rounded-xl focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 transition-all outline-none text-sm"/>
+            <button *ngIf="searchBackupSchedules" (click)="clearSectionSearch('backupSchedules')" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#0367A6] transition-colors">
+              <i class="pi pi-times-circle text-lg"></i>
+            </button>
+          </div>
+          <div class="bg-blue-50 px-4 py-2 rounded-xl border border-blue-100">
+            <span class="text-[#0367A6] font-semibold text-lg">{{ backupScheduleCount() }}</span>
+            <span class="text-[#666666] text-sm ml-2">programaciones</span>
+          </div>
+        </div>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 border-b-2 border-gray-200">
+            <tr>
+              <th class="px-4 py-3 text-left">Nombre</th>
+              <th class="px-4 py-3 text-left">Tipo</th>
+              <th class="px-4 py-3 text-left">Frecuencia</th>
+              <th class="px-4 py-3 text-left">Próxima</th>
+              <th class="px-4 py-3 text-left">Creada</th>
+              <th class="px-4 py-3 text-center">Acción</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let schedule of paginatedBackupSchedules" class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+              <td class="px-4 py-3">{{ schedule.name }}</td>
+              <td class="px-4 py-3">
+                <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold" [ngClass]="schedule.type === 'full' ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700'">
+                  <span class="material-symbols-outlined text-base">{{ schedule.type === 'full' ? 'database' : 'security' }}</span>
+                  {{ schedule.type === 'full' ? 'Completo' : 'Crítico' }}
+                </span>
+              </td>
+              <td class="px-4 py-3">
+                <div class="font-medium text-[#202020]">{{ schedule.description }}</div>
+                <div class="text-xs text-[#666666]">{{ scheduleTypeLabel(schedule.scheduleType) }}</div>
+              </td>
+              <td class="px-4 py-3">{{ formatDate(schedule.nextRunAt) }}</td>
+              <td class="px-4 py-3">{{ formatDate(schedule.createdAt) }}</td>
+              <td class="px-4 py-3 text-center">
+                <button class="db-icon-button db-icon-delete" (click)="deleteBackupSchedule(schedule.name)" title="Eliminar programación" aria-label="Eliminar programación">
+                  <span class="material-symbols-outlined">delete</span>
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="!filteredBackupSchedules.length"><td colspan="6" class="px-4 py-6 text-center text-gray-500">No hay programaciones de backup activas.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
+        <div class="flex items-center gap-3"><span class="text-sm text-[#666666]">Mostrando 10 resultados por página</span></div>
+        <div class="text-sm text-[#666666] order-first sm:order-none">{{ sectionRangeLabel('backupSchedules') }} programaciones</div>
+        <div class="flex gap-2">
+          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('backupSchedules', 'first')" [disabled]="currentPages.backupSchedules === 1"><i class="pi pi-angle-double-left"></i></button>
+          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('backupSchedules', 'prev')" [disabled]="currentPages.backupSchedules === 1"><i class="pi pi-angle-left"></i></button>
+          <div class="flex gap-1">
+            <button *ngFor="let page of sectionPageNumbers('backupSchedules')" class="min-w-[2.5rem] h-10 rounded-lg transition-all font-medium" [ngClass]="page === currentPages.backupSchedules ? 'bg-[#0367A6] text-white hover:bg-[#035A91]' : 'border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6]'" (click)="goToSectionPage('backupSchedules', page)">{{ page }}</button>
+          </div>
+          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('backupSchedules', 'next')" [disabled]="currentPages.backupSchedules === sectionPageNumbers('backupSchedules').length"><i class="pi pi-angle-right"></i></button>
+          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('backupSchedules', 'last')" [disabled]="currentPages.backupSchedules === sectionPageNumbers('backupSchedules').length"><i class="pi pi-angle-double-right"></i></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="border rounded-xl p-5 mb-6">
+      <div class="flex flex-col gap-4 mb-4">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h3 class="text-lg font-semibold text-[#202020] mb-1">Limpieza automática de backups</h3>
+            <p class="text-sm text-[#666666]">Programa el borrado automático de backups y logs después del periodo de retención.</p>
+          </div>
+          <button class="db-action-button bg-[#0367A6] text-white hover:bg-[#035A91]" (click)="openRetentionPolicyModal()">
+            <span class="material-symbols-outlined">auto_delete</span>
+            Crear tarea de limpieza
+          </button>
+        </div>
+
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div class="relative w-full sm:w-96">
+            <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#666666]"><i class="pi pi-search text-lg"></i></span>
+            <input [(ngModel)]="searchRetentionPolicies" (ngModelChange)="onSectionSearch('retentionPolicies')" class="w-full pl-10 pr-10 py-3 border-2 border-gray-200 rounded-xl focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 transition-all outline-none text-sm" placeholder="Buscar política de retención..." />
+            <button *ngIf="searchRetentionPolicies" (click)="clearSectionSearch('retentionPolicies')" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#0367A6] transition-colors"><i class="pi pi-times-circle text-lg"></i></button>
+          </div>
+          <div class="bg-blue-50 px-4 py-2 rounded-xl border border-blue-100">
+            <span class="text-[#0367A6] font-semibold text-lg">{{ retentionPolicyCount() }}</span>
+            <span class="text-[#666666] text-sm ml-2">políticas</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 border-b-2 border-gray-200">
+            <tr>
+              <th class="px-4 py-3 text-left">Nombre</th>
+              <th class="px-4 py-3 text-left">Alcance</th>
+              <th class="px-4 py-3 text-left">Retención</th>
+              <th class="px-4 py-3 text-left">Frecuencia</th>
+              <th class="px-4 py-3 text-left">Próxima</th>
+              <th class="px-4 py-3 text-center">Acción</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let policy of paginatedRetentionPolicies" class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+              <td class="px-4 py-3">{{ policy.name }}</td>
+              <td class="px-4 py-3">{{ policy.type === 'all' ? 'Todos' : policy.type === 'full' ? 'Completos' : 'Críticos' }}</td>
+              <td class="px-4 py-3">{{ policy.retentionDays }} días</td>
+              <td class="px-4 py-3">{{ policy.description }}</td>
+              <td class="px-4 py-3">{{ formatDate(policy.nextRunAt) }}</td>
+              <td class="px-4 py-3 text-center"><button class="db-icon-button db-icon-delete" (click)="deleteRetentionPolicy(policy.name)" title="Eliminar política" aria-label="Eliminar política"><span class="material-symbols-outlined">delete</span></button></td>
+            </tr>
+            <tr *ngIf="!filteredRetentionPolicies.length"><td colspan="6" class="px-4 py-6 text-center text-gray-500">No hay políticas de retención configuradas.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
+        <div class="flex items-center gap-3"><span class="text-sm text-[#666666]">Mostrando 10 resultados por página</span></div>
+        <div class="text-sm text-[#666666] order-first sm:order-none">{{ sectionRangeLabel('retentionPolicies') }} políticas</div>
+        <div class="flex gap-2">
+          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('retentionPolicies', 'first')" [disabled]="currentPages.retentionPolicies === 1"><i class="pi pi-angle-double-left"></i></button>
+          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('retentionPolicies', 'prev')" [disabled]="currentPages.retentionPolicies === 1"><i class="pi pi-angle-left"></i></button>
+          <div class="flex gap-1">
+            <button *ngFor="let page of sectionPageNumbers('retentionPolicies')" class="min-w-[2.5rem] h-10 rounded-lg transition-all font-medium" [ngClass]="page === currentPages.retentionPolicies ? 'bg-[#0367A6] text-white hover:bg-[#035A91]' : 'border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6]'" (click)="goToSectionPage('retentionPolicies', page)">{{ page }}</button>
+          </div>
+          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('retentionPolicies', 'next')" [disabled]="currentPages.retentionPolicies === sectionPageNumbers('retentionPolicies').length"><i class="pi pi-angle-right"></i></button>
+          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('retentionPolicies', 'last')" [disabled]="currentPages.retentionPolicies === sectionPageNumbers('retentionPolicies').length"><i class="pi pi-angle-double-right"></i></button>
+        </div>
+      </div>
+    </div>
+
+  </ng-container>
+
+  <ng-container *ngIf="activeTab() === 'stats'">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div class="bg-blue-50 border border-blue-100 rounded-xl p-4"><p class="text-sm text-gray-600">Tablas monitoreadas</p><p class="text-2xl font-bold text-[#202020]">{{ tableSizes().length }}</p></div>
+      <div class="bg-green-50 border border-green-100 rounded-xl p-4"><p class="text-sm text-gray-600">Índices registrados</p><p class="text-2xl font-bold text-[#202020]">{{ indexInfo().length }}</p></div>
+      <div class="bg-purple-50 border border-purple-100 rounded-xl p-4"><p class="text-sm text-gray-600">Tamaño total</p><p class="text-2xl font-bold text-[#202020]">{{ formatBytes(totalDbSize()) }}</p></div>
+    </div>
+
+    <div class="space-y-6">
+      <div class="border rounded-xl p-4">
+        <h3 class="font-semibold mb-4">Tablas más consultadas</h3>
+        <div class="h-72">
+          <canvas *ngIf="activeTab() === 'stats'" baseChart [data]="queriesChart" [type]="'bar'" [options]="{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }"></canvas>
+        </div>
+      </div>
+
+      <div class="border rounded-xl p-4">
+        <h3 class="font-semibold mb-4">Tamaño tablas vs índices</h3>
+        <div class="h-72">
+          <canvas *ngIf="activeTab() === 'stats'" baseChart [data]="sizesChart" [type]="'bar'" [options]="{ responsive: true, maintainAspectRatio: false }"></canvas>
+        </div>
+      </div>
+
+      <div class="border rounded-xl p-4">
+        <h3 class="font-semibold mb-4">Índices más usados</h3>
+        <div class="h-72">
+          <canvas *ngIf="activeTab() === 'stats'" baseChart [data]="indexUsageChart" [type]="'bar'" [options]="{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }"></canvas>
+        </div>
+      </div>
+
+      <div class="border rounded-xl p-4">
+        <h3 class="font-semibold mb-4">Escaneos secuenciales</h3>
+        <div class="space-y-3">
+          <div *ngFor="let row of scanStats().slice(0, 6)" class="bg-gray-50 rounded-lg p-3 border">
+            <div class="flex justify-between gap-3">
+              <span class="font-medium">{{ row.tablename }}</span>
+              <span class="text-sm text-red-600">{{ row.porcentaje_escaneo_secuencial }}%</span>
+            </div>
+            <div class="mt-2 h-2 rounded-full bg-gray-200"><div class="h-2 rounded-full bg-red-500" [style.width]="row.porcentaje_escaneo_secuencial + '%'"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+  <ng-container *ngIf="activeTab() === 'connections'">
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+      <div class="border rounded-xl p-4">
+        <h3 class="font-semibold mb-4">Distribución de conexiones</h3>
+        <div class="h-72">
+          <canvas *ngIf="activeTab() === 'connections'" baseChart [data]="connectionsChart" [type]="'doughnut'" [options]="{ responsive: true, maintainAspectRatio: false }"></canvas>
+        </div>
+      </div>
+      <div class="xl:col-span-2 border rounded-xl p-4">
+        <div class="flex flex-col gap-4 mb-4">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div class="relative w-full sm:w-96">
+              <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#666666]">
+                <i class="pi pi-search text-lg"></i>
+              </span>
+              <input [(ngModel)]="searchConnections" (ngModelChange)="onSectionSearch('connections')" placeholder="Buscar por PID, usuario, app, estado o IP..." class="w-full pl-10 pr-10 py-3 border-2 border-gray-200 rounded-xl focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 transition-all outline-none text-sm"/>
+              <button *ngIf="searchConnections" (click)="clearSectionSearch('connections')" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#0367A6] transition-colors"><i class="pi pi-times-circle text-lg"></i></button>
+            </div>
+            <div class="flex items-center gap-4">
+              <div class="bg-blue-50 px-4 py-2 rounded-xl border border-blue-100">
+                <span class="text-[#0367A6] font-semibold text-lg">{{ connectionCount() }}</span>
+                <span class="text-[#666666] text-sm ml-2">conexiones</span>
+              </div>
+              <span class="text-xs text-gray-500">Actualizado: {{ lastUpdateConnections() }}</span>
+            </div>
+          </div>
+          <h3 class="font-semibold">Conexiones activas</h3>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 border-b-2 border-gray-200">
+              <tr>
+                <th class="px-4 py-3 text-left">PID</th>
+                <th class="px-4 py-3 text-left">Usuario</th>
+                <th class="px-4 py-3 text-left">Aplicación</th>
+                <th class="px-4 py-3 text-left">Estado</th>
+                <th class="px-4 py-3 text-left">IP</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let connection of paginatedConnections" class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                <td class="px-4 py-3 font-mono">{{ connection.pid }}</td>
+                <td class="px-4 py-3">{{ connection.usename }}</td>
+                <td class="px-4 py-3">{{ connection.application_name || 'N/A' }}</td>
+                <td class="px-4 py-3">
+                  <span class="px-3 py-1 rounded-full text-xs font-semibold" [ngClass]="connection.state === 'active' ? 'bg-green-100 text-green-700' : connection.state === 'idle in transaction' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-700'">
+                    {{ connectionStatusLabel(connection.state) }}
+                  </span>
+                </td>
+                <td class="px-4 py-3">{{ connection.client_addr || 'Local' }}</td>
+              </tr>
+              <tr *ngIf="!filteredConnections.length"><td colspan="5" class="px-4 py-6 text-center text-gray-500">No hay conexiones que coincidan con la búsqueda.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
+          <div class="flex items-center gap-3"><span class="text-sm text-[#666666]">Mostrando 10 resultados por página</span></div>
+          <div class="text-sm text-[#666666] order-first sm:order-none">{{ sectionRangeLabel('connections') }} conexiones</div>
+          <div class="flex gap-2">
+            <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('connections', 'first')" [disabled]="currentPages.connections === 1"><i class="pi pi-angle-double-left"></i></button>
+            <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('connections', 'prev')" [disabled]="currentPages.connections === 1"><i class="pi pi-angle-left"></i></button>
+            <div class="flex gap-1">
+              <button *ngFor="let page of sectionPageNumbers('connections')" class="min-w-[2.5rem] h-10 rounded-lg transition-all font-medium" [ngClass]="page === currentPages.connections ? 'bg-[#0367A6] text-white hover:bg-[#035A91]' : 'border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6]'" (click)="goToSectionPage('connections', page)">{{ page }}</button>
+            </div>
+            <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('connections', 'next')" [disabled]="currentPages.connections === sectionPageNumbers('connections').length"><i class="pi pi-angle-right"></i></button>
+            <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('connections', 'last')" [disabled]="currentPages.connections === sectionPageNumbers('connections').length"><i class="pi pi-angle-double-right"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+  <ng-container *ngIf="activeTab() === 'locks'">
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
+      <div class="border rounded-xl p-4">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="font-semibold">Resumen visual de bloqueos</h3>
+          <span class="text-xs text-gray-500">Actualizado: {{ lastUpdateLocks() }}</span>
+        </div>
+        <div class="h-72">
+          <canvas *ngIf="activeTab() === 'locks'" baseChart [data]="lockChart" [type]="'bar'" [options]="{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }"></canvas>
+        </div>
+      </div>
+      <div class="border rounded-xl p-4">
+        <h3 class="font-semibold mb-4">Sesiones bloqueadas</h3>
+        <div class="space-y-3" *ngIf="blockingLocks().length; else noBlockingLocks">
+          <div *ngFor="let item of blockingLocks()" class="bg-red-50 border border-red-200 rounded-lg p-4">
+            <div class="font-semibold text-red-700 mb-2">Conflicto detectado</div>
+            <div class="text-sm text-gray-700">Bloqueado: {{ item.blocked_user }} (PID {{ item.blocked_pid }})</div>
+            <div class="text-sm text-gray-700">Bloqueador: {{ item.blocking_user }} (PID {{ item.blocking_pid }})</div>
+          </div>
+        </div>
+        <ng-template #noBlockingLocks><div class="bg-green-50 border border-green-200 rounded-lg p-4 text-green-700">No hay sesiones bloqueadas en este momento.</div></ng-template>
+      </div>
+    </div>
+
+    <div class="border rounded-xl p-4">
+      <div class="flex flex-col gap-4 mb-4">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div class="relative w-full sm:w-96">
+            <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#666666]">
+              <i class="pi pi-search text-lg"></i>
+            </span>
+            <input [(ngModel)]="searchLocks" (ngModelChange)="onSectionSearch('locks')" placeholder="Buscar lock por PID, usuario, tabla o tipo..." class="w-full pl-10 pr-10 py-3 border-2 border-gray-200 rounded-xl focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 transition-all outline-none text-sm"/>
+            <button *ngIf="searchLocks" (click)="clearSectionSearch('locks')" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#0367A6] transition-colors"><i class="pi pi-times-circle text-lg"></i></button>
+          </div>
+          <div class="bg-blue-50 px-4 py-2 rounded-xl border border-blue-100">
+            <span class="text-[#0367A6] font-semibold text-lg">{{ lockCount() }}</span>
+            <span class="text-[#666666] text-sm ml-2">locks</span>
+          </div>
+        </div>
+        <h3 class="font-semibold">Detalle amigable de locks</h3>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 border-b-2 border-gray-200">
+            <tr>
+              <th class="px-4 py-3 text-left">PID</th>
+              <th class="px-4 py-3 text-left">Usuario</th>
+              <th class="px-4 py-3 text-left">Tabla</th>
+              <th class="px-4 py-3 text-left">Tipo</th>
+              <th class="px-4 py-3 text-left">Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let lock of paginatedLocks" class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+              <td class="px-4 py-3 font-mono">{{ lock.pid }}</td>
+              <td class="px-4 py-3">{{ lock.usename }}</td>
+              <td class="px-4 py-3">{{ lock.tabla || 'N/A' }}</td>
+              <td class="px-4 py-3"><span class="px-2 py-1 rounded-full text-xs font-semibold" [ngClass]="getLockBadgeClass(lock.mode)">{{ toFriendlyLockMode(lock.mode) }}</span></td>
+              <td class="px-4 py-3">{{ lock.granted ? 'Concedido' : 'En espera' }}</td>
+            </tr>
+            <tr *ngIf="!filteredLocks.length"><td colspan="5" class="px-4 py-6 text-center text-gray-500">No hay locks que coincidan con la búsqueda.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
+        <div class="flex items-center gap-3"><span class="text-sm text-[#666666]">Mostrando 10 resultados por página</span></div>
+        <div class="text-sm text-[#666666] order-first sm:order-none">{{ sectionRangeLabel('locks') }} locks</div>
+        <div class="flex gap-2">
+          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('locks', 'first')" [disabled]="currentPages.locks === 1"><i class="pi pi-angle-double-left"></i></button>
+          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('locks', 'prev')" [disabled]="currentPages.locks === 1"><i class="pi pi-angle-left"></i></button>
+          <div class="flex gap-1">
+            <button *ngFor="let page of sectionPageNumbers('locks')" class="min-w-[2.5rem] h-10 rounded-lg transition-all font-medium" [ngClass]="page === currentPages.locks ? 'bg-[#0367A6] text-white hover:bg-[#035A91]' : 'border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6]'" (click)="goToSectionPage('locks', page)">{{ page }}</button>
+          </div>
+          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('locks', 'next')" [disabled]="currentPages.locks === sectionPageNumbers('locks').length"><i class="pi pi-angle-right"></i></button>
+          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('locks', 'last')" [disabled]="currentPages.locks === sectionPageNumbers('locks').length"><i class="pi pi-angle-double-right"></i></button>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+  <ng-container *ngIf="activeTab() === 'vacuum'">
+    <div class="hidden grid-cols-1 xl:grid-cols-3 gap-6 mb-6">
+      <div class="xl:col-span-2 border rounded-xl p-5 relative overflow-hidden">
+        <div *ngIf="isRunningVacuum()" class="absolute inset-0 db-overlay z-10 flex items-center justify-center">
+          <div class="db-loader-card">
+            <span class="material-symbols-outlined spin text-4xl text-[#0367A6]">sync</span>
+            <p class="text-sm font-medium text-[#202020]">Ejecutando vacuum analyze y generando log...</p>
+          </div>
+        </div>
+        <div class="flex justify-between items-start gap-3 mb-4">
+          <div>
+            <h3 class="text-lg font-semibold text-[#202020]">Vacuum Analyze</h3>
+            <p class="text-sm text-[#666666]">Ejecuta mantenimiento manual o programado y consulta sus logs</p>
+          </div>
+          <span class="text-xs text-gray-500">Actualizado: {{ lastUpdateVacuum() }}</span>
+        </div>
+        <button class="db-action-button bg-[#0367A6] text-white hover:bg-[#035A91]" (click)="openVacuumConfirmModal()" [disabled]="isRunningVacuum()">
+          <span class="material-symbols-outlined" [class.spin]="isRunningVacuum()">
+            {{ isRunningVacuum() ? 'sync' : 'cleaning_services' }}
+          </span>
+          {{ isRunningVacuum() ? 'Ejecutando...' : 'Ejecutar vacuum analyze manual' }}
+        </button>
+      </div>
+      <div class="border rounded-xl p-5">
+        <h3 class="text-lg font-semibold text-[#202020] mb-4">Programar Vacuum</h3>
+        <div class="space-y-3">
+          <input [(ngModel)]="vacuumScheduleForm.name" class="w-full border rounded-lg px-3 py-2" placeholder="Nombre de la tarea" />
+          <select [(ngModel)]="vacuumScheduleForm.scheduleType" class="w-full border rounded-lg px-3 py-2">
+            <option value="daily">Diario</option>
+            <option value="weekly">Semanal</option>
+            <option value="datetime">Fecha exacta</option>
+          </select>
+          <input *ngIf="vacuumScheduleForm.scheduleType !== 'datetime'" [(ngModel)]="vacuumScheduleForm.time" type="time" class="w-full border rounded-lg px-3 py-2" />
+          <select *ngIf="vacuumScheduleForm.scheduleType === 'weekly'" [(ngModel)]="vacuumScheduleForm.dayOfWeek" class="w-full border rounded-lg px-3 py-2">
+            <option *ngFor="let day of weekDays" [ngValue]="day.value">{{ day.label }}</option>
+          </select>
+          <mat-form-field *ngIf="vacuumScheduleForm.scheduleType === 'datetime'" appearance="outline" class="w-full">
+            <mat-label>Fecha de ejecución</mat-label>
+            <input matInput [matDatepicker]="vacuumRunAtPicker" [(ngModel)]="vacuumScheduleForm.runAt" />
+            <mat-datepicker-toggle matIconSuffix [for]="vacuumRunAtPicker"></mat-datepicker-toggle>
+            <mat-datepicker #vacuumRunAtPicker></mat-datepicker>
+          </mat-form-field>
+          <input *ngIf="vacuumScheduleForm.scheduleType === 'datetime'" [(ngModel)]="vacuumScheduleForm.time" type="time" class="w-full border rounded-lg px-3 py-2" />
+          <button class="w-full px-4 py-2 rounded-lg bg-[#0367A6] text-white hover:bg-[#035A91]" (click)="createVacuumSchedule()">Guardar programación</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="border rounded-xl p-5 mb-6 relative overflow-hidden">
+      <div *ngIf="isRunningVacuum()" class="absolute inset-0 db-overlay z-10 flex items-center justify-center">
+        <div class="db-loader-card">
+          <div class="db-loader-badge">
+            <span class="material-symbols-outlined spin text-4xl text-[#0367A6]">sync</span>
+          </div>
+          <div class="text-center">
+            <p class="text-base font-semibold text-[#202020]">Ejecutando vacuum analyze</p>
+            <p class="text-sm text-[#4b5563] mt-1">Realizando mantenimiento sobre el esquema y guardando el log de ejecución.</p>
+          </div>
+        </div>
+      </div>
+      <div class="flex flex-col gap-4 mb-4">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h3 class="text-lg font-semibold text-[#202020]">Historial de logs de Vacuum</h3>
+            <p class="text-sm text-[#666666]">Consulta ejecuciones anteriores y lanza un vacuum manual cuando lo necesites.</p>
+          </div>
+          <button class="db-action-button bg-[#0367A6] text-white hover:bg-[#035A91]" (click)="openVacuumConfirmModal()" [disabled]="isRunningVacuum()">
+            <span class="material-symbols-outlined" [class.spin]="isRunningVacuum()">
+              {{ isRunningVacuum() ? 'sync' : 'cleaning_services' }}
+            </span>
+            {{ isRunningVacuum() ? 'Ejecutando...' : 'Ejecutar vacuum manual' }}
+          </button>
+        </div>
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div class="relative w-full sm:w-96">
+            <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#666666]"><i class="pi pi-search text-lg"></i></span>
+            <input [(ngModel)]="searchVacuums" (ngModelChange)="onSectionSearch('vacuumLogs')" class="w-full pl-10 pr-10 py-3 border-2 border-gray-200 rounded-xl focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 transition-all outline-none text-sm" placeholder="Buscar logs de vacuum..." />
+            <button *ngIf="searchVacuums" (click)="clearSectionSearch('vacuumLogs')" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#0367A6] transition-colors"><i class="pi pi-times-circle text-lg"></i></button>
+          </div>
+          <div class="flex items-center gap-4">
+            <div class="bg-blue-50 px-4 py-2 rounded-xl border border-blue-100">
+              <span class="text-[#0367A6] font-semibold text-lg">{{ vacuumLogCount() }}</span>
+              <span class="text-[#666666] text-sm ml-2">logs</span>
+            </div>
+            <span class="text-xs text-gray-500">Actualizado: {{ lastUpdateVacuum() }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 border-b-2 border-gray-200">
+            <tr>
+              <th class="px-4 py-3 text-left">Archivo</th>
+              <th class="px-4 py-3 text-left">Fecha</th>
+              <th class="px-4 py-3 text-left">Tamaño</th>
+              <th class="px-4 py-3 text-center">Acción</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of paginatedVacuumLogs" class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+              <td class="px-4 py-3 font-mono text-xs">{{ item.fileName }}</td>
+              <td class="px-4 py-3">{{ formatDate(item.lastModified) }}</td>
+              <td class="px-4 py-3">{{ formatBytes(item.size) }}</td>
+              <td class="px-4 py-3 text-center">
+                <button class="db-icon-button db-icon-log" (click)="openVacuumLog(item)" title="Ver log" aria-label="Ver log">
+                  <span class="material-symbols-outlined">description</span>
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="!filteredVacuumLogs.length"><td colspan="4" class="px-4 py-6 text-center text-gray-500">No hay logs de vacuum disponibles.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
+        <div class="flex items-center gap-3"><span class="text-sm text-[#666666]">Mostrando 10 resultados por página</span></div>
+        <div class="text-sm text-[#666666] order-first sm:order-none">{{ sectionRangeLabel('vacuumLogs') }} logs</div>
+        <div class="flex gap-2">
+          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('vacuumLogs', 'first')" [disabled]="currentPages.vacuumLogs === 1"><i class="pi pi-angle-double-left"></i></button>
+          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('vacuumLogs', 'prev')" [disabled]="currentPages.vacuumLogs === 1"><i class="pi pi-angle-left"></i></button>
+          <div class="flex gap-1">
+            <button *ngFor="let page of sectionPageNumbers('vacuumLogs')" class="min-w-[2.5rem] h-10 rounded-lg transition-all font-medium" [ngClass]="page === currentPages.vacuumLogs ? 'bg-[#0367A6] text-white hover:bg-[#035A91]' : 'border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6]'" (click)="goToSectionPage('vacuumLogs', page)">{{ page }}</button>
+          </div>
+          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('vacuumLogs', 'next')" [disabled]="currentPages.vacuumLogs === sectionPageNumbers('vacuumLogs').length"><i class="pi pi-angle-right"></i></button>
+          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('vacuumLogs', 'last')" [disabled]="currentPages.vacuumLogs === sectionPageNumbers('vacuumLogs').length"><i class="pi pi-angle-double-right"></i></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="border rounded-xl p-5 mb-6">
+      <div class="flex flex-col gap-4 mb-4">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h3 class="text-lg font-semibold text-[#202020]">Programaciones de Vacuum</h3>
+            <p class="text-sm text-[#666666]">Crea tareas automáticas de mantenimiento diario, semanal o por fecha exacta.</p>
+          </div>
+          <button class="db-action-button bg-[#0367A6] text-white hover:bg-[#035A91]" (click)="openVacuumScheduleModal()">
+            <span class="material-symbols-outlined">schedule</span>
+            Crear tarea de vacuum
+          </button>
+        </div>
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div class="relative w-full sm:w-96">
+            <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#666666]"><i class="pi pi-search text-lg"></i></span>
+            <input [(ngModel)]="searchVacuumSchedules" (ngModelChange)="onSectionSearch('vacuumSchedules')" placeholder="Buscar programación de vacuum..." class="w-full pl-10 pr-10 py-3 border-2 border-gray-200 rounded-xl focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 transition-all outline-none text-sm"/>
+            <button *ngIf="searchVacuumSchedules" (click)="clearSectionSearch('vacuumSchedules')" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#0367A6] transition-colors"><i class="pi pi-times-circle text-lg"></i></button>
+          </div>
+          <div class="bg-blue-50 px-4 py-2 rounded-xl border border-blue-100">
+            <span class="text-[#0367A6] font-semibold text-lg">{{ vacuumScheduleCount() }}</span>
+            <span class="text-[#666666] text-sm ml-2">programaciones</span>
+          </div>
+        </div>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 border-b-2 border-gray-200">
+            <tr>
+              <th class="px-4 py-3 text-left">Nombre</th>
+              <th class="px-4 py-3 text-left">Frecuencia</th>
+              <th class="px-4 py-3 text-left">Próxima</th>
+              <th class="px-4 py-3 text-left">Creada</th>
+              <th class="px-4 py-3 text-center">Acción</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let schedule of paginatedVacuumSchedules" class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+              <td class="px-4 py-3">{{ schedule.name }}</td>
+              <td class="px-4 py-3">
+                <div class="font-medium text-[#202020]">{{ schedule.description }}</div>
+                <div class="text-xs text-[#666666]">{{ scheduleTypeLabel(schedule.scheduleType) }}</div>
+              </td>
+              <td class="px-4 py-3">{{ formatDate(schedule.nextRunAt) }}</td>
+              <td class="px-4 py-3">{{ formatDate(schedule.createdAt) }}</td>
+              <td class="px-4 py-3 text-center"><button class="db-icon-button db-icon-delete" (click)="deleteVacuumSchedule(schedule.name)" title="Eliminar programación" aria-label="Eliminar programación"><span class="material-symbols-outlined">delete</span></button></td>
+            </tr>
+            <tr *ngIf="!filteredVacuumSchedules.length"><td colspan="5" class="px-4 py-6 text-center text-gray-500">No hay vacuums programados todavía.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
+        <div class="flex items-center gap-3"><span class="text-sm text-[#666666]">Mostrando 10 resultados por página</span></div>
+        <div class="text-sm text-[#666666] order-first sm:order-none">{{ sectionRangeLabel('vacuumSchedules') }} programaciones</div>
+        <div class="flex gap-2">
+          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('vacuumSchedules', 'first')" [disabled]="currentPages.vacuumSchedules === 1"><i class="pi pi-angle-double-left"></i></button>
+          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('vacuumSchedules', 'prev')" [disabled]="currentPages.vacuumSchedules === 1"><i class="pi pi-angle-left"></i></button>
+          <div class="flex gap-1">
+            <button *ngFor="let page of sectionPageNumbers('vacuumSchedules')" class="min-w-[2.5rem] h-10 rounded-lg transition-all font-medium" [ngClass]="page === currentPages.vacuumSchedules ? 'bg-[#0367A6] text-white hover:bg-[#035A91]' : 'border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6]'" (click)="goToSectionPage('vacuumSchedules', page)">{{ page }}</button>
+          </div>
+          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('vacuumSchedules', 'next')" [disabled]="currentPages.vacuumSchedules === sectionPageNumbers('vacuumSchedules').length"><i class="pi pi-angle-right"></i></button>
+          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('vacuumSchedules', 'last')" [disabled]="currentPages.vacuumSchedules === sectionPageNumbers('vacuumSchedules').length"><i class="pi pi-angle-double-right"></i></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="hidden border rounded-xl p-5">
+      <div class="flex flex-col gap-4 mb-4">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div class="relative w-full sm:w-96">
+            <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#666666]"><i class="pi pi-search text-lg"></i></span>
+            <input [(ngModel)]="searchVacuums" (ngModelChange)="onSectionSearch('vacuumLogs')" class="w-full pl-10 pr-10 py-3 border-2 border-gray-200 rounded-xl focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 transition-all outline-none text-sm" placeholder="Buscar logs de vacuum..." />
+            <button *ngIf="searchVacuums" (click)="clearSectionSearch('vacuumLogs')" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#0367A6] transition-colors"><i class="pi pi-times-circle text-lg"></i></button>
+          </div>
+          <div class="bg-blue-50 px-4 py-2 rounded-xl border border-blue-100">
+            <span class="text-[#0367A6] font-semibold text-lg">{{ vacuumLogCount() }}</span>
+            <span class="text-[#666666] text-sm ml-2">logs</span>
+          </div>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold text-[#202020]">Historial de logs de Vacuum</h3>
+          <p class="text-sm text-[#666666]">Los logs se guardan en `logsVacum/vacuum-fecha`</p>
+        </div>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 border-b-2 border-gray-200">
+            <tr>
+              <th class="px-4 py-3 text-left">Archivo</th>
+              <th class="px-4 py-3 text-left">Fecha</th>
+              <th class="px-4 py-3 text-left">Tamaño</th>
+              <th class="px-4 py-3 text-center">Acción</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of paginatedVacuumLogs" class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+              <td class="px-4 py-3 font-mono text-xs">{{ item.fileName }}</td>
+              <td class="px-4 py-3">{{ formatDate(item.lastModified) }}</td>
+              <td class="px-4 py-3">{{ formatBytes(item.size) }}</td>
+              <td class="px-4 py-3 text-center">
+                <button class="db-icon-button db-icon-log" (click)="openVacuumLog(item)" title="Ver log" aria-label="Ver log">
+                  <span class="material-symbols-outlined">description</span>
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="!filteredVacuumLogs.length"><td colspan="5" class="px-4 py-6 text-center text-gray-500">No hay logs de vacuum disponibles.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
+        <div class="flex items-center gap-3"><span class="text-sm text-[#666666]">Mostrando 10 resultados por página</span></div>
+        <div class="text-sm text-[#666666] order-first sm:order-none">{{ sectionRangeLabel('vacuumLogs') }} logs</div>
+        <div class="flex gap-2">
+          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('vacuumLogs', 'first')" [disabled]="currentPages.vacuumLogs === 1"><i class="pi pi-angle-double-left"></i></button>
+          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('vacuumLogs', 'prev')" [disabled]="currentPages.vacuumLogs === 1"><i class="pi pi-angle-left"></i></button>
+          <div class="flex gap-1">
+            <button *ngFor="let page of sectionPageNumbers('vacuumLogs')" class="min-w-[2.5rem] h-10 rounded-lg transition-all font-medium" [ngClass]="page === currentPages.vacuumLogs ? 'bg-[#0367A6] text-white hover:bg-[#035A91]' : 'border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6]'" (click)="goToSectionPage('vacuumLogs', page)">{{ page }}</button>
+          </div>
+          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('vacuumLogs', 'next')" [disabled]="currentPages.vacuumLogs === sectionPageNumbers('vacuumLogs').length"><i class="pi pi-angle-right"></i></button>
+          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('vacuumLogs', 'last')" [disabled]="currentPages.vacuumLogs === sectionPageNumbers('vacuumLogs').length"><i class="pi pi-angle-double-right"></i></button>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+</div>
+
+<div *ngIf="showBackupScheduleModal()" class="fixed inset-0 bg-black/55 z-[70] flex items-center justify-center p-4" (click)="closeBackupScheduleModal()">
+  <div class="db-modal-card w-full max-w-2xl" (click)="$event.stopPropagation()">
+    <div class="flex items-start gap-4 mb-6">
+      <div class="db-modal-icon bg-blue-100 text-blue-700">
+        <span class="material-symbols-outlined">schedule</span>
+      </div>
+      <div class="flex-1">
+        <h3 class="text-lg font-semibold text-[#202020]">Programar backup</h3>
+        <p class="text-sm text-[#666666] mt-1">Configura una tarea diaria, semanal o por fecha exacta para los respaldos automáticos.</p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm font-medium text-[#202020] mb-2">Nombre de la tarea</label>
+        <input [(ngModel)]="backupScheduleForm.name" class="w-full border rounded-lg px-3 py-2" placeholder="Ej. Backup semanal producción" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-[#202020] mb-2">Tipo de backup</label>
+        <select [(ngModel)]="backupScheduleForm.type" class="w-full border rounded-lg px-3 py-2">
+          <option value="full">Backup completo</option>
+          <option value="critical">Backup crítico</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-[#202020] mb-2">Tipo de programación</label>
+        <select [(ngModel)]="backupScheduleForm.scheduleType" class="w-full border rounded-lg px-3 py-2">
+          <option value="daily">Diario</option>
+          <option value="weekly">Semanal</option>
+          <option value="datetime">Fecha exacta</option>
+        </select>
+      </div>
+      <div *ngIf="backupScheduleForm.scheduleType !== 'datetime'">
+        <label class="block text-sm font-medium text-[#202020] mb-2">Hora</label>
+        <input [(ngModel)]="backupScheduleForm.time" type="time" class="w-full border rounded-lg px-3 py-2" />
+      </div>
+      <div *ngIf="backupScheduleForm.scheduleType === 'weekly'">
+        <label class="block text-sm font-medium text-[#202020] mb-2">Día de la semana</label>
+        <select [(ngModel)]="backupScheduleForm.dayOfWeek" class="w-full border rounded-lg px-3 py-2">
+          <option *ngFor="let day of weekDays" [ngValue]="day.value">{{ day.label }}</option>
+        </select>
+      </div>
+      <div *ngIf="backupScheduleForm.scheduleType === 'datetime'">
+        <label class="block text-sm font-medium text-[#202020] mb-2">Fecha de ejecución</label>
+        <mat-form-field appearance="outline" class="w-full">
+          <input matInput [matDatepicker]="backupSchedulePicker" [(ngModel)]="backupScheduleForm.runAt" />
+          <mat-datepicker-toggle matIconSuffix [for]="backupSchedulePicker"></mat-datepicker-toggle>
+          <mat-datepicker #backupSchedulePicker></mat-datepicker>
+        </mat-form-field>
+      </div>
+      <div *ngIf="backupScheduleForm.scheduleType === 'datetime'">
+        <label class="block text-sm font-medium text-[#202020] mb-2">Hora exacta</label>
+        <input [(ngModel)]="backupScheduleForm.time" type="time" class="w-full border rounded-lg px-3 py-2" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-[#202020] mb-2">Retención en días</label>
+        <input [(ngModel)]="backupScheduleForm.retentionDays" type="number" min="1" class="w-full border rounded-lg px-3 py-2" placeholder="7" />
+      </div>
+    </div>
+
+    <div class="mt-6 flex justify-end gap-3">
+      <button class="db-secondary-button" (click)="closeBackupScheduleModal()">Cancelar</button>
+      <button class="db-primary-button" (click)="createBackupSchedule()" [disabled]="isSavingBackupSchedule()">
+        <span class="material-symbols-outlined" [class.spin]="isSavingBackupSchedule()">{{ isSavingBackupSchedule() ? 'sync' : 'save' }}</span>
+        {{ isSavingBackupSchedule() ? 'Guardando...' : 'Guardar programación' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<div *ngIf="showRetentionPolicyModal()" class="fixed inset-0 bg-black/55 z-[70] flex items-center justify-center p-4" (click)="closeRetentionPolicyModal()">
+  <div class="db-modal-card w-full max-w-2xl" (click)="$event.stopPropagation()">
+    <div class="flex items-start gap-4 mb-6">
+      <div class="db-modal-icon bg-amber-100 text-amber-700">
+        <span class="material-symbols-outlined">auto_delete</span>
+      </div>
+      <div class="flex-1">
+        <h3 class="text-lg font-semibold text-[#202020]">Crear tarea de limpieza</h3>
+        <p class="text-sm text-[#666666] mt-1">Define cuándo borrar backups antiguos y cuánto tiempo conservarlos.</p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm font-medium text-[#202020] mb-2">Nombre de la política</label>
+        <input [(ngModel)]="retentionPolicyForm.name" class="w-full border rounded-lg px-3 py-2" placeholder="Ej. Limpieza semanal" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-[#202020] mb-2">Alcance</label>
+        <select [(ngModel)]="retentionPolicyForm.type" class="w-full border rounded-lg px-3 py-2">
+          <option value="all">Todos los backups</option>
+          <option value="full">Solo completos</option>
+          <option value="critical">Solo críticos</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-[#202020] mb-2">Tipo de programación</label>
+        <select [(ngModel)]="retentionPolicyForm.scheduleType" class="w-full border rounded-lg px-3 py-2">
+          <option value="daily">Diario</option>
+          <option value="weekly">Semanal</option>
+          <option value="datetime">Fecha exacta</option>
+        </select>
+      </div>
+      <div *ngIf="retentionPolicyForm.scheduleType !== 'datetime'">
+        <label class="block text-sm font-medium text-[#202020] mb-2">Hora</label>
+        <input [(ngModel)]="retentionPolicyForm.time" type="time" class="w-full border rounded-lg px-3 py-2" />
+      </div>
+      <div *ngIf="retentionPolicyForm.scheduleType === 'weekly'">
+        <label class="block text-sm font-medium text-[#202020] mb-2">Día de la semana</label>
+        <select [(ngModel)]="retentionPolicyForm.dayOfWeek" class="w-full border rounded-lg px-3 py-2">
+          <option *ngFor="let day of weekDays" [ngValue]="day.value">{{ day.label }}</option>
+        </select>
+      </div>
+      <div *ngIf="retentionPolicyForm.scheduleType === 'datetime'">
+        <label class="block text-sm font-medium text-[#202020] mb-2">Fecha de limpieza</label>
+        <mat-form-field appearance="outline" class="w-full">
+          <input matInput [matDatepicker]="retentionPolicyPicker" [(ngModel)]="retentionPolicyForm.runAt" />
+          <mat-datepicker-toggle matIconSuffix [for]="retentionPolicyPicker"></mat-datepicker-toggle>
+          <mat-datepicker #retentionPolicyPicker></mat-datepicker>
+        </mat-form-field>
+      </div>
+      <div *ngIf="retentionPolicyForm.scheduleType === 'datetime'">
+        <label class="block text-sm font-medium text-[#202020] mb-2">Hora exacta</label>
+        <input [(ngModel)]="retentionPolicyForm.time" type="time" class="w-full border rounded-lg px-3 py-2" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-[#202020] mb-2">Días de retención</label>
+        <input [(ngModel)]="retentionPolicyForm.retentionDays" type="number" min="1" class="w-full border rounded-lg px-3 py-2" placeholder="7" />
+      </div>
+    </div>
+
+    <div class="mt-6 flex justify-end gap-3">
+      <button class="db-secondary-button" (click)="closeRetentionPolicyModal()">Cancelar</button>
+      <button class="db-primary-button" (click)="createRetentionPolicy()" [disabled]="isSavingRetentionPolicy()">
+        <span class="material-symbols-outlined" [class.spin]="isSavingRetentionPolicy()">{{ isSavingRetentionPolicy() ? 'sync' : 'save' }}</span>
+        {{ isSavingRetentionPolicy() ? 'Guardando...' : 'Guardar política' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<div *ngIf="showVacuumScheduleModal()" class="fixed inset-0 bg-black/55 z-[70] flex items-center justify-center p-4" (click)="closeVacuumScheduleModal()">
+  <div class="db-modal-card w-full max-w-2xl" (click)="$event.stopPropagation()">
+    <div class="flex items-start gap-4 mb-6">
+      <div class="db-modal-icon bg-cyan-100 text-cyan-700">
+        <span class="material-symbols-outlined">cleaning_services</span>
+      </div>
+      <div class="flex-1">
+        <h3 class="text-lg font-semibold text-[#202020]">Crear tarea de vacuum</h3>
+        <p class="text-sm text-[#666666] mt-1">Programa el mantenimiento para ejecutarlo de forma automática según tu calendario.</p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm font-medium text-[#202020] mb-2">Nombre de la tarea</label>
+        <input [(ngModel)]="vacuumScheduleForm.name" class="w-full border rounded-lg px-3 py-2" placeholder="Ej. Vacuum semanal core" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-[#202020] mb-2">Tipo de programación</label>
+        <select [(ngModel)]="vacuumScheduleForm.scheduleType" class="w-full border rounded-lg px-3 py-2">
+          <option value="daily">Diario</option>
+          <option value="weekly">Semanal</option>
+          <option value="datetime">Fecha exacta</option>
+        </select>
+      </div>
+      <div *ngIf="vacuumScheduleForm.scheduleType !== 'datetime'">
+        <label class="block text-sm font-medium text-[#202020] mb-2">Hora</label>
+        <input [(ngModel)]="vacuumScheduleForm.time" type="time" class="w-full border rounded-lg px-3 py-2" />
+      </div>
+      <div *ngIf="vacuumScheduleForm.scheduleType === 'weekly'">
+        <label class="block text-sm font-medium text-[#202020] mb-2">Día de la semana</label>
+        <select [(ngModel)]="vacuumScheduleForm.dayOfWeek" class="w-full border rounded-lg px-3 py-2">
+          <option *ngFor="let day of weekDays" [ngValue]="day.value">{{ day.label }}</option>
+        </select>
+      </div>
+      <div *ngIf="vacuumScheduleForm.scheduleType === 'datetime'">
+        <label class="block text-sm font-medium text-[#202020] mb-2">Fecha de ejecución</label>
+        <mat-form-field appearance="outline" class="w-full">
+          <input matInput [matDatepicker]="vacuumSchedulePicker" [(ngModel)]="vacuumScheduleForm.runAt" />
+          <mat-datepicker-toggle matIconSuffix [for]="vacuumSchedulePicker"></mat-datepicker-toggle>
+          <mat-datepicker #vacuumSchedulePicker></mat-datepicker>
+        </mat-form-field>
+      </div>
+      <div *ngIf="vacuumScheduleForm.scheduleType === 'datetime'">
+        <label class="block text-sm font-medium text-[#202020] mb-2">Hora exacta</label>
+        <input [(ngModel)]="vacuumScheduleForm.time" type="time" class="w-full border rounded-lg px-3 py-2" />
+      </div>
+    </div>
+
+    <div class="mt-6 flex justify-end gap-3">
+      <button class="db-secondary-button" (click)="closeVacuumScheduleModal()">Cancelar</button>
+      <button class="db-primary-button" (click)="createVacuumSchedule()" [disabled]="isSavingVacuumSchedule()">
+        <span class="material-symbols-outlined" [class.spin]="isSavingVacuumSchedule()">{{ isSavingVacuumSchedule() ? 'sync' : 'save' }}</span>
+        {{ isSavingVacuumSchedule() ? 'Guardando...' : 'Guardar programación' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<div *ngIf="showDeleteConfigModal()" class="fixed inset-0 bg-black/55 z-[70] flex items-center justify-center p-4" (click)="closeDeleteConfigModal()">
+  <div class="db-modal-card" (click)="$event.stopPropagation()">
+    <div class="flex items-start gap-4">
+      <div class="db-modal-icon bg-red-100 text-red-700">
+        <span class="material-symbols-outlined">warning</span>
+      </div>
+      <div class="flex-1">
+        <h3 class="text-lg font-semibold text-[#202020]">Confirmar eliminación</h3>
+        <p class="text-sm text-[#666666] mt-1" *ngIf="pendingConfigDelete()?.kind === 'backupSchedule'">
+          Se eliminará la programación de backup <span class="font-semibold text-[#202020]">{{ pendingConfigDelete()?.name }}</span>.
+        </p>
+        <p class="text-sm text-[#666666] mt-1" *ngIf="pendingConfigDelete()?.kind === 'retentionPolicy'">
+          Se eliminará la política de limpieza <span class="font-semibold text-[#202020]">{{ pendingConfigDelete()?.name }}</span>.
+        </p>
+        <p class="text-sm text-[#666666] mt-1" *ngIf="pendingConfigDelete()?.kind === 'vacuumSchedule'">
+          Se eliminará la programación de vacuum <span class="font-semibold text-[#202020]">{{ pendingConfigDelete()?.name }}</span>.
+        </p>
+      </div>
+    </div>
+    <div class="mt-6 flex justify-end gap-3">
+      <button class="db-secondary-button" (click)="closeDeleteConfigModal()">Cancelar</button>
+      <button class="db-danger-button" (click)="confirmDeleteConfig()" [disabled]="isDeletingConfig()">
+        <span class="material-symbols-outlined" [class.spin]="isDeletingConfig()">{{ isDeletingConfig() ? 'sync' : 'delete' }}</span>
+        {{ isDeletingConfig() ? 'Eliminando...' : 'Eliminar' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<div *ngIf="showBackupConfirmModal()" class="fixed inset-0 bg-black/55 z-[70] flex items-center justify-center p-4" (click)="closeBackupConfirmModal()">
+  <div class="db-modal-card" (click)="$event.stopPropagation()">
+    <div class="flex items-start gap-4">
+      <div class="db-modal-icon bg-blue-100 text-blue-700">
+        <span class="material-symbols-outlined">database</span>
+      </div>
+      <div class="flex-1">
+        <h3 class="text-lg font-semibold text-[#202020]">Confirmar backup</h3>
+        <p class="text-sm text-[#666666] mt-1">
+          Se creará un backup {{ pendingBackupType() === 'full' ? 'completo' : 'crítico' }} con su carpeta y log asociado.
+        </p>
+      </div>
+    </div>
+    <div class="mt-6 flex justify-end gap-3">
+      <button class="db-secondary-button" (click)="closeBackupConfirmModal()">Cancelar</button>
+      <button class="db-primary-button" (click)="createBackup()" [disabled]="isCreatingBackup()">
+        <span class="material-symbols-outlined" [class.spin]="isCreatingBackup()">{{ isCreatingBackup() ? 'sync' : 'play_arrow' }}</span>
+        {{ isCreatingBackup() ? 'Creando...' : 'Continuar' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<div *ngIf="showDeleteBackupModal()" class="fixed inset-0 bg-black/55 z-[70] flex items-center justify-center p-4" (click)="closeDeleteBackupModal()">
+  <div class="db-modal-card" (click)="$event.stopPropagation()">
+    <div class="flex items-start gap-4">
+      <div class="db-modal-icon bg-red-100 text-red-700">
+        <span class="material-symbols-outlined">warning</span>
+      </div>
+      <div class="flex-1">
+        <h3 class="text-lg font-semibold text-[#202020]">Eliminar backup</h3>
+        <p class="text-sm text-[#666666] mt-1">
+          Se eliminará el dump y el log de <span class="font-semibold text-[#202020]">{{ backupToDelete()?.folder }}</span>.
+        </p>
+      </div>
+    </div>
+    <div class="mt-6 flex justify-end gap-3">
+      <button class="db-secondary-button" (click)="closeDeleteBackupModal()">Cancelar</button>
+      <button class="db-danger-button" (click)="deleteBackup()" [disabled]="!!(backupToDelete() && isDeletingBackup()[backupToDelete()!.key])">
+        <span class="material-symbols-outlined" [class.spin]="!!(backupToDelete() && isDeletingBackup()[backupToDelete()!.key])">
+          {{ backupToDelete() && isDeletingBackup()[backupToDelete()!.key] ? 'sync' : 'delete' }}
+        </span>
+        {{ backupToDelete() && isDeletingBackup()[backupToDelete()!.key] ? 'Eliminando...' : 'Eliminar backup' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<div *ngIf="showVacuumConfirmModal()" class="fixed inset-0 bg-black/55 z-[70] flex items-center justify-center p-4" (click)="closeVacuumConfirmModal()">
+  <div class="db-modal-card" (click)="$event.stopPropagation()">
+    <div class="flex items-start gap-4">
+      <div class="db-modal-icon bg-amber-100 text-amber-700">
+        <span class="material-symbols-outlined">cleaning_services</span>
+      </div>
+      <div class="flex-1">
+        <h3 class="text-lg font-semibold text-[#202020]">Confirmar vacuum analyze</h3>
+        <p class="text-sm text-[#666666] mt-1">
+          Se ejecutará el mantenimiento manual sobre las tablas del esquema <span class="font-semibold text-[#202020]">core</span> y se guardará su log en Cloudflare.
+        </p>
+      </div>
+    </div>
+    <div class="mt-6 flex justify-end gap-3">
+      <button class="db-secondary-button" (click)="closeVacuumConfirmModal()">Cancelar</button>
+      <button class="db-primary-button" (click)="runVacuum()" [disabled]="isRunningVacuum()">
+        <span class="material-symbols-outlined" [class.spin]="isRunningVacuum()">{{ isRunningVacuum() ? 'sync' : 'play_arrow' }}</span>
+        {{ isRunningVacuum() ? 'Ejecutando...' : 'Ejecutar' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<div *ngIf="showLogModal()" class="fixed inset-0 bg-black/50 z-[70] flex items-center justify-center p-4" (click)="closeLogModal()">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[85vh] overflow-hidden" (click)="$event.stopPropagation()">
+    <div class="px-6 py-4 border-b flex items-center justify-between">
+      <h3 class="text-lg font-semibold text-[#202020]">{{ selectedLogTitle() }}</h3>
+      <button class="text-gray-500 hover:text-gray-700" (click)="closeLogModal()"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div class="p-6 overflow-auto max-h-[70vh] bg-slate-950 text-slate-100 text-sm">
+      <pre class="whitespace-pre-wrap font-mono">{{ selectedLogContent() }}</pre>
+    </div>
+  </div>
+</div>

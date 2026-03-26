@@ -1,106 +1,109 @@
-import { HttpInterceptorFn } from '@angular/common/http';
+import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { AuthService } from '../services/auth.service';
-import { TokenService } from '../services/token.service';
-import { catchError, throwError } from 'rxjs';
 import { Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
-import { getDashboardRoute } from '../models/user.model';
+import { catchError, switchMap, throwError } from 'rxjs';
+import { AuthService } from '../services/auth.service';
+import { TokenService } from '../services/token.service';
 
-/**
- * Interceptor para:
- * 1. Agregar token JWT en todas las peticiones HTTP
- * 2. Agregar token CSRF para peticiones de modificación
- * 3. Manejar errores de autenticación (401, 403)
- */
+const AUTH_EXCLUDED_URLS = [
+  '/users/login-user',
+  '/users/refresh-token',
+  '/users/create-user',
+  '/users/auth/google-login',
+  '/users/verify-email',
+  '/users/resend-code',
+  '/users/verify-user-email',
+  '/users/verify-user-token',
+  '/users/reset-psw',
+];
+
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
   const tokenService = inject(TokenService);
   const router = inject(Router);
   const toastr = inject(ToastrService);
 
-  // URLs que no requieren autenticación
-  const excludedUrls = ['/auth/login', '/auth/register', '/health', '/public/'];
-  const isExcluded = excludedUrls.some(url => req.url.includes(url));
-
+  const isExcluded = AUTH_EXCLUDED_URLS.some((url) => req.url.includes(url));
   if (isExcluded) {
     return next(req);
   }
 
-  // Obtener token
-  const token = tokenService.getAccessToken();
+  const cloneWithToken = (token: string | null) => {
+    const headers: Record<string, string> = {
+      Accept: 'application/json',
+    };
 
-  // Clonar request y agregar token
-  let authReq = req.clone({
-    setHeaders: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json'
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
     }
-  });
 
-  if (token) {
-    authReq = authReq.clone({
-      setHeaders: {
-        Authorization: `Bearer ${token}`
-      }
-    });
-  }
+    return req.clone({ setHeaders: headers });
+  };
 
-  // Para peticiones de modificación (POST, PUT, DELETE), agregar CSRF token
-  const isModificationRequest = ['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method);
-  if (isModificationRequest) {
-    const csrfToken = tokenService.getCsrfToken();
-    if (csrfToken) {
-      authReq = authReq.clone({
-        setHeaders: {
-          'X-CSRF-Token': csrfToken
+  const sendRequest = (token: string | null) =>
+    next(cloneWithToken(token)).pipe(
+      catchError((error: HttpErrorResponse) => {
+        const canRetry = !req.headers.has('X-Auth-Retry');
+
+        if (error.status === 401 && canRetry && tokenService.getRefreshToken()) {
+          return authService.refreshAccessToken().pipe(
+            switchMap((newToken) =>
+              next(
+                cloneWithToken(newToken).clone({
+                  setHeaders: { 'X-Auth-Retry': '1' },
+                }),
+              ),
+            ),
+            catchError((refreshError) => {
+              authService.logout(false);
+              router.navigate(['/auth/login']);
+              return throwError(() => refreshError);
+            }),
+          );
         }
-      });
-    }
+
+        if (error.status === 401 || error.status === 403) {
+          toastr.error(
+            'Tu sesión ya no es válida. Inicia sesión nuevamente.',
+            'Sesión expirada',
+          );
+          authService.logout(false);
+          router.navigate(['/auth/login']);
+        }
+
+        if (error.status === 419) {
+          toastr.error('La sesión expiró. Inicia sesión nuevamente.', 'Sesión expirada');
+          authService.logout(false);
+          router.navigate(['/auth/login']);
+        }
+
+        return throwError(() => error);
+      }),
+    );
+
+  const token = tokenService.getAccessToken();
+  if (!token && tokenService.getRefreshToken()) {
+    return authService.refreshAccessToken().pipe(
+      switchMap((newToken) => sendRequest(newToken)),
+      catchError(() => {
+        authService.logout(false);
+        router.navigate(['/auth/login']);
+        return throwError(() => new Error('Unable to restore session'));
+      }),
+    );
   }
 
-  // Manejar errores de autenticación
-  return next(authReq).pipe(
-    catchError((error) => {
-      // Error 401 - No autorizado
-      if (error.status === 401) {
-        toastr.error('No tienes permisos para acceder a esta sección. Inicia sesión nuevamente', 'Acceso Denegado');
-        tokenService.clearTokens();
-        authService.logout();
-        authService.clearAuthState();
+  if (token && authService.shouldRefreshSoon() && tokenService.getRefreshToken()) {
+    return authService.refreshAccessToken().pipe(
+      switchMap((newToken) => sendRequest(newToken)),
+      catchError(() => {
+        authService.logout(false);
         router.navigate(['/auth/login']);
-      }
+        return throwError(() => new Error('Unable to refresh session'));
+      }),
+    );
+  }
 
-      // Error 403 - Prohibido (sin permisos o CSRF inválido)
-      // Error 403 - Prohibido (sin permisos o token manipulado)
-      if (error.status === 403) {
-
-        toastr.error('No tienes permisos para acceder a esta sección. Inicia sesión nuevamente', 'Acceso Denegado');
-
-        // limpiar tokens
-        tokenService.clearTokens();
-
-        // limpiar estado auth
-        authService.logout();
-
-        // redirigir
-        router.navigate(['/auth/login']);
-      }
-
-      // Error 419 - Token de sesión expirado
-      if (error.status === 419) {
-        toastr.error('Token de seguridad expirado. Por favor, inicia sesión nuevamente.', 'CSRF Token Inválido');
-        tokenService.clearTokens();
-        authService.logout();
-        router.navigate(['/auth/login']);
-      }
-
-      // Error 500 - Error del servidor
-      if (error.status === 500) {
-        toastr.error('Error en el servidor. Intenta nuevamente más tarde.', 'Error del Servidor');
-      }
-
-      return throwError(() => error);
-    })
-  );
+  return sendRequest(token);
 };

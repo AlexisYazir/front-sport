@@ -248,6 +248,44 @@
           <!-- Imágenes -->
           <div>
             <label class="block text-sm font-semibold text-gray-700 mb-2">Imágenes</label>
+
+            <div
+              class="mb-4 rounded-xl border-2 border-dashed p-5 transition-all"
+              [ngClass]="dragOverImages
+                ? 'border-[#0367A6] bg-[#0367A6]/5'
+                : 'border-gray-300 bg-gray-50/60'"
+              (dragover)="onImageDragOver($event)"
+              (dragleave)="onImageDragLeave($event)"
+              (drop)="onImageDrop($event)">
+              <input
+                #imagePicker
+                type="file"
+                accept="image/*"
+                multiple
+                class="hidden"
+                (change)="onImageFilesSelected($event)">
+
+              <div class="flex flex-col items-center text-center gap-3">
+                <div class="w-14 h-14 rounded-full bg-[#0367A6]/10 flex items-center justify-center">
+                  <span *ngIf="!uploadingImages" class="material-symbols-outlined text-[#0367A6] text-3xl">cloud_upload</span>
+                  <i *ngIf="uploadingImages" class="pi pi-spin pi-spinner text-[#0367A6] text-2xl"></i>
+                </div>
+                <div>
+                  <p class="font-semibold text-[#202020]">
+                    {{ uploadingImages ? 'Subiendo imagenes a Cloudinary...' : 'Arrastra imagenes aqui o selecciona desde tu equipo' }}
+                  </p>
+                  <p class="text-sm text-gray-500 mt-1">Se cargan automaticamente y se guarda su URL segura.</p>
+                </div>
+                <button
+                  type="button"
+                  (click)="imagePicker.click()"
+                  [disabled]="uploadingImages"
+                  class="px-4 py-2.5 bg-[#0367A6] text-white rounded-lg hover:bg-[#035A91] transition-all disabled:opacity-50 inline-flex items-center gap-2">
+                  <span class="material-symbols-outlined text-sm">upload_file</span>
+                  Seleccionar imágenes
+                </button>
+              </div>
+            </div>
             
             <!-- Lista de imágenes -->
             <div class="flex flex-wrap gap-3 mb-3">
@@ -265,14 +303,14 @@
             <!-- Agregar imagen -->
             <div class="flex gap-2">
               <input type="text" [(ngModel)]="variantes[varianteActualIndex].imagenInput"
-                     placeholder="URL de la imagen"
+                     placeholder="O pega directamente la URL de la imagen"
                      class="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0367A6]/20 focus:border-[#0367A6] outline-none transition-all placeholder-gray-400">
               <button (click)="agregarImagen()" 
                       class="px-4 py-2.5 bg-[#0367A6] text-white rounded-lg hover:bg-[#035A91] transition-colors">
                 Agregar
               </button>
             </div>
-            <p class="text-xs text-gray-400 mt-1">Las imágenes deben ser URLs válidas</p>
+            <p class="text-xs text-gray-400 mt-1">Puedes subir archivos o pegar una URL válida manualmente</p>
           </div>
 
           <!-- SECCIÓN DE ATRIBUTOS CON VALIDACIONES VISUALES -->
@@ -356,10 +394,11 @@
           Cancelar
         </button>
 
-        <button (click)="guardarVariantes()" [disabled]="saving"
+        <button (click)="guardarVariantes()" [disabled]="saving || uploadingImages"
                 class="px-6 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all disabled:opacity-50 font-medium flex items-center gap-2">
           <i *ngIf="saving" class="pi pi-spin pi-spinner text-sm"></i>
-          {{ saving ? 'Guardando...' : 'Guardar Variantes' }}
+          <i *ngIf="!saving && uploadingImages" class="pi pi-spin pi-spinner text-sm"></i>
+          {{ saving ? 'Guardando...' : (uploadingImages ? 'Subiendo imagenes...' : 'Guardar Variantes') }}
         </button>
       </div>
     </div>

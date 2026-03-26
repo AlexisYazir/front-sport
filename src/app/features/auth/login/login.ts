@@ -103,20 +103,10 @@ export class Login implements OnInit {
     this.isLoading = true;
 
     this.authService.login(this.credentials).subscribe({
-      next: (response: any) => {
+      next: () => {
         this.isLoading = false;
-        if (response?.token) return;
-
-        // Si backend indica cuenta no activada en response.code === 2 -> redirigir
-        if (response?.code === 2) {
-          this.router.navigate(['/auth/verify-account'], {
-            queryParams: { email: this.credentials.email, from: 'login' },
-          });
-        }
       },
       error: (error) => {
-        this.isLoading = false;
-
         this.isLoading = false;
 
         // Por si el backend devolviera error en vez de next; detectamos code en err

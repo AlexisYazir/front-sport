@@ -543,7 +543,7 @@
   <!-- MODAL DE CREAR PRODUCTO -->
   <div *ngIf="showCreateModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" (click)="closeCreateModal()">
     
-    <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl" (click)="$event.stopPropagation()">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col" (click)="$event.stopPropagation()">
       
       <div class="bg-gradient-to-r from-[#0367A6] to-[#035A91] text-white px-6 py-4 rounded-t-xl flex justify-between items-center">
         <div class="flex items-center gap-2">
@@ -555,7 +555,7 @@
         </button>
       </div>
 
-      <div class="p-8">
+      <div class="p-8 overflow-y-auto">
         <div class="space-y-6">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -597,6 +597,40 @@
                       placeholder="Ej: Camiseta deportiva de alta calidad, ideal para entrenamientos y actividades al aire libre."
                       class="w-full px-4 py-2.5 border placeholder-gray-400 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0367A6]/20 focus:border-[#0367A6] outline-none transition-all"></textarea>
             <p *ngIf="validationErrors.descripcion" class="text-red-500 text-xs mt-1">{{ validationErrors.descripcion }}</p>
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between gap-3 mb-3">
+              <div>
+                <label class="block text-sm font-semibold text-gray-700">Deportes</label>
+                <p class="text-xs text-gray-500 mt-1">Selecciona los deportes a los que pertenece este producto.</p>
+              </div>
+              <span class="text-xs font-medium text-[#0367A6] bg-[#0367A6]/10 px-3 py-1 rounded-full">
+                {{ selectedSports.length }} seleccionados
+              </span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              <button
+                *ngFor="let sport of sports"
+                type="button"
+                (click)="toggleSportSelection(sport.id_deporte)"
+                class="text-left px-4 py-3 rounded-xl border transition-all flex items-center justify-between gap-3"
+                [ngClass]="isSportSelected(sport.id_deporte)
+                  ? 'border-[#0367A6] bg-[#0367A6]/10 text-[#035A91] shadow-sm'
+                  : 'border-gray-200 bg-white hover:border-[#0367A6]/40 hover:bg-[#0367A6]/5 text-gray-700'">
+                <span class="font-medium">{{ sport.nombre }}</span>
+                <span
+                  class="material-symbols-outlined text-[20px]"
+                  [ngClass]="isSportSelected(sport.id_deporte) ? 'text-[#0367A6]' : 'text-gray-400'">
+                  {{ isSportSelected(sport.id_deporte) ? 'check_circle' : 'radio_button_unchecked' }}
+                </span>
+              </button>
+            </div>
+
+            <p *ngIf="sports.length === 0" class="text-sm text-gray-500 mt-2">
+              No hay deportes disponibles para seleccionar.
+            </p>
           </div>
         </div>
       </div>

@@ -78,6 +78,11 @@ export interface Attibute {
   id_padre: number | null;
 }
 
+export interface Sport {
+  id_deporte: number;
+  nombre: string;
+}
+
 // product.model.ts - Agrega esta interfaz
 
 export interface CreateProductDto {
@@ -95,6 +100,7 @@ export interface InventoryProduct {
   stock: number | null;
   marca?: string;
   imagen: string;
+  imagen_marca?: string;
   fecha_creacion: string;
 
 }

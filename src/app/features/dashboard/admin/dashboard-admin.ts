@@ -19,7 +19,7 @@ export class DashboardAdmin implements OnInit {
   private productService = inject(ProductService);
   
   // Estado del menú lateral (inicialmente abierto)
-  sidebarOpen = signal<boolean>(false);
+  sidebarOpen = signal<boolean>(true);
 
   // Estado del navbar (oculto o visible)
   navbarOculto = signal<boolean>(false);
@@ -54,9 +54,8 @@ export class DashboardAdmin implements OnInit {
     // { icon: 'category', label: 'Categorías', route: '/dashboard/admin/categories' },
     { icon: 'branding_watermark', label: 'Marcas & Categ', route: '/dashboard/admin/marcas-categorias' },
     { icon: 'people', label: 'Usuarios', route: '/dashboard/admin/users' },
-    { icon: 'database', label: 'Respaldos', route: '/dashboard/admin/backups' },
+    { icon: 'database', label: 'DB Admin', route: '/dashboard/admin/db' },
     // { icon: 'domain', label: 'Perfil Empresa', route: '/dashboard/admin/empresa' },
-    { icon: 'bar_chart', label: 'Rendimiento', route: '/dashboard/admin/performance' },
     { icon: 'monitoring', label: 'Predicción ventas', route: '/dashboard/admin/predictions' },
     // { icon: 'person', label: 'Perfil', route: '/dashboard/admin/profile' },
     { icon: 'settings', label: 'Configuración', route: '/dashboard/admin/settings' },

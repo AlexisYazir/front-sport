@@ -1,0 +1,230 @@
+:host {
+  display: block;
+}
+
+.db-overlay {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.32)),
+    radial-gradient(circle at top, rgba(3, 103, 166, 0.18), transparent 42%);
+  backdrop-filter: blur(12px) saturate(160%);
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+}
+
+.db-loader-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem 1.75rem;
+  border-radius: 1.35rem;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(255, 255, 255, 0.72));
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  box-shadow:
+    0 24px 50px rgba(15, 23, 42, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  min-width: 21rem;
+}
+
+.db-loader-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 4.5rem;
+  height: 4.5rem;
+  border-radius: 9999px;
+  background: radial-gradient(circle at top, rgba(255, 255, 255, 0.95), rgba(219, 234, 254, 0.82));
+  border: 1px solid rgba(3, 103, 166, 0.16);
+  box-shadow:
+    0 16px 26px rgba(3, 103, 166, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92);
+}
+
+.db-action-button,
+.db-icon-button,
+.db-primary-button,
+.db-secondary-button,
+.db-danger-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.9rem;
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease,
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
+}
+
+.db-action-button:hover,
+.db-primary-button:hover,
+.db-secondary-button:hover,
+.db-danger-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+}
+
+.db-action-button:disabled,
+.db-icon-button:disabled,
+.db-primary-button:disabled,
+.db-secondary-button:disabled,
+.db-danger-button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.db-action-button {
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+}
+
+.db-icon-button {
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border-width: 2px;
+  border-radius: 9999px;
+  background-color: transparent;
+  font-size: 0.875rem;
+  flex-shrink: 0;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
+}
+
+.db-icon-button:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.db-icon-button .material-symbols-outlined,
+.db-icon-button i {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.db-icon-download {
+  border-color: #3b82f6;
+  color: #3b82f6;
+}
+
+.db-icon-download:hover {
+  background-color: #3b82f6;
+  color: #ffffff;
+}
+
+.db-icon-log {
+  border-color: #94a3b8;
+  color: #64748b;
+}
+
+.db-icon-log:hover {
+  background-color: #64748b;
+  color: #ffffff;
+}
+
+.db-icon-delete {
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+.db-icon-delete:hover {
+  background-color: #ef4444;
+  color: #ffffff;
+}
+
+.db-primary-button,
+.db-danger-button,
+.db-secondary-button {
+  padding: 0.72rem 1rem;
+  font-weight: 600;
+}
+
+.db-primary-button .material-symbols-outlined,
+.db-danger-button .material-symbols-outlined,
+.db-secondary-button .material-symbols-outlined {
+  transition: transform 180ms ease;
+}
+
+.db-primary-button:hover .material-symbols-outlined,
+.db-danger-button:hover .material-symbols-outlined,
+.db-secondary-button:hover .material-symbols-outlined {
+  transform: translateX(2px);
+}
+
+.db-primary-button {
+  background: #0367a6;
+  color: #fff;
+  box-shadow: 0 10px 24px rgba(3, 103, 166, 0.2);
+}
+
+.db-primary-button:hover {
+  background: #035a91;
+  box-shadow: 0 16px 28px rgba(3, 103, 166, 0.28);
+}
+
+.db-danger-button {
+  background: #dc2626;
+  color: #fff;
+  box-shadow: 0 10px 24px rgba(220, 38, 38, 0.2);
+}
+
+.db-danger-button:hover {
+  background: #b91c1c;
+  box-shadow: 0 16px 28px rgba(185, 28, 28, 0.28);
+}
+
+.db-secondary-button {
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #334155;
+}
+
+.db-secondary-button:hover {
+  background: #f8fafc;
+}
+
+.db-primary-button:active,
+.db-danger-button:active,
+.db-secondary-button:active,
+.db-action-button:active,
+.db-icon-button:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.db-modal-card {
+  width: 100%;
+  max-width: 34rem;
+  border-radius: 1.25rem;
+  background: #ffffff;
+  padding: 1.5rem;
+  box-shadow: 0 30px 60px rgba(15, 23, 42, 0.22);
+}
+
+.db-modal-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 9999px;
+  flex-shrink: 0;
+}
+
+.spin {
+  animation: db-spin 0.9s linear infinite;
+}
+
+@keyframes db-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

@@ -164,7 +164,13 @@
           <tr *ngFor="let product of paginatedProducts" class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
            
             <td class="px-4 py-4">
-              <div class="font-semibold text-[#202020]">{{ product.producto }}</div>
+              <div class="flex items-center gap-3">
+                <img [src]="getProductImage(product)"
+                     [alt]="product.producto"
+                     class="w-12 h-12 rounded-lg object-cover border border-gray-200 bg-gray-50"
+                     onerror="this.src='assets/images/no-imagen.webp'">
+                <div class="font-semibold text-[#202020]">{{ product.producto }}</div>
+              </div>
             </td>
             <td class="px-4 py-4">
               <div class="w-12 h-12 rounded-lg overflow-hidden border border-gray-200">
@@ -360,7 +366,7 @@
         <thead class="bg-gray-50 border-b-2 border-gray-200">
           <tr>
             <th class="px-4 py-4 text-left font-semibold text-[#202020]">Fecha</th>
-            <th class="px-4 py-4 text-left font-semibold text-[#202020]">SKU</th>
+            <th class="px-4 py-4 text-left font-semibold text-[#202020]">Variante</th>
             <th class="px-4 py-4 text-left font-semibold text-[#202020]">ID Ref.</th>
             <th class="px-4 py-4 text-left font-semibold text-[#202020]">Referencia</th>
             <th class="px-4 py-4 text-left font-semibold text-[#202020]">Tipo</th>
@@ -371,7 +377,18 @@
         <tbody>
           <tr *ngFor="let movement of paginatedMovements" class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
             <td class="px-4 py-4 text-[#202020]">{{ formatDate(movement.fecha) }}</td>
-            <td class="px-4 py-4 font-mono text-[#666666]">{{ movement.sku }}</td>
+            <td class="px-4 py-4">
+              <div class="flex items-center gap-3">
+                <img [src]="getMovementImage(movement)"
+                     [alt]="movement.sku"
+                     class="w-11 h-11 rounded-lg object-cover border border-gray-200 bg-gray-50"
+                     onerror="this.src='assets/images/no-imagen.webp'">
+                <div class="flex flex-col">
+                  <span class="font-mono text-[#666666]">{{ movement.sku }}</span>
+                  <span class="text-xs text-gray-400">Variante #{{ movement.id_variante }}</span>
+                </div>
+              </div>
+            </td>
             <td class="px-4 py-4 font-mono text-[#666666]">{{ movement.referencia_id || 'N/A' }}</td>
             <td class="px-4 py-4">
               <span class="px-2 py-1 bg-gray-100 rounded-md text-xs">

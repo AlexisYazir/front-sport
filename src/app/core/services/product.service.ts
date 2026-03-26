@@ -98,7 +98,8 @@ export class ProductService {
       precio: p.precio,
       stock: p.stock,
       marca: p.marca,
-      imagen: p.imagen,
+      imagen: p.imagen_producto || p.imagen,
+      imagen_marca: p.imagen_marca || p.imagen,
       fecha_creacion: p.fecha_creacion
     }
   }
@@ -354,6 +355,16 @@ createBaseProduct(data: { nombre: string, descripcion: string, id_marca: number,
   );
 }
 
+assignProductSports(data: { id_producto: number, ids_deportes: number[] }): Observable<any> {
+  this.isLoading.set(true);
+  return this.http.post(`${this.API_URL}/products/assign-product-sports`, data).pipe(
+    map(res => {
+      this.isLoading.set(false);
+      return res;
+    })
+  );
+}
+
 /**
  * PASO 2: Crear la variante del producto
  * POST: /products/create-product-variant
@@ -368,6 +379,14 @@ createProductVariant(data: {id_producto: number, sku: string, precio: number, im
         return res;
       })
     );
+}
+
+uploadProductImage(file: File, folder = 'sport-center/products'): Observable<any> {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('folder', folder);
+
+  return this.http.post(`${this.API_URL}/products/upload-image`, formData);
 }
 
 
@@ -423,6 +442,10 @@ getInventoryMovements(): Observable<any> {
         return res;
       })
     );
+}
+
+getVariantsForInventoryMovement(): Observable<any[]> {
+  return this.http.get<any[]>(`${this.API_URL}/products/inventory-movements/variants`);
 }
 
 createCatetorie(data: { nombre: string, id_padre: number | null }): Observable<any> {

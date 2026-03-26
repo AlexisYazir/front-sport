@@ -136,19 +136,14 @@ export const routes: Routes = [
           import('./features/dashboard/admin/admin-pages/prediction/prediction').then((m) => m.Prediction),
       },
       {
-        path: 'backups',
+        path: 'db',
         loadComponent: () =>
-          import('./features/dashboard/admin/admin-pages/backups/backups').then((m) => m.Backups),
+          import('./features/dashboard/admin/admin-pages/db/db').then((m) => m.DbPage),
       },
       {
         path: 'empresa',
         loadComponent: () =>
           import('./features/dashboard/admin/admin-pages/empresa/empresa').then((m) => m.Empresa),
-      },
-      {
-        path: 'performance',
-        loadComponent: () =>
-          import('./features/dashboard/admin/admin-pages/reports/reports').then((m) => m.Reports),
       },
     ],
   },

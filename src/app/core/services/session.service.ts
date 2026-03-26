@@ -14,7 +14,7 @@ export class SessionService {
   private readonly INACTIVITY_TIMEOUT = 24 * 60 * 60 * 1000; // 1 día
   private readonly LOCK_TIME = 5 * 60 * 1000; // 5 minutos de bloqueo
   private readonly MAX_FAILED_ATTEMPTS = 5;
-  private readonly TOKEN_KEY = 'auth:token';
+  private readonly TOKEN_KEY = 'auth:access_token';
 
   // Estado de sesión
   isActive = signal<boolean>(true);
@@ -56,8 +56,8 @@ export class SessionService {
    * Verifica si el usuario está logueado (sin inyectar AuthService)
    */
   private isLoggedIn(): boolean {
-    if (typeof localStorage === 'undefined') return false;
-    return !!localStorage.getItem(this.TOKEN_KEY);
+    if (typeof sessionStorage === 'undefined') return false;
+    return !!sessionStorage.getItem(this.TOKEN_KEY);
   }
 
   /**
@@ -112,12 +112,11 @@ export class SessionService {
     this.clearSession();
     
     // Limpiar localStorage sin inyectar AuthService
-    if (typeof localStorage !== 'undefined') {
-      localStorage.removeItem(this.TOKEN_KEY);
-      localStorage.removeItem('auth:user');
-      localStorage.removeItem('auth:csrf_token');
-      localStorage.removeItem('auth:access_token');
-      localStorage.removeItem('auth_timestamp');
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.removeItem(this.TOKEN_KEY);
+      sessionStorage.removeItem('auth:access_token');
+      sessionStorage.removeItem('auth:refresh_token');
+      sessionStorage.removeItem('auth:session_id');
     }
     
     this.router.navigate(['/auth/login'], {

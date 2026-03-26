@@ -1,223 +1,136 @@
-import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable, BehaviorSubject } from 'rxjs';
+import { Injectable } from '@angular/core';
+import { BehaviorSubject, Observable } from 'rxjs';
+import { jwtDecode } from 'jwt-decode';
 
-/**
- * Gestiona tokens de seguridad (JWT y CSRF)
- * Almacenamiento en memoria + sessionStorage
- */
+interface JwtPayload {
+  exp?: number;
+  sessionId?: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class TokenService {
-
-  private http = inject(HttpClient);
-
-  // Tokens en memoria
-  private accessToken = new BehaviorSubject<string | null>(null);
-  private refreshToken = new BehaviorSubject<string | null>(null);
-  private csrfToken = new BehaviorSubject<string | null>(null);
-
-  // Keys sessionStorage
   private readonly ACCESS_TOKEN_KEY = 'auth:access_token';
   private readonly REFRESH_TOKEN_KEY = 'auth:refresh_token';
-  private readonly CSRF_TOKEN_KEY = 'auth:csrf_token';
-  private readonly TOKEN_EXPIRY_KEY = 'auth:token_expiry';
+  private readonly SESSION_ID_KEY = 'auth:session_id';
+
+  private accessToken$ = new BehaviorSubject<string | null>(null);
+  private refreshToken$ = new BehaviorSubject<string | null>(null);
+  private sessionId$ = new BehaviorSubject<string | null>(null);
 
   constructor() {
-    this.loadTokensFromSession();
+    this.restoreFromStorage();
   }
 
-  /**
-   * Observable Access Token
-   */
-  getAccessToken$(): Observable<string | null> {
-    return this.accessToken.asObservable();
+  getAccessTokenChanges(): Observable<string | null> {
+    return this.accessToken$.asObservable();
   }
 
-  /**
-   * Obtener Access Token
-   */
   getAccessToken(): string | null {
-    return this.accessToken.value || sessionStorage.getItem(this.ACCESS_TOKEN_KEY);
+    return this.accessToken$.value ?? sessionStorage.getItem(this.ACCESS_TOKEN_KEY);
   }
 
-  /**
-   * Obtener Refresh Token
-   */
   getRefreshToken(): string | null {
-    return this.refreshToken.value || sessionStorage.getItem(this.REFRESH_TOKEN_KEY);
+    return this.refreshToken$.value ?? sessionStorage.getItem(this.REFRESH_TOKEN_KEY);
   }
 
-  /**
-   * Guardar Access Token
-   */
-  setAccessToken(token: string, expiresIn: number = 15 * 60 * 1000) {
+  getSessionId(): string | null {
+    return this.sessionId$.value ?? sessionStorage.getItem(this.SESSION_ID_KEY);
+  }
 
-    if (typeof sessionStorage !== 'undefined') {
+  setAccessToken(token: string | null): void {
+    this.accessToken$.next(token);
 
+    if (token) {
       sessionStorage.setItem(this.ACCESS_TOKEN_KEY, token);
-
-      sessionStorage.setItem(
-        this.TOKEN_EXPIRY_KEY,
-        (Date.now() + expiresIn).toString()
-      );
-
-    }
-
-    this.accessToken.next(token);
-  }
-
-  /**
-   * Guardar Refresh Token
-   */
-  setRefreshToken(token: string) {
-
-    if (typeof sessionStorage !== 'undefined') {
-
-      sessionStorage.setItem(this.REFRESH_TOKEN_KEY, token);
-
-    }
-
-    this.refreshToken.next(token);
-  }
-
-  /**
-   * Obtener CSRF Token
-   */
-  getCsrfToken(): string | null {
-    return this.csrfToken.value || sessionStorage.getItem(this.CSRF_TOKEN_KEY);
-  }
-
-  /**
-   * Guardar CSRF Token
-   */
-  setCsrfToken(token: string) {
-
-    if (typeof sessionStorage !== 'undefined') {
-
-      sessionStorage.setItem(this.CSRF_TOKEN_KEY, token);
-
-    }
-
-    this.csrfToken.next(token);
-  }
-
-  /**
-   * Generar CSRF Token
-   */
-  generateCsrfToken(): string {
-
-    const token = this.generateRandomToken(32);
-
-    this.setCsrfToken(token);
-
-    return token;
-  }
-
-  /**
-   * Verificar expiración del access token
-   */
-  isTokenExpired(): boolean {
-
-    const expiry = sessionStorage.getItem(this.TOKEN_EXPIRY_KEY);
-
-    if (!expiry) return false;
-
-    return Date.now() > parseInt(expiry);
-
-  }
-
-  /**
-   * Tiempo restante del access token
-   */
-  getTokenExpiryTime(): number {
-
-    const expiry = sessionStorage.getItem(this.TOKEN_EXPIRY_KEY);
-
-    if (!expiry) return 0;
-
-    const remaining = parseInt(expiry) - Date.now();
-
-    return Math.max(0, remaining);
-
-  }
-
-  /**
-   * Limpiar todos los tokens
-   */
-  clearTokens() {
-    this.accessToken.next(null);
-    this.refreshToken.next(null);
-    this.csrfToken.next(null);
-
-    if (typeof sessionStorage !== 'undefined') {
-
-      sessionStorage.removeItem(this.ACCESS_TOKEN_KEY);
-      sessionStorage.removeItem(this.REFRESH_TOKEN_KEY);
-      sessionStorage.removeItem(this.CSRF_TOKEN_KEY);
-      sessionStorage.removeItem(this.TOKEN_EXPIRY_KEY);
-
-    }
-
-  }
-
-  /**
-   * Generador criptográfico de tokens
-   */
-  private generateRandomToken(length: number): string {
-
-    const chars =
-      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-
-    let token = '';
-
-    if (typeof window !== 'undefined' && window.crypto) {
-
-      const array = new Uint8Array(length);
-
-      window.crypto.getRandomValues(array);
-
-      array.forEach((i) => {
-        token += chars[i % chars.length];
-      });
-
-    } else {
-
-      for (let i = 0; i < length; i++) {
-
-        token += chars.charAt(Math.floor(Math.random() * chars.length));
-
+      const payload = this.decodeToken(token);
+      if (payload?.sessionId) {
+        this.setSessionId(payload.sessionId);
       }
-
+      return;
     }
 
-    return token;
-
+    sessionStorage.removeItem(this.ACCESS_TOKEN_KEY);
   }
 
-  /**
-   * Restaurar tokens después de refresh del navegador
-   */
-  private loadTokensFromSession() {
+  setRefreshToken(token: string | null): void {
+    this.refreshToken$.next(token);
 
-    if (typeof sessionStorage === 'undefined') return;
-
-    const access = sessionStorage.getItem(this.ACCESS_TOKEN_KEY);
-    const refresh = sessionStorage.getItem(this.REFRESH_TOKEN_KEY);
-    const csrf = sessionStorage.getItem(this.CSRF_TOKEN_KEY);
-
-    if (access && !this.isTokenExpired()) {
-      this.accessToken.next(access);
+    if (token) {
+      sessionStorage.setItem(this.REFRESH_TOKEN_KEY, token);
+      return;
     }
 
-    if (refresh) {
-      this.refreshToken.next(refresh);
+    sessionStorage.removeItem(this.REFRESH_TOKEN_KEY);
+  }
+
+  setSessionId(sessionId: string | null): void {
+    this.sessionId$.next(sessionId);
+
+    if (sessionId) {
+      sessionStorage.setItem(this.SESSION_ID_KEY, sessionId);
+      return;
     }
 
-    if (csrf) {
-      this.csrfToken.next(csrf);
+    sessionStorage.removeItem(this.SESSION_ID_KEY);
+  }
+
+  setSessionTokens(accessToken: string, refreshToken: string, sessionId?: string): void {
+    this.setAccessToken(accessToken);
+    this.setRefreshToken(refreshToken);
+    if (sessionId) {
+      this.setSessionId(sessionId);
+    }
+  }
+
+  isAccessTokenExpired(bufferSeconds = 0): boolean {
+    const token = this.getAccessToken();
+    if (!token) {
+      return true;
     }
 
+    const payload = this.decodeToken(token);
+    if (!payload?.exp) {
+      return true;
+    }
+
+    return payload.exp * 1000 <= Date.now() + bufferSeconds * 1000;
+  }
+
+  clearTokens(): void {
+    this.accessToken$.next(null);
+    this.refreshToken$.next(null);
+    this.sessionId$.next(null);
+
+    sessionStorage.removeItem(this.ACCESS_TOKEN_KEY);
+    sessionStorage.removeItem(this.REFRESH_TOKEN_KEY);
+    sessionStorage.removeItem(this.SESSION_ID_KEY);
+  }
+
+  private restoreFromStorage(): void {
+    const accessToken = sessionStorage.getItem(this.ACCESS_TOKEN_KEY);
+    const refreshToken = sessionStorage.getItem(this.REFRESH_TOKEN_KEY);
+    const sessionId = sessionStorage.getItem(this.SESSION_ID_KEY);
+
+    if (accessToken) {
+      this.accessToken$.next(accessToken);
+    }
+
+    if (refreshToken) {
+      this.refreshToken$.next(refreshToken);
+    }
+
+    if (sessionId) {
+      this.sessionId$.next(sessionId);
+    }
+  }
+
+  private decodeToken(token: string): JwtPayload | null {
+    try {
+      return jwtDecode<JwtPayload>(token);
+    } catch {
+      return null;
+    }
   }
 }

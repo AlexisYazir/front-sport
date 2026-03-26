@@ -232,13 +232,22 @@ export class ForgotPassword implements OnDestroy {
       return;
     }
 
+    if (!this.recoveryCode()) {
+      this.passwordError.set('No se encontró el token de recuperación. Verifica el código nuevamente.');
+      return;
+    }
+
     this.isLoading.set(true);
 
-    this.authService.resetPassword(this.email(), this.newPassword()).subscribe({
+    this.authService.resetPassword(
+      this.email(),
+      this.newPassword(),
+      this.recoveryCode()
+    ).subscribe({
       next: () => {
         this.isLoading.set(false);
         this.cleanupIntervals();
-        this.clearRateLimit(); // Limpiar tras éxito
+        this.clearRateLimit();
         this.toastr.success('Contraseña restablecida exitosamente', 'Éxito');
         this.router.navigate(['/auth/login']);
       },

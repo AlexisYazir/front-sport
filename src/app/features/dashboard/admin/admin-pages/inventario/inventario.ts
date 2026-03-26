@@ -21,6 +21,8 @@ interface InventoryMovement {
   id_movimiento: number;
   id_variante: number;
   sku: string;
+  imagen_variante?: string;
+  imagenes_variante?: string[];
   tipo: 'entrada' | 'salida' | 'ajuste';
   cantidad: number;
   costo_unitario: number;
@@ -48,6 +50,8 @@ interface VariantSearchItem {
   marca: string;
   stock_actual: number;
   precio: number;
+  imagen?: string;
+  imagenes?: string[];
 }
 
 // ===== NUEVAS INTERFACES PARA EXCEL =====
@@ -310,7 +314,7 @@ export class Inventario implements OnInit {
 
   // Utilidades para la tabla
   getProductImage(product: InventoryProduct): string {
-    return 'assets/images/no-imagen.webp';
+    return product.imagen || 'assets/images/no-imagen.webp';
   }
 
   getStockValue(product: InventoryProduct): number {
@@ -351,10 +355,24 @@ export class Inventario implements OnInit {
     const productId = product.id_producto;
     
     if (this.togglingActive[productId]) return;
+
+    const nextState = !product.activo;
+    const stock = this.getStockValue(product);
+    const precio = product.precio ? Number(product.precio) : 0;
+
+    if (nextState && stock <= 0) {
+      this.toastr.warning('No puedes activar un producto con stock 0', 'Validacion');
+      return;
+    }
+
+    if (nextState && precio <= 0) {
+      this.toastr.warning('No puedes activar un producto con precio 0', 'Validacion');
+      return;
+    }
     
     this.togglingActive[productId] = true;
     const previousState = product.activo;
-    product.activo = !product.activo;
+    product.activo = nextState;
     
     const updateData = {
       id_producto: productId,
@@ -453,7 +471,19 @@ export class Inventario implements OnInit {
   }
 
   getMarcaImageUrl(product: InventoryProduct): string {
-    return product.imagen || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(product.producto) + '&background=0367A6&color=fff&size=64';
+    return product.imagen_marca || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(product.marca || product.producto) + '&background=0367A6&color=fff&size=64';
+  }
+
+  getMovementImage(movement: InventoryMovement): string {
+    if (movement.imagen_variante) {
+      return movement.imagen_variante;
+    }
+
+    if (movement.imagenes_variante && movement.imagenes_variante.length > 0) {
+      return movement.imagenes_variante[0];
+    }
+
+    return 'assets/images/no-imagen.webp';
   }
 
   // Función para previsualizar imagen
@@ -693,44 +723,18 @@ onFechaFinChange(value: string) {  // Cambiado de event a value
 
   loadVariantsForSearch() {
     this.loadingVariantsForSearch = true;
-    
-    // Necesitamos cargar todas las variantes de todos los productos
-    // Esto podría ser ineficiente si hay muchos productos, pero funciona
-    const variantPromises = this.products.map(product => 
-      this.productService.getProductVariants(product.id_producto).toPromise()
-    );
-    
-    Promise.all(variantPromises)
-      .then(results => {
-        const allVariants: VariantSearchItem[] = [];
-        
-        results.forEach((variants: any, index) => {
-          const product = this.products[index];
-          
-          if (variants && Array.isArray(variants)) {
-            variants.forEach((v: any) => {
-              allVariants.push({
-                id_variante: v.id_variante,
-                id_producto: v.id_producto,
-                sku: v.sku,
-                producto: product.producto,
-                marca: product.marca || '',
-                stock_actual: v.stock || 0,
-                precio: v.precio || 0
-              });
-            });
-          }
-        });
-        
-        this.allVariants = allVariants;
+    this.productService.getVariantsForInventoryMovement().subscribe({
+      next: (variants: VariantSearchItem[]) => {
+        this.allVariants = variants || [];
         this.filterVariantsForMovement();
         this.loadingVariantsForSearch = false;
-      })
-      .catch(error => {
+      },
+      error: (error) => {
         console.error('Error loading variants for search:', error);
         this.toastr.error('Error al cargar variantes', 'Error');
         this.loadingVariantsForSearch = false;
-      });
+      }
+    });
   }
 
   filterVariantsForMovement() {
@@ -738,12 +742,23 @@ onFechaFinChange(value: string) {  // Cambiado de event a value
       this.filteredVariantsForMovement = [];
       return;
     }
+
+    const sortedVariants = [...this.allVariants].sort((a, b) => {
+      const aStock = Number(a.stock_actual || 0);
+      const bStock = Number(b.stock_actual || 0);
+
+      if (aStock === 0 && bStock !== 0) return -1;
+      if (aStock !== 0 && bStock === 0) return 1;
+      if (aStock !== bStock) return aStock - bStock;
+
+      return a.sku.localeCompare(b.sku);
+    });
     
     if (!this.variantSearchTerm || this.variantSearchTerm.trim() === '') {
-      this.filteredVariantsForMovement = this.allVariants.slice(0, 10);
+      this.filteredVariantsForMovement = sortedVariants.slice(0, 10);
     } else {
       const term = this.variantSearchTerm.toLowerCase().trim();
-      this.filteredVariantsForMovement = this.allVariants.filter(v => 
+      this.filteredVariantsForMovement = sortedVariants.filter(v => 
         v.sku.toLowerCase().includes(term) ||
         v.producto.toLowerCase().includes(term) ||
         v.marca.toLowerCase().includes(term) ||

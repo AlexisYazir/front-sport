@@ -23,15 +23,17 @@ export interface User {
 export interface LoginRequest {
   email: string;
   passw: string;
-  code: string
+  code?: string;
+  deviceName?: string;
 }
 
 // Interface para Login Response
 export interface LoginResponse {
-  success: boolean;
-  message: string;
-  token?: string;
-  user?: User;
+  accessToken: string;
+  refreshToken: string;
+  sessionId: string;
+  accessTokenExpiresIn: string;
+  refreshTokenExpiresIn: string;
 }
 
 // Interface para Register Request
@@ -57,7 +59,8 @@ export interface RegisterResponse {
 export interface AuthState {
   isAuthenticated: boolean;
   user: User | null;
-  token: string | null;
+  accessToken: string | null;
+  sessionId: string | null;
 }
 
 // Helper para obtener nombre del rol

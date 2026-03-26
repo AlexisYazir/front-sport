@@ -5,6 +5,7 @@ import { ProductService } from '../../../../../core/services/product.service';
 import { RecientProduct, Attibute } from '../../../../../core/models/product.model';
 import { RouterModule } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
+import { firstValueFrom } from 'rxjs';
 
 // Interfaz para variantes - AHORA INCLUYE ATRIBUTOS
 interface ProductVariant {
@@ -61,6 +62,8 @@ export class NewProducts implements OnInit {
   
   // Estados
   saving: boolean = false;
+  uploadingImages: boolean = false;
+  dragOverImages: boolean = false;
   
   // Validaciones
   validationErrors = {
@@ -339,6 +342,11 @@ export class NewProducts implements OnInit {
   agregarImagen() {
     const variante = this.variantes[this.varianteActualIndex];
     if (variante.imagenInput && variante.imagenInput.trim()) {
+      if (!this.isValidUrl(variante.imagenInput.trim())) {
+        this.toastr.warning('Ingresa una URL valida para la imagen', 'Validacion');
+        return;
+      }
+
       variante.imagenes.push(variante.imagenInput.trim());
       variante.imagenInput = '';
     }
@@ -346,6 +354,92 @@ export class NewProducts implements OnInit {
 
   eliminarImagen(index: number) {
     this.variantes[this.varianteActualIndex].imagenes.splice(index, 1);
+  }
+
+  async onImageFilesSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files?.length) return;
+
+    await this.uploadImageFiles(Array.from(input.files));
+    input.value = '';
+  }
+
+  onImageDragOver(event: DragEvent) {
+    event.preventDefault();
+    this.dragOverImages = true;
+  }
+
+  onImageDragLeave(event: DragEvent) {
+    event.preventDefault();
+    this.dragOverImages = false;
+  }
+
+  async onImageDrop(event: DragEvent) {
+    event.preventDefault();
+    this.dragOverImages = false;
+
+    const files = Array.from(event.dataTransfer?.files || []);
+    if (!files.length) return;
+
+    await this.uploadImageFiles(files);
+  }
+
+  private async uploadImageFiles(files: File[]) {
+    const imageFiles = files.filter(file => file.type.startsWith('image/'));
+
+    if (imageFiles.length === 0) {
+      this.toastr.warning('Selecciona archivos de imagen validos', 'Validacion');
+      return;
+    }
+
+    this.uploadingImages = true;
+    let uploaded = 0;
+    const failed: string[] = [];
+
+    try {
+      for (const file of imageFiles) {
+        try {
+          const response = await firstValueFrom(
+            this.productService.uploadProductImage(file)
+          );
+
+          if (response?.secure_url) {
+            this.variantes[this.varianteActualIndex].imagenes.push(response.secure_url);
+            uploaded++;
+          } else {
+            failed.push(file.name);
+          }
+        } catch (error) {
+          console.error('Error al subir imagen:', error);
+          failed.push(file.name);
+        }
+      }
+    } finally {
+      this.uploadingImages = false;
+    }
+
+    if (uploaded > 0) {
+      this.toastr.success(
+        `${uploaded} imagen(es) subida(s) a Cloudinary correctamente`,
+        'Exito'
+      );
+    }
+
+    if (failed.length > 0) {
+      this.toastr.warning(
+        `No se pudieron subir: ${failed.join(', ')}`,
+        'Atencion'
+      );
+    }
+  }
+
+  isValidUrl(url: string): boolean {
+    try {
+      const parsed = new URL(url);
+      return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+    } catch {
+      return false;
+    }
   }
 
   // ===== FUNCIONES DE ATRIBUTOS =====

@@ -4,7 +4,7 @@ import { ToastrService } from 'ngx-toastr';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { ProductService } from '../../../../../core/services/product.service';
-import { Product, CreateProductDto, Categorie, Marca, Attibute, RecientProduct } from '../../../../../core/models/product.model';
+import { Product, CreateProductDto, Categorie, Marca, Attibute, RecientProduct, Sport } from '../../../../../core/models/product.model';
 
 // Interfaz para variantes existentes - SIN STOCK
 interface ExistingVariant {
@@ -83,6 +83,8 @@ export class Products implements OnInit {
   categoriasPadre: Categorie[] = [];
   subcategorias: Categorie[] = [];
   marcas: Marca[] = [];
+  sports: Sport[] = [];
+  selectedSports: number[] = [];
   
   showEditModal: boolean = false;
   selectedProduct: Product | null = null;
@@ -146,6 +148,7 @@ export class Products implements OnInit {
     this.loadProducts();
     this.loadCategories();
     this.loadMarcas();
+    this.loadSports();
     this.loadAttributes();
     this.loadNewProductsCount();
   }
@@ -236,6 +239,18 @@ export class Products implements OnInit {
       error: (error) => {
         console.error('Error loading marcas:', error);
         this.toastr.error('Error al cargar marcas', 'Error');
+      }
+    });
+  }
+
+  loadSports() {
+    this.productService.getSports().subscribe({
+      next: (data: Sport[]) => {
+        this.sports = data;
+      },
+      error: (error) => {
+        console.error('Error loading sports:', error);
+        this.toastr.error('Error al cargar deportes', 'Error');
       }
     });
   }
@@ -337,6 +352,7 @@ export class Products implements OnInit {
   openCreateModal() {
     this.nuevoProducto = { nombre: '', descripcion: '', id_marca: 0, id_categoria: 0 };
     this.validationErrors = { nombre: '', descripcion: '', id_marca: '', id_categoria: '' };
+    this.selectedSports = [];
     this.subcategorias = [];
     this.showCreateModal = true;
   }
@@ -348,6 +364,19 @@ export class Products implements OnInit {
 
   closeCreateModal() {
     this.showCreateModal = false;
+  }
+
+  toggleSportSelection(sportId: number) {
+    if (this.selectedSports.includes(sportId)) {
+      this.selectedSports = this.selectedSports.filter(id => id !== sportId);
+      return;
+    }
+
+    this.selectedSports = [...this.selectedSports, sportId];
+  }
+
+  isSportSelected(sportId: number): boolean {
+    return this.selectedSports.includes(sportId);
   }
 
   validateFields(): boolean {
@@ -378,12 +407,41 @@ export class Products implements OnInit {
 
     this.creatingProduct = true;
     this.productService.createBaseProduct(this.nuevoProducto).subscribe({
-      next: () => {
-        this.creatingProduct = false;
-        this.closeCreateModal();
-        this.loadProducts();
-        this.loadNewProductsCount();
-        this.toastr.success('Producto creado exitosamente', 'Éxito');
+      next: (createdProduct) => {
+        const productId = createdProduct?.id_producto;
+
+        if (!productId || this.selectedSports.length === 0) {
+          this.creatingProduct = false;
+          this.closeCreateModal();
+          this.loadProducts();
+          this.loadNewProductsCount();
+          this.toastr.success('Producto creado exitosamente', 'Éxito');
+          return;
+        }
+
+        this.productService.assignProductSports({
+          id_producto: productId,
+          ids_deportes: this.selectedSports
+        }).subscribe({
+          next: () => {
+            this.creatingProduct = false;
+            this.closeCreateModal();
+            this.loadProducts();
+            this.loadNewProductsCount();
+            this.toastr.success('Producto y deportes guardados exitosamente', 'Éxito');
+          },
+          error: (err) => {
+            this.creatingProduct = false;
+            this.closeCreateModal();
+            this.loadProducts();
+            this.loadNewProductsCount();
+            this.toastr.warning(
+              err.error?.message || 'El producto se creo, pero no se pudieron guardar los deportes',
+              'Atencion'
+            );
+            console.error('Error al asignar deportes:', err);
+          }
+        });
       },
       error: (err) => {
         this.creatingProduct = false;
