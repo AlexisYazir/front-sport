@@ -26,7 +26,14 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   const isExcluded = AUTH_EXCLUDED_URLS.some((url) => req.url.includes(url));
   if (isExcluded) {
-    return next(req);
+    return next(
+      req.clone({
+        withCredentials: true,
+        setHeaders: {
+          Accept: 'application/json',
+        },
+      }),
+    );
   }
 
   const cloneWithToken = (token: string | null) => {
@@ -38,7 +45,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
-    return req.clone({ setHeaders: headers });
+    return req.clone({ setHeaders: headers, withCredentials: true });
   };
 
   const sendRequest = (token: string | null) =>
@@ -46,7 +53,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
       catchError((error: HttpErrorResponse) => {
         const canRetry = !req.headers.has('X-Auth-Retry');
 
-        if (error.status === 401 && canRetry && tokenService.getRefreshToken()) {
+        if (error.status === 401 && canRetry && authService.isLoggedIn()) {
           return authService.refreshAccessToken().pipe(
             switchMap((newToken) =>
               next(
@@ -83,7 +90,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     );
 
   const token = tokenService.getAccessToken();
-  if (!token && tokenService.getRefreshToken()) {
+  if (!token && authService.isLoggedIn()) {
     return authService.refreshAccessToken().pipe(
       switchMap((newToken) => sendRequest(newToken)),
       catchError(() => {
@@ -94,7 +101,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     );
   }
 
-  if (token && authService.shouldRefreshSoon() && tokenService.getRefreshToken()) {
+  if (token && authService.shouldRefreshSoon()) {
     return authService.refreshAccessToken().pipe(
       switchMap((newToken) => sendRequest(newToken)),
       catchError(() => {

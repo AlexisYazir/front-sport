@@ -35,7 +35,7 @@
           <input [(ngModel)]="backupScheduleForm.name" class="w-full border rounded-lg px-3 py-2" placeholder="Nombre de la tarea" />
           <select [(ngModel)]="backupScheduleForm.type" class="w-full border rounded-lg px-3 py-2">
             <option value="full">Backup completo</option>
-            <option value="critical">Backup crítico</option>
+            <option value="critical">Backup prioritario</option>
           </select>
           <select [(ngModel)]="backupScheduleForm.scheduleType" class="w-full border rounded-lg px-3 py-2">
             <option value="daily">Diario</option>
@@ -74,13 +74,13 @@
       <div class="flex flex-col gap-4 mb-4">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div class="flex flex-wrap gap-3">
-            <button class="db-action-button bg-green-600 text-white hover:bg-green-700" (click)="openBackupConfirmModal('full')" [disabled]="isCreatingBackup()">
+            <button class="db-action-button bg-[#0367A6] text-white hover:bg-[#035A91]" (click)="openBackupConfirmModal('full')" [disabled]="isCreatingBackup()">
               <span class="material-symbols-outlined">database</span>
               Backup completo
             </button>
-            <button class="db-action-button bg-red-600 text-white hover:bg-red-700" (click)="openBackupConfirmModal('critical')" [disabled]="isCreatingBackup()">
+            <button class="db-action-button bg-green-600 text-white hover:bg-green-700" (click)="openBackupConfirmModal('critical')" [disabled]="isCreatingBackup()">
               <span class="material-symbols-outlined">security</span>
-              Backup crítico
+              Backup prioritario
             </button>
           </div>
         </div>
@@ -120,9 +120,9 @@
           <tbody>
             <tr *ngFor="let backup of paginatedBackups" class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
               <td class="px-4 py-3">
-                <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold" [ngClass]="backup.type === 'full' ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700'">
+                <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold" [ngClass]="backup.type === 'full' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'">
                   <span class="material-symbols-outlined text-base">{{ backupTypeIcon(backup.type) }}</span>
-                  {{ backup.type === 'full' ? 'Completo' : 'Crítico' }}
+                  {{ backup.type === 'full' ? 'Completo' : 'Prioritario' }}
                 </span>
               </td>
               <td class="px-4 py-3 font-mono text-xs">{{ backup.dumpFileName }}</td>
@@ -209,9 +209,9 @@
             <tr *ngFor="let schedule of paginatedBackupSchedules" class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
               <td class="px-4 py-3">{{ schedule.name }}</td>
               <td class="px-4 py-3">
-                <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold" [ngClass]="schedule.type === 'full' ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700'">
+                <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold" [ngClass]="schedule.type === 'full' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'">
                   <span class="material-symbols-outlined text-base">{{ schedule.type === 'full' ? 'database' : 'security' }}</span>
-                  {{ schedule.type === 'full' ? 'Completo' : 'Crítico' }}
+                  {{ schedule.type === 'full' ? 'Completo' : 'Prioritario' }}
                 </span>
               </td>
               <td class="px-4 py-3">
@@ -286,7 +286,7 @@
           <tbody>
             <tr *ngFor="let policy of paginatedRetentionPolicies" class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
               <td class="px-4 py-3">{{ policy.name }}</td>
-              <td class="px-4 py-3">{{ policy.type === 'all' ? 'Todos' : policy.type === 'full' ? 'Completos' : 'Críticos' }}</td>
+              <td class="px-4 py-3">{{ policy.type === 'all' ? 'Todos' : policy.type === 'full' ? 'Completos' : 'Prioritarios' }}</td>
               <td class="px-4 py-3">{{ policy.retentionDays }} días</td>
               <td class="px-4 py-3">{{ policy.description }}</td>
               <td class="px-4 py-3">{{ formatDate(policy.nextRunAt) }}</td>
@@ -783,7 +783,7 @@
         <label class="block text-sm font-medium text-[#202020] mb-2">Tipo de backup</label>
         <select [(ngModel)]="backupScheduleForm.type" class="w-full border rounded-lg px-3 py-2">
           <option value="full">Backup completo</option>
-          <option value="critical">Backup crítico</option>
+          <option value="critical">Backup prioritario</option>
         </select>
       </div>
       <div>
@@ -854,7 +854,7 @@
         <select [(ngModel)]="retentionPolicyForm.type" class="w-full border rounded-lg px-3 py-2">
           <option value="all">Todos los backups</option>
           <option value="full">Solo completos</option>
-          <option value="critical">Solo críticos</option>
+          <option value="critical">Solo prioritarios</option>
         </select>
       </div>
       <div>
@@ -1000,7 +1000,11 @@
       <div class="flex-1">
         <h3 class="text-lg font-semibold text-[#202020]">Confirmar backup</h3>
         <p class="text-sm text-[#666666] mt-1">
-          Se creará un backup {{ pendingBackupType() === 'full' ? 'completo' : 'crítico' }} con su carpeta y log asociado.
+          @if (pendingBackupType() === 'full') {
+            Se respaldarán todas las tablas de la base de datos, junto con su carpeta y log asociado. Tiempo aproximado de ejecución: 1 a 3 minutos, según el tamaño actual de la DB.
+          } @else {
+            Se respaldarán las tablas críticas del sistema: productos, variantes, inventario, movimientos, órdenes, pagos, usuarios, sesiones, marcas, categorías y configuraciones clave, junto con su carpeta y log asociado. Tiempo aproximado de ejecución: 20 a 60 segundos.
+          }
         </p>
       </div>
     </div>

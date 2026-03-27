@@ -84,7 +84,6 @@ export class AuthService {
 
   private loadAuthState(): void {
     const token = this.tokenService.getAccessToken();
-    const refreshToken = this.tokenService.getRefreshToken();
     const storedUser = this.getStoredUser();
 
     if (!storedUser) {
@@ -92,31 +91,21 @@ export class AuthService {
       return;
     }
 
-    if (!token && refreshToken) {
+    if (!token) {
       this.updateAuthState(true, storedUser, null, this.tokenService.getSessionId());
       this.sessionService.startInactivityCountdown();
       return;
     }
 
-    if (!token) {
-      this.clearAuthState(false);
-      return;
-    }
-
     const tokenData = this.decodeToken(token);
     if (!tokenData) {
-      this.clearAuthState(false);
-      return;
-    }
-
-    if (this.isTokenExpired(token) && refreshToken) {
-      this.updateAuthState(true, storedUser, null, tokenData.sessionId ?? this.tokenService.getSessionId());
-      this.sessionService.startInactivityCountdown();
+      this.updateAuthState(true, storedUser, null, this.tokenService.getSessionId());
       return;
     }
 
     if (this.isTokenExpired(token)) {
-      this.clearAuthState(false);
+      this.updateAuthState(true, storedUser, null, tokenData.sessionId ?? this.tokenService.getSessionId());
+      this.sessionService.startInactivityCountdown();
       return;
     }
 
@@ -142,8 +131,6 @@ export class AuthService {
     window.addEventListener('storage', (event) => {
       const relevantKeys = new Set([
         this.USER_KEY,
-        'auth:access_token',
-        'auth:refresh_token',
         'auth:session_id',
       ]);
 
@@ -285,7 +272,9 @@ export class AuthService {
       deviceName: credentials.deviceName ?? this.getDeviceName(),
     };
 
-    return this.http.post<LoginResponse>(`${this.API_URL}/users/login-user`, payload).pipe(
+    return this.http.post<LoginResponse>(`${this.API_URL}/users/login-user`, payload, {
+      withCredentials: true,
+    }).pipe(
       tap((response) => {
         this.handleAuthenticationResponse(response, {
           navigate: true,
@@ -321,18 +310,16 @@ export class AuthService {
   }
 
   refreshAccessToken(): Observable<string> {
-    const refreshToken = this.tokenService.getRefreshToken();
-
-    if (!refreshToken) {
-      return throwError(() => new Error('No refresh token available'));
-    }
-
     if (this.refreshRequest$) {
       return this.refreshRequest$;
     }
 
     this.refreshRequest$ = this.http
-      .post<LoginResponse>(`${this.API_URL}/users/refresh-token`, { refreshToken })
+      .post<LoginResponse>(
+        `${this.API_URL}/users/refresh-token`,
+        { refreshToken: this.tokenService.getRefreshToken() ?? undefined },
+        { withCredentials: true },
+      )
       .pipe(
         map((response) => {
           const user = this.currentUser() ?? this.getStoredUser();
@@ -358,12 +345,12 @@ export class AuthService {
       this.router.navigate(['/home']);
     };
 
-    if (!notifyServer || !this.tokenService.getAccessToken()) {
+    if (!notifyServer || (!this.tokenService.getAccessToken() && !this.getStoredUser())) {
       finalizeLogout();
       return;
     }
 
-    this.http.post(`${this.API_URL}/users/logout`, {}).pipe(
+    this.http.post(`${this.API_URL}/users/logout`, {}, { withCredentials: true }).pipe(
       catchError(() => of(null)),
       finalize(() => finalizeLogout()),
     ).subscribe();
@@ -380,7 +367,7 @@ export class AuthService {
   isLoggedIn(): boolean {
     return (
       this.isAuthenticated() &&
-      (!!this.tokenService.getAccessToken() || !!this.tokenService.getRefreshToken())
+      (!!this.tokenService.getAccessToken() || !!this.getStoredUser())
     );
   }
 

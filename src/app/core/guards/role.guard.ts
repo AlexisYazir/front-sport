@@ -46,8 +46,8 @@ export function roleGuard(allowedRoles: UserRole[]): CanActivateFn {
  * Guards específicos para cada rol
  */
 export const adminGuard: CanActivateFn = roleGuard([UserRole.ADMIN]);
-export const empleadoGuard: CanActivateFn = roleGuard([UserRole.EMPLEADO, UserRole.ADMIN]);
-export const usuarioGuard: CanActivateFn = roleGuard([UserRole.USUARIO, UserRole.EMPLEADO, UserRole.ADMIN]);
+export const empleadoGuard: CanActivateFn = roleGuard([UserRole.EMPLEADO]);
+export const usuarioGuard: CanActivateFn = roleGuard([UserRole.USUARIO]);
 
 // Import helper
 import { getDashboardRoute } from '../models/user.model';
