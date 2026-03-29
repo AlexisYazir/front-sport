@@ -1,5 +1,6 @@
 import { Injectable, inject, signal, effect } from '@angular/core';
 import { Router } from '@angular/router';
+import { environment } from '../../../environments/environment';
 
 /**
  * Gestiona sesiones, timeouts de inactividad y bloqueo de cuenta
@@ -14,7 +15,8 @@ export class SessionService {
   private readonly INACTIVITY_TIMEOUT = 24 * 60 * 60 * 1000; // 1 día
   private readonly LOCK_TIME = 5 * 60 * 1000; // 5 minutos de bloqueo
   private readonly MAX_FAILED_ATTEMPTS = 5;
-  private readonly TOKEN_KEY = 'auth:access_token';
+  private readonly SESSION_ID_KEY = 'auth:session_id';
+  private readonly USER_KEY = environment.storageKeys.user;
 
   // Estado de sesión
   isActive = signal<boolean>(true);
@@ -57,7 +59,7 @@ export class SessionService {
    */
   private isLoggedIn(): boolean {
     if (typeof localStorage === 'undefined') return false;
-    return !!localStorage.getItem(this.TOKEN_KEY);
+    return !!localStorage.getItem(this.USER_KEY) || !!localStorage.getItem(this.SESSION_ID_KEY);
   }
 
   /**
@@ -113,14 +115,13 @@ export class SessionService {
     
     // Limpiar localStorage sin inyectar AuthService
     if (typeof localStorage !== 'undefined') {
-      localStorage.removeItem(this.TOKEN_KEY);
       localStorage.removeItem('auth:access_token');
       localStorage.removeItem('auth:refresh_token');
       localStorage.removeItem('auth:session_id');
+      localStorage.removeItem(this.USER_KEY);
     }
 
     if (typeof sessionStorage !== 'undefined') {
-      sessionStorage.removeItem(this.TOKEN_KEY);
       sessionStorage.removeItem('auth:access_token');
       sessionStorage.removeItem('auth:refresh_token');
       sessionStorage.removeItem('auth:session_id');

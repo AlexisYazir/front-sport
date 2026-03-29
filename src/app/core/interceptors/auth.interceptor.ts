@@ -71,7 +71,11 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
           );
         }
 
-        if (error.status === 401 || error.status === 403) {
+        if (error.status === 403) {
+          return throwError(() => error);
+        }
+
+        if (error.status === 401) {
           toastr.error(
             'Tu sesión ya no es válida. Inicia sesión nuevamente.',
             'Sesión expirada',
@@ -91,17 +95,6 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     );
 
   const token = tokenService.getAccessToken();
-  if (!token && authService.isLoggedIn()) {
-    return authService.refreshAccessToken().pipe(
-      switchMap((newToken) => sendRequest(newToken)),
-      catchError(() => {
-        authService.logout(false);
-        router.navigate(['/auth/login']);
-        return throwError(() => new Error('Unable to restore session'));
-      }),
-    );
-  }
-
   if (token && authService.shouldRefreshSoon()) {
     return authService.refreshAccessToken().pipe(
       switchMap((newToken) => sendRequest(newToken)),
