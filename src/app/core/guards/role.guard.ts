@@ -27,7 +27,7 @@ export function roleGuard(allowedRoles: UserRole[]): CanActivateFn {
     if (!authService.hasAnyRole(allowedRoles)) {
       const user = authService.getCurrentUser();
       toastr.error('No tienes permisos para acceder a esta sección', 'Acceso Denegado');
-      
+
       // Redirigir a su dashboard correspondiente
       if (user) {
         const dashboardRoute = getDashboardRoute(user.rol);

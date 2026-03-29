@@ -9,6 +9,7 @@ import { TokenService } from '../services/token.service';
 const AUTH_EXCLUDED_URLS = [
   '/users/login-user',
   '/users/refresh-token',
+  '/users/session',
   '/users/create-user',
   '/users/auth/google-login',
   '/users/verify-email',

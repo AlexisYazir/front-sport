@@ -5,6 +5,7 @@ import { ToastrService } from 'ngx-toastr';
 import { FormsModule } from '@angular/forms';
 import { UsersAdmin, Roles } from '../../../../../core/models/user.model';
 import { RouterModule } from '@angular/router';
+import { formatMexicoDate } from '../../../../../core/utils/date-time.util';
 
 interface UserWithEditState extends UsersAdmin {
   editing: boolean;
@@ -329,11 +330,6 @@ export class Users implements OnInit {
   }
 
   formatDate(dateString: string): string {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('es-MX', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
+    return formatMexicoDate(dateString);
   }
 }

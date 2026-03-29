@@ -1,16 +1,20 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject, of } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
+import { map, catchError, finalize } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { Product, Category, ProductFilters, ProductSearchResult, Categorie, Marca, Attibute, Orders,InventoryProduct, RecientProduct, ProductVariant } from '../models/product.model';
+import { RequestCacheService } from './request-cache.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ProductService {
   private http = inject(HttpClient);
+  private cache = inject(RequestCacheService);
   private readonly API_URL = environment.apiUrl;
+  private readonly CACHE_TTL = 60_000;
+  private readonly SHORT_CACHE_TTL = 20_000;
 
   // Estado reactivo para productos
   private productsSubject = new BehaviorSubject<Product[]>([]);
@@ -148,17 +152,19 @@ export class ProductService {
   loadProducts(): Observable<Product[]> {
     this.isLoading.set(true);
 
-    return this.http
-      .get<any[]>(`${this.API_URL}/products/get-all-products`)
+    return this.cache
+      .getOrSet(
+        'products:list',
+        () => this.http.get<any[]>(`${this.API_URL}/products/get-all-products`),
+        this.CACHE_TTL,
+      )
       .pipe(
         map(response => {
-           console.log('📦 RESPUESTA CRUDA DE LA API:', response);
           const mapped = response.map(p => this.mapProductFromApi(p));
           this.productsSubject.next(mapped);
-          this.isLoading.set(false);
-          console.log("prods", mapped);
           return mapped;
-        })
+        }),
+        finalize(() => this.isLoading.set(false))
       );
   }
 
@@ -172,14 +178,18 @@ export class ProductService {
   loadMarcas(): Observable<Marca[]> {
     this.isLoading.set(true);
 
-    return this.http
-      .get<any[]>(`${this.API_URL}/products/get-all-marcas`)
+    return this.cache
+      .getOrSet(
+        'products:marcas',
+        () => this.http.get<any[]>(`${this.API_URL}/products/get-all-marcas`),
+        this.CACHE_TTL,
+      )
       .pipe(
         map(response => {
           const mapped = response.map(p => this.mapMarcaFromApi(p));
-          this.isLoading.set(false);
           return mapped;
-        })
+        }),
+        finalize(() => this.isLoading.set(false))
       );
   }
 
@@ -193,28 +203,36 @@ export class ProductService {
   loadCategorias(): Observable<Categorie[]> {
     this.isLoading.set(true);
 
-    return this.http
-      .get<any[]>(`${this.API_URL}/products/get-all-categories`)
+    return this.cache
+      .getOrSet(
+        'products:categorias',
+        () => this.http.get<any[]>(`${this.API_URL}/products/get-all-categories`),
+        this.CACHE_TTL,
+      )
       .pipe(
         map(response => {
           const mappedC = response.map(c => this.mapCategoriaFromApi(c));
-          this.isLoading.set(false);
           return mappedC;
-        })
+        }),
+        finalize(() => this.isLoading.set(false))
       );
   }
 
     getAttributes(): Observable<Attibute[]> {
     this.isLoading.set(true);
 
-    return this.http
-      .get<any[]>(`${this.API_URL}/products/get-all-attributes`)
+    return this.cache
+      .getOrSet(
+        'products:attributes',
+        () => this.http.get<any[]>(`${this.API_URL}/products/get-all-attributes`),
+        this.CACHE_TTL,
+      )
       .pipe(
         map(response => {
           const mapped = response.map(a => this.mapAttributeFromApi(a));
-          this.isLoading.set(false);
           return mapped;
-        })
+        }),
+        finalize(() => this.isLoading.set(false))
       );
   }
 
@@ -222,66 +240,85 @@ export class ProductService {
     getInventoryProducts(): Observable<InventoryProduct[]> {
     this.isLoading.set(true);
 
-    return this.http
-      .get<any[]>(`${this.API_URL}/products/get-inventory-products`)
+    return this.cache
+      .getOrSet(
+        'products:inventory',
+        () => this.http.get<any[]>(`${this.API_URL}/products/get-inventory-products`),
+        this.SHORT_CACHE_TTL,
+      )
       .pipe(
         map(response => {
           const mapped = response.map(p => this.mapInventoryProductFromApi(p));
-          this.isLoading.set(false);
           return mapped;
-        })
+        }),
+        finalize(() => this.isLoading.set(false))
       );
   }
 getProductVariants(id_producto: number): Observable<ProductVariant[]> {
   this.isLoading.set(true);
-  return this.http.get<any[]>(`${this.API_URL}/products/get-variants-by-product/${id_producto}`).pipe(
+  return this.cache.getOrSet(
+    `products:variants:${id_producto}`,
+    () => this.http.get<any[]>(`${this.API_URL}/products/get-variants-by-product/${id_producto}`),
+    this.SHORT_CACHE_TTL,
+  ).pipe(
     map(response => {
-      console.log('📦 Respuesta de variantes (SERVICE):', response); // ← Debug
-      this.isLoading.set(false);
       return response.map(v => this.mapProductVariantFromApi(v));
-    })
+    }),
+    finalize(() => this.isLoading.set(false))
   );
 }
 
     getReceientProducts(): Observable<any[]> {
         this.isLoading.set(true);
     
-        return this.http
-          .get<any[]>(`${this.API_URL}/products/get-recient-products`)
+        return this.cache
+          .getOrSet(
+            'products:recent',
+            () => this.http.get<any[]>(`${this.API_URL}/products/get-recient-products`),
+            this.SHORT_CACHE_TTL,
+          )
           .pipe(
             map(response => {
               const mapped = response.map(u => this.mapRecentProductCreatedFromApi(u));
-              this.isLoading.set(false);
               return mapped;
-            })
+            }),
+            finalize(() => this.isLoading.set(false))
           );
       }
 
   getProductsWithoutVariantsAttributes(): Observable<any[]> {
     this.isLoading.set(true);
 
-    return this.http
-      .get<any[]>(`${this.API_URL}/products/get-products-without-variants-attributes`)
+    return this.cache
+      .getOrSet(
+        'products:without-variants-attributes',
+        () => this.http.get<any[]>(`${this.API_URL}/products/get-products-without-variants-attributes`),
+        this.SHORT_CACHE_TTL,
+      )
       .pipe(
         map(response => {
           const mapped = response.map(u => this.mapRecentProductCreatedFromApi(u));
-          this.isLoading.set(false);
           return mapped;
-        })
+        }),
+        finalize(() => this.isLoading.set(false))
       );
   }
 
   getOrdersEmployee(): Observable<any[]> {
     this.isLoading.set(true);
 
-    return this.http
-      .get<any[]>(`${this.API_URL}/products/get-all-orders`)
+    return this.cache
+      .getOrSet(
+        'products:orders',
+        () => this.http.get<any[]>(`${this.API_URL}/products/get-all-orders`),
+        this.SHORT_CACHE_TTL,
+      )
       .pipe(
         map(response => {
           const mapped = response.map(u => this.mapOrdersEmployeeFromApi(u));
-          this.isLoading.set(false);
           return mapped;
-        })
+        }),
+        finalize(() => this.isLoading.set(false))
       );
   }
   
@@ -297,13 +334,14 @@ getProductById(id: number): Observable<Product | null> {
   this.isLoading.set(true);
   
   // Usar el endpoint específico en lugar de filtrar todos los productos
-  return this.http
-    .get<any>(`${this.API_URL}/products/get-product-details/${id}`)  // 👈 Endpoint correcto
+  return this.cache
+    .getOrSet(
+      `products:detail:${id}`,
+      () => this.http.get<any>(`${this.API_URL}/products/get-product-details/${id}`),
+      this.SHORT_CACHE_TTL,
+    )
     .pipe(
       map(response => {
-        this.isLoading.set(false);
-        console.log('Producto encontrado:', response);
-        
         // Si el endpoint devuelve un array con un solo producto
         if (Array.isArray(response) && response.length > 0) {
           return this.mapProductFromApi(response[0]);
@@ -317,9 +355,9 @@ getProductById(id: number): Observable<Product | null> {
       }),
       catchError(error => {
         console.error('Error fetching product details:', error);
-        this.isLoading.set(false);
         return of(null); // Retorna null en caso de error
-      })
+      }),
+      finalize(() => this.isLoading.set(false))
     );
 }
 
@@ -399,9 +437,10 @@ createBaseProduct(data: { nombre: string, descripcion: string, id_marca: number,
   this.isLoading.set(true);
   return this.http.post(`${this.API_URL}/products/create-product`, data).pipe(
     map(res => {
-      this.isLoading.set(false);
+      this.invalidateProductCaches();
       return res; // Retorna el objeto que contiene el id_producto creado
-    })
+    }),
+    finalize(() => this.isLoading.set(false))
   );
 }
 
@@ -409,9 +448,10 @@ assignProductSports(data: { id_producto: number, ids_deportes: number[] }): Obse
   this.isLoading.set(true);
   return this.http.post(`${this.API_URL}/products/assign-product-sports`, data).pipe(
     map(res => {
-      this.isLoading.set(false);
+      this.invalidateProductCaches(data.id_producto);
       return res;
-    })
+    }),
+    finalize(() => this.isLoading.set(false))
   );
 }
 
@@ -425,9 +465,10 @@ createProductVariant(data: {id_producto: number, sku: string, precio: number, im
     .post(`${this.API_URL}/products/create-product-variant`, data)
     .pipe(
       map((res) => {
-        this.isLoading.set(false);
+        this.invalidateProductCaches(data.id_producto);
         return res;
-      })
+      }),
+      finalize(() => this.isLoading.set(false))
     );
 }
 
@@ -444,9 +485,10 @@ createProductVariantValues(data: { id_variante: number, id_atributo: number, val
   this.isLoading.set(true);
   return this.http.post(`${this.API_URL}/products/create-variant-attribute-values`, data).pipe(
     map(res => {
-      this.isLoading.set(false);
+      this.cache.invalidate(`products:variants:`);
       return res; // Retorna el objeto creado
-    })
+    }),
+    finalize(() => this.isLoading.set(false))
   );
 }
 
@@ -463,9 +505,10 @@ createInventoryMovement(data: {
 
   return this.http.post(`${this.API_URL}/products/create-inventory-movement`, data).pipe(
     map(res => {
-      this.isLoading.set(false);
+      this.invalidateInventoryCaches();
       return res;
-    })
+    }),
+    finalize(() => this.isLoading.set(false))
   );
 }
 
@@ -474,9 +517,10 @@ bulkCreateInventoryMovements(movements: any[]): Observable<any> {
   this.isLoading.set(true);
   return this.http.post(`${this.API_URL}/products/inventory-movements/bulk`, { movements }).pipe(
     map(res => {
-      this.isLoading.set(false);
+      this.invalidateInventoryCaches();
       return res;
-    })
+    }),
+    finalize(() => this.isLoading.set(false))
   );
 }
 
@@ -484,18 +528,26 @@ bulkCreateInventoryMovements(movements: any[]): Observable<any> {
 getInventoryMovements(): Observable<any> {
   this.isLoading.set(true);
 
-  return this.http
-    .get(`${this.API_URL}/products/inventory-movements`)
-    .pipe(
-      map((res) => {
-        this.isLoading.set(false);
-        return res;
-      })
-    );
+    return this.cache
+      .getOrSet(
+        'products:inventory-movements',
+        () => this.http.get(`${this.API_URL}/products/inventory-movements`),
+        this.SHORT_CACHE_TTL,
+      )
+      .pipe(
+        map((res) => {
+          return res;
+        }),
+        finalize(() => this.isLoading.set(false))
+      );
 }
 
 getVariantsForInventoryMovement(): Observable<any[]> {
-  return this.http.get<any[]>(`${this.API_URL}/products/inventory-movements/variants`);
+  return this.cache.getOrSet(
+    'products:inventory-movement-variants',
+    () => this.http.get<any[]>(`${this.API_URL}/products/inventory-movements/variants`),
+    this.SHORT_CACHE_TTL,
+  );
 }
 
 createCatetorie(data: { nombre: string, id_padre: number | null }): Observable<any> {
@@ -503,9 +555,10 @@ createCatetorie(data: { nombre: string, id_padre: number | null }): Observable<a
   //
   return this.http.post(`${this.API_URL}/products/create-categorie`, data).pipe(
     map(res => {
-      this.isLoading.set(false);
+      this.invalidateCategoryCaches();
       return res;
-    })
+    }),
+    finalize(() => this.isLoading.set(false))
   );
 }
 
@@ -514,9 +567,10 @@ updateCatetorie(data: { id_categoria: number, nombre: string, id_padre: number |
   //
   return this.http.put(`${this.API_URL}/products/update-categorie`, data).pipe(
     map(res => {
-      this.isLoading.set(false);
+      this.invalidateCategoryCaches();
       return res;
-    })
+    }),
+    finalize(() => this.isLoading.set(false))
   );
 }
 
@@ -525,9 +579,11 @@ updateProductInv(data: { id_producto: number, estado: boolean }): Observable<any
   //
   return this.http.put(`${this.API_URL}/products/update-product-inventory`, data).pipe(
     map(res => {
-      this.isLoading.set(false);
+      this.invalidateProductCaches(data.id_producto);
+      this.invalidateInventoryCaches();
       return res;
-    })
+    }),
+    finalize(() => this.isLoading.set(false))
   );
 }
 
@@ -536,9 +592,10 @@ updateProductFull(data: { id_producto: number, id_marca: number, id_categoria: n
   //
   return this.http.put(`${this.API_URL}/products/update-product-full`, data).pipe(
     map(res => {
-      this.isLoading.set(false);
+      this.invalidateProductCaches(data.id_producto);
       return res;
-    })
+    }),
+    finalize(() => this.isLoading.set(false))
   );
 }
 
@@ -554,9 +611,10 @@ updateProductVariant(data: {
   
   return this.http.put(`${this.API_URL}/products/update-product-variant`, data).pipe(
     map(res => {
-      this.isLoading.set(false);
+      this.invalidateProductCaches(data.id_producto);
       return res;
-    })
+    }),
+    finalize(() => this.isLoading.set(false))
   );
 }
 
@@ -566,9 +624,10 @@ createMarca(data: { nombre: string, imagen: string }): Observable<any> {
   
   return this.http.post(`${this.API_URL}/products/create-marca`, data).pipe(
     map(res => {
-      this.isLoading.set(false);
+      this.invalidateBrandCaches();
       return res;
-    })
+    }),
+    finalize(() => this.isLoading.set(false))
   );
 }
 
@@ -577,9 +636,10 @@ updateMarca(data: { id_marca: number, nombre: string, imagen: string }): Observa
   
   return this.http.post(`${this.API_URL}/products/update-marca`, data).pipe(
     map(res => {
-      this.isLoading.set(false);
+      this.invalidateBrandCaches();
       return res;
-    })
+    }),
+    finalize(() => this.isLoading.set(false))
   );
 }
 
@@ -595,9 +655,12 @@ createVariantAttributeValue(data: { id_variante: number, id_atributo: number, va
  * Función extra para crear nuevos atributos (Talla, Color, etc)
  * POST: /products/create-attribute
  */
-createAttribute(nombre: string): Observable<Attibute> {
+  createAttribute(nombre: string): Observable<Attibute> {
   return this.http.post<any>(`${this.API_URL}/products/create-attribute`, { nombre }).pipe(
-    map(res => this.mapAttributeFromApi(res))
+    map(res => {
+      this.cache.invalidate('products:attributes');
+      return this.mapAttributeFromApi(res);
+    })
   );
 }
 
@@ -621,11 +684,12 @@ createAttribute(nombre: string): Observable<Attibute> {
       .put<any>(`${this.API_URL}/products/update-product/${id}`, apiProduct)
       .pipe(
         map(response => {
-          this.isLoading.set(false);
+          this.invalidateProductCaches(id);
           // Recargar productos para actualizar la lista
           this.loadProducts().subscribe();
           return this.mapProductFromApi(response);
-        })
+        }),
+        finalize(() => this.isLoading.set(false))
       );
   }
 
@@ -639,10 +703,11 @@ createAttribute(nombre: string): Observable<Attibute> {
       .delete<void>(`${this.API_URL}/products/delete-product/${id}`)
       .pipe(
         map(() => {
-          this.isLoading.set(false);
+          this.invalidateProductCaches(id);
           // Recargar productos para actualizar la lista
           this.loadProducts().subscribe();
-        })
+        }),
+        finalize(() => this.isLoading.set(false))
       );
   }
 
@@ -850,26 +915,86 @@ createAttribute(nombre: string): Observable<Attibute> {
   // product.service.ts - Agrega estos métodos
 
 // Obtener categorías por padre (ropa, accesorios)
-getCategoriesByParent(parentId: number): Observable<Category[]> {
-  return this.http.get<Category[]>(`${this.API_URL}/products/menu/categories-by-parent/${parentId}`);
+  getCategoriesByParent(parentId: number): Observable<Category[]> {
+  return this.cache.getOrSet(
+    `products:menu:categories-by-parent:${parentId}`,
+    () => this.http.get<Category[]>(`${this.API_URL}/products/menu/categories-by-parent/${parentId}`),
+    this.CACHE_TTL,
+  );
 }
 
 // Obtener deportes
 getSports(): Observable<any[]> {
-  return this.http.get<any[]>(`${this.API_URL}/products/menu/sports`);
+  return this.cache.getOrSet(
+    'products:menu:sports',
+    () => this.http.get<any[]>(`${this.API_URL}/products/menu/sports`),
+    this.CACHE_TTL,
+  );
 }
 
 // Obtener menú completo
 getCompleteMenu(): Observable<any> {
-  return this.http.get(`${this.API_URL}/products/menu/complete-menu`);
+  return this.cache.getOrSet(
+    'products:menu:complete',
+    () => this.http.get(`${this.API_URL}/products/menu/complete-menu`),
+    this.CACHE_TTL,
+  );
 }
 
 getAllOrders(): Observable<any[]> {
-  return this.http.get<any[]>(`${this.API_URL}/products/get-all-orders`);
+  return this.cache.getOrSet(
+    'products:orders',
+    () => this.http.get<any[]>(`${this.API_URL}/products/get-all-orders`),
+    this.SHORT_CACHE_TTL,
+  );
 }
 
 getOrdersById(id: number): Observable<any> {
-  return this.http.get<any[]>(`${this.API_URL}/products/get-order-details/${id}`);
+  return this.cache.getOrSet(
+    `products:order-detail:${id}`,
+    () => this.http.get<any[]>(`${this.API_URL}/products/get-order-details/${id}`),
+    this.SHORT_CACHE_TTL,
+  );
 }
+
+  clearRequestCache(): void {
+    this.cache.invalidate('products:');
+  }
+
+  private invalidateProductCaches(idProducto?: number): void {
+    this.cache.invalidate('products:list');
+    this.cache.invalidate('products:recent');
+    this.cache.invalidate('products:without-variants-attributes');
+    this.cache.invalidate('products:orders');
+    this.cache.invalidate('products:inventory-movement-variants');
+    this.cache.invalidate('products:menu:complete');
+    this.cache.invalidate('products:detail:');
+    this.cache.invalidate('products:variants:');
+    if (idProducto) {
+      this.cache.invalidate(`products:detail:${idProducto}`);
+      this.cache.invalidate(`products:variants:${idProducto}`);
+    }
+  }
+
+  private invalidateInventoryCaches(): void {
+    this.cache.invalidate('products:inventory');
+    this.cache.invalidate('products:inventory-movements');
+    this.cache.invalidate('products:inventory-movement-variants');
+    this.cache.invalidate('products:variants:');
+    this.cache.invalidate('products:detail:');
+    this.cache.invalidate('products:list');
+  }
+
+  private invalidateCategoryCaches(): void {
+    this.cache.invalidate('products:categorias');
+    this.cache.invalidate('products:menu:categories-by-parent:');
+    this.cache.invalidate('products:menu:complete');
+    this.cache.invalidate('products:list');
+  }
+
+  private invalidateBrandCaches(): void {
+    this.cache.invalidate('products:marcas');
+    this.cache.invalidate('products:list');
+  }
 
 }

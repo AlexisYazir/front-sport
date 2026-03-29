@@ -48,16 +48,13 @@ export const guestGuard: CanActivateFn = (route, state) => {
   }
 
   const isLoggedIn = authService.isLoggedIn();
-  // console.log('🔍 guestGuard - isLoggedIn:', isLoggedIn, 'URL:', state.url);
 
   if (!isLoggedIn) {
     return true;
   }
 
-  // Si ya está autenticado y NO hay navegación en progreso, redirigir
   const user = authService.getCurrentUser();
   if (user) {
-    // console.log('⚠️ Usuario ya autenticado, redirigiendo a dashboard:', getDashboardRoute(user.rol));
     const dashboardRoute = getDashboardRoute(user.rol);
     router.navigate([dashboardRoute]);
   }

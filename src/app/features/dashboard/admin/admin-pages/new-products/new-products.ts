@@ -6,6 +6,7 @@ import { RecientProduct, Attibute } from '../../../../../core/models/product.mod
 import { RouterModule } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { firstValueFrom } from 'rxjs';
+import { formatMexicoDateTime } from '../../../../../core/utils/date-time.util';
 
 // Interfaz para variantes - AHORA INCLUYE ATRIBUTOS
 interface ProductVariant {
@@ -243,13 +244,12 @@ export class NewProducts implements OnInit {
   }
 
   formatDate(dateString: string): string {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('es-MX', {
+    return formatMexicoDateTime(dateString, 'es-MX', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   }
 

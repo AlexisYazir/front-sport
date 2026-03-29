@@ -31,6 +31,7 @@ import {
 } from '../models/user.model';
 import { TokenService } from './token.service';
 import { SessionService } from './session.service';
+import { RequestCacheService } from './request-cache.service';
 
 interface JwtPayload {
   id_usuario: number;
@@ -53,6 +54,7 @@ export class AuthService {
   private toastr = inject(ToastrService);
   private tokenService = inject(TokenService);
   private sessionService = inject(SessionService);
+  private requestCache = inject(RequestCacheService);
 
   public isLoading = signal<boolean>(false);
   public currentUser = signal<User | null>(null);
@@ -76,6 +78,7 @@ export class AuthService {
   constructor() {
     this.loadAuthState();
     this.initializeStorageSync();
+    this.restoreSessionFromCookies();
   }
 
   currentUser$(): Observable<User | null> {
@@ -138,6 +141,42 @@ export class AuthService {
         this.loadAuthState();
       }
     });
+  }
+
+  private restoreSessionFromCookies(): void {
+    const token = this.tokenService.getAccessToken();
+    const storedUser = this.getStoredUser();
+    const storedSessionId = this.tokenService.getSessionId();
+
+    if (token) {
+      return;
+    }
+
+    this.http
+      .get<LoginResponse>(`${this.API_URL}/users/session`, { withCredentials: true })
+      .pipe(
+        tap((response) => {
+          const existingUser = storedUser ?? this.currentUser() ?? undefined;
+          this.handleAuthenticationResponse(response, { navigate: false });
+
+          if (existingUser) {
+            const refreshedUser = this.currentUser();
+            if (refreshedUser) {
+              this.storeUser({
+                ...existingUser,
+                ...refreshedUser,
+              });
+            }
+          }
+        }),
+        catchError(() => {
+          if (!storedUser && !storedSessionId) {
+            this.updateAuthState(false, null, null, null);
+          }
+          return of(null);
+        }),
+      )
+      .subscribe();
   }
 
   private buildUserFromToken(tokenData: JwtPayload, fallback?: Partial<User>): User {
@@ -247,6 +286,7 @@ export class AuthService {
     localStorage.removeItem('auth_timestamp');
     this.tokenService.clearTokens();
     this.sessionService.clearSession();
+    this.requestCache.clear();
     this.updateAuthState(false, null, null, null);
 
     if (redirect) {

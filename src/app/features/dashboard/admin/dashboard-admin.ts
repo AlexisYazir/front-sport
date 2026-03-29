@@ -6,6 +6,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { ProductService } from '../../../core/services/product.service';
 import { RecentUserCreated, getRoleName } from '../../../core/models/user.model';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { formatMexicoDate } from '../../../core/utils/date-time.util';
 
 @Component({
   selector: 'app-dashboard-admin',
@@ -213,12 +214,7 @@ export class DashboardAdmin implements OnInit {
   }
 
   formatDate(dateString: string): string {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('es-MX', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
+    return formatMexicoDate(dateString);
   }
 
   //mejor mieerda jajaja 

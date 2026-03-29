@@ -5,6 +5,7 @@ import { ToastrService } from 'ngx-toastr';
 import { ProductService } from '../../../../../core/services/product.service';
 import { InventoryProduct, ProductVariant } from '../../../../../core/models/product.model';
 import * as XLSX from 'xlsx';
+import { formatMexicoDateTime, parseApiDate } from '../../../../../core/utils/date-time.util';
 
 // Interfaz para variantes existentes (SOLO VISUALIZACIÓN)
 interface ExistingVariant {
@@ -546,7 +547,8 @@ applyMovementsFilters() {
     fechaInicio.setHours(0, 0, 0, 0);
     
     filtered = filtered.filter(m => {
-      const fechaMovimiento = new Date(m.fecha);
+      const fechaMovimiento = parseApiDate(m.fecha);
+      if (!fechaMovimiento) return false;
       fechaMovimiento.setHours(0, 0, 0, 0); // Ignorar hora para comparar solo fecha
       return fechaMovimiento >= fechaInicio;
     });
@@ -558,7 +560,8 @@ applyMovementsFilters() {
     fechaFin.setHours(23, 59, 59, 999);
     
     filtered = filtered.filter(m => {
-      const fechaMovimiento = new Date(m.fecha);
+      const fechaMovimiento = parseApiDate(m.fecha);
+      if (!fechaMovimiento) return false;
       return fechaMovimiento <= fechaFin;
     });
   }
@@ -680,13 +683,12 @@ onFechaFinChange(value: string) {  // Cambiado de event a value
   }
 
   formatDate(dateString: string): string {
-    const date = new Date(dateString);
-    return date.toLocaleString('es-ES', {
+    return formatMexicoDateTime(dateString, 'es-ES', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   }
 
@@ -1123,13 +1125,12 @@ private exportToExcel(data: any[], filename: string) {
 
 // Formatear fecha para export
 private formatDateForExport(dateString: string): string {
-  const date = new Date(dateString);
-  return date.toLocaleString('es-ES', {
+  return formatMexicoDateTime(dateString, 'es-ES', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
     hour: '2-digit',
-    minute: '2-digit'
+    minute: '2-digit',
   });
 }
 }

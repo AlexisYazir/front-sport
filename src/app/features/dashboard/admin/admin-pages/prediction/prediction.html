@@ -629,7 +629,7 @@
     />
 
     <div>
-      <h3 class="text-xl font-bold">Predicción de ventas por categoría y subcategoria</h3>
+      <h3 class="text-xl font-bold">Predicción de ventas del producto</h3>
       <p class="text-sm text-white/90 mt-0.5">
         {{ selectedProduct?.nombre }}
       </p>
@@ -661,9 +661,9 @@
           <div class="flex items-start gap-3">
             <span class="material-symbols-outlined text-green-700 mt-0.5">auto_graph</span>
             <div>
-              <p class="font-semibold text-green-800">Modelo de Predicción Multifuncional</p>
+              <p class="font-semibold text-green-800">Proyección de ventas</p>
               <p class="text-sm text-green-700 mt-1">
-                El tiempo se calcula con el historial mensual del producto, la categoría corresponde a la categoría padre y la subcategoría corresponde al tipo específico del producto.
+                Esta estimación toma como base el historial de ventas del producto seleccionado para proyectar su comportamiento en los próximos meses.
               </p>
             </div>
           </div>
@@ -769,36 +769,30 @@
 
         </div>
 
-        <!-- Coeficientes -->
+        <!-- Resumen del comportamiento -->
         <div class="mb-6 rounded-xl border border-gray-200 p-4">
           <div class="flex items-center gap-2 mb-4">
             <span class="material-symbols-outlined text-[#0367A6]">functions</span>
-            <h4 class="text-lg font-bold text-[#202020]">Coeficientes del modelo</h4>
+            <h4 class="text-lg font-bold text-[#202020]">Resumen del comportamiento</h4>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
-              <p class="text-xs uppercase tracking-wide text-gray-500">a</p>
-              <p class="text-xl font-bold text-[#202020] mt-1">{{ predictionModel.a }}</p>
-              <p class="text-xs text-gray-500 mt-1">Valor inicial de ventas</p>
+              <p class="text-xs uppercase tracking-wide text-gray-500">Condición inicial</p>
+              <p class="text-xl font-bold text-[#202020] mt-1">{{ predictionModel.x0 }}</p>
+              <p class="text-xs text-gray-500 mt-1">Ventas registradas en {{ predictionModel.initialLabel }}</p>
             </div>
 
             <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
-              <p class="text-xs uppercase tracking-wide text-gray-500">b1</p>
-              <p class="text-xl font-bold text-[#202020] mt-1">{{ predictionModel.b1 }}</p>
-              <p class="text-xs text-gray-500 mt-1">Impacto del tiempo</p>
+              <p class="text-xs uppercase tracking-wide text-gray-500">Ritmo estimado</p>
+              <p class="text-xl font-bold text-[#202020] mt-1">{{ predictionModel.k }}</p>
+              <p class="text-xs text-gray-500 mt-1">Qué tan rápido podrían subir o bajar las ventas</p>
             </div>
 
             <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
-              <p class="text-xs uppercase tracking-wide text-gray-500">b2</p>
-              <p class="text-xl font-bold text-[#202020] mt-1">{{ predictionModel.b2 }}</p>
-              <p class="text-xs text-gray-500 mt-1">Impacto de categoría</p>
-            </div>
-
-            <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
-              <p class="text-xs uppercase tracking-wide text-gray-500">b3</p>
-              <p class="text-xl font-bold text-[#202020] mt-1">{{ predictionModel.b3 }}</p>
-              <p class="text-xs text-gray-500 mt-1">Impacto de subcategoría</p>
+              <p class="text-xs uppercase tracking-wide text-gray-500">Tendencia</p>
+              <p class="text-xl font-bold text-[#202020] mt-1 capitalize">{{ predictionModel.trendType }}</p>
+              <p class="text-xs text-gray-500 mt-1">Comportamiento esperado en los próximos meses</p>
             </div>
           </div>
         </div>

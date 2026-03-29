@@ -21,6 +21,7 @@ import {
 
 import { ProductService } from '../../../../../core/services/product.service';
 import { Categorie } from '../../../../../core/models/product.model';
+import { formatMexicoDateTime, parseApiDate } from '../../../../../core/utils/date-time.util';
 
 Chart.register(
   BarController,
@@ -90,12 +91,12 @@ interface PredictionPoint {
 }
 
 interface PredictionModelResult {
-  a: number;
-  b1: number;
-  b2: number;
-  b3: number;
+  x0: number;
+  k: number;
+  trendType: 'crecimiento' | 'decrecimiento' | 'estable';
   averagePrice: number;
   historicalMonths: number;
+  initialLabel: string;
   projections: PredictionPoint[];
 }
 
@@ -553,8 +554,7 @@ export class Prediction implements OnInit {
   }
 
   formatDateTime(date: string): string {
-    if (!date) return '-';
-    return new Date(date).toLocaleString('es-MX');
+    return formatMexicoDateTime(date);
   }
 
   get totalRecords(): number {
@@ -625,7 +625,8 @@ export class Prediction implements OnInit {
     const map = new Map<string, GroupedSale>();
 
     for (const item of this.salesDetailRaw) {
-      const date = new Date(item.fecha_creacion);
+      const date = parseApiDate(item.fecha_creacion);
+      if (!date) continue;
       const keyData = this.getGroupKey(date, this.detailPeriod);
 
       if (!map.has(keyData.key)) {
@@ -827,17 +828,15 @@ export class Prediction implements OnInit {
         ? product.ingresos_totales / product.total_vendido
         : this.getAverageUnitPriceBySubcategory(product.categoria);
 
-    const timeModel = this.calculateTimeRegression(monthlyHistory);
-    const b2 = this.calculateCategoryImpact(product.categoria_padre);
-    const b3 = this.calculateSubcategoryImpact(product.categoria);
+    const exponentialModel = this.calculateExponentialModel(monthlyHistory);
 
     const projections: PredictionPoint[] = [];
 
     for (let i = 1; i <= this.predictionHorizon; i++) {
-      const t = historicalMonths + i;
+      const futureTime = (historicalMonths - 1) + i;
       const projectedSales = Math.max(
         0,
-        timeModel.a + (timeModel.b1 * t) + b2 + b3
+        exponentialModel.x0 * Math.exp(exponentialModel.k * futureTime)
       );
 
       const salesRounded = this.round2(projectedSales);
@@ -852,12 +851,12 @@ export class Prediction implements OnInit {
     }
 
     return {
-      a: this.round2(timeModel.a),
-      b1: this.round2(timeModel.b1),
-      b2: this.round2(b2),
-      b3: this.round2(b3),
+      x0: this.round2(exponentialModel.x0),
+      k: this.round2(exponentialModel.k),
+      trendType: exponentialModel.trendType,
       averagePrice: this.round2(averagePrice),
       historicalMonths,
+      initialLabel: monthlyHistory[0]?.label ?? 'Sin historial',
       projections
     };
   }
@@ -866,7 +865,8 @@ export class Prediction implements OnInit {
     const map = new Map<string, MonthlySalePoint>();
 
     for (const item of details) {
-      const date = new Date(item.fecha_creacion);
+      const date = parseApiDate(item.fecha_creacion);
+      if (!date) continue;
       const year = date.getFullYear();
       const month = date.getMonth();
       const key = `${year}-${this.pad(month + 1)}`;
@@ -914,79 +914,75 @@ export class Prediction implements OnInit {
     return result;
   }
 
-  private calculateTimeRegression(history: MonthlySalePoint[]): { a: number; b1: number } {
+  private calculateExponentialModel(history: MonthlySalePoint[]): {
+    x0: number;
+    k: number;
+    trendType: 'crecimiento' | 'decrecimiento' | 'estable';
+  } {
     if (history.length === 0) {
-      return { a: 0, b1: 0 };
+      return { x0: 0, k: 0, trendType: 'estable' };
     }
 
     if (history.length === 1) {
+      const onlyValue = Number(history[0].cantidad || 0);
       return {
-        a: Number(history[0].cantidad || 0),
-        b1: 0
+        x0: onlyValue,
+        k: 0,
+        trendType: 'estable'
       };
     }
 
-    const x = history.map((_, index) => index + 1);
-    const y = history.map((item) => Number(item.cantidad || 0));
+    const positiveHistory = history
+      .map((item, index) => ({
+        t: index,
+        y: Number(item.cantidad || 0)
+      }))
+      .filter((point) => point.y > 0);
+
+    const initialSales = Number(history[0]?.cantidad || 0);
+    const fallbackBase = initialSales > 0 ? initialSales : Number(history[history.length - 1]?.cantidad || 0);
+
+    if (positiveHistory.length < 2) {
+      return {
+        x0: fallbackBase,
+        k: 0,
+        trendType: 'estable'
+      };
+    }
+
+    const x = positiveHistory.map((point) => point.t);
+    const y = positiveHistory.map((point) => Math.log(point.y));
 
     const n = x.length;
     const sumX = x.reduce((acc, val) => acc + val, 0);
     const sumY = y.reduce((acc, val) => acc + val, 0);
     const sumXY = x.reduce((acc, val, index) => acc + (val * y[index]), 0);
     const sumX2 = x.reduce((acc, val) => acc + (val * val), 0);
-
     const denominator = (n * sumX2) - (sumX * sumX);
 
     if (denominator === 0) {
       return {
-        a: sumY / n,
-        b1: 0
+        x0: fallbackBase,
+        k: 0,
+        trendType: 'estable'
       };
     }
 
-    const b1 = ((n * sumXY) - (sumX * sumY)) / denominator;
-    const a = (sumY - (b1 * sumX)) / n;
+    const k = ((n * sumXY) - (sumX * sumY)) / denominator;
+    const lnC = (sumY - (k * sumX)) / n;
+    const x0 = initialSales > 0 ? initialSales : Math.exp(lnC);
 
     return {
-      a,
-      b1
+      x0,
+      k,
+      trendType: this.getTrendType(k)
     };
   }
 
-  private calculateCategoryImpact(categoriaPadre: string | null): number {
-    if (!categoriaPadre || this.orders.length === 0) return 0;
-
-    const globalAvg =
-      this.orders.reduce((acc, item) => acc + item.total_vendido, 0) / this.orders.length;
-
-    const sameCategory = this.orders.filter(
-      (item) => (item.categoria_padre || '').toLowerCase() === categoriaPadre.toLowerCase()
-    );
-
-    if (sameCategory.length === 0) return 0;
-
-    const categoryAvg =
-      sameCategory.reduce((acc, item) => acc + item.total_vendido, 0) / sameCategory.length;
-
-    return (categoryAvg - globalAvg) * 0.25;
-  }
-
-  private calculateSubcategoryImpact(subcategoria: string): number {
-    if (!subcategoria || this.orders.length === 0) return 0;
-
-    const globalAvg =
-      this.orders.reduce((acc, item) => acc + item.total_vendido, 0) / this.orders.length;
-
-    const sameSubcategory = this.orders.filter(
-      (item) => item.categoria.toLowerCase() === subcategoria.toLowerCase()
-    );
-
-    if (sameSubcategory.length === 0) return 0;
-
-    const subcategoryAvg =
-      sameSubcategory.reduce((acc, item) => acc + item.total_vendido, 0) / sameSubcategory.length;
-
-    return (subcategoryAvg - globalAvg) * 0.35;
+  private getTrendType(k: number): 'crecimiento' | 'decrecimiento' | 'estable' {
+    if (k > 0.03) return 'crecimiento';
+    if (k < -0.03) return 'decrecimiento';
+    return 'estable';
   }
 
   private getAverageUnitPriceBySubcategory(subcategoria: string): number {
@@ -1049,20 +1045,20 @@ export class Prediction implements OnInit {
   getPredictionText(): string {
   if (!this.predictionModel) return 'Sin información';
 
-  const b1 = this.predictionModel.b1;
+  const k = this.predictionModel.k;
 
-  if (b1 > 0.3) return 'Este producto podría venderse más en los próximos meses';
-  if (b1 < -0.3) return 'Este producto podría venderse menos en los próximos meses';
-  return 'Este producto podría mantenerse estable en ventas';
+  if (k > 0.03) return 'Este producto muestra una tendencia de crecimiento en ventas';
+  if (k < -0.03) return 'Este producto muestra una tendencia de decrecimiento en ventas';
+  return 'Este producto muestra un comportamiento estable en ventas';
 }
 
 getPredictionClass(): string {
   if (!this.predictionModel) return 'bg-gray-100 text-gray-700';
 
-  const b1 = this.predictionModel.b1;
+  const k = this.predictionModel.k;
 
-  if (b1 > 0.3) return 'bg-green-100 text-green-700';
-  if (b1 < -0.3) return 'bg-red-100 text-red-700';
+  if (k > 0.03) return 'bg-green-100 text-green-700';
+  if (k < -0.03) return 'bg-red-100 text-red-700';
   return 'bg-blue-100 text-blue-700';
 }
 

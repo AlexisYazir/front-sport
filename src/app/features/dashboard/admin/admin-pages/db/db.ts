@@ -28,6 +28,7 @@ import {
   VacuumLogInfo,
   VacuumSchedule,
 } from '../../../../../core/services/backup.service';
+import { formatMexicoDateTime, formatMexicoNow } from '../../../../../core/utils/date-time.util';
 
 Chart.register(
   BarController,
@@ -915,8 +916,7 @@ export class DbPage implements OnInit, OnDestroy {
   }
 
   formatDate(date: string | Date | null): string {
-    if (!date) return 'N/A';
-    return new Date(date).toLocaleString('es-MX');
+    return formatMexicoDateTime(date);
   }
 
   backupTypeIcon(type: BackupType): string {
@@ -1010,7 +1010,7 @@ export class DbPage implements OnInit, OnDestroy {
   }
 
   private nowLabel(): string {
-    return new Date().toLocaleString('es-MX');
+    return formatMexicoNow();
   }
 
   private paginate<T>(items: T[], currentPage: number): T[] {
