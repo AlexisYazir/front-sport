@@ -56,7 +56,7 @@ export class DashboardAdmin implements OnInit {
     { icon: 'branding_watermark', label: 'Marcas & Categ', route: '/dashboard/admin/marcas-categorias' },
     { icon: 'people', label: 'Usuarios', route: '/dashboard/admin/users' },
     { icon: 'database', label: 'DB Admin', route: '/dashboard/admin/db' },
-    // { icon: 'domain', label: 'Perfil Empresa', route: '/dashboard/admin/empresa' },
+    { icon: 'domain', label: 'Perfil Empresa', route: '/dashboard/admin/empresa' },
     { icon: 'monitoring', label: 'Predicción ventas', route: '/dashboard/admin/predictions' },
     // { icon: 'person', label: 'Perfil', route: '/dashboard/admin/profile' },
     { icon: 'settings', label: 'Configuración', route: '/dashboard/admin/settings' },

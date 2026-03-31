@@ -47,6 +47,10 @@ export class TokenService {
       if (payload?.sessionId) {
         this.setSessionId(payload.sessionId);
       }
+
+      localStorage.setItem(this.ACCESS_TOKEN_KEY, token);
+      sessionStorage.removeItem(this.ACCESS_TOKEN_KEY);
+      return;
     }
 
     localStorage.removeItem(this.ACCESS_TOKEN_KEY);
@@ -55,6 +59,13 @@ export class TokenService {
 
   setRefreshToken(token: string | null): void {
     this.refreshToken$.next(token);
+
+    if (token) {
+      localStorage.setItem(this.REFRESH_TOKEN_KEY, token);
+      sessionStorage.removeItem(this.REFRESH_TOKEN_KEY);
+      return;
+    }
+
     localStorage.removeItem(this.REFRESH_TOKEN_KEY);
     sessionStorage.removeItem(this.REFRESH_TOKEN_KEY);
   }
@@ -108,21 +119,31 @@ export class TokenService {
   }
 
   private restoreFromStorage(): void {
+    const accessToken =
+      localStorage.getItem(this.ACCESS_TOKEN_KEY) ??
+      sessionStorage.getItem(this.ACCESS_TOKEN_KEY);
+    const refreshToken =
+      localStorage.getItem(this.REFRESH_TOKEN_KEY) ??
+      sessionStorage.getItem(this.REFRESH_TOKEN_KEY);
     const sessionId = localStorage.getItem(this.SESSION_ID_KEY) ?? sessionStorage.getItem(this.SESSION_ID_KEY);
-    this.accessToken$.next(null);
-    this.refreshToken$.next(null);
+    this.accessToken$.next(accessToken);
+    this.refreshToken$.next(refreshToken);
+
+    if (accessToken) {
+      localStorage.setItem(this.ACCESS_TOKEN_KEY, accessToken);
+      sessionStorage.removeItem(this.ACCESS_TOKEN_KEY);
+    }
+
+    if (refreshToken) {
+      localStorage.setItem(this.REFRESH_TOKEN_KEY, refreshToken);
+      sessionStorage.removeItem(this.REFRESH_TOKEN_KEY);
+    }
 
     if (sessionId) {
       this.sessionId$.next(sessionId);
       localStorage.setItem(this.SESSION_ID_KEY, sessionId);
       sessionStorage.removeItem(this.SESSION_ID_KEY);
     }
-
-    // Limpia tokens heredados de implementaciones anteriores.
-    localStorage.removeItem(this.ACCESS_TOKEN_KEY);
-    localStorage.removeItem(this.REFRESH_TOKEN_KEY);
-    sessionStorage.removeItem(this.ACCESS_TOKEN_KEY);
-    sessionStorage.removeItem(this.REFRESH_TOKEN_KEY);
   }
 
   private decodeToken(token: string): JwtPayload | null {

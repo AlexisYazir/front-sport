@@ -1,51 +1,106 @@
 import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, finalize } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
+import { RequestCacheService } from './request-cache.service';
+
+export interface CompanyInfo {
+  id_empresa?: number;
+  nombre: string;
+  rfc?: string | null;
+  telefono?: string | null;
+  email?: string | null;
+  sitio_web?: string | null;
+  id_direccion?: number | null;
+  facebook?: string | null;
+  instagram?: string | null;
+  twitter?: string | null;
+  tiktok?: string | null;
+  youtube?: string | null;
+  regimen_fiscal?: string | null;
+  logo_url?: string | null;
+  horario_atencion?: string | null;
+  mision?: string | null;
+  vision?: string | null;
+  valores?: string[];
+  mapa_ubicacion?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface CompanyFaq {
+  id_faq: number;
+  pregunta: string;
+  respuesta: string;
+  orden?: number;
+  seccion?: string | null;
+  palabras_clave?: string[];
+  activo: boolean;
+  destacado?: boolean;
+  contador_vistas?: number;
+  contador_util?: number;
+  created_at?: string;
+  updated_at?: string;
+}
 
 @Injectable({
   providedIn: 'root'
 })
 export class CompanyService {
   private readonly API_URL = environment.apiUrl;
+  private readonly CACHE_TTL = 60_000;
   isLoading = signal<boolean>(false);
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private cache: RequestCacheService,
+  ) {}
 
   // ========== COMPANY INFO ==========
   
   // Obtener información de la empresa
-  getCompanyInfo(): Observable<any> {
+  getCompanyInfo(): Observable<CompanyInfo> {
     this.isLoading.set(true);
-    return this.http.get(`${this.API_URL}/company/info`).pipe(
-      map(res => {
-        this.isLoading.set(false);
-        return res;
-      })
+    return this.cache.getOrSet(
+      'company:info',
+      () => this.http.get<CompanyInfo>(`${this.API_URL}/company/info`),
+      this.CACHE_TTL,
+    ).pipe(
+      finalize(() => this.isLoading.set(false)),
     );
   }
 
   // Crear información de empresa (solo admin)
-  createCompanyInfo(data: any): Observable<any> {
+  createCompanyInfo(data: Partial<CompanyInfo>): Observable<CompanyInfo> {
     this.isLoading.set(true);
-    return this.http.post(`${this.API_URL}/company/info`, data).pipe(
-      map(res => {
-        this.isLoading.set(false);
+    return this.http.post<CompanyInfo>(`${this.API_URL}/company/info`, data).pipe(
+      map((res) => {
+        this.cache.invalidate('company:info');
         return res;
-      })
+      }),
+      finalize(() => this.isLoading.set(false)),
     );
   }
 
   // Actualizar información de empresa (solo admin)
-  updateCompanyInfo(data: any): Observable<any> {
+  updateCompanyInfo(data: Partial<CompanyInfo>): Observable<CompanyInfo> {
     this.isLoading.set(true);
-    return this.http.patch(`${this.API_URL}/company/info`, data).pipe(
-      map(res => {
-        this.isLoading.set(false);
+    return this.http.patch<CompanyInfo>(`${this.API_URL}/company/info`, data).pipe(
+      map((res) => {
+        this.cache.invalidate('company:info');
         return res;
-      })
+      }),
+      finalize(() => this.isLoading.set(false)),
     );
+  }
+
+  uploadCompanyLogo(file: File, folder = 'sport-center/company'): Observable<any> {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('folder', folder);
+
+    return this.http.post(`${this.API_URL}/products/upload-image`, formData);
   }
 
   // ========== FAQS ==========
@@ -57,7 +112,12 @@ export class CompanyService {
     if (activo !== undefined) {
       url += `?activo=${activo}`;
     }
-    return this.http.get(url).pipe(
+    const cacheKey = activo === undefined ? 'company:faqs:all' : `company:faqs:${activo}`;
+    return this.cache.getOrSet(
+      cacheKey,
+      () => this.http.get<CompanyFaq[]>(url),
+      this.CACHE_TTL,
+    ).pipe(
       map(res => {
         this.isLoading.set(false);
         return res;
@@ -103,6 +163,7 @@ export class CompanyService {
     this.isLoading.set(true);
     return this.http.post(`${this.API_URL}/company/faqs`, data).pipe(
       map(res => {
+        this.cache.invalidate('company:faqs:');
         this.isLoading.set(false);
         return res;
       })
@@ -114,6 +175,7 @@ export class CompanyService {
     this.isLoading.set(true);
     return this.http.patch(`${this.API_URL}/company/faqs/${id}`, data).pipe(
       map(res => {
+        this.cache.invalidate('company:faqs:');
         this.isLoading.set(false);
         return res;
       })
@@ -125,6 +187,7 @@ export class CompanyService {
     this.isLoading.set(true);
     return this.http.delete(`${this.API_URL}/company/faqs/${id}`).pipe(
       map(res => {
+        this.cache.invalidate('company:faqs:');
         this.isLoading.set(false);
         return res;
       })

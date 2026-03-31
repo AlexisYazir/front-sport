@@ -1,7 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { CompanyService } from '../../../core/services/company.service';
+import { CompanyInfo, CompanyService } from '../../../core/services/company.service';
 
 @Component({
   selector: 'app-nosotros',
@@ -13,7 +13,7 @@ import { CompanyService } from '../../../core/services/company.service';
 export class Nosotros implements OnInit {
   private companyService = inject(CompanyService);
   
-  companyInfo: any = null;
+  companyInfo: CompanyInfo | null = null;
 
   ngOnInit() {
     this.loadCompanyInfo();
@@ -28,5 +28,18 @@ export class Nosotros implements OnInit {
         console.error('Error cargando info de empresa:', error);
       }
     });
+  }
+
+  get valores(): string[] {
+    return this.companyInfo?.valores?.length
+      ? this.companyInfo.valores
+      : ['Calidad', 'Servicio', 'Compromiso', 'Pasión por el deporte'];
+  }
+
+  get horarioLineas(): string[] {
+    return (this.companyInfo?.horario_atencion || '')
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean);
   }
 }

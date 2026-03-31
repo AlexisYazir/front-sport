@@ -1,59 +1,53 @@
-<!-- Footer - Solo visible para usuarios no admin -->
 <footer *ngIf="!isAdmin" class="bg-[#202020] text-white">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
     <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-      <!-- Logo y descripción -->
       <div class="col-span-1 md:col-span-2">
-        <div class="flex items-center space-x-2 mb-4">
+        <div class="flex items-center space-x-3 mb-4">
           <span class="material-symbols-outlined text-[#0367A6] text-2xl font-variation-settings-wght-400">storefront</span>
-          <span class="text-xl font-bold text-white">Sport Center</span>
+          <span class="text-xl font-bold text-white">{{ companyInfo?.nombre || 'Sport Center' }}</span>
         </div>
+
         <p class="text-[#A6A6A6] mb-6 max-w-md">
-          Tu tienda deportiva online de confianza con los mejores productos y precios competitivos. Equipamiento profesional para atletas de todos los niveles.
+          {{ companyInfo?.mision || 'Tu tienda deportiva online de confianza con los mejores productos y una experiencia más clara para explorar, comprar y volver cuando lo necesites.' }}
         </p>
-        <div class="flex space-x-4">
-          <a href="#" class="text-[#A6A6A6] hover:text-[#0367A6] transition-colors">
-            <span class="material-symbols-outlined font-variation-settings-wght-400">facebook</span>
-          </a>
-          <a href="#" class="text-[#A6A6A6] hover:text-[#0367A6] transition-colors">
-            <span class="material-symbols-outlined font-variation-settings-wght-400">sports_soccer</span>
-          </a>
-          <a href="#" class="text-[#A6A6A6] hover:text-[#0367A6] transition-colors">
-            <span class="material-symbols-outlined font-variation-settings-wght-400">contact_mail</span>
-          </a>
+
+        <div class="space-y-2 text-sm text-[#A6A6A6]">
+          <p *ngIf="companyInfo?.telefono">Teléfono: {{ companyInfo?.telefono }}</p>
+          <p *ngIf="companyInfo?.email">Correo: {{ companyInfo?.email }}</p>
         </div>
       </div>
       
-      <!-- Categorías de Productos -->
       <div>
-        <h3 class="text-sm font-semibold uppercase tracking-wider mb-4 text-white">Categorías</h3>
+        <h3 class="text-sm font-semibold uppercase tracking-wider mb-4 text-white">Empresa</h3>
         <ul class="space-y-2">
-          <li><a routerLink="/products/running" class="text-[#A6A6A6] hover:text-[#0367A6] transition-colors">Running</a></li>
-          <li><a routerLink="/products/fitness" class="text-[#A6A6A6] hover:text-[#0367A6] transition-colors">Fitness</a></li>
-          <li><a routerLink="/products/football" class="text-[#A6A6A6] hover:text-[#0367A6] transition-colors">Fútbol</a></li>
-          <li><a routerLink="/products/basketball" class="text-[#A6A6A6] hover:text-[#0367A6] transition-colors">Basketball</a></li>
-          <li><a routerLink="/products/yoga" class="text-[#A6A6A6] hover:text-[#0367A6] transition-colors">Yoga</a></li>
+          <li><a routerLink="/info/nosotros" class="text-[#A6A6A6] hover:text-[#0367A6] transition-colors">Nosotros</a></li>
+          <li><a routerLink="/info/ubicacion" class="text-[#A6A6A6] hover:text-[#0367A6] transition-colors">Ubicación</a></li>
+          <li><a routerLink="/support/contact" class="text-[#A6A6A6] hover:text-[#0367A6] transition-colors">Contacto</a></li>
+          <li><a routerLink="/support/preguntas-frecuentes" class="text-[#A6A6A6] hover:text-[#0367A6] transition-colors">Preguntas frecuentes</a></li>
         </ul>
       </div>
       
-      <!-- Servicio al Cliente -->
       <div>
-        <h3 class="text-sm font-semibold uppercase tracking-wider mb-4 text-white">Soporte</h3>
+        <h3 class="text-sm font-semibold uppercase tracking-wider mb-4 text-white">Legal</h3>
         <ul class="space-y-2">
-          <li><a routerLink="/support/help" class="text-[#A6A6A6] hover:text-[#0367A6] transition-colors">Centro de Ayuda</a></li>
-          <li><a routerLink="/support/contact" class="text-[#A6A6A6] hover:text-[#0367A6] transition-colors">Contacto</a></li>
-          <li><a routerLink="/support/returns" class="text-[#A6A6A6] hover:text-[#0367A6] transition-colors">Devoluciones</a></li>
-          <li><a routerLink="/support/shipping" class="text-[#A6A6A6] hover:text-[#0367A6] transition-colors">Envíos</a></li>
-          <li><a routerLink="/support/warranty" class="text-[#A6A6A6] hover:text-[#0367A6] transition-colors">Garantía</a></li>
+          <li><a routerLink="/legal/terms" class="text-[#A6A6A6] hover:text-[#0367A6] transition-colors">Términos y condiciones</a></li>
+          <li><a routerLink="/legal/privacy" class="text-[#A6A6A6] hover:text-[#0367A6] transition-colors">Política de privacidad</a></li>
+          <li>
+            <a *ngIf="companyInfo?.sitio_web" [href]="companyInfo?.sitio_web || '#'" target="_blank" rel="noopener noreferrer" class="text-[#A6A6A6] hover:text-[#0367A6] transition-colors">
+              Sitio oficial
+            </a>
+          </li>
         </ul>
       </div>
     </div>
     
     <div class="border-t border-[#666666] mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
-      <p class="text-[#A6A6A6] text-sm">&copy; 2024 Sport Center. Todos los derechos reservados.</p>
+      <p class="text-[#A6A6A6] text-sm">&copy; 2026 {{ companyInfo?.nombre || 'Sport Center' }}. Todos los derechos reservados.</p>
       <div class="flex space-x-6 mt-4 md:mt-0">
-        <a href="#" class="text-[#A6A6A6] hover:text-[#0367A6] text-sm transition-colors">Términos de Servicio</a>
-        <a href="#" class="text-[#A6A6A6] hover:text-[#0367A6] text-sm transition-colors">Política de Privacidad</a>
+        <a *ngIf="companyInfo?.facebook" [href]="companyInfo?.facebook || '#'" target="_blank" rel="noopener noreferrer" class="text-[#A6A6A6] hover:text-[#0367A6] text-sm transition-colors">Facebook</a>
+        <a *ngIf="companyInfo?.instagram" [href]="companyInfo?.instagram || '#'" target="_blank" rel="noopener noreferrer" class="text-[#A6A6A6] hover:text-[#0367A6] text-sm transition-colors">Instagram</a>
+        <a *ngIf="companyInfo?.twitter" [href]="companyInfo?.twitter || '#'" target="_blank" rel="noopener noreferrer" class="text-[#A6A6A6] hover:text-[#0367A6] text-sm transition-colors">X</a>
+        <a *ngIf="companyInfo?.tiktok" [href]="companyInfo?.tiktok || '#'" target="_blank" rel="noopener noreferrer" class="text-[#A6A6A6] hover:text-[#0367A6] text-sm transition-colors">TikTok</a>
       </div>
     </div>
   </div>

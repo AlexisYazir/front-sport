@@ -1,1 +1,616 @@
-<p>empresa works!</p>
+<div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+  <div class="mb-6 p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-100 shadow-sm flex items-center justify-between gap-4 flex-wrap">
+    <div class="flex items-center gap-3">
+      <div class="bg-[#0367A6]/10 p-3 rounded-xl">
+        <span class="material-symbols-outlined text-[#0367A6] text-2xl">domain</span>
+      </div>
+      <div>
+        <h2 class="text-2xl font-bold text-[#202020]">Perfil de Empresa</h2>
+        <p class="text-sm text-[#666666] mt-0.5">Administra la información pública de Sport Center</p>
+      </div>
+    </div>
+
+    <div class="flex gap-3 flex-wrap">
+      <button class="px-4 py-2 bg-[#0367A6] hover:bg-[#035A91] text-white rounded-lg flex items-center gap-2" (click)="openModal('general')">
+        <span class="material-symbols-outlined text-base">edit_note</span>
+        Editar empresa
+      </button>
+      <button class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg flex items-center gap-2" (click)="openModal('ubicacion')">
+        <span class="material-symbols-outlined text-base">location_on</span>
+        Ubicación
+      </button>
+    </div>
+  </div>
+
+  <div class="space-y-6">
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+      <article class="company-card">
+        <div class="company-card__header">
+          <div>
+            <h3>Información general</h3>
+            <p>Nombre comercial, RFC, régimen fiscal, sitio y logo.</p>
+          </div>
+          <button class="px-4 py-2 bg-[#0367A6] hover:bg-[#035A91] text-white rounded-lg flex items-center gap-2" type="button" (click)="openModal('general')">
+            <span class="material-symbols-outlined text-base">edit</span>
+            Editar
+          </button>
+        </div>
+
+        <div class="company-card__content">
+          <div class="info-row">
+            <span>Empresa</span>
+            <strong>{{ companyInfo?.nombre || 'Sin configurar' }}</strong>
+          </div>
+          <div class="info-row">
+            <span>RFC</span>
+            <strong>{{ companyInfo?.rfc || 'Sin configurar' }}</strong>
+          </div>
+          <div class="info-row">
+            <span>Régimen</span>
+            <strong>{{ companyInfo?.regimen_fiscal || 'Sin configurar' }}</strong>
+          </div>
+          <div class="info-row">
+            <span>Web</span>
+            <strong>{{ companyInfo?.sitio_web || 'Sin configurar' }}</strong>
+          </div>
+        </div>
+      </article>
+
+      <article class="company-card">
+        <div class="company-card__header">
+          <div>
+            <h3>Contacto y horarios</h3>
+            <p>Datos visibles en footer, contacto y página pública.</p>
+          </div>
+          <button class="px-4 py-2 bg-[#0367A6] hover:bg-[#035A91] text-white rounded-lg flex items-center gap-2" type="button" (click)="openModal('contacto')">
+            <span class="material-symbols-outlined text-base">edit</span>
+            Editar
+          </button>
+        </div>
+
+        <div class="company-card__content">
+          <div class="info-row">
+            <span>Teléfono</span>
+            <strong>{{ companyInfo?.telefono || 'Sin configurar' }}</strong>
+          </div>
+          <div class="info-row">
+            <span>Email</span>
+            <strong>{{ companyInfo?.email || 'Sin configurar' }}</strong>
+          </div>
+          <div class="info-row info-row--full">
+            <span>Horario</span>
+            <strong class="multiline">{{ companyInfo?.horario_atencion || 'Sin configurar' }}</strong>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <article class="company-card">
+      <div class="company-card__header">
+        <div>
+          <h3>Identidad y redes</h3>
+          <p>Misión, visión, valores y redes sociales públicas.</p>
+        </div>
+        <button class="px-4 py-2 bg-[#0367A6] hover:bg-[#035A91] text-white rounded-lg flex items-center gap-2" type="button" (click)="openModal('historia')">
+          <span class="material-symbols-outlined text-base">edit</span>
+          Editar
+        </button>
+      </div>
+
+      <div class="company-card__content company-card__content--single">
+        <div class="info-row info-row--full">
+          <span>Misión</span>
+          <strong class="multiline">{{ companyInfo?.mision || 'Sin configurar' }}</strong>
+        </div>
+        <div class="info-row info-row--full">
+          <span>Visión</span>
+          <strong class="multiline">{{ companyInfo?.vision || 'Sin configurar' }}</strong>
+        </div>
+        <div class="info-row info-row--full">
+          <span>Valores</span>
+          <div class="value-preview">
+            <span class="value-chip" *ngFor="let valor of getValoresPreview()">{{ valor }}</span>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="company-card company-card--highlight">
+      <div class="company-card__header">
+        <div>
+          <h3>Ubicación pública</h3>
+          <p>Selecciona el punto exacto que verá el cliente.</p>
+        </div>
+        <button class="px-4 py-2 bg-[#0367A6] hover:bg-[#035A91] text-white rounded-lg flex items-center gap-2" type="button" (click)="openModal('ubicacion')">
+          <span class="material-symbols-outlined text-base">edit_location_alt</span>
+          {{ hasLocation() ? 'Actualizar' : 'Configurar' }}
+        </button>
+      </div>
+
+      <div class="location-state" [class.location-state--empty]="!hasLocation()">
+        <span class="material-symbols-outlined">{{ hasLocation() ? 'pin_drop' : 'map' }}</span>
+        <div>
+          <strong>{{ hasLocation() ? 'Ubicación lista' : 'Sin ubicación guardada' }}</strong>
+          <p>{{ getLocationSummary() }}</p>
+        </div>
+      </div>
+    </article>
+
+    <article class="company-card">
+      <div class="company-card__header">
+        <div>
+          <h3>Preguntas frecuentes</h3>
+          <p>Gestiona las preguntas que se muestran en la sección pública de ayuda.</p>
+        </div>
+        <button class="px-4 py-2 bg-[#0367A6] hover:bg-[#035A91] text-white rounded-lg flex items-center gap-2" type="button" (click)="openCreateFaqModal()">
+          <span class="material-symbols-outlined text-base">add</span>
+          Nueva FAQ
+        </button>
+      </div>
+
+      <div class="faq-admin-topbar">
+        <div class="faq-search-box">
+          <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#666666]">
+            <i class="pi pi-search text-lg"></i>
+          </span>
+          <input
+            [(ngModel)]="faqSearchTerm"
+            (ngModelChange)="applyFaqFilters()"
+            type="text"
+            placeholder="Buscar por pregunta, sección o palabra clave..."
+          />
+        </div>
+
+        <div class="faq-admin-topbar__meta">
+          <div class="bg-blue-50 px-4 py-2 rounded-xl border border-blue-100">
+            <span class="text-[#0367A6] font-semibold text-lg">{{ filteredFaqs.length }}</span>
+            <span class="text-[#666666] text-sm ml-2">faqs</span>
+          </div>
+          <button class="w-10 h-10 rounded-full border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all"
+                  type="button"
+                  (click)="loadFaqs()"
+                  [disabled]="isLoadingFaqs"
+                  title="Actualizar FAQs">
+            <i class="pi pi-refresh text-lg" [class.pi-spin]="isLoadingFaqs"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="faq-filters-row">
+        <label class="faq-inline-filter">
+          <span>Estado:</span>
+          <select [(ngModel)]="faqActivoFilter" (ngModelChange)="applyFaqFilters()">
+            <option value="todas">Todas</option>
+            <option value="activas">Activas</option>
+            <option value="inactivas">Inactivas</option>
+          </select>
+        </label>
+
+        <label class="faq-inline-filter">
+          <span>Sección:</span>
+          <select [(ngModel)]="faqSeccionFilter" (ngModelChange)="applyFaqFilters()">
+            <option *ngFor="let section of faqSections" [value]="section">{{ section === 'todas' ? 'Todas' : section }}</option>
+          </select>
+        </label>
+
+        <button class="mini-btn mini-btn--soft" type="button" (click)="clearFaqFilters()">Limpiar filtros</button>
+      </div>
+
+      <div class="overflow-x-auto rounded-xl border border-gray-200">
+        <table class="faq-table">
+          <thead class="bg-gray-50 border-b-2 border-gray-200">
+            <tr>
+              <th>Pregunta</th>
+              <th>Sección</th>
+              <th>Orden</th>
+              <th>Estado</th>
+              <th>Destacada</th>
+              <th>Utilidad</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="isLoadingFaqs">
+              <td colspan="7" class="faq-table__empty">Cargando preguntas frecuentes...</td>
+            </tr>
+            <tr *ngIf="!isLoadingFaqs && !paginatedFaqs.length">
+              <td colspan="7" class="faq-table__empty">No hay preguntas frecuentes con esos filtros.</td>
+            </tr>
+            <tr *ngFor="let faq of paginatedFaqs" class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+              <td>
+                <div class="faq-cell">
+                  <strong>{{ faq.pregunta }}</strong>
+                  <small>{{ faq.respuesta }}</small>
+                </div>
+              </td>
+              <td>{{ faq.seccion || 'General' }}</td>
+              <td>{{ faq.orden || 0 }}</td>
+              <td>
+                <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold" [ngClass]="faq.activo ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'">
+                  {{ faq.activo ? 'Activa' : 'Inactiva' }}
+                </span>
+              </td>
+              <td>{{ faq.destacado ? 'Sí' : 'No' }}</td>
+              <td>{{ faq.contador_util || 0 }}</td>
+              <td>
+                <div class="flex items-center justify-center gap-2 flex-wrap">
+                  <button class="db-icon-button db-icon-download" type="button" (click)="openEditFaqModal(faq)" title="Editar FAQ">
+                    <span class="material-symbols-outlined">edit</span>
+                  </button>
+                  <button
+                    class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#0367A6] focus:ring-offset-2"
+                    [class.bg-green-600]="faq.activo"
+                    [class.bg-gray-300]="!faq.activo"
+                    type="button"
+                    (click)="toggleFaqStatus(faq)"
+                    [title]="faq.activo ? 'Desactivar FAQ' : 'Activar FAQ'">
+                    <span class="sr-only">Cambiar estado FAQ</span>
+                    <span class="inline-block h-5 w-5 transform rounded-full bg-white transition-transform"
+                          [class.translate-x-5]="faq.activo"
+                          [class.translate-x-0.5]="!faq.activo"></span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="faq-pagination" *ngIf="filteredFaqs.length">
+        <p>Mostrando {{ faqPageSize }} resultados por página</p>
+        <div class="faq-pagination__actions">
+          <span>{{ faqRangeLabel }}</span>
+          <div class="flex gap-2">
+            <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50"
+                    type="button" (click)="goToFaqPage(1)" [disabled]="faqPage === 1">
+              <i class="pi pi-angle-double-left"></i>
+            </button>
+            <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50"
+                    type="button" (click)="goToFaqPage(faqPage - 1)" [disabled]="faqPage === 1">
+              <i class="pi pi-angle-left"></i>
+            </button>
+            <div class="flex gap-1">
+              <button class="min-w-[2.5rem] h-10 rounded-lg transition-all font-medium bg-[#0367A6] text-white hover:bg-[#035A91]" type="button">
+                {{ faqPage }}
+              </button>
+            </div>
+            <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50"
+                    type="button" (click)="goToFaqPage(faqPage + 1)" [disabled]="faqPage === totalFaqPages">
+              <i class="pi pi-angle-right"></i>
+            </button>
+            <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50"
+                    type="button" (click)="goToFaqPage(totalFaqPages)" [disabled]="faqPage === totalFaqPages">
+              <i class="pi pi-angle-double-right"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </article>
+  </div>
+</div>
+
+<div *ngIf="activeModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" (click)="closeModal()">
+  <div
+    class="bg-white rounded-xl shadow-2xl w-full flex flex-col"
+    [ngClass]="activeModal === 'ubicacion' ? 'max-w-6xl max-h-[92vh]' : 'max-w-4xl max-h-[90vh]'"
+    (click)="$event.stopPropagation()">
+
+    <div class="sticky top-0 bg-gradient-to-r from-[#0367A6] to-[#035A91] text-white px-6 py-4 rounded-t-xl flex justify-between items-center z-10">
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined">
+          {{
+            activeModal === 'general' ? 'business' :
+            activeModal === 'contacto' ? 'call' :
+            activeModal === 'historia' ? 'auto_stories' :
+            activeModal === 'ubicacion' ? 'location_on' :
+            'help'
+          }}
+        </span>
+        <div>
+          <h3 class="text-xl font-bold">
+            {{
+              activeModal === 'general' ? 'Editar información general' :
+              activeModal === 'contacto' ? 'Editar contacto y horarios' :
+              activeModal === 'historia' ? 'Editar identidad y redes' :
+              activeModal === 'ubicacion' ? 'Editar ubicación pública' :
+              (editingFaqId ? 'Editar pregunta frecuente' : 'Nueva pregunta frecuente')
+            }}
+          </h3>
+          <p class="text-sm text-white/80">
+            {{
+              activeModal === 'ubicacion'
+                ? 'Haz click fuera del modal para cerrar. Selecciona o arrastra el pin para guardar la ubicación.'
+                : activeModal === 'faq'
+                  ? 'Define la pregunta, respuesta y visibilidad para mostrarla en la parte pública.'
+                : 'Los cambios se reflejarán en la parte pública de la tienda.'
+            }}
+          </p>
+        </div>
+      </div>
+      <button (click)="closeModal()" class="hover:bg-white/20 p-2 rounded-lg transition-colors">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+
+    <div class="company-modal-body overflow-y-auto">
+      <ng-container *ngIf="activeModal === 'general'">
+        <div class="company-form-grid">
+          <label class="form-field">
+            <span>Nombre de la empresa</span>
+            <input [(ngModel)]="generalForm.nombre" type="text" placeholder="Sport Center" />
+            <small class="form-help" *ngIf="generalForm.nombre && !isValidCompanyName(generalForm.nombre)">
+              El nombre no puede estar vacío ni ser solo números.
+            </small>
+          </label>
+          <label class="form-field">
+            <span>RFC</span>
+            <input [(ngModel)]="generalForm.rfc" type="text" placeholder="Opcional" />
+          </label>
+          <label class="form-field">
+            <span>Régimen fiscal</span>
+            <input [(ngModel)]="generalForm.regimen_fiscal" type="text" placeholder="Opcional" />
+          </label>
+          <label class="form-field">
+            <span>Sitio web</span>
+            <input [(ngModel)]="generalForm.sitio_web" type="url" placeholder="https://..." />
+            <small class="form-help" *ngIf="generalForm.sitio_web && !isValidUrl(generalForm.sitio_web)">
+              Debe ser una URL válida.
+            </small>
+          </label>
+          <label class="form-field form-field--full">
+            <span>Subir logo</span>
+            <div
+              class="logo-upload-box"
+              [class.logo-upload-box--dragging]="isDraggingLogo"
+              (dragover)="onLogoDragOver($event)"
+              (dragleave)="onLogoDragLeave($event)"
+              (drop)="onLogoDrop($event)">
+              <div class="logo-upload-box__preview" *ngIf="generalForm.logo_url; else emptyLogoPreview">
+                <img [src]="generalForm.logo_url" alt="Preview del logo de la empresa" />
+              </div>
+              <ng-template #emptyLogoPreview>
+                <div class="logo-upload-box__empty">
+                  <span class="material-symbols-outlined">{{ isUploadingLogo ? 'cloud_upload' : 'image' }}</span>
+                  <p class="font-semibold text-[#202020]">
+                    {{ isUploadingLogo ? 'Subiendo logo...' : 'Arrastra tu logo aquí o selecciónalo desde tu equipo' }}
+                  </p>
+                  <small class="text-gray-500">
+                    {{ isUploadingLogo ? 'Estamos enviando la imagen a Cloudinary.' : 'Se carga automáticamente y se guarda su URL segura.' }}
+                  </small>
+                </div>
+              </ng-template>
+
+              <div class="logo-upload-box__actions">
+                <label class="mini-btn mini-btn--upload">
+                  <input type="file" accept="image/*" hidden (change)="onLogoSelected($event)" />
+                  {{ isUploadingLogo ? 'Subiendo...' : 'Seleccionar logo' }}
+                </label>
+                <span class="text-sm text-gray-500" *ngIf="logoFileName">{{ logoFileName }}</span>
+              </div>
+            </div>
+          </label>
+          <label class="form-field form-field--full">
+            <span>Logo URL</span>
+            <input [(ngModel)]="generalForm.logo_url" type="url" placeholder="https://..." />
+            <small class="form-help" *ngIf="generalForm.logo_url && !isValidUrl(generalForm.logo_url)">
+              Debe ser una URL válida.
+            </small>
+          </label>
+        </div>
+      </ng-container>
+
+      <ng-container *ngIf="activeModal === 'contacto'">
+        <div class="company-form-grid">
+          <label class="form-field">
+            <span>Teléfono</span>
+            <input
+              [(ngModel)]="contactoForm.telefono"
+              (input)="onPhoneInput($event)"
+              type="text"
+              inputmode="numeric"
+              maxlength="10"
+              placeholder="5512345678" />
+            <small class="form-help" *ngIf="contactoForm.telefono && !isValidPhone(contactoForm.telefono)">
+              Debe contener 10 dígitos y solo números.
+            </small>
+          </label>
+          <label class="form-field">
+            <span>Correo</span>
+            <input [(ngModel)]="contactoForm.email" type="email" placeholder="contacto@empresa.com" />
+            <small class="form-help" *ngIf="contactoForm.email && !isValidEmail(contactoForm.email)">
+              Solo se permiten correos válidos.
+            </small>
+          </label>
+          <label class="form-field form-field--full">
+            <span>Horario de atención</span>
+            <textarea [(ngModel)]="contactoForm.horario_atencion" rows="6" placeholder="Lun - Vie: 9:00 a 18:00&#10;Sáb: 10:00 a 14:00"></textarea>
+          </label>
+        </div>
+      </ng-container>
+
+      <ng-container *ngIf="activeModal === 'historia'">
+        <div class="company-form-grid">
+          <label class="form-field form-field--full">
+            <span>Misión</span>
+            <textarea [(ngModel)]="historiaForm.mision" rows="4"></textarea>
+          </label>
+          <label class="form-field form-field--full">
+            <span>Visión</span>
+            <textarea [(ngModel)]="historiaForm.vision" rows="4"></textarea>
+          </label>
+
+          <div class="form-field form-field--full">
+            <span>Valores</span>
+            <div class="value-editor">
+              <div class="value-editor__input">
+                <input
+                  [(ngModel)]="newValor"
+                  type="text"
+                  placeholder="Agrega un valor y presiona el botón"
+                  (keydown.enter)="$event.preventDefault(); addValor()"
+                />
+                <button type="button" class="mini-btn" (click)="addValor()">Agregar</button>
+                <button
+                  *ngIf="removedValoresHistory.length"
+                  type="button"
+                  class="mini-btn mini-btn--soft"
+                  (click)="undoRemoveValor()">
+                  Deshacer
+                </button>
+              </div>
+
+              <div class="value-editor__chips">
+                <button type="button" class="value-chip value-chip--editable" *ngFor="let valor of valoresDraft; let i = index" (click)="removeValor(i)">
+                  <span>{{ valor }}</span>
+                  <span class="material-symbols-outlined text-sm">close</span>
+                </button>
+                <p *ngIf="!valoresDraft.length" class="text-sm text-gray-500">Aún no agregas valores para mostrar en la interfaz pública.</p>
+              </div>
+            </div>
+          </div>
+
+          <label class="form-field">
+            <span>Facebook</span>
+            <input [(ngModel)]="historiaForm.facebook" type="url" placeholder="https://facebook.com/..." />
+          </label>
+          <label class="form-field">
+            <span>Instagram</span>
+            <input [(ngModel)]="historiaForm.instagram" type="url" placeholder="https://instagram.com/..." />
+          </label>
+          <label class="form-field">
+            <span>X / Twitter</span>
+            <input [(ngModel)]="historiaForm.twitter" type="url" placeholder="https://x.com/..." />
+          </label>
+          <label class="form-field">
+            <span>TikTok</span>
+            <input [(ngModel)]="historiaForm.tiktok" type="url" placeholder="https://tiktok.com/..." />
+          </label>
+          <label class="form-field form-field--full">
+            <span>YouTube</span>
+            <input [(ngModel)]="historiaForm.youtube" type="url" placeholder="https://youtube.com/..." />
+          </label>
+        </div>
+      </ng-container>
+
+      <ng-container *ngIf="activeModal === 'ubicacion'">
+        <div class="company-location-layout">
+          <div class="company-form-grid company-form-grid--single">
+            <label class="form-field">
+              <span>Nombre del punto</span>
+              <input [(ngModel)]="ubicacionForm.label" type="text" placeholder="Sucursal principal" />
+            </label>
+            <label class="form-field">
+              <span>Dirección o referencia</span>
+              <textarea [(ngModel)]="ubicacionForm.address" rows="4" placeholder="Avenida, colonia, ciudad, referencias"></textarea>
+            </label>
+            <div class="company-form-grid">
+              <label class="form-field">
+                <span>Latitud</span>
+                <input [(ngModel)]="ubicacionForm.lat" (blur)="onLocationCoordinateChange()" type="number" step="0.000001" />
+              </label>
+              <label class="form-field">
+                <span>Longitud</span>
+                <input [(ngModel)]="ubicacionForm.lng" (blur)="onLocationCoordinateChange()" type="number" step="0.000001" />
+              </label>
+            </div>
+            <p class="text-sm text-gray-500 leading-6">
+              Haz clic en el mapa o arrastra el pin para mover la ubicación exacta. Usa los botones de zoom o <strong>Ctrl + scroll</strong> para acercar y alejar sin mover toda la página.
+            </p>
+          </div>
+
+          <div class="company-map-panel">
+            <div id="company-location-map" class="company-location-map"></div>
+          </div>
+        </div>
+      </ng-container>
+
+      <ng-container *ngIf="activeModal === 'faq'">
+        <div class="company-form-grid">
+          <label class="form-field form-field--full">
+            <span>Pregunta</span>
+            <input [(ngModel)]="faqForm.pregunta" type="text" placeholder="Escribe la pregunta frecuente" />
+          </label>
+
+          <label class="form-field form-field--full">
+            <span>Respuesta</span>
+            <textarea [(ngModel)]="faqForm.respuesta" rows="6" placeholder="Escribe la respuesta que verá el cliente"></textarea>
+          </label>
+
+          <label class="form-field">
+            <span>Sección</span>
+            <input [(ngModel)]="faqForm.seccion" type="text" placeholder="Pagos, envíos, devoluciones..." />
+          </label>
+
+          <label class="form-field">
+            <span>Orden</span>
+            <input [(ngModel)]="faqForm.orden" type="number" min="0" />
+          </label>
+
+          <label class="form-field">
+            <span>Estado</span>
+            <select [(ngModel)]="faqForm.activo">
+              <option [ngValue]="true">Activa</option>
+              <option [ngValue]="false">Inactiva</option>
+            </select>
+          </label>
+
+          <label class="form-field">
+            <span>Destacada</span>
+            <select [(ngModel)]="faqForm.destacado">
+              <option [ngValue]="false">No</option>
+              <option [ngValue]="true">Sí</option>
+            </select>
+          </label>
+
+          <div class="form-field form-field--full">
+            <span>Palabras clave</span>
+            <div class="value-editor">
+              <div class="value-editor__input">
+                <input
+                  [(ngModel)]="newFaqKeyword"
+                  type="text"
+                  placeholder="Agrega una palabra clave"
+                  (keydown.enter)="$event.preventDefault(); addFaqKeyword()"
+                />
+                <button type="button" class="mini-btn" (click)="addFaqKeyword()">Agregar</button>
+                <button
+                  *ngIf="removedFaqKeywordsHistory.length"
+                  type="button"
+                  class="mini-btn mini-btn--soft"
+                  (click)="undoRemoveFaqKeyword()">
+                  Deshacer
+                </button>
+              </div>
+
+              <div class="value-editor__chips">
+                <button type="button" class="value-chip value-chip--editable" *ngFor="let keyword of faqKeywordsDraft; let i = index" (click)="removeFaqKeyword(i)">
+                  <span>{{ keyword }}</span>
+                  <span class="material-symbols-outlined text-sm">close</span>
+                </button>
+                <p *ngIf="!faqKeywordsDraft.length" class="text-sm text-gray-500">Aún no agregas palabras clave para esta pregunta.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+    </div>
+
+    <div class="sticky bottom-0 bg-gray-50 px-6 py-4 rounded-b-xl border-t border-gray-200 flex justify-end gap-3">
+      <button (click)="closeModal()" class="px-5 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition-all font-medium" [disabled]="isSaving">
+        Cancelar
+      </button>
+      <button
+        class="px-5 py-2.5 bg-[#0367A6] text-white rounded-lg hover:bg-[#035A91] transition-all font-medium disabled:opacity-50"
+        [disabled]="isSaving"
+        (click)="
+          activeModal === 'general' ? saveGeneral() :
+          activeModal === 'contacto' ? saveContacto() :
+          activeModal === 'historia' ? saveHistoria() :
+          activeModal === 'ubicacion' ? saveUbicacion() :
+          saveFaq()
+        ">
+        {{ isSaving ? 'Guardando...' : 'Guardar cambios' }}
+      </button>
+    </div>
+  </div>
+</div>

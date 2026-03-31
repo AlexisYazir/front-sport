@@ -1,157 +1,99 @@
-<section class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-8">
-  <!-- Header -->
-  <header class="space-y-2 text-center">
+<section class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-8">
+  <header class="space-y-3 text-center">
     <p class="inline-flex items-center gap-2 text-sm font-semibold text-[#0367A6] bg-[#0367A6]/10 px-3 py-1 rounded-full">
       <span class="material-symbols-outlined text-base">business</span>
-      Sobre Nosotros
+      Perfil de empresa
     </p>
-    <h1 class="text-3xl sm:text-4xl font-bold text-[#202020]">Conoce Sport Center</h1>
-    <p class="text-[#666666] max-w-2xl mx-auto">
-      Más que una tienda, somos tu aliado para alcanzar tus metas deportivas. 
-      Calidad, pasión y compromiso en cada producto.
+    <h1 class="text-3xl sm:text-4xl font-bold text-[#202020]">
+      {{ companyInfo?.nombre || 'Sport Center' }}
+    </h1>
+    <p class="text-[#666666] max-w-3xl mx-auto">
+      {{ companyInfo?.mision || 'Conoce quiénes somos, cómo trabajamos y por qué queremos que cada compra se sienta clara, confiable y útil para tu práctica deportiva.' }}
     </p>
   </header>
 
-  <!-- Nuestra Historia / Misión / Visión -->
-  <div class="grid gap-6 sm:grid-cols-3">
-    <article class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-all">
-      <div class="w-12 h-12 bg-[#0367A6]/10 rounded-lg flex items-center justify-center mb-4">
-        <span class="material-symbols-outlined text-[#0367A6] text-2xl">flag</span>
-      </div>
-      <h2 class="text-lg font-semibold text-[#202020] mb-2">Nuestra Misión</h2>
-      <p class="text-[#666666] text-sm leading-relaxed">
-        Ofrecer productos deportivos de la más alta calidad para inspirar un estilo de vida activo y saludable en cada persona.
+  <div class="grid gap-6 lg:grid-cols-[1.2fr,0.8fr]">
+    <article class="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 sm:p-8">
+      <p class="text-sm font-semibold uppercase tracking-[0.2em] text-[#0367A6]">Nuestra visión</p>
+      <h2 class="text-2xl font-bold text-[#202020] mt-3">Hacia dónde llevamos la experiencia Sport Center</h2>
+      <p class="text-[#555555] leading-7 mt-4">
+        {{ companyInfo?.vision || 'Buscamos convertirnos en una referencia confiable para personas que necesitan equipamiento deportivo, atención clara y una experiencia digital bien organizada.' }}
       </p>
+
+      <div class="mt-8">
+        <p class="text-sm font-semibold uppercase tracking-[0.2em] text-[#0367A6] mb-4">Valores</p>
+        <div class="flex flex-wrap gap-3">
+          <span *ngFor="let valor of valores" class="px-4 py-2 rounded-full bg-[#EAF4FB] text-[#0B5E96] text-sm font-medium">
+            {{ valor }}
+          </span>
+        </div>
+      </div>
     </article>
 
-    <article class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-all">
-      <div class="w-12 h-12 bg-[#0367A6]/10 rounded-lg flex items-center justify-center mb-4">
-        <span class="material-symbols-outlined text-[#0367A6] text-2xl">visibility</span>
+    <article class="bg-gradient-to-br from-[#0A6AAA] to-[#034E80] rounded-3xl text-white p-6 sm:p-8 shadow-sm">
+      <p class="text-sm uppercase tracking-[0.2em] text-blue-100">Datos rápidos</p>
+      <div class="space-y-5 mt-6">
+        <div>
+          <p class="text-blue-100 text-sm">Contacto</p>
+          <p class="font-semibold text-lg">{{ companyInfo?.email || 'Sin correo registrado' }}</p>
+          <p class="text-blue-100">{{ companyInfo?.telefono || 'Sin teléfono registrado' }}</p>
+        </div>
+        <div>
+          <p class="text-blue-100 text-sm">Sitio web</p>
+          <a
+            *ngIf="companyInfo?.sitio_web; else noWeb"
+            [href]="companyInfo?.sitio_web || '#'"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="font-semibold underline decoration-white/40 underline-offset-4"
+          >
+            {{ companyInfo?.sitio_web }}
+          </a>
+          <ng-template #noWeb>
+            <p class="font-semibold">Sin sitio web registrado</p>
+          </ng-template>
+        </div>
+        <div>
+          <p class="text-blue-100 text-sm">Horario de atención</p>
+          <div *ngIf="horarioLineas.length; else sinHorario" class="space-y-1">
+            <p *ngFor="let linea of horarioLineas" class="font-semibold">{{ linea }}</p>
+          </div>
+          <ng-template #sinHorario>
+            <p class="font-semibold">Sin horario registrado</p>
+          </ng-template>
+        </div>
       </div>
-      <h2 class="text-lg font-semibold text-[#202020] mb-2">Nuestra Visión</h2>
-      <p class="text-[#666666] text-sm leading-relaxed">
-        Ser la tienda deportiva líder en México, reconocida por nuestra calidad, servicio y compromiso con el deporte.
-      </p>
-    </article>
-
-    <article class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-all">
-      <div class="w-12 h-12 bg-[#0367A6]/10 rounded-lg flex items-center justify-center mb-4">
-        <span class="material-symbols-outlined text-[#0367A6] text-2xl">favorite</span>
-      </div>
-      <h2 class="text-lg font-semibold text-[#202020] mb-2">Nuestros Valores</h2>
-      <p class="text-[#666666] text-sm leading-relaxed">
-        Calidad, servicio, compromiso, innovación y pasión por el deporte.
-      </p>
     </article>
   </div>
 
-  <!-- Información de contacto y ubicación -->
   <div class="grid gap-6 md:grid-cols-2">
-    <!-- Contacto -->
-    <article class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-      <h2 class="text-xl font-semibold text-[#202020] mb-4 flex items-center gap-2">
-        <span class="material-symbols-outlined text-[#0367A6]">contact_support</span>
-        Contacto
-      </h2>
-      
-      <div class="space-y-4">
-        <div class="flex items-start gap-3">
-          <div class="w-8 h-8 bg-[#0367A6]/10 rounded-lg flex items-center justify-center shrink-0">
-            <span class="material-symbols-outlined text-[#0367A6] text-sm">phone</span>
-          </div>
-          <div>
-            <p class="text-xs text-[#666666]">Teléfono</p>
-            <p class="text-sm font-medium text-[#202020]">(55) 1234 5678</p>
-          </div>
-        </div>
-
-        <div class="flex items-start gap-3">
-          <div class="w-8 h-8 bg-[#0367A6]/10 rounded-lg flex items-center justify-center shrink-0">
-            <span class="material-symbols-outlined text-[#0367A6] text-sm">mail</span>
-          </div>
-          <div>
-            <p class="text-xs text-[#666666]">Email</p>
-            <p class="text-sm font-medium text-[#202020]">contacto&#64;sportcenter.com</p>
-          </div>
-        </div>
-
-        <div class="flex items-start gap-3">
-          <div class="w-8 h-8 bg-[#0367A6]/10 rounded-lg flex items-center justify-center shrink-0">
-            <span class="material-symbols-outlined text-[#0367A6] text-sm">schedule</span>
-          </div>
-          <div>
-            <p class="text-xs text-[#666666]">Horario de atención</p>
-            <p class="text-sm font-medium text-[#202020]">Lun - Vie: 9:00 - 18:00</p>
-            <p class="text-sm font-medium text-[#202020]">Sáb: 10:00 - 14:00</p>
-          </div>
-        </div>
-      </div>
-    </article>
-
-    <!-- Ubicación -->
-    <article class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-      <h2 class="text-xl font-semibold text-[#202020] mb-4 flex items-center gap-2">
-        <span class="material-symbols-outlined text-[#0367A6]">location_on</span>
-        Ubicación
-      </h2>
-      
-      <div class="space-y-4">
-        <div class="flex items-start gap-3">
-          <div class="w-8 h-8 bg-[#0367A6]/10 rounded-lg flex items-center justify-center shrink-0">
-            <span class="material-symbols-outlined text-[#0367A6] text-sm">store</span>
-          </div>
-          <div>
-            <p class="text-xs text-[#666666]">Sucursal Principal</p>
-            <p class="text-sm font-medium text-[#202020]">Av. Deportiva #123</p>
-            <p class="text-sm font-medium text-[#202020]">Colonia Centro, CDMX</p>
-            <p class="text-sm font-medium text-[#202020]">C.P. 01000</p>
-          </div>
-        </div>
-
-        <div class="bg-gray-50 rounded-lg p-4 mt-2">
-          <div class="flex items-center gap-2 text-sm text-[#666666]">
-            <span class="material-symbols-outlined text-sm">info</span>
-            <p>Estacionamiento gratuito para clientes</p>
-          </div>
-        </div>
-      </div>
-    </article>
-  </div>
-
-  <!-- Redes Sociales -->
-  <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-    <h2 class="text-lg font-semibold text-[#202020] mb-4 text-center">Síguenos en redes sociales</h2>
-    <div class="flex justify-center gap-4">
-      <a href="#" class="w-12 h-12 bg-[#0367A6]/10 rounded-xl flex items-center justify-center hover:bg-[#0367A6] hover:text-white transition-all group">
-        <span class="material-symbols-outlined text-[#0367A6] group-hover:text-white">facebook</span>
-      </a>
-      <a href="#" class="w-12 h-12 bg-[#0367A6]/10 rounded-xl flex items-center justify-center hover:bg-[#0367A6] hover:text-white transition-all group">
-        <span class="material-symbols-outlined text-[#0367A6] group-hover:text-white">camera</span>
-      </a>
-      <a href="#" class="w-12 h-12 bg-[#0367A6]/10 rounded-xl flex items-center justify-center hover:bg-[#0367A6] hover:text-white transition-all group">
-        <span class="material-symbols-outlined text-[#0367A6] group-hover:text-white">chat</span>
-      </a>
-      <a href="#" class="w-12 h-12 bg-[#0367A6]/10 rounded-xl flex items-center justify-center hover:bg-[#0367A6] hover:text-white transition-all group">
-        <span class="material-symbols-outlined text-[#0367A6] group-hover:text-white">smart_display</span>
-      </a>
-    </div>
-  </div>
-
-  <!-- CTA -->
-  <div class="bg-gradient-to-r from-[#0367A6] to-[#035A91] rounded-xl p-8 text-white">
-    <div class="flex flex-col md:flex-row items-center justify-between gap-4">
-      <div>
-        <h3 class="text-xl font-bold mb-2">¿Listo para comenzar tu próxima aventura deportiva?</h3>
-        <p class="text-blue-100">Explora nuestro catálogo y encuentra el equipo perfecto para ti.</p>
-      </div>
-      <div class="flex gap-3">
-        <a routerLink="/products" class="px-6 py-3 bg-white text-[#0367A6] rounded-lg hover:bg-gray-100 transition-all font-medium">
-          Ver productos
+    <article class="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
+      <h2 class="text-xl font-bold text-[#202020] mb-4">Ubicación y atención</h2>
+      <p class="text-[#666666] leading-7">
+        Consulta la ubicación pública de la empresa, encuentra la sucursal configurada y revisa la mejor forma de llegar.
+      </p>
+      <div class="mt-6 flex gap-3 flex-wrap">
+        <a routerLink="/info/ubicacion" class="px-5 py-3 rounded-2xl bg-[#0367A6] text-white font-medium hover:bg-[#025A8F] transition-colors">
+          Ver ubicación
         </a>
-        <a routerLink="/support/contact" class="px-6 py-3 border border-white text-white rounded-lg hover:bg-white/10 transition-all font-medium">
+        <a routerLink="/support/contact" class="px-5 py-3 rounded-2xl bg-[#EEF5FB] text-[#0B5E96] font-medium hover:bg-[#E0EDF8] transition-colors">
           Contactar
         </a>
       </div>
-    </div>
+    </article>
+
+    <article class="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
+      <h2 class="text-xl font-bold text-[#202020] mb-4">Redes y presencia digital</h2>
+      <div class="grid gap-3">
+        <a *ngIf="companyInfo?.facebook" [href]="companyInfo?.facebook" target="_blank" rel="noopener noreferrer" class="text-[#0367A6] font-medium hover:underline">Facebook</a>
+        <a *ngIf="companyInfo?.instagram" [href]="companyInfo?.instagram" target="_blank" rel="noopener noreferrer" class="text-[#0367A6] font-medium hover:underline">Instagram</a>
+        <a *ngIf="companyInfo?.twitter" [href]="companyInfo?.twitter" target="_blank" rel="noopener noreferrer" class="text-[#0367A6] font-medium hover:underline">X / Twitter</a>
+        <a *ngIf="companyInfo?.tiktok" [href]="companyInfo?.tiktok" target="_blank" rel="noopener noreferrer" class="text-[#0367A6] font-medium hover:underline">TikTok</a>
+        <a *ngIf="companyInfo?.youtube" [href]="companyInfo?.youtube" target="_blank" rel="noopener noreferrer" class="text-[#0367A6] font-medium hover:underline">YouTube</a>
+        <p *ngIf="!companyInfo?.facebook && !companyInfo?.instagram && !companyInfo?.twitter && !companyInfo?.tiktok && !companyInfo?.youtube" class="text-[#666666]">
+          Aún no hay redes sociales configuradas públicamente.
+        </p>
+      </div>
+    </article>
   </div>
 </section>

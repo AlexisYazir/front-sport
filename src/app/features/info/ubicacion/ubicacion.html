@@ -1,7 +1,31 @@
-<div class="map-card">
+<section class="map-card">
   <div class="map-header">
-    <h2>Ubicación de UT Huasteca Hidalguense</h2>
-    <p>Lat: 21.1559307, Lng: -98.3811029</p>
+    <div>
+      <p class="text-sm font-semibold uppercase tracking-[0.2em] text-[#0367A6]">Ubicación pública</p>
+      <h2>{{ locationData.label || companyInfo?.nombre || 'Sport Center' }}</h2>
+      <p>{{ locationData.address }}</p>
+    </div>
+    <a
+      [href]="locationData.mapsUrl"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="inline-flex items-center gap-2 px-4 py-3 rounded-2xl bg-[#0367A6] text-white font-medium hover:bg-[#025A8F] transition-colors"
+    >
+      <span class="material-symbols-outlined">open_in_new</span>
+      Abrir en Google Maps
+    </a>
   </div>
+
   <div id="map" class="map-container"></div>
-</div>
+
+  <div class="map-footer">
+    <div>
+      <strong>Coordenadas</strong>
+      <p>{{ locationData.lat | number:'1.4-6' }}, {{ locationData.lng | number:'1.4-6' }}</p>
+    </div>
+    <div *ngIf="companyInfo?.horario_atencion">
+      <strong>Horario</strong>
+      <p>{{ companyInfo?.horario_atencion }}</p>
+    </div>
+  </div>
+</section>
