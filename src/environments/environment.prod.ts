@@ -6,7 +6,7 @@ export const environment = {
   apiUrl: 'https://back-sport-ghxk.onrender.com',
   appName: 'Sport Center',
   appVersion: '1.0.0',
-  maptilerApiKey: 'P8d5gh2p1ZmSAbNmmUpE',
+  maptilerApiKey: 'AfCJS7SbygYGLEQE04zm',
   storageKeys: {
     token: 'auth_token',
     user: 'current_user'
