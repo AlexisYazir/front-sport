@@ -66,7 +66,7 @@
     Cross-Origin-Opener-Policy = "same-origin-allow-popups"
     Cross-Origin-Resource-Policy = "cross-origin"
 
-    Cache-Control = "public, max-age=3600"
+    Cache-Control = "public, max-age=0, must-revalidate"
 
 ## ================================
 ## Cache fuerte para assets
@@ -91,5 +91,10 @@
 ## ================================
 [[headers]]
   for = "/index.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/*.html"
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
