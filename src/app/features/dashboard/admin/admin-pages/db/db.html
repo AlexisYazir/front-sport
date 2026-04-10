@@ -342,18 +342,43 @@
         </div>
       </div>
 
-      <div class="border rounded-xl p-4">
-        <h3 class="font-semibold mb-4">Escaneos secuenciales</h3>
-        <div class="space-y-3">
-          <div *ngFor="let row of scanStats().slice(0, 6)" class="bg-gray-50 rounded-lg p-3 border">
-            <div class="flex justify-between gap-3">
-              <span class="font-medium">{{ row.tablename }}</span>
-              <span class="text-sm text-red-600">{{ row.porcentaje_escaneo_secuencial }}%</span>
-            </div>
-            <div class="mt-2 h-2 rounded-full bg-gray-200"><div class="h-2 rounded-full bg-red-500" [style.width]="row.porcentaje_escaneo_secuencial + '%'"></div></div>
-          </div>
+      <div class="border rounded-xl p-4 overflow-hidden">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="material-symbols-outlined text-[#0367A6]">table_chart</span>
+          <h3 class="font-semibold text-[#202020]">Detalle de Tablas</h3>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 border-b-2 border-gray-200">
+              <tr>
+                <th class="px-4 py-3 text-left">Tabla</th>
+                <th class="px-4 py-3 text-left">Tamaño Total</th>
+                <th class="px-4 py-3 text-left">Tabla</th>
+                <th class="px-4 py-3 text-left">Índices</th>
+                <th class="px-4 py-3 text-left">Consultas</th>
+                <th class="px-4 py-3 text-left">% Uso Índices</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let row of tableDetails()" class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                <td class="px-4 py-3 font-medium text-[#202020]">{{ row.tablename }}</td>
+                <td class="px-4 py-3">{{ row.totalSize }}</td>
+                <td class="px-4 py-3">{{ row.tableSize }}</td>
+                <td class="px-4 py-3">{{ row.indexSize }}</td>
+                <td class="px-4 py-3">{{ row.totalQueries }}</td>
+                <td class="px-4 py-3 font-medium" [ngClass]="indexUsageClass(row.indexUsagePercent)">
+                  {{ indexUsageText(row.indexUsagePercent) }}
+                </td>
+              </tr>
+              <tr *ngIf="!tableDetails().length">
+                <td colspan="6" class="px-4 py-6 text-center text-gray-500">No hay detalles de tablas disponibles.</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
+
     </div>
   </ng-container>
 

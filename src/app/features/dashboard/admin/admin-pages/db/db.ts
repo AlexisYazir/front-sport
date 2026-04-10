@@ -930,6 +930,36 @@ export class DbPage implements OnInit, OnDestroy {
     );
   }
 
+  tableDetails() {
+    const queryMap = new Map(
+      this.mostQueried().map((item) => [item.tablename, item]),
+    );
+
+    return this.tableSizes()
+      .map((table) => {
+        const queryStats = queryMap.get(table.tablename);
+        return {
+          tablename: table.tablename,
+          totalSize: table.total_size_humano,
+          tableSize: table.tabla_size_humano,
+          indexSize: table.indices_size_humano,
+          totalQueries: Number(queryStats?.total_consultas) || 0,
+          indexUsagePercent: Number(queryStats?.porcentaje_uso_indices) || 0,
+        };
+      })
+      .sort((a, b) => b.totalQueries - a.totalQueries);
+  }
+
+  indexUsageText(value: number): string {
+    const rounded = Number.isInteger(value) ? value.toFixed(0) : value.toFixed(2);
+    return `${rounded}%`;
+  }
+
+  indexUsageClass(value: number): string {
+    if (value >= 50) return 'text-amber-600';
+    return 'text-green-600';
+  }
+
   backupHistoryCount() {
     return this.filteredBackups.length;
   }

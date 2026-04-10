@@ -196,6 +196,11 @@ export const routes: Routes = [
           import('./features/dashboard/admin/admin-pages/db/db').then((m) => m.DbPage),
       },
       {
+        path: 'logs',
+        loadComponent: () =>
+          import('./features/dashboard/admin/admin-pages/logs/logs').then((m) => m.LogsPage),
+      },
+      {
         path: 'empresa',
         loadComponent: () =>
           import('./features/dashboard/admin/admin-pages/empresa/empresa').then((m) => m.Empresa),
