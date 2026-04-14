@@ -1,0 +1,158 @@
+/* ═══════════════════════════════════════════════════════
+   HOME · Sport Center
+   Solo CSS estrictamente necesario — el resto es Tailwind
+   ═══════════════════════════════════════════════════════ */
+
+/* ─── Shell contenedor de sección ──────────────────────── */
+.home-page {
+  font-family: inherit;
+}
+
+.section-shell {
+  border: 1px solid #D9E6F2;
+  border-radius: 1.25rem;
+  padding: clamp(1.25rem, 2.5vw, 2rem);
+  background: #F5FAFF;
+  position: relative;
+  overflow: hidden;
+}
+
+.section-shell--alt {
+  background: #ffffff;
+}
+
+/* ─── Botón scroll productos ────────────────────────────── */
+.home-scroll-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 9999px;
+  border: 1px solid #D9E6F2;
+  background: #ffffff;
+  color: #0367A6;
+  cursor: pointer;
+  transition: background 0.18s, border-color 0.18s, translate 0.18s;
+}
+
+.home-scroll-button:hover {
+  background: #EEF6FD;
+  border-color: #0367A6;
+  translate: 0 -1px;
+}
+
+/* ─── Marquee de marcas ─────────────────────────────────── */
+.brands-marquee {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Fades laterales (no se pueden hacer con Tailwind puro en gradientes reales) */
+.brands-fade {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 5rem;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.brands-fade--l {
+  left: 0;
+  background: linear-gradient(90deg, #F5FAFF 20%, transparent);
+}
+
+.brands-fade--r {
+  right: 0;
+  background: linear-gradient(270deg, #F5FAFF 20%, transparent);
+}
+
+/* Track animado */
+.brands-track {
+  display: flex;
+  gap: 0.75rem;
+  width: max-content;
+  animation: marquee-slide 36s linear infinite;
+  will-change: transform;
+}
+
+.brands-marquee:hover .brands-track {
+  animation-play-state: paused;
+}
+
+@keyframes marquee-slide {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+/* Chip de marca — compacto, estilo pill horizontal */
+.brand-chip {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.9rem;
+  flex-shrink: 0;
+  border: 1px solid #D9E6F2;
+  border-radius: 1rem;
+  background: #ffffff;
+  min-width: 10.25rem;
+  padding: 1.1rem 1.15rem 1rem;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.brand-chip__logo {
+  width: 5.25rem;
+  height: 5.25rem;
+  overflow: visible;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.brand-chip__logo--interactive {
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.brand-chip:hover .brand-chip__logo--interactive {
+  transform: translateY(-3px) scale(1.04);
+}
+
+.home-category-icon {
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+}
+
+.group:hover .home-category-icon {
+  transform: translateY(-2px) scale(1.05);
+  background: #0367A6;
+  color: #ffffff;
+  box-shadow: 0 10px 18px rgba(3, 103, 166, 0.2);
+}
+
+/* ─── Responsive ─────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .section-shell {
+    border-radius: 1rem;
+  }
+
+  .brands-track {
+    animation-duration: 26s;
+  }
+
+  .brands-fade {
+    width: 2.5rem;
+  }
+
+  .brand-chip {
+    min-width: 8.75rem;
+    padding: 0.9rem 0.85rem;
+  }
+
+  .brand-chip__logo {
+    width: 4.25rem;
+    height: 4.25rem;
+  }
+}

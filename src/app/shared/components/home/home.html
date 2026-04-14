@@ -1,161 +1,266 @@
-<!-- Modern Home Page for Sport Center - Fondo Blanco y sin scrollbars visibles -->
-<div class="min-h-screen bg-white">
-  <!-- Hero Section -->
-  <section class="relative bg-linear-to-r from-[#0367A6] via-[#0367A6] to-[#E56E00] text-[#202020] overflow-hidden">
-    <div class="absolute inset-0 bg-black/20"></div>
-    <div class="relative container mx-auto px-4 sm:px-6 py-20">
+<!-- Home — Sport Center · Estilo Adidas · Tailwind + minimal CSS -->
+<div class="home-page min-h-screen bg-white">
+
+  <!-- ═══════════════════════════════ HERO -->
+  <section class="relative overflow-hidden bg-[#0367A6] text-white">
+    <!-- Acento naranja esquina derecha -->
+    <div class="pointer-events-none absolute -right-20 -top-20 h-[26rem] w-[26rem] rounded-full bg-[#FF7A00]/10"></div>
+    <!-- Bloque oscuro esquina inferior derecha -->
+    <div class="pointer-events-none absolute bottom-0 right-0 h-44 w-80 rounded-tl-[5rem] bg-[#025486]"></div>
+
+    <div class="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 lg:py-20">
       <div class="max-w-2xl">
-        <h1 class="text-5xl sm:text-6xl font-bold leading-tight mb-6">
-          Equípate para<br/>
-          <span class="text-[#FF7A00]">el Éxito</span>
+
+        <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.02] tracking-tight mb-5">
+          Equípate<br/>para el
+          <span class="text-[#FF7A00]">Éxito.</span>
         </h1>
-        <p class="text-xl text-white/90 mb-8 leading-relaxed">
-          Descubre la mejor selección de ropa y equipo deportivo. Calidad profesional para atletas de todos los niveles.
+
+        <p class="text-base sm:text-lg text-white/70 mb-7 max-w-xl leading-relaxed">
+          La mejor selección de ropa y equipo deportivo. Calidad profesional para atletas de todos los niveles.
         </p>
-        <div class="flex flex-col sm:flex-row gap-4">
-          <button routerLink="/products" class="bg-[#FF7A00] hover:bg-[#E56E00] text-[#202020] font-semibold py-4 px-8 rounded-xl transition-all duration-200 transform hover:-translate-y-1 shadow-lg hover:shadow-xl">
-            <span class="flex items-center gap-2">
-              <span class="material-symbols-outlined font-variation-settings-wght-400">shopping_bag</span>
-              Explorar Catálogo
-            </span>
+
+        <div class="flex flex-wrap gap-3">
+          <button routerLink="/products"
+            class="inline-flex items-center gap-2 rounded-lg bg-white px-7 py-3.5 text-sm font-bold text-[#0367A6] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#EEF6FD]">
+            <span class="material-symbols-outlined text-[1.1rem]">shopping_bag</span>
+            Explorar Catálogo
           </button>
-          <button routerLink="/offers" class="bg-white/20 hover:bg-white/30 backdrop-blur-sm border-2 border-white/30 text-white font-semibold py-4 px-8 rounded-xl transition-all duration-200 transform hover:-translate-y-1">
-            <span class="flex items-center gap-2">
-              <span class="material-symbols-outlined font-variation-settings-wght-400">local_offer</span>
-              Ver Ofertas
-            </span>
+          <button routerLink="/offers"
+            class="inline-flex items-center gap-2 rounded-lg border border-white/25 px-7 py-3.5 text-sm font-bold text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/10">
+            <span class="material-symbols-outlined text-[1.1rem]">local_offer</span>
+            Ver Ofertas
           </button>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Marcas Section -->
-  <section class="container mx-auto px-4 sm:px-6 py-12">
-    <div class="flex items-center justify-between mb-6">
-      <div>
-        <h2 class="text-2xl sm:text-3xl font-bold text-[#202020] mb-2">Marcas Disponibles</h2>
-        <p class="text-[#666666]">Las mejores marcas deportivas en un solo lugar</p>
+  <!-- ═══════════════════════════════ PROMO STRIP -->
+  <div class="bg-[#025486]">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-2.5
+                flex flex-wrap items-center justify-center gap-6 sm:gap-10
+                text-[10px] font-bold uppercase tracking-[0.1em] text-white/80">
+      <span class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-[#FF7A00] text-sm">local_shipping</span>
+        Envío gratis +$999
+      </span>
+      <span class="hidden sm:block h-3 w-px bg-white/20"></span>
+      <span class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-[#FF7A00] text-sm">workspace_premium</span>
+        Productos 100% originales
+      </span>
+      <span class="hidden sm:block h-3 w-px bg-white/20"></span>
+      <span class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-[#FF7A00] text-sm">replay</span>
+        Devoluciones 30 días
+      </span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════ MARCAS -->
+  <section class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-14">
+    <div class="section-shell">
+
+      <div class="flex flex-wrap items-end justify-between gap-4 mb-6">
+        <div>
+          <p class="text-[10px] font-bold uppercase tracking-[0.13em] text-[#0367A6] mb-1">Nuestro ecosistema</p>
+          <h2 class="text-2xl sm:text-3xl font-bold text-[#202020]">Marcas Disponibles</h2>
+          <p class="mt-1 text-sm text-[#4F6479] max-w-md">Las marcas que los atletas realmente eligen, en un solo lugar.</p>
+        </div>
       </div>
-    </div>
 
-    <!-- Loading State -->
-    <div *ngIf="loadingMarcas()" class="flex justify-center py-8">
-      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0367A6]"></div>
-    </div>
+      <!-- Loading -->
+      <div *ngIf="loadingMarcas()" class="flex justify-center py-10">
+        <div class="h-9 w-9 rounded-full border-2 border-[#D9E6F2] border-t-[#0367A6] animate-spin"></div>
+      </div>
 
-    <!-- Slider Horizontal de Marcas - SIN BARRA DE SCROLL VISIBLE -->
-    <div *ngIf="!loadingMarcas() && marcas.length > 0" 
-         class="overflow-x-auto pb-4 scrollbar-hide"
-         style="scrollbar-width: none; -webkit-overflow-scrolling: touch; -ms-overflow-style: none;">
-      <div class="flex gap-6 min-w-max">
-        <!-- Tarjeta de Marca -->
-        <div *ngFor="let marca of marcas.slice(0, 8)" 
-             class="flex-shrink-0 w-40 bg-white rounded-xl shadow-md border border-gray-100 p-5 hover:shadow-lg transition-all duration-200 cursor-pointer group"
+      <!-- Marquee un solo carril, chips horizontales -->
+      <div *ngIf="!loadingMarcas() && marcas.length > 0" class="brands-marquee">
+        <div class="brands-fade brands-fade--l"></div>
+        <div class="brands-fade brands-fade--r"></div>
+        <div class="brands-track">
+          <a *ngFor="let marca of brandCarouselItems(); let index = index"
+             class="brand-chip"
              [routerLink]="['/marca', marca.nombre]"
-             [title]="marca.nombre">
-          <div class="flex flex-col items-center">
-            <!-- Imagen de la Marca -->
-            <div class="w-24 h-24 rounded-xl overflow-hidden mb-4 bg-gray-50 p-3 group-hover:border-[#0367A6] transition-colors">
-              <img [src]="marca.imagen" 
-                   [alt]="marca.nombre"
-                   [title]="marca.nombre"
-                   class="w-full h-full object-contain"
-                   loading="lazy"
-                   onerror="this.src='https://ui-avatars.com/api/?name=' + encodeURIComponent(marca.nombre) + '&background=0367A6&color=fff&size=128'">
+             [title]="marca.nombre"
+             [attr.aria-hidden]="index >= marcas.length ? 'true' : null">
+            <div class="brand-chip__logo brand-chip__logo--interactive">
+              <img [src]="getMarcaImageUrl(marca)" [alt]="marca.nombre" loading="lazy"
+                   class="w-full h-full object-contain">
             </div>
-            <!-- Nombre de la Marca -->
-            <span class="text-base font-semibold text-[#202020] text-center">
-              {{ marca.nombre }}
-            </span>
-          </div>
+            <span class="text-sm font-semibold text-[#202020] whitespace-nowrap">{{ marca.nombre }}</span>
+          </a>
         </div>
-        
-        <!-- TARJETA VER MÁS MARCAS -->
-        <a routerLink="/products" 
-           class="flex-shrink-0 w-40 bg-white rounded-xl shadow-md border border-gray-100 p-5 hover:shadow-lg transition-all duration-200 cursor-pointer group">
-          <div class="flex flex-col items-center justify-center h-full min-h-[160px]">
-            <span class="material-symbols-outlined text-3xl text-gray-400 mb-2 group-hover:text-[#0367A6]">chevron_right</span>
-            <span class="text-sm font-medium text-gray-400 group-hover:text-[#0367A6]">Ver más</span>
-          </div>
-        </a>
       </div>
-    </div>
 
-    <!-- Empty State -->
-    <div *ngIf="!loadingMarcas() && marcas.length === 0" 
-         class="text-center py-12 bg-white rounded-xl border border-gray-100">
-      <span class="material-symbols-outlined text-5xl text-gray-300 mb-3">branding_watermark</span>
-      <p class="text-[#666666]">No hay marcas disponibles</p>
+      <!-- Empty -->
+      <div *ngIf="!loadingMarcas() && marcas.length === 0"
+           class="flex flex-col items-center gap-2 py-10 text-[#7B8FA1]">
+        <span class="material-symbols-outlined text-5xl opacity-30">branding_watermark</span>
+        <p class="text-sm">No hay marcas disponibles</p>
+      </div>
     </div>
   </section>
 
-  <!-- Productos Destacados Section -->
-  <section class="container mx-auto px-4 sm:px-6 py-12">
-    <div class="flex items-center justify-between mb-6">
+  <!-- ═══════════════════════════════ CATEGORÍAS -->
+  <section class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-14">
+    <div class="flex flex-wrap items-end justify-between gap-4 mb-7">
       <div>
-        <h2 class="text-2xl sm:text-3xl font-bold text-[#202020] mb-2">Productos Destacados</h2>
-        <p class="text-[#666666]">Lo más popular en nuestra tienda</p>
+        <p class="text-[10px] font-bold uppercase tracking-[0.13em] text-[#0367A6] mb-1">Navega por deporte</p>
+        <h2 class="text-2xl sm:text-3xl font-bold text-[#202020]">Categorías</h2>
       </div>
     </div>
-
-    <!-- Loading State -->
-    <div *ngIf="loading()" class="flex justify-center py-8">
-      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0367A6]"></div>
-    </div>
-
-    <!-- Slider Horizontal de Productos  -->
-    <div *ngIf="!loading() && products.length > 0" 
-         class="overflow-x-auto pb-4 scrollbar-hide"
-         style="scrollbar-width: none; -webkit-overflow-scrolling: touch; -ms-overflow-style: none;">
-      <div class="flex gap-5 min-w-max">
-        <!-- Tarjeta de Producto -->
-        <div *ngFor="let product of products.slice(0, 8)" 
-             class="flex-shrink-0 w-56 group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer border border-gray-100 overflow-hidden"
-             [routerLink]="getProductLink(product)"
-             [title]="product.nombre">
-          <!-- Imagen del Producto -->
-          <div class="w-full pt-[75%] relative overflow-hidden bg-white">
-            <img [src]="product.imagen" 
-                 [alt]="product.nombre"
-                 [title]="product.nombre"
-                 class="absolute top-0 left-0 w-full h-full object-contain p-3 group-hover:scale-125 transition-transform duration-700 ease-in-out"
-                 loading="lazy"
-                 onerror="this.src='https://ui-avatars.com/api/?name=' + encodeURIComponent(product.nombre) + '&background=0367A6&color=fff&size=128'">
-          </div>
-          
-          <!-- Información del Producto -->
-          <div class="p-4">
-            <h3 class="font-semibold text-[#202020] text-base mb-1 line-clamp-1" [title]="product.nombre">
-              {{ product.nombre }}
-            </h3>
-            <p class="text-sm text-[#666666] mb-2 line-clamp-1" [title]="product.marca">
-              {{ product.marca }}
-            </p>
-            <div class="flex items-center justify-between">
-              <span class="text-xl font-bold text-[#0367A6]">
-                ${{ product.precio }}
-              </span>
-            </div>
-          </div>
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+      <a *ngFor="let cat of staticCategories" [routerLink]="cat.route"
+         class="group relative rounded-xl border border-[#D9E6F2] bg-gradient-to-b from-[#EEF6FD] to-white p-5
+                flex flex-col items-center gap-3 cursor-pointer text-center">
+        <div class="home-category-icon flex h-11 w-11 items-center justify-center rounded-full bg-[#0367A6]/10 text-[#0367A6]
+                    transition-all duration-200">
+          <span class="material-symbols-outlined text-xl">{{ cat.icon }}</span>
         </div>
-        
-        <!-- TARJETA VER MÁS PRODUCTOS -->
-        <a routerLink="/products" 
-           class="flex-shrink-0 w-56 bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-200 cursor-pointer group">
-          <div class="flex flex-col items-center justify-center h-full min-h-[250px] p-4">
-            <span class="material-symbols-outlined text-4xl text-gray-400 mb-3 group-hover:text-[#0367A6]">chevron_right</span>
-            <span class="text-base font-medium text-gray-400 group-hover:text-[#0367A6]">Ver más productos</span>
-          </div>
-        </a>
-      </div>
-    </div>
-
-    <!-- Empty State -->
-    <div *ngIf="!loading() && products.length === 0" 
-         class="text-center py-12 bg-white rounded-xl border border-gray-100">
-      <span class="material-symbols-outlined text-5xl text-gray-300 mb-3">inventory_2</span>
-      <p class="text-[#666666]">No hay productos disponibles</p>
+        <span class="text-xs font-bold text-[#202020]">{{ cat.label }}</span>
+      </a>
     </div>
   </section>
+
+  <!-- ═══════════════════════════════ PRODUCTOS DESTACADOS -->
+  <section class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-14">
+    <div class="section-shell section-shell--alt">
+
+      <div class="flex flex-wrap items-end justify-between gap-4 mb-6">
+        <div>
+          <p class="text-[10px] font-bold uppercase tracking-[0.13em] text-[#0367A6] mb-1">Lo más buscado</p>
+        <h2 class="text-2xl sm:text-3xl font-bold text-[#202020]">Productos Destacados</h2>
+          <p class="mt-1 text-sm text-[#4F6479] max-w-md">Selección curada de los productos más populares.</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button type="button" class="home-scroll-button" aria-label="Izquierda" (click)="scrollProducts('left')">
+            <span class="material-symbols-outlined">chevron_left</span>
+          </button>
+          <button type="button" class="home-scroll-button" aria-label="Derecha" (click)="scrollProducts('right')">
+            <span class="material-symbols-outlined">chevron_right</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Loading -->
+      <div *ngIf="loading()" class="flex justify-center py-10">
+        <div class="h-9 w-9 rounded-full border-2 border-[#D9E6F2] border-t-[#0367A6] animate-spin"></div>
+      </div>
+
+      <!-- Scroll -->
+      <div #productScroller
+           *ngIf="!loading() && products.length > 0"
+           class="overflow-x-auto pb-1"
+           style="scrollbar-width:none;-ms-overflow-style:none;-webkit-overflow-scrolling:touch">
+        <div class="flex gap-3 min-w-max">
+
+          <div *ngFor="let product of featuredProducts()"
+               class="group flex-shrink-0 w-52 bg-white rounded-lg sm:rounded-xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border border-gray-100 overflow-hidden"
+               [routerLink]="getProductLink(product)"
+               [title]="product.nombre">
+            <!-- Imagen -->
+            <div class="w-full pt-[75%] relative overflow-hidden bg-white">
+              <img [src]="product.imagen" [alt]="product.nombre" loading="lazy"
+                   class="absolute top-0 left-0 w-full h-full object-contain p-2 sm:p-3 group-hover:scale-110 transition-transform duration-500"
+                   onerror="this.src='https://ui-avatars.com/api/?name='+encodeURIComponent(product.nombre)+'&background=0367A6&color=fff&size=128'">
+            </div>
+            <!-- Info -->
+            <div class="p-2 sm:p-3">
+              <div class="flex items-center gap-1 mb-1">
+                <span class="text-[10px] sm:text-xs font-medium text-gray-700 bg-gray-100 px-1.5 sm:px-2 py-0.5 rounded-full truncate max-w-[80px] sm:max-w-full">
+                  {{ product.marca }}
+                </span>
+              </div>
+
+              <h3 class="text-xs sm:text-sm font-semibold text-gray-900 mb-1 line-clamp-2 h-8 sm:h-10" [title]="product.nombre">
+                {{ product.nombre }}
+              </h3>
+
+              <div class="flex items-center justify-between mt-1 sm:mt-2">
+                <span class="text-sm sm:text-lg font-bold text-[#202020]">${{ product.precio }}</span>
+                <div class="flex items-center">
+                  <span class="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full mr-1 bg-green-500"></span>
+                  <span class="text-[8px] sm:text-[10px] font-medium text-green-600">
+                    Disp
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Ver más -->
+          <a routerLink="/products"
+             class="group flex-shrink-0 w-52 rounded-xl border border-dashed border-[#0367A6]/30 bg-[#F5FAFF]
+                    flex flex-col items-center justify-center gap-3 min-h-[14rem]
+                    transition-all duration-200 hover:bg-[#EEF6FD] hover:border-[#0367A6]">
+            <div class="flex h-11 w-11 items-center justify-center rounded-full bg-[#0367A6]/10 text-[#0367A6]
+                        group-hover:bg-[#0367A6] group-hover:text-white transition-all duration-200">
+              <span class="material-symbols-outlined">grid_view</span>
+            </div>
+            <span class="text-sm font-bold text-[#0367A6]">Ver catálogo</span>
+          </a>
+
+        </div>
+      </div>
+
+      <!-- Empty -->
+      <div *ngIf="!loading() && products.length === 0"
+           class="flex flex-col items-center gap-2 py-10 text-[#7B8FA1]">
+        <span class="material-symbols-outlined text-5xl opacity-30">inventory_2</span>
+        <p class="text-sm">No hay productos disponibles</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════ BANNER CTA -->
+  <section class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-14">
+    <div class="relative overflow-hidden rounded-2xl bg-[#0367A6] px-8 sm:px-12 py-12 sm:py-14
+                flex flex-col sm:flex-row items-center justify-between gap-8">
+      <div class="pointer-events-none absolute -right-10 top-0 h-full w-56 rounded-l-full bg-[#FF7A00]/10 translate-x-10"></div>
+      <div class="relative">
+        <p class="text-[10px] font-bold uppercase tracking-[0.14em] text-white/55 mb-2">Oferta limitada</p>
+        <h2 class="text-3xl sm:text-4xl font-bold text-white mb-2">Hasta 40% OFF</h2>
+        <p class="text-white/65 text-sm max-w-sm">En equipamiento seleccionado de las mejores marcas. Mientras dure el stock.</p>
+      </div>
+      <a routerLink="/offers"
+         class="relative inline-flex items-center gap-2 rounded-lg bg-[#FF7A00] px-8 py-4 text-sm font-black text-white whitespace-nowrap transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#E56E00]">
+        <span class="material-symbols-outlined text-[1.1rem]">local_offer</span>
+        Ver ofertas
+      </a>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════ PILARES -->
+  <section class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-20">
+    <div class="flex flex-wrap items-end justify-between gap-4 mb-8">
+      <div>
+        <p class="text-[10px] font-bold uppercase tracking-[0.13em] text-[#0367A6] mb-1">Por qué elegirnos</p>
+        <h2 class="text-2xl sm:text-3xl font-bold text-[#202020]">Compra con confianza</h2>
+        <p class="mt-1 text-sm text-[#4F6479]">Una experiencia clara y cómoda en cada paso.</p>
+      </div>
+      <a routerLink="/products"
+         class="inline-flex items-center gap-2 rounded-lg bg-[#0367A6] px-5 py-2.5 text-sm font-bold text-white
+                transition-all duration-200 hover:bg-[#025486] hover:-translate-y-0.5">
+        <span class="material-symbols-outlined text-[1rem]">north_east</span>
+        Ver catálogo completo
+      </a>
+    </div>
+
+    <div class="grid gap-4 md:grid-cols-3">
+      <article *ngFor="let pillar of consumptionPillars"
+               class="group rounded-xl border border-[#D9E6F2] bg-white p-6 transition-all duration-200 hover:-translate-y-1 hover:border-[#0367A6]">
+        <div class="mb-5 flex h-12 w-12 items-center justify-center rounded-xl
+                    bg-gradient-to-br from-[#EEF6FD] to-[#D9E6F2] text-[#0367A6]
+                    group-hover:bg-[#0367A6] group-hover:from-[#0367A6] group-hover:to-[#025486] group-hover:text-white
+                    transition-all duration-200">
+          <span class="material-symbols-outlined text-2xl">{{ pillar.icon }}</span>
+        </div>
+        <h3 class="text-base font-bold text-[#202020] mb-2">{{ pillar.title }}</h3>
+        <p class="text-sm text-[#4F6479] leading-relaxed">{{ pillar.description }}</p>
+      </article>
+    </div>
+  </section>
+
 </div>

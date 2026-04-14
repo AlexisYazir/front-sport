@@ -3,6 +3,7 @@ import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { catchError, throwError } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
@@ -10,6 +11,8 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
 
   const isErrorRoute = router.url.startsWith('/error/');
   const isAsset = req.url.includes('/assets/');
+  const apiUrl = environment.apiUrl.replace(/\/$/, '');
+  const isApiRequest = req.url.startsWith(apiUrl);
   if (isAsset || isErrorRoute) return next(req);
 
   const method = req.method.toUpperCase();
@@ -23,6 +26,10 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
     catchError((error: HttpErrorResponse) => {
       const hasBackendValidation =
         !!(error?.error?.errors || error?.error?.validationErrors || Array.isArray(error?.error?.message));
+
+      if (isApiRequest) {
+        return throwError(() => error);
+      }
 
       // 500 o sin red: siempre global
       if (error.status >= 500 || error.status === 0) {
