@@ -136,9 +136,9 @@
 
             <td class="px-4 py-4">
               <div class="flex flex-col gap-1">
-                <span class="text-[#202020] font-medium">{{ order.categoria }}</span>
+                <span class="text-[#202020] font-medium">{{ order.categoria_padre }}</span>
                 <span class="text-xs text-[#666666]" *ngIf="order.categoria_padre">
-                  {{ order.categoria_padre }}
+                  {{ order.categoria }}
                 </span>
               </div>
             </td>
@@ -291,122 +291,85 @@
     </div>
   </div>
 
-  <div *ngIf="filteredOrders.length > 0; else noStatsContent">
-    <!-- Tarjetas principales -->
-    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
-      <div class="bg-blue-50 border border-blue-100 rounded-xl p-4">
-        <p class="text-sm text-[#666666]">Media de ventas</p>
-        <p class="text-2xl font-bold text-[#0367A6] mt-1">
-          {{ roundStat(averageSalesPerProduct) }}
+<div *ngIf="filteredOrders.length > 0; else noStatsContent">
+  <!-- Gráficas una debajo de otra -->
+  <div class="flex flex-col gap-6 mb-6">
+    <!-- Gráfica 1 - Resumen de consumo -->
+    <div class="rounded-2xl border border-gray-200 bg-white overflow-hidden">
+      <div class="px-5 py-4 border-b border-gray-100">
+        <h4 class="font-bold text-[#202020]">Resumen de consumo por barra</h4>
+        <p class="text-sm text-gray-500 mt-1">
+          Muestra el producto líder con su categoría y subcategoría, además de la categoría, subcategoría y deporte con más unidades vendidas
         </p>
-        <p class="text-xs text-gray-500 mt-1">Promedio vendido por producto</p>
       </div>
 
-      <div class="bg-green-50 border border-green-100 rounded-xl p-4">
-        <p class="text-sm text-[#666666]">Mediana</p>
-        <p class="text-2xl font-bold text-green-600 mt-1">
-          {{ roundStat(medianSalesPerProduct) }}
-        </p>
-        <p class="text-xs text-gray-500 mt-1">Valor central de ventas</p>
-      </div>
-
-      <div class="bg-amber-50 border border-amber-100 rounded-xl p-4">
-        <p class="text-sm text-[#666666]">Moda</p>
-        <p class="text-2xl font-bold text-amber-600 mt-1">
-          {{ modeSalesPerProduct }}
-        </p>
-        <p class="text-xs text-gray-500 mt-1">Venta más repetida entre productos</p>
-      </div>
-
-      <div class="bg-purple-50 border border-purple-100 rounded-xl p-4">
-        <p class="text-sm text-[#666666]">Unidades vendidas</p>
-        <p class="text-2xl font-bold text-purple-600 mt-1">
-          {{ totalUnitsSold }}
-        </p>
-        <p class="text-xs text-gray-500 mt-1">Suma total según filtros</p>
+      <div class="p-4 h-[360px]">
+        <canvas
+          baseChart
+          [type]="consumptionSummaryChartType"
+          [data]="consumptionSummaryChartData"
+          [options]="consumptionSummaryChartOptions">
+        </canvas>
       </div>
     </div>
 
-<!-- Insights -->
-<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
-  <div class="rounded-xl border border-gray-200 p-4 bg-gray-50">
-    <p class="text-sm text-gray-500">Producto más consumido</p>
-    <p class="text-base font-bold text-[#202020] mt-2">
-      {{ mostConsumedProduct?.nombre || 'Sin datos' }}
-    </p>
-    <p class="text-sm text-[#0367A6] mt-1" *ngIf="mostConsumedProduct">
-      {{ mostConsumedProduct.total_vendido }} unidades
-    </p>
+    <!-- Gráfica 2 - Producto más consumido -->
+    <div class="rounded-2xl border border-gray-200 bg-white overflow-hidden">
+      <div class="px-5 py-4 border-b border-gray-100">
+        <h4 class="font-bold text-[#202020]">Producto más consumido por subcategoría</h4>
+        <p class="text-sm text-gray-500 mt-1">
+          Distribución del top de productos filtrados por categoría y subcategoría
+        </p>
+      </div>
+
+      <div class="p-4 h-[360px]">
+        <canvas
+          baseChart
+          [type]="topProductsPieChartType"
+          [data]="topProductsPieChartData"
+          [options]="topProductsPieChartOptions">
+        </canvas>
+      </div>
+    </div>
   </div>
 
-  <div class="rounded-xl border border-gray-200 p-4 bg-gray-50">
-    <p class="text-sm text-gray-500">Categoría más consumida</p>
-    <p class="text-base font-bold text-[#202020] mt-2">
-      {{ mostConsumedParentCategory?.nombre || 'Sin datos' }}
-    </p>
-    <p class="text-sm text-[#0367A6] mt-1" *ngIf="mostConsumedParentCategory">
-      {{ mostConsumedParentCategory.total }} unidades
-    </p>
-  </div>
+  <!-- Top productos -->
+  <div class="rounded-xl border border-gray-200 overflow-hidden mt-6">
+    <div class="bg-gray-50 px-4 py-3 border-b border-gray-200">
+      <h4 class="font-bold text-[#202020]">Top 5 productos más consumidos</h4>
+    </div>
 
-  <div class="rounded-xl border border-gray-200 p-4 bg-gray-50">
-    <p class="text-sm text-gray-500">Subcategoría más consumida</p>
-    <p class="text-base font-bold text-[#202020] mt-2">
-      {{ mostConsumedSubcategory?.nombre || 'Sin datos' }}
-    </p>
-    <p class="text-sm text-[#0367A6] mt-1" *ngIf="mostConsumedSubcategory">
-      {{ mostConsumedSubcategory.total }} unidades
-    </p>
-  </div>
-
-  <div class="rounded-xl border border-gray-200 p-4 bg-gray-50">
-    <p class="text-sm text-gray-500">Deporte más consumido</p>
-    <p class="text-base font-bold text-[#202020] mt-2">
-      {{ mostConsumedSport?.nombre || 'Sin datos' }}
-    </p>
-    <p class="text-sm text-[#0367A6] mt-1" *ngIf="mostConsumedSport">
-      {{ mostConsumedSport.total }} unidades
-    </p>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-white border-b border-gray-200">
+          <tr>
+            <th class="px-4 py-3 text-left font-semibold text-[#202020]">Producto</th>
+            <th class="px-4 py-3 text-left font-semibold text-[#202020]">Subcategoría</th>
+            <th class="px-4 py-3 text-center font-semibold text-[#202020]">Ventas</th>
+            <th class="px-4 py-3 text-center font-semibold text-[#202020]">Ingresos</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            *ngFor="let product of topProducts"
+            class="border-b border-gray-100 hover:bg-gray-50 transition-colors"
+          >
+            <td class="px-4 py-3 font-medium text-[#202020]">{{ product.nombre }}</td>
+            <td class="px-4 py-3 text-[#666666]">{{ product.categoria }}</td>
+            <td class="px-4 py-3 text-center">
+              <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-semibold">
+                {{ product.total_vendido }}
+              </span>
+            </td>
+            <td class="px-4 py-3 text-center font-bold text-[#0367A6]">
+              {{ formatCurrency(product.ingresos_totales) }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
-
-    <!-- Top productos -->
-    <div class="rounded-xl border border-gray-200 overflow-hidden">
-      <div class="bg-gray-50 px-4 py-3 border-b border-gray-200">
-        <h4 class="font-bold text-[#202020]">Top 5 productos más consumidos</h4>
-      </div>
-
-      <div class="overflow-x-auto">
-        <table class="w-full text-sm">
-          <thead class="bg-white border-b border-gray-200">
-            <tr>
-              <th class="px-4 py-3 text-left font-semibold text-[#202020]">Producto</th>
-              <th class="px-4 py-3 text-left font-semibold text-[#202020]">Subcategoría</th>
-              <th class="px-4 py-3 text-center font-semibold text-[#202020]">Ventas</th>
-              <th class="px-4 py-3 text-center font-semibold text-[#202020]">Ingresos</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              *ngFor="let product of topProducts"
-              class="border-b border-gray-100 hover:bg-gray-50 transition-colors"
-            >
-              <td class="px-4 py-3 font-medium text-[#202020]">{{ product.nombre }}</td>
-              <td class="px-4 py-3 text-[#666666]">{{ product.categoria }}</td>
-              <td class="px-4 py-3 text-center">
-                <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-semibold">
-                  {{ product.total_vendido }}
-                </span>
-              </td>
-              <td class="px-4 py-3 text-center font-bold text-[#0367A6]">
-                {{ formatCurrency(product.ingresos_totales) }}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
 
   <ng-template #noStatsContent>
     <div class="text-center py-10">
@@ -499,6 +462,41 @@
               >
                 Mes
               </button>
+
+              <button
+                (click)="setDetailPeriod('anio')"
+                class="px-4 py-2 rounded-lg text-sm font-medium transition-all"
+                [ngClass]="detailPeriod === 'anio'
+                  ? 'bg-[#0367A6] text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
+              >
+                Año
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <p class="text-sm font-semibold text-gray-700 mb-2">Rango de fechas</p>
+            <div class="flex flex-col sm:flex-row gap-3">
+              <div>
+                <p class="text-xs font-semibold text-gray-500 mb-1">DESDE</p>
+                <input
+                  type="date"
+                  [(ngModel)]="detailDateFrom"
+                  (change)="onDetailDateChange()"
+                  class="px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700"
+                />
+              </div>
+
+              <div>
+                <p class="text-xs font-semibold text-gray-500 mb-1">HASTA</p>
+                <input
+                  type="date"
+                  [(ngModel)]="detailDateTo"
+                  (change)="onDetailDateChange()"
+                  class="px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700"
+                />
+              </div>
             </div>
           </div>
 
@@ -538,7 +536,7 @@
 
           <div class="bg-green-50 border border-green-100 rounded-xl p-4">
             <p class="text-sm text-[#666666]">Cantidad total</p>
-            <p class="text-2xl font-bold text-green-600 mt-1">{{ getTotalDetailCantidad() }}</p>
+            <p class="text-2xl font-bold text-green-600 mt-1">{{ roundSales(getTotalDetailCantidad()) }}</p>
           </div>
 
           <div class="bg-amber-50 border border-amber-100 rounded-xl p-4">
@@ -560,7 +558,7 @@
             <thead class="bg-gray-50 border-b-2 border-gray-200">
               <tr>
                 <th class="px-4 py-4 text-left font-semibold text-[#202020]">
-                  {{ detailPeriod === 'dia' ? 'Fecha' : (detailPeriod === 'semana' ? 'Semana' : 'Mes') }}
+                  {{ detailPeriod === 'dia' ? 'Fecha' : (detailPeriod === 'semana' ? 'Semana' : (detailPeriod === 'anio' ? 'Año' : 'Mes')) }}
                 </th>
                 <th class="px-4 py-4 text-center font-semibold text-[#202020]">Órdenes</th>
                 <th class="px-4 py-4 text-center font-semibold text-[#202020]">Cantidad</th>
@@ -582,7 +580,7 @@
                 </td>
                 <td class="px-4 py-4 text-center">
                   <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-semibold">
-                    {{ item.cantidad }}
+                    {{ roundSales(item.cantidad) }}
                   </span>
                 </td>
                 <td class="px-4 py-4 text-center font-bold text-[#0367A6]">
@@ -656,21 +654,53 @@
       </div>
 
       <ng-container *ngIf="!isLoadingPrediction() && predictionModel">
-        <!-- Explicación -->
-        <div class="mb-6 rounded-xl border border-green-100 bg-green-50 p-4">
-          <div class="flex items-start gap-3">
-            <span class="material-symbols-outlined text-green-700 mt-0.5">auto_graph</span>
-            <div>
-              <p class="font-semibold text-green-800">Proyección de ventas</p>
-              <p class="text-sm text-green-700 mt-1">
-                Esta estimación toma como base el historial de ventas del producto seleccionado para proyectar su comportamiento en los próximos meses.
-              </p>
-            </div>
-          </div>
-        </div>
-
         <!-- Controles -->
         <div class="flex flex-col xl:flex-row xl:items-end xl:justify-between gap-4 mb-6">
+          <div>
+            <p class="text-sm font-semibold text-gray-700 mb-2">Agrupar historial por</p>
+            <div class="flex flex-wrap gap-2">
+              <button
+                (click)="setPredictionPeriod('dia')"
+                class="px-4 py-2 rounded-lg text-sm font-medium transition-all"
+                [ngClass]="predictionPeriod === 'dia'
+                  ? 'bg-green-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
+              >
+                Día
+              </button>
+
+              <button
+                (click)="setPredictionPeriod('semana')"
+                class="px-4 py-2 rounded-lg text-sm font-medium transition-all"
+                [ngClass]="predictionPeriod === 'semana'
+                  ? 'bg-green-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
+              >
+                Semana
+              </button>
+
+              <button
+                (click)="setPredictionPeriod('mes')"
+                class="px-4 py-2 rounded-lg text-sm font-medium transition-all"
+                [ngClass]="predictionPeriod === 'mes'
+                  ? 'bg-green-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
+              >
+                Mes
+              </button>
+
+              <button
+                (click)="setPredictionPeriod('anio')"
+                class="px-4 py-2 rounded-lg text-sm font-medium transition-all"
+                [ngClass]="predictionPeriod === 'anio'
+                  ? 'bg-green-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
+              >
+                Año
+              </button>
+            </div>
+          </div>
+
           <div>
             <p class="text-sm font-semibold text-gray-700 mb-2">Horizonte de proyección</p>
             <div class="flex flex-wrap gap-2">
@@ -681,7 +711,7 @@
                   ? 'bg-green-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
               >
-                3 meses
+                {{ getPredictionHorizonLabel(3) }}
               </button>
 
               <button
@@ -691,7 +721,7 @@
                   ? 'bg-green-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
               >
-                6 meses
+                {{ getPredictionHorizonLabel(6) }}
               </button>
 
               <button
@@ -701,7 +731,7 @@
                   ? 'bg-green-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
               >
-                12 meses
+                {{ getPredictionHorizonLabel(12) }}
               </button>
             </div>
           </div>
@@ -738,7 +768,7 @@
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <div class="bg-green-50 border border-green-100 rounded-xl p-4">
             <p class="text-sm text-[#666666]">Ventas proyectadas</p>
-            <p class="text-2xl font-bold text-green-600 mt-1">{{ round2(predictionTotalProjectedSales) }}</p>
+            <p class="text-2xl font-bold text-green-600 mt-1">{{ roundSales(predictionTotalProjectedSales) }}</p>
           </div>
 
           <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-4">
@@ -753,7 +783,7 @@
 
           <div class="bg-amber-50 border border-amber-100 rounded-xl p-4">
             <p class="text-sm text-[#666666]">Historial usado</p>
-            <p class="text-2xl font-bold text-amber-600 mt-1">{{ predictionModel.historicalMonths }} meses</p>
+            <p class="text-2xl font-bold text-amber-600 mt-1">{{ getPredictionHistoryUsedText() }}</p>
           </div>
         </div>
 
@@ -769,57 +799,48 @@
 
         </div>
 
-        <!-- Resumen del comportamiento -->
-        <div class="mb-6 rounded-xl border border-gray-200 p-4">
-          <div class="flex items-center gap-2 mb-4">
-            <span class="material-symbols-outlined text-[#0367A6]">functions</span>
-            <h4 class="text-lg font-bold text-[#202020]">Resumen del comportamiento</h4>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
-              <p class="text-xs uppercase tracking-wide text-gray-500">Condición inicial</p>
-              <p class="text-xl font-bold text-[#202020] mt-1">{{ predictionModel.x0 }}</p>
-              <p class="text-xs text-gray-500 mt-1">Ventas registradas en {{ predictionModel.initialLabel }}</p>
-            </div>
-
-            <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
-              <p class="text-xs uppercase tracking-wide text-gray-500">Ritmo estimado</p>
-              <p class="text-xl font-bold text-[#202020] mt-1">{{ predictionModel.k }}</p>
-              <p class="text-xs text-gray-500 mt-1">Qué tan rápido podrían subir o bajar las ventas</p>
-            </div>
-
-            <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
-              <p class="text-xs uppercase tracking-wide text-gray-500">Tendencia</p>
-              <p class="text-xl font-bold text-[#202020] mt-1 capitalize">{{ predictionModel.trendType }}</p>
-              <p class="text-xs text-gray-500 mt-1">Comportamiento esperado en los próximos meses</p>
-            </div>
-          </div>
-        </div>
-
         <!-- Tabla predicción -->
         <div *ngIf="predictionView === 'tabla'" class="overflow-x-auto rounded-xl border border-gray-200">
           <table class="w-full text-sm">
             <thead class="bg-gray-50 border-b-2 border-gray-200">
               <tr>
                 <th class="px-4 py-4 text-left font-semibold text-[#202020]">Periodo</th>
-                <th class="px-4 py-4 text-center font-semibold text-[#202020]">Ventas proyectadas</th>
-                <th class="px-4 py-4 text-center font-semibold text-[#202020]">Ingreso proyectado</th>
+                <th class="px-4 py-4 text-center font-semibold text-[#202020]">Tipo</th>
+                <th class="px-4 py-4 text-center font-semibold text-[#202020]">Ventas</th>
+                <th class="px-4 py-4 text-center font-semibold text-[#202020]">Ingreso</th>
               </tr>
             </thead>
             <tbody>
               <tr
-                *ngFor="let item of predictionProjections"
+                *ngFor="let item of predictionTableRows"
                 class="border-b border-gray-100 hover:bg-gray-50 transition-colors"
               >
                 <td class="px-4 py-4 font-medium text-[#202020]">{{ item.label }}</td>
                 <td class="px-4 py-4 text-center">
-                  <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-semibold">
-                    {{ round2(item.ventasProyectadas) }}
+                  <span
+                    class="px-3 py-1 rounded-full text-xs font-semibold"
+                    [ngClass]="item.tipo === 'real'
+                      ? 'bg-blue-100 text-blue-700'
+                      : 'bg-green-100 text-green-700'"
+                  >
+                    {{ item.tipo === 'real' ? 'Real' : 'Proyección' }}
                   </span>
                 </td>
-                <td class="px-4 py-4 text-center font-bold text-emerald-600">
-                  {{ formatCurrency(item.ingresosProyectados) }}
+                <td class="px-4 py-4 text-center">
+                  <span
+                    class="px-3 py-1 rounded-full text-xs font-semibold"
+                    [ngClass]="item.tipo === 'real'
+                      ? 'bg-blue-100 text-blue-700'
+                      : 'bg-green-100 text-green-700'"
+                  >
+                    {{ item.ventas }}
+                  </span>
+                </td>
+                <td
+                  class="px-4 py-4 text-center font-bold"
+                  [ngClass]="item.tipo === 'real' ? 'text-[#0367A6]' : 'text-emerald-600'"
+                >
+                  {{ formatCurrency(item.ingresos) }}
                 </td>
               </tr>
             </tbody>

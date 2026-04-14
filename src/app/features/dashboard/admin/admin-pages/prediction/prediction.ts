@@ -13,10 +13,13 @@ import {
   Chart,
   BarController,
   BarElement,
+  PieController,
+  ArcElement,
   CategoryScale,
   LinearScale,
   Tooltip,
-  Legend
+  Legend,
+  Plugin
 } from 'chart.js';
 
 import { ProductService } from '../../../../../core/services/product.service';
@@ -26,11 +29,52 @@ import { formatMexicoDateTime, parseApiDate } from '../../../../../core/utils/da
 Chart.register(
   BarController,
   BarElement,
+  PieController,
+  ArcElement,
   CategoryScale,
   LinearScale,
   Tooltip,
   Legend
 );
+
+const salesValueLabelsPlugin: Plugin<'bar'> = {
+  id: 'salesValueLabels',
+  afterDatasetsDraw(chart, _args, pluginOptions) {
+    const options = pluginOptions as { enabled?: boolean; color?: string } | undefined;
+    if (!options?.enabled) return;
+
+    const { ctx } = chart;
+
+    chart.data.datasets.forEach((dataset, datasetIndex) => {
+      const meta = chart.getDatasetMeta(datasetIndex);
+      if (meta.hidden) return;
+
+      meta.data.forEach((element, index) => {
+        const rawValue = Number((dataset.data as number[])[index] ?? 0);
+        if (!Number.isFinite(rawValue)) return;
+
+        const value = Math.round(rawValue);
+        const props = (element as any).getProps(['x', 'y', 'base'], true);
+        const x = props.x;
+        const y = props.y;
+        const base = props.base;
+        const height = Math.abs(base - y);
+
+        if (height < 28) return;
+
+        ctx.save();
+        ctx.fillStyle = options.color ?? '#FFFFFF';
+        ctx.font = '700 12px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(String(value), x, y + height / 2);
+        ctx.restore();
+      });
+    });
+  }
+};
+
+Chart.register(salesValueLabelsPlugin);
 
 interface Sport {
   id_deporte: number;
@@ -95,9 +139,16 @@ interface PredictionModelResult {
   k: number;
   trendType: 'crecimiento' | 'decrecimiento' | 'estable';
   averagePrice: number;
-  historicalMonths: number;
+  historicalPeriods: number;
   initialLabel: string;
   projections: PredictionPoint[];
+}
+
+interface PredictionTableRow {
+  label: string;
+  tipo: 'real' | 'proyeccion';
+  ventas: number;
+  ingresos: number;
 }
 
 @Component({
@@ -131,13 +182,16 @@ export class Prediction implements OnInit {
   selectedProduct: OrderProduct | null = null;
   salesDetailRaw: OrderDetail[] = [];
 
-  detailPeriod: 'dia' | 'semana' | 'mes' = 'dia';
-  detailView: 'tabla' | 'grafica' = 'tabla';
+  detailPeriod: 'dia' | 'semana' | 'mes' | 'anio' = 'dia';
+  detailView: 'tabla' | 'grafica' = 'grafica';
+  detailDateFrom = '';
+  detailDateTo = '';
 
   // Modal predicción
   showPredictionModal = false;
   predictionDetailRaw: OrderDetail[] = [];
   predictionView: 'tabla' | 'grafica' = 'tabla';
+  predictionPeriod: 'dia' | 'semana' | 'mes' | 'anio' = 'mes';
   predictionHorizon: 3 | 6 | 12 = 6;
   predictionModel: PredictionModelResult | null = null;
 
@@ -148,9 +202,16 @@ export class Prediction implements OnInit {
   emerald = '#10B981';
   amber = '#F59E0B';
   blue = '#0367A6';
+  purple = '#9333EA';
 
   salesChartType: 'bar' = 'bar';
   predictionChartType: 'bar' = 'bar';
+  consumptionSummaryChartType: 'bar' = 'bar';
+  topProductsPieChartType: 'pie' = 'pie';
+  private consumptionSummaryChartSignature = '';
+  private consumptionSummaryChartDataCache: any = { labels: [], datasets: [] };
+  private topProductsPieChartSignature = '';
+  private topProductsPieChartDataCache: any = { labels: [], datasets: [] };
 
   // Paginación tabla principal
   rowsPerPage = 10;
@@ -245,6 +306,10 @@ export class Prediction implements OnInit {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
+      salesValueLabels: {
+        enabled: true,
+        color: '#FFFFFF'
+      },
       legend: {
         display: true,
         labels: {
@@ -265,7 +330,7 @@ export class Prediction implements OnInit {
 
             if (!item) return '';
 
-            return `Cantidad vendida: ${item.cantidad}`;
+            return `Cantidad vendida: ${this.roundSales(item.cantidad)}`;
           },
           afterLabel: (context: any) => {
             const index = context.dataIndex;
@@ -324,6 +389,10 @@ export class Prediction implements OnInit {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
+      salesValueLabels: {
+        enabled: true,
+        color: '#FFFFFF'
+      },
       legend: {
         display: true,
         labels: {
@@ -339,16 +408,23 @@ export class Prediction implements OnInit {
             return tooltipItems[0]?.label || '';
           },
           label: (context: any) => {
-            const index = context.dataIndex;
-            const item = this.predictionProjections[index];
-            if (!item) return '';
-            return `Ventas proyectadas: ${this.round2(item.ventasProyectadas)}`;
+            const datasetLabel = context.dataset?.label || 'Ventas';
+            const value = Number(context.parsed?.y ?? context.raw ?? 0);
+            return `${datasetLabel}: ${this.roundSales(value)}`;
           },
           afterLabel: (context: any) => {
+            const datasetLabel = context.dataset?.label || '';
             const index = context.dataIndex;
-            const item = this.predictionProjections[index];
-            if (!item) return '';
-            return `Ingreso proyectado: ${this.formatCurrency(item.ingresosProyectados)}`;
+
+            if (datasetLabel === 'Ventas proyectadas') {
+              const historyCount = this.predictionHistoricalSales.length;
+              const projectionIndex = index - historyCount;
+              const item = this.predictionProjections[projectionIndex];
+              if (!item) return '';
+              return `Ingreso proyectado: ${this.formatCurrency(item.ingresosProyectados)}`;
+            }
+
+            return '';
           }
         }
       }
@@ -365,7 +441,8 @@ export class Prediction implements OnInit {
       y: {
         beginAtZero: true,
         ticks: {
-          color: '#666666'
+          color: '#666666',
+          precision: 0
         },
         grid: {
           color: '#E5E7EB'
@@ -374,6 +451,92 @@ export class Prediction implements OnInit {
           display: true,
           text: 'Ventas proyectadas',
           color: '#666666'
+        }
+      }
+    }
+  };
+
+  consumptionSummaryChartOptions: any = {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: false,
+    plugins: {
+      salesValueLabels: {
+        enabled: true,
+        color: '#FFFFFF'
+      },
+      legend: {
+        display: false
+      },
+      tooltip: {
+        callbacks: {
+          label: (context: any) => `${Math.round(Number(context.raw || 0))} unidades`
+        }
+      }
+    },
+    scales: {
+      x: {
+        ticks: {
+          color: '#666666',
+          font: {
+            size: 11
+          },
+          maxRotation: 0,
+          autoSkip: false
+        },
+        grid: {
+          display: false
+        }
+      },
+      y: {
+        beginAtZero: true,
+        ticks: {
+          precision: 0,
+          color: '#666666'
+        },
+        title: {
+          display: true,
+          text: 'Unidades'
+        },
+        grid: {
+          color: 'rgba(148, 163, 184, 0.15)'
+        }
+      }
+    }
+  };
+
+  topProductsPieChartOptions: any = {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: false,
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: {
+          usePointStyle: true,
+          boxWidth: 10,
+          color: '#374151',
+          font: {
+            size: 11
+          }
+        }
+      },
+      tooltip: {
+        callbacks: {
+          label: (context: any) => {
+            const product = this.topProducts[context.dataIndex];
+
+            if (!product) {
+              return `${Math.round(Number(context.raw || 0))} unidades`;
+            }
+
+            return [
+              `Cantidad vendida: ${Math.round(Number(product.total_vendido || 0))} unidades`,
+              `Categoría: ${product.categoria_padre || 'Sin categoría'}`,
+              `Subcategoría: ${product.categoria || 'Sin subcategoría'}`,
+              `Ingresos: ${this.formatCurrency(Number(product.ingresos_totales || 0))}`
+            ];
+          }
         }
       }
     }
@@ -569,6 +732,10 @@ export class Prediction implements OnInit {
     return Number((value || 0).toFixed(2));
   }
 
+  roundSales(value: number): number {
+    return Math.round(value || 0);
+  }
+
   // =========================
   // MODAL DETALLES
   // =========================
@@ -576,8 +743,10 @@ export class Prediction implements OnInit {
     this.selectedProduct = product;
     this.showSalesDetailModal = true;
     this.detailPeriod = 'dia';
-    this.detailView = 'tabla';
+    this.detailView = 'grafica';
     this.salesDetailRaw = [];
+    this.detailDateFrom = '';
+    this.detailDateTo = '';
     this.resetSalesChart();
     this.loadSalesDetail(product.id_producto);
   }
@@ -587,7 +756,9 @@ export class Prediction implements OnInit {
     this.selectedProduct = null;
     this.salesDetailRaw = [];
     this.detailPeriod = 'dia';
-    this.detailView = 'tabla';
+    this.detailView = 'grafica';
+    this.detailDateFrom = '';
+    this.detailDateTo = '';
     this.resetSalesChart();
   }
 
@@ -600,6 +771,7 @@ export class Prediction implements OnInit {
           ? data.map((item) => this.normalizeOrderDetail(item))
           : [];
 
+        this.initializeDetailDateRange();
         this.updateSalesChart();
         this.isLoadingDetails.set(false);
       },
@@ -611,7 +783,7 @@ export class Prediction implements OnInit {
     });
   }
 
-  setDetailPeriod(period: 'dia' | 'semana' | 'mes'): void {
+  setDetailPeriod(period: 'dia' | 'semana' | 'mes' | 'anio'): void {
     this.detailPeriod = period;
     this.updateSalesChart();
   }
@@ -621,10 +793,14 @@ export class Prediction implements OnInit {
     this.updateSalesChart();
   }
 
+  onDetailDateChange(): void {
+    this.updateSalesChart();
+  }
+
   get groupedSales(): GroupedSale[] {
     const map = new Map<string, GroupedSale>();
 
-    for (const item of this.salesDetailRaw) {
+    for (const item of this.filteredSalesDetailRaw) {
       const date = parseApiDate(item.fecha_creacion);
       if (!date) continue;
       const keyData = this.getGroupKey(date, this.detailPeriod);
@@ -648,7 +824,27 @@ export class Prediction implements OnInit {
     return Array.from(map.values()).sort((a, b) => a.sortValue - b.sortValue);
   }
 
-  private getGroupKey(date: Date, period: 'dia' | 'semana' | 'mes') {
+  get filteredSalesDetailRaw(): OrderDetail[] {
+    const from = this.detailDateFrom ? this.parseDateInputLocal(this.detailDateFrom) : null;
+    const to = this.detailDateTo ? this.parseDateInputLocal(this.detailDateTo) : null;
+    const fromTime = from ? new Date(from.getFullYear(), from.getMonth(), from.getDate(), 0, 0, 0, 0).getTime() : null;
+    const toExclusiveTime = to
+      ? new Date(to.getFullYear(), to.getMonth(), to.getDate() + 1, 0, 0, 0, 0).getTime()
+      : null;
+
+    return this.salesDetailRaw.filter((item) => {
+      const date = parseApiDate(item.fecha_creacion);
+      if (!date) return false;
+
+      const time = date.getTime();
+      const afterFrom = fromTime !== null ? time >= fromTime : true;
+      const beforeTo = toExclusiveTime !== null ? time < toExclusiveTime : true;
+
+      return afterFrom && beforeTo;
+    });
+  }
+
+  private getGroupKey(date: Date, period: 'dia' | 'semana' | 'mes' | 'anio') {
     if (period === 'dia') {
       const year = date.getFullYear();
       const month = this.pad(date.getMonth() + 1);
@@ -708,6 +904,42 @@ export class Prediction implements OnInit {
     return value.charAt(0).toUpperCase() + value.slice(1);
   }
 
+  private initializeDetailDateRange(): void {
+    if (this.salesDetailRaw.length === 0) {
+      this.detailDateFrom = '';
+      this.detailDateTo = '';
+      return;
+    }
+
+    const timestamps = this.salesDetailRaw
+      .map((item) => parseApiDate(item.fecha_creacion)?.getTime() ?? null)
+      .filter((value): value is number => value !== null)
+      .sort((a, b) => a - b);
+
+    if (timestamps.length === 0) {
+      this.detailDateFrom = '';
+      this.detailDateTo = '';
+      return;
+    }
+
+    this.detailDateFrom = this.toDateInputValue(new Date(timestamps[0]));
+    this.detailDateTo = this.toDateInputValue(new Date(timestamps[timestamps.length - 1]));
+  }
+
+  private toDateInputValue(date: Date): string {
+    return `${date.getFullYear()}-${this.pad(date.getMonth() + 1)}-${this.pad(date.getDate())}`;
+  }
+
+  private parseDateInputLocal(value: string): Date | null {
+    const parts = value.split('-').map((part) => Number(part));
+    if (parts.length !== 3 || parts.some((part) => Number.isNaN(part))) {
+      return null;
+    }
+
+    const [year, month, day] = parts;
+    return new Date(year, month - 1, day, 0, 0, 0, 0);
+  }
+
   updateSalesChart(): void {
     const grouped = this.groupedSales;
 
@@ -716,7 +948,7 @@ export class Prediction implements OnInit {
       datasets: [
         {
           label: 'Cantidad vendida',
-          data: grouped.map((item) => item.cantidad),
+          data: grouped.map((item) => this.roundSales(item.cantidad)),
           backgroundColor: this.primary,
           borderRadius: 6
         }
@@ -756,7 +988,8 @@ export class Prediction implements OnInit {
   openPredictionModal(product: OrderProduct): void {
     this.selectedProduct = product;
     this.showPredictionModal = true;
-    this.predictionView = 'tabla';
+    this.predictionPeriod = 'mes';
+    this.predictionView = 'grafica';
     this.predictionHorizon = 6;
     this.predictionDetailRaw = [];
     this.predictionModel = null;
@@ -768,8 +1001,9 @@ export class Prediction implements OnInit {
     this.showPredictionModal = false;
     this.predictionDetailRaw = [];
     this.predictionModel = null;
+    this.predictionPeriod = 'mes';
     this.predictionHorizon = 6;
-    this.predictionView = 'tabla';
+    this.predictionView = 'grafica';
     this.resetPredictionChart();
   }
 
@@ -799,6 +1033,14 @@ export class Prediction implements OnInit {
     this.updatePredictionChart();
   }
 
+  setPredictionPeriod(period: 'dia' | 'semana' | 'mes' | 'anio'): void {
+    this.predictionPeriod = period;
+    if (this.selectedProduct) {
+      this.predictionModel = this.buildPredictionModel(this.selectedProduct, this.predictionDetailRaw);
+      this.updatePredictionChart();
+    }
+  }
+
   setPredictionHorizon(months: 3 | 6 | 12): void {
     this.predictionHorizon = months;
     if (this.selectedProduct) {
@@ -811,6 +1053,27 @@ export class Prediction implements OnInit {
     return this.predictionModel?.projections ?? [];
   }
 
+  get predictionHistoricalSales(): MonthlySalePoint[] {
+    return this.buildPredictionHistory(this.predictionDetailRaw);
+  }
+
+  get predictionTableRows(): PredictionTableRow[] {
+    return [
+      ...this.predictionHistoricalSales.map((item) => ({
+        label: item.label,
+        tipo: 'real' as const,
+        ventas: this.roundSales(item.cantidad),
+        ingresos: item.total
+      })),
+      ...this.predictionProjections.map((item) => ({
+        label: item.label,
+        tipo: 'proyeccion' as const,
+        ventas: this.roundSales(item.ventasProyectadas),
+        ingresos: item.ingresosProyectados
+      }))
+    ];
+  }
+
   get predictionTotalProjectedSales(): number {
     return this.predictionProjections.reduce((acc, item) => acc + item.ventasProyectadas, 0);
   }
@@ -820,20 +1083,21 @@ export class Prediction implements OnInit {
   }
 
   private buildPredictionModel(product: OrderProduct, details: OrderDetail[]): PredictionModelResult {
-    const monthlyHistory = this.buildMonthlyHistory(details);
-    const historicalMonths = monthlyHistory.length;
+    const historicalSales = this.buildPredictionHistory(details);
+    const historicalPeriods = historicalSales.length;
 
     const averagePrice =
       product.total_vendido > 0
         ? product.ingresos_totales / product.total_vendido
         : this.getAverageUnitPriceBySubcategory(product.categoria);
 
-    const exponentialModel = this.calculateExponentialModel(monthlyHistory);
+    const exponentialModel = this.calculateExponentialModel(historicalSales);
 
     const projections: PredictionPoint[] = [];
+    const lastSortValue = historicalSales[historicalSales.length - 1]?.sortValue ?? Date.now();
 
     for (let i = 1; i <= this.predictionHorizon; i++) {
-      const futureTime = (historicalMonths - 1) + i;
+      const futureTime = (historicalPeriods - 1) + i;
       const projectedSales = Math.max(
         0,
         exponentialModel.x0 * Math.exp(exponentialModel.k * futureTime)
@@ -843,7 +1107,7 @@ export class Prediction implements OnInit {
       const projectedRevenue = this.round2(salesRounded * averagePrice);
 
       projections.push({
-        label: this.getFutureMonthLabel(i),
+        label: this.getFuturePredictionLabel(lastSortValue, i),
         ventasProyectadas: salesRounded,
         ingresosProyectados: projectedRevenue,
         periodoIndex: i
@@ -855,39 +1119,31 @@ export class Prediction implements OnInit {
       k: this.round2(exponentialModel.k),
       trendType: exponentialModel.trendType,
       averagePrice: this.round2(averagePrice),
-      historicalMonths,
-      initialLabel: monthlyHistory[0]?.label ?? 'Sin historial',
+      historicalPeriods,
+      initialLabel: historicalSales[0]?.label ?? 'Sin historial',
       projections
     };
   }
 
-  private buildMonthlyHistory(details: OrderDetail[]): MonthlySalePoint[] {
+  private buildPredictionHistory(details: OrderDetail[]): MonthlySalePoint[] {
     const map = new Map<string, MonthlySalePoint>();
 
     for (const item of details) {
       const date = parseApiDate(item.fecha_creacion);
       if (!date) continue;
-      const year = date.getFullYear();
-      const month = date.getMonth();
-      const key = `${year}-${this.pad(month + 1)}`;
-      const label = this.capitalize(
-        new Intl.DateTimeFormat('es-MX', {
-          month: 'short',
-          year: 'numeric'
-        }).format(new Date(year, month, 1))
-      );
+      const groupKey = this.getPredictionGroupKey(date, this.predictionPeriod);
 
-      if (!map.has(key)) {
-        map.set(key, {
-          key,
-          label,
+      if (!map.has(groupKey.key)) {
+        map.set(groupKey.key, {
+          key: groupKey.key,
+          label: groupKey.label,
           cantidad: 0,
           total: 0,
-          sortValue: new Date(year, month, 1).getTime()
+          sortValue: groupKey.sortValue
         });
       }
 
-      const current = map.get(key)!;
+      const current = map.get(groupKey.key)!;
       current.cantidad += Number(item.cantidad || 0);
       current.total += Number(item.total || 0);
     }
@@ -895,19 +1151,14 @@ export class Prediction implements OnInit {
     const result = Array.from(map.values()).sort((a, b) => a.sortValue - b.sortValue);
 
     if (result.length === 0 && this.selectedProduct) {
-      const fallbackMonth = new Date();
-      const key = `${fallbackMonth.getFullYear()}-${this.pad(fallbackMonth.getMonth() + 1)}`;
+      const fallbackDate = new Date();
+      const groupKey = this.getPredictionGroupKey(fallbackDate, this.predictionPeriod);
       result.push({
-        key,
-        label: this.capitalize(
-          new Intl.DateTimeFormat('es-MX', {
-            month: 'short',
-            year: 'numeric'
-          }).format(new Date(fallbackMonth.getFullYear(), fallbackMonth.getMonth(), 1))
-        ),
+        key: groupKey.key,
+        label: groupKey.label,
         cantidad: this.selectedProduct.total_vendido || 0,
         total: this.selectedProduct.ingresos_totales || 0,
-        sortValue: new Date(fallbackMonth.getFullYear(), fallbackMonth.getMonth(), 1).getTime()
+        sortValue: groupKey.sortValue
       });
     }
 
@@ -1000,9 +1251,80 @@ export class Prediction implements OnInit {
     return totalUnits > 0 ? totalRevenue / totalUnits : 0;
   }
 
-  private getFutureMonthLabel(offsetMonths: number): string {
-    const today = new Date();
-    const futureDate = new Date(today.getFullYear(), today.getMonth() + offsetMonths, 1);
+  private getPredictionGroupKey(date: Date, period: 'dia' | 'semana' | 'mes' | 'anio') {
+    if (period === 'dia') {
+      const year = date.getFullYear();
+      const month = this.pad(date.getMonth() + 1);
+      const day = this.pad(date.getDate());
+
+      return {
+        key: `${year}-${month}-${day}`,
+        label: `${day}/${month}/${year}`,
+        sortValue: new Date(year, date.getMonth(), date.getDate()).getTime()
+      };
+    }
+
+    if (period === 'semana') {
+      const start = this.getStartOfWeek(date);
+      const end = new Date(start);
+      end.setDate(start.getDate() + 6);
+      const startLabel = `${this.pad(start.getDate())}/${this.pad(start.getMonth() + 1)}/${start.getFullYear()}`;
+      const endLabel = `${this.pad(end.getDate())}/${this.pad(end.getMonth() + 1)}/${end.getFullYear()}`;
+
+      return {
+        key: `${start.getFullYear()}-${this.pad(start.getMonth() + 1)}-${this.pad(start.getDate())}`,
+        label: `${startLabel} - ${endLabel}`,
+        sortValue: start.getTime()
+      };
+    }
+
+    if (period === 'anio') {
+      const year = date.getFullYear();
+      return {
+        key: `${year}`,
+        label: `${year}`,
+        sortValue: new Date(year, 0, 1).getTime()
+      };
+    }
+
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const monthLabel = new Intl.DateTimeFormat('es-MX', {
+      month: 'long',
+      year: 'numeric'
+    }).format(new Date(year, month, 1));
+
+    return {
+      key: `${year}-${this.pad(month + 1)}`,
+      label: this.capitalize(monthLabel),
+      sortValue: new Date(year, month, 1).getTime()
+    };
+  }
+
+  private getFuturePredictionLabel(baseSortValue: number, offset: number): string {
+    const baseDate = new Date(baseSortValue);
+
+    if (this.predictionPeriod === 'dia') {
+      const futureDate = new Date(baseDate);
+      futureDate.setDate(futureDate.getDate() + offset);
+      return `${this.pad(futureDate.getDate())}/${this.pad(futureDate.getMonth() + 1)}/${futureDate.getFullYear()}`;
+    }
+
+    if (this.predictionPeriod === 'semana') {
+      const futureStart = new Date(baseDate);
+      futureStart.setDate(futureStart.getDate() + (7 * offset));
+      const futureEnd = new Date(futureStart);
+      futureEnd.setDate(futureStart.getDate() + 6);
+      const startLabel = `${this.pad(futureStart.getDate())}/${this.pad(futureStart.getMonth() + 1)}/${futureStart.getFullYear()}`;
+      const endLabel = `${this.pad(futureEnd.getDate())}/${this.pad(futureEnd.getMonth() + 1)}/${futureEnd.getFullYear()}`;
+      return `${startLabel} - ${endLabel}`;
+    }
+
+    if (this.predictionPeriod === 'anio') {
+      return `${baseDate.getFullYear() + offset}`;
+    }
+
+    const futureDate = new Date(baseDate.getFullYear(), baseDate.getMonth() + offset, 1);
 
     return this.capitalize(
       new Intl.DateTimeFormat('es-MX', {
@@ -1012,15 +1334,59 @@ export class Prediction implements OnInit {
     );
   }
 
+  getPredictionHistoryUsedText(): string {
+    if (!this.predictionModel) return '0 periodos';
+
+    const total = this.predictionModel.historicalPeriods;
+
+    return this.formatPredictionPeriodLabel(total);
+  }
+
+  getPredictionHorizonLabel(value: 3 | 6 | 12): string {
+    return this.formatPredictionPeriodLabel(value);
+  }
+
+  private formatPredictionPeriodLabel(value: number): string {
+    switch (this.predictionPeriod) {
+      case 'dia':
+        return `${value} ${value === 1 ? 'día' : 'días'}`;
+      case 'semana':
+        return `${value} ${value === 1 ? 'semana' : 'semanas'}`;
+      case 'anio':
+        return `${value} ${value === 1 ? 'año' : 'años'}`;
+      default:
+        return `${value} ${value === 1 ? 'mes' : 'meses'}`;
+    }
+  }
+
   updatePredictionChart(): void {
+    const historical = this.predictionHistoricalSales;
     const projections = this.predictionProjections;
+    const labels = [
+      ...historical.map((item) => item.label),
+      ...projections.map((item) => item.label)
+    ];
+    const historicalData = [
+      ...historical.map((item) => this.roundSales(item.cantidad)),
+      ...projections.map(() => 0)
+    ];
+    const projectedData = [
+      ...historical.map(() => 0),
+      ...projections.map((item) => this.roundSales(item.ventasProyectadas))
+    ];
 
     this.predictionChartData = {
-      labels: projections.map((item) => item.label),
+      labels,
       datasets: [
         {
+          label: 'Ventas realizadas',
+          data: historicalData,
+          backgroundColor: this.blue,
+          borderRadius: 8
+        },
+        {
           label: 'Ventas proyectadas',
-          data: projections.map((item) => item.ventasProyectadas),
+          data: projectedData,
           backgroundColor: this.emerald,
           borderRadius: 8
         }
@@ -1032,6 +1398,12 @@ export class Prediction implements OnInit {
     this.predictionChartData = {
       labels: [],
       datasets: [
+        {
+          label: 'Ventas realizadas',
+          data: [],
+          backgroundColor: this.blue,
+          borderRadius: 8
+        },
         {
           label: 'Ventas proyectadas',
           data: [],
@@ -1191,6 +1563,98 @@ get topProducts(): OrderProduct[] {
   return [...this.filteredOrders]
     .sort((a, b) => Number(b.total_vendido || 0) - Number(a.total_vendido || 0))
     .slice(0, 5);
+}
+
+get consumptionSummaryChartData(): any {
+  const product = this.mostConsumedProduct;
+  const parentCategory = this.mostConsumedParentCategory;
+  const subcategory = this.mostConsumedSubcategory;
+  const sport = this.mostConsumedSport;
+
+  const signature = [
+    product?.id_producto ?? 0,
+    product?.nombre ?? '',
+    product?.categoria_padre ?? '',
+    product?.categoria ?? '',
+    product?.total_vendido ?? 0,
+    parentCategory?.nombre ?? '',
+    parentCategory?.total ?? 0,
+    subcategory?.nombre ?? '',
+    subcategory?.total ?? 0,
+    sport?.nombre ?? '',
+    sport?.total ?? 0
+  ].join('|');
+
+  if (signature === this.consumptionSummaryChartSignature) {
+    return this.consumptionSummaryChartDataCache;
+  }
+
+  const labels = [
+    [
+      product?.nombre || 'Producto',
+      product ? `${product.categoria_padre || 'Sin categoría'} / ${product.categoria || 'Sin subcategoría'}` : 'Sin datos'
+    ],
+    [parentCategory?.nombre || 'Categoría', 'Categoría más consumida'],
+    [subcategory?.nombre || 'Subcategoría', 'Subcategoría más consumida'],
+    [sport?.nombre || 'Deporte', 'Deporte más consumido']
+  ];
+
+  this.consumptionSummaryChartSignature = signature;
+  this.consumptionSummaryChartDataCache = {
+    labels,
+    datasets: [
+      {
+        label: 'Unidades vendidas',
+        data: [
+          Number(product?.total_vendido || 0),
+          Number(parentCategory?.total || 0),
+          Number(subcategory?.total || 0),
+          Number(sport?.total || 0)
+        ],
+        backgroundColor: [this.blue, this.green, this.amber, this.purple],
+        borderRadius: 10,
+        borderSkipped: false,
+        maxBarThickness: 72
+      }
+    ]
+  };
+
+  return this.consumptionSummaryChartDataCache;
+}
+
+get topProductsPieChartData(): any {
+  const signature = this.topProducts
+    .map((product) => [
+      product.id_producto,
+      product.nombre,
+      product.categoria_padre || '',
+      product.categoria || '',
+      product.total_vendido || 0,
+      product.ingresos_totales || 0
+    ].join(':'))
+    .join('|');
+
+  if (signature === this.topProductsPieChartSignature) {
+    return this.topProductsPieChartDataCache;
+  }
+
+  const colors = ['#0367A6', '#10B981', '#F59E0B', '#8B5CF6', '#EF4444'];
+
+  this.topProductsPieChartSignature = signature;
+  this.topProductsPieChartDataCache = {
+    labels: this.topProducts.map((product) => product.nombre),
+    datasets: [
+      {
+        data: this.topProducts.map((product) => Math.round(Number(product.total_vendido || 0))),
+        backgroundColor: colors.slice(0, this.topProducts.length),
+        borderColor: '#FFFFFF',
+        borderWidth: 2,
+        hoverOffset: 8
+      }
+    ]
+  };
+
+  return this.topProductsPieChartDataCache;
 }
 
 roundStat(value: number): number {
