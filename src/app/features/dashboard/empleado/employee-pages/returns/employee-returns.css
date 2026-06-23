@@ -1,0 +1,13 @@
+:host {
+  display: block;
+}
+
+button,
+select,
+input {
+  transition:
+    border-color 0.2s ease-in-out,
+    background-color 0.2s ease-in-out,
+    color 0.2s ease-in-out,
+    box-shadow 0.2s ease-in-out;
+}

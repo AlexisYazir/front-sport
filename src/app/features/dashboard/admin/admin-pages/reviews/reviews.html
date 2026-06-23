@@ -1,0 +1,223 @@
+<div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+  <div class="mb-6 p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-100 shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+    <div class="flex items-center gap-3">
+      <div class="bg-[#0367A6]/10 p-3 rounded-xl">
+        <span class="material-symbols-outlined text-[#0367A6] text-2xl">reviews</span>
+      </div>
+      <div>
+        <h2 class="text-2xl font-bold text-[#202020]">Reseñas de Productos</h2>
+        <p class="text-sm text-[#666666] mt-0.5">Consulta las calificaciones y comentarios publicados</p>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="isLoading()" class="flex flex-col items-center justify-center py-16">
+    <div class="relative">
+      <div class="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-[#0367A6]"></div>
+      <div class="absolute inset-0 flex items-center justify-center">
+        <span class="material-symbols-outlined text-[#0367A6] text-xl">reviews</span>
+      </div>
+    </div>
+    <p class="text-[#666666] mt-4">Cargando reseñas...</p>
+  </div>
+
+  <ng-container *ngIf="!isLoading()">
+    <div class="flex flex-col gap-4 mb-6">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div class="relative w-full sm:w-96">
+          <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#666666]">
+            <i class="pi pi-search text-lg"></i>
+          </span>
+          <input
+            type="text"
+            [ngModel]="searchTerm()"
+            (ngModelChange)="searchTerm.set($event); onFiltersChange()"
+            placeholder="Buscar por ID, producto, usuario o comentario..."
+            class="w-full pl-10 pr-10 py-3 border-2 border-gray-200 rounded-xl focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 transition-all outline-none text-sm">
+          <button
+            *ngIf="searchTerm()"
+            type="button"
+            (click)="clearFilters()"
+            class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#0367A6] transition-colors">
+            <i class="pi pi-times-circle text-lg"></i>
+          </button>
+        </div>
+
+        <div class="flex items-center gap-4">
+          <div class="bg-blue-50 px-4 py-2 rounded-xl border border-blue-100">
+            <span class="text-[#0367A6] font-semibold text-lg">{{ filteredReviews().length }}</span>
+            <span class="text-[#666666] text-sm ml-2">reseñas</span>
+          </div>
+          <button
+            type="button"
+            (click)="refresh()"
+            class="w-10 h-10 rounded-full border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all flex items-center justify-center"
+            title="Actualizar datos">
+            <i class="pi pi-refresh text-lg"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap gap-3 items-center">
+        <div class="flex items-center gap-2">
+          <label class="text-sm font-medium text-[#666666]">Calificación:</label>
+          <select
+            [ngModel]="selectedRating()"
+            (ngModelChange)="selectedRating.set($event); onFiltersChange()"
+            class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none">
+            <option value="all">Todas</option>
+            <option value="5">5 estrellas</option>
+            <option value="4">4 estrellas</option>
+            <option value="3">3 estrellas</option>
+            <option value="2">2 estrellas</option>
+            <option value="1">1 estrella</option>
+          </select>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <label class="text-sm font-medium text-[#666666]">Producto:</label>
+          <select
+            [ngModel]="selectedProductId()"
+            (ngModelChange)="selectedProductId.set($event); onFiltersChange()"
+            class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none max-w-[260px]">
+            <option value="all">Todos</option>
+            <option *ngFor="let product of productOptions()" [value]="product.id">
+              {{ product.name }}
+            </option>
+          </select>
+        </div>
+
+        <button
+          *ngIf="selectedRating() !== 'all' || selectedProductId() !== 'all' || searchTerm()"
+          type="button"
+          (click)="clearFilters()"
+          class="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm flex items-center gap-1">
+          <i class="pi pi-filter-slash"></i>
+          Limpiar filtros
+        </button>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto rounded-xl border border-gray-200">
+      <table class="w-full text-sm min-w-[980px]">
+        <thead class="bg-gray-50 border-b-2 border-gray-200">
+          <tr>
+            <th class="px-4 py-4 text-left font-semibold text-[#202020]">Producto</th>
+            <th class="px-4 py-4 text-left font-semibold text-[#202020]">Usuario</th>
+            <th class="px-4 py-4 text-left font-semibold text-[#202020]">Calificación</th>
+            <th class="px-4 py-4 text-left font-semibold text-[#202020]">Comentario</th>
+            <th class="px-4 py-4 text-left font-semibold text-[#202020]">Fecha</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let review of paginatedReviews()" class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+            <td class="px-4 py-4">
+              <div class="font-semibold text-[#202020]">{{ review.producto || 'Producto sin nombre' }}</div>
+              <div class="text-xs text-[#666666] mt-0.5">Producto ID #{{ review.id_producto }}</div>
+            </td>
+            <td class="px-4 py-4">
+              <div class="font-medium text-[#202020]">{{ review.usuario || 'Usuario' }}</div>
+              <div class="text-xs text-[#666666] mt-0.5">{{ review.email || 'Sin email' }}</div>
+            </td>
+            <td class="px-4 py-4">
+              <div class="flex flex-col gap-1">
+                <div class="flex items-center gap-1">
+                  <span
+                    *ngFor="let star of stars"
+                    class="material-symbols-outlined text-sm"
+                    [ngClass]="isStarFilled(star, review.calificacion) ? 'text-yellow-400' : 'text-gray-300'">
+                    star
+                  </span>
+                </div>
+                <span class="bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-semibold shadow-sm border border-blue-200 w-fit">
+                  {{ getRatingText(review.calificacion) }}
+                </span>
+              </div>
+            </td>
+            <td class="px-4 py-4 max-w-[420px]">
+              <p class="text-[#202020] leading-5 line-clamp-3">{{ review.comentario }}</p>
+              <p class="text-xs text-[#666666] mt-1">Reseña ID #{{ review.id_review }}</p>
+            </td>
+            <td class="px-4 py-4 text-[#666666] whitespace-nowrap">
+              {{ formatDate(review.fecha) }}
+            </td>
+          </tr>
+
+          <tr *ngIf="filteredReviews().length === 0">
+            <td colspan="5" class="text-center py-12">
+              <div class="flex flex-col items-center gap-3">
+                <i class="pi pi-search text-5xl text-gray-300"></i>
+                <span class="text-[#666666] text-lg font-medium">No se encontraron reseñas</span>
+                <span class="text-sm text-gray-400">Intenta con otros términos o filtros</span>
+                <button
+                  type="button"
+                  class="px-4 py-2 border border-gray-300 rounded-lg text-[#666666] hover:bg-gray-50 transition-all text-sm font-medium mt-2"
+                  (click)="clearFilters()">
+                  <i class="pi pi-times mr-2"></i>
+                  Limpiar filtros
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div *ngIf="filteredReviews().length > 0" class="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
+      <div class="flex items-center gap-3">
+        <span class="text-sm text-[#666666]">Mostrando 10 resultados por página</span>
+      </div>
+
+      <div class="text-sm text-[#666666] order-first sm:order-none">
+        Mostrando {{ firstItem }} a {{ lastItem }} de {{ filteredReviews().length }} reseñas
+      </div>
+
+      <div class="flex gap-2">
+        <button
+          type="button"
+          class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          (click)="goToPage(1)"
+          [disabled]="currentPage() === 1"
+          title="Primera página">
+          <i class="pi pi-angle-double-left"></i>
+        </button>
+        <button
+          type="button"
+          class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          (click)="goToPage(currentPage() - 1)"
+          [disabled]="currentPage() === 1"
+          title="Página anterior">
+          <i class="pi pi-angle-left"></i>
+        </button>
+
+        <div class="flex gap-1">
+          <button
+            *ngFor="let page of pageNumbers()"
+            type="button"
+            class="min-w-[2.5rem] h-10 rounded-lg transition-all font-medium"
+            [ngClass]="currentPage() === page ? 'bg-[#0367A6] text-white hover:bg-[#035A91]' : 'border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6]'"
+            (click)="goToPage(page)">
+            {{ page }}
+          </button>
+        </div>
+
+        <button
+          type="button"
+          class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          (click)="goToPage(currentPage() + 1)"
+          [disabled]="currentPage() === totalPages()"
+          title="Página siguiente">
+          <i class="pi pi-angle-right"></i>
+        </button>
+        <button
+          type="button"
+          class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          (click)="goToPage(totalPages())"
+          [disabled]="currentPage() === totalPages()"
+          title="Última página">
+          <i class="pi pi-angle-double-right"></i>
+        </button>
+      </div>
+    </div>
+  </ng-container>
+</div>

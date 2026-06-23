@@ -56,7 +56,7 @@
           <input type="text" 
                  (input)="onSearch($event)" 
                  [ngModel]="searchValue"
-                 placeholder="Buscar por ID, nombre, marca o categoría..." 
+                 placeholder="Buscar por ID, nombre, marca, categoría, SKU o atributo..." 
                  class="w-full pl-10 pr-10 py-3 border-2 border-gray-200 rounded-xl focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 transition-all outline-none text-sm"/>
           <button *ngIf="searchValue" 
                   (click)="clearSearch()"
@@ -76,6 +76,77 @@
             <i class="pi pi-refresh text-lg"></i>
           </button>
         </div>
+      </div>
+
+      <!-- Segunda fila: Filtros adicionales -->
+      <div class="flex flex-wrap gap-3 items-center">
+
+        <div class="flex items-center gap-2">
+          <label class="text-sm font-medium text-[#666666]">Marca:</label>
+          <select [(ngModel)]="filterMarca"
+                  (ngModelChange)="onProductFilterChange()"
+                  class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none bg-white min-w-[150px]">
+            <option value="todos">Todas</option>
+            <option *ngFor="let marca of marcas" [value]="marca.nombre">{{ marca.nombre }}</option>
+          </select>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <label class="text-sm font-medium text-[#666666]">Categoría:</label>
+          <select [ngModel]="filterCategoriaPadre"
+                  (ngModelChange)="onFilterCategoriaPadreChange($event)"
+                  class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none bg-white min-w-[160px]">
+            <option value="todos">Todas</option>
+            <option *ngFor="let categoria of categoriasPadre" [value]="categoria.id_categoria">{{ categoria.nombre }}</option>
+          </select>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <label class="text-sm font-medium text-[#666666]">Subcategoría:</label>
+          <select [(ngModel)]="filterCategoria"
+                  (ngModelChange)="onProductFilterChange()"
+                  class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none bg-white min-w-[160px]">
+            <option value="todos">Todas</option>
+            <option *ngFor="let categoria of categoriasParaFiltro" [value]="categoria.id_categoria">{{ categoria.nombre }}</option>
+          </select>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <label class="text-sm font-medium text-[#666666]">Color:</label>
+          <select [(ngModel)]="filterColor"
+                  (ngModelChange)="onProductFilterChange()"
+                  class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none bg-white min-w-[130px]">
+            <option value="todos">Todos</option>
+            <option *ngFor="let color of coloresDisponibles" [value]="color">{{ color }}</option>
+          </select>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <label class="text-sm font-medium text-[#666666]">Talla:</label>
+          <select [(ngModel)]="filterTalla"
+                  (ngModelChange)="onProductFilterChange()"
+                  class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none bg-white min-w-[120px]">
+            <option value="todos">Todas</option>
+            <option *ngFor="let talla of tallasDisponibles" [value]="talla">{{ talla }}</option>
+          </select>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <label class="text-sm font-medium text-[#666666]">Deporte:</label>
+          <select [(ngModel)]="filterDeporte"
+                  (ngModelChange)="onProductFilterChange()"
+                  class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none bg-white min-w-[140px]">
+            <option value="todos">Todos</option>
+            <option *ngFor="let deporte of deportesDisponibles" [value]="deporte">{{ deporte }}</option>
+          </select>
+        </div>
+
+        <button *ngIf="hasActiveProductFilters()"
+                (click)="clearSearch()"
+                class="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm flex items-center gap-1">
+          <i class="pi pi-filter-slash"></i>
+          Limpiar filtros
+        </button>
       </div>
     </div>
 

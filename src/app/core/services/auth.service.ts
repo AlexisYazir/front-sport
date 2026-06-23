@@ -252,6 +252,21 @@ export class AuthService {
     return navigator.userAgent.slice(0, 150);
   }
 
+  private getSafeReturnUrl(): string | null {
+    const returnUrl = this.router.parseUrl(this.router.url).queryParams['returnUrl'];
+    if (
+      typeof returnUrl === 'string' &&
+      returnUrl.startsWith('/') &&
+      !returnUrl.startsWith('//') &&
+      !returnUrl.startsWith('/auth/login') &&
+      !returnUrl.includes('://')
+    ) {
+      return returnUrl;
+    }
+
+    return null;
+  }
+
   handleAuthenticationResponse(
     response: LoginResponse,
     options?: { navigate?: boolean; successMessage?: string },
@@ -272,8 +287,12 @@ export class AuthService {
 
     if (options?.navigate !== false) {
       this.setNavigationInProgress(true);
-      const dashboardRoute = getDashboardRoute(user.rol);
-      this.router.navigate([dashboardRoute]).finally(() => {
+      const returnUrl = this.getSafeReturnUrl();
+      const navigation = returnUrl
+        ? this.router.navigateByUrl(returnUrl)
+        : this.router.navigate([getDashboardRoute(user.rol)]);
+
+      navigation.finally(() => {
         this.setNavigationInProgress(false);
       });
     }

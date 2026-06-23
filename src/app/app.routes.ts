@@ -84,6 +84,7 @@ export const routes: Routes = [
   {
     path: 'cart',
     loadComponent: () => import('./features/cart/cart').then((m) => m.Cart),
+    canActivate: [authGuard],
   },
   {
     path: 'checkout',
@@ -127,12 +128,54 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/dashboard/usuario/dashboard-usuario').then((m) => m.DashboardUsuario),
     canActivate: [authGuard, usuarioGuard],
+    children: [
+      {
+        path: 'compras',
+        loadComponent: () =>
+          import('./features/dashboard/usuario/user-pages/purchases/user-purchases').then((m) => m.UserPurchases),
+      },
+      {
+        path: 'profile',
+        loadComponent: () => import('./features/dashboard/pofile/profile').then((m) => m.Profile),
+      },
+      {
+        path: 'billing',
+        loadComponent: () =>
+          import('./features/dashboard/usuario/user-pages/billing/user-billing').then((m) => m.UserBilling),
+      },
+      {
+        path: 'settings',
+        loadComponent: () =>
+          import('./features/dashboard/usuario/user-pages/settings/user-settings').then((m) => m.UserSettings),
+      },
+    ],
   },
   {
     path: 'dashboard/empleado',
     loadComponent: () =>
       import('./features/dashboard/empleado/dashboard-empleado').then((m) => m.DashboardEmpleado),
     canActivate: [authGuard, empleadoGuard],
+    children: [
+      {
+        path: '',
+        redirectTo: 'orders',
+        pathMatch: 'full',
+      },
+      {
+        path: 'orders',
+        loadComponent: () =>
+          import('./features/dashboard/empleado/employee-pages/orders/employee-orders').then((m) => m.EmployeeOrders),
+      },
+      {
+        path: 'returns',
+        loadComponent: () =>
+          import('./features/dashboard/empleado/employee-pages/returns/employee-returns').then((m) => m.EmployeeReturns),
+      },
+      {
+        path: 'profile',
+        loadComponent: () => import('./features/dashboard/pofile/profile').then((m) => m.Profile),
+      },
+    ],
   },
   {
     path: 'dashboard/admin',
@@ -201,17 +244,27 @@ export const routes: Routes = [
           import('./features/dashboard/admin/admin-pages/logs/logs').then((m) => m.LogsPage),
       },
       {
+        path: 'reviews',
+        loadComponent: () =>
+          import('./features/dashboard/admin/admin-pages/reviews/reviews').then((m) => m.ReviewsPage),
+      },
+      {
+        path: 'promotions',
+        loadComponent: () =>
+          import('./features/dashboard/admin/admin-pages/promotions/promotions').then((m) => m.Promotions),
+      },
+      {
+        path: 'returns',
+        loadComponent: () =>
+          import('./features/dashboard/empleado/employee-pages/returns/employee-returns').then((m) => m.EmployeeReturns),
+      },
+      {
         path: 'empresa',
         loadComponent: () =>
           import('./features/dashboard/admin/admin-pages/empresa/empresa').then((m) => m.Empresa),
       },
     ],
   },
-  {
-    path: 'dashboard/usuario/profile',
-      loadComponent: () => import('./features/dashboard/pofile/profile').then((m) => m.Profile),
-      canActivate: [authGuard],
-    },
   {
     path: 'ofertas',
     loadComponent: () => import('./features/offers/offers').then((m) => m.Offers),

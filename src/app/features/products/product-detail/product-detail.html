@@ -113,16 +113,22 @@
           {{ product()?.nombre || product()?.producto }}
         </h1>
         
-        <!-- Rating (mock) -->
+        <!-- Rating -->
         <div class="flex items-center gap-2 mb-4">
           <div class="flex items-center">
-            <span class="material-symbols-outlined text-yellow-400 text-sm">star</span>
-            <span class="material-symbols-outlined text-yellow-400 text-sm">star</span>
-            <span class="material-symbols-outlined text-yellow-400 text-sm">star</span>
-            <span class="material-symbols-outlined text-yellow-400 text-sm">star</span>
-            <span class="material-symbols-outlined text-gray-300 text-sm">star</span>
+            <span
+              *ngFor="let star of reviewStars"
+              class="material-symbols-outlined text-sm"
+              [ngClass]="isStarFilled(star) ? 'text-yellow-400' : 'text-gray-300'">
+              star
+            </span>
           </div>
-          <span class="text-sm text-gray-500">4.0 · 128 reseñas</span>
+          <a href="#reviews" class="text-sm text-gray-500 hover:text-[#0367A6] transition-colors">
+            <ng-container *ngIf="reviewSummary().total > 0; else noReviews">
+              {{ ratingAverage() | number:'1.1-1' }} · {{ getReviewCountLabel() }}
+            </ng-container>
+            <ng-template #noReviews>Sin reseñas</ng-template>
+          </a>
         </div>
         
         <!-- PRICE - Dinámico según variante seleccionada -->
@@ -295,5 +301,147 @@
 
       </div>
     </div>
+
+    <!-- REVIEWS -->
+    <section id="reviews" class="mt-12 border-t border-gray-200 pt-8">
+      <div class="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-8">
+        <aside class="lg:sticky lg:top-24 lg:self-start">
+          <h2 class="text-2xl font-bold text-gray-900 mb-3">Reseñas</h2>
+          <div class="flex items-end gap-3 mb-2">
+            <span class="text-5xl font-bold text-gray-900">
+              {{ ratingAverage() | number:'1.1-1' }}
+            </span>
+            <span class="text-sm text-gray-500 mb-2">/ 5</span>
+          </div>
+          <div class="flex items-center gap-1 mb-2">
+            <span
+              *ngFor="let star of reviewStars"
+              class="material-symbols-outlined"
+              [ngClass]="isStarFilled(star) ? 'text-yellow-400' : 'text-gray-300'">
+              star
+            </span>
+          </div>
+          <p class="text-sm text-gray-500">{{ getReviewCountLabel() }}</p>
+        </aside>
+
+        <div class="space-y-6">
+          <div class="rounded-2xl border border-gray-200 bg-gray-50 p-4 sm:p-5">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h3 class="text-lg font-semibold text-gray-900">Tu experiencia con este producto</h3>
+                <p class="text-sm text-gray-500">Solo compradores con pedidos entregados pueden publicar reseñas.</p>
+              </div>
+              <button
+                type="button"
+                (click)="toggleReviewForm()"
+                class="inline-flex items-center justify-center gap-2 rounded-xl bg-[#0367A6] px-5 py-3 text-sm font-semibold text-white hover:bg-[#035A91]">
+                <span class="material-symbols-outlined text-base">
+                  {{ reviewFormOpen() ? 'close' : 'rate_review' }}
+                </span>
+                <span>{{ reviewFormOpen() ? 'Cerrar' : 'Escribir una reseña' }}</span>
+              </button>
+            </div>
+
+            <div *ngIf="reviewFormOpen()" class="mt-5 border-t border-gray-200 pt-5">
+              <div *ngIf="isReviewEligibilityLoading()" class="py-4 text-sm text-gray-500">
+                Validando compra...
+              </div>
+
+              <ng-container *ngIf="!isReviewEligibilityLoading()">
+                <div *ngIf="reviewEligibility()?.canReview; else cannotReview" class="space-y-4">
+                  <div>
+                    <p class="text-sm font-medium text-gray-900 mb-2">Haz clic para calificar</p>
+                    <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+                      <div class="inline-flex overflow-hidden rounded-md border border-gray-300">
+                        <button
+                          *ngFor="let star of reviewStars"
+                          type="button"
+                          (click)="setRating(star)"
+                          (mouseenter)="setHoveredRating(star)"
+                          (mouseleave)="clearHoveredRating()"
+                          class="w-12 h-11 border-r border-gray-300 flex items-center justify-center transition-colors last:border-r-0"
+                          [ngClass]="star <= getActiveReviewRating() ? 'bg-[#72A900] text-white border-[#4E7B00]' : 'bg-gray-300 text-white hover:bg-[#8BC500]'">
+                          <span class="material-symbols-outlined text-3xl">star</span>
+                        </button>
+                      </div>
+                      <span
+                        class="text-sm font-medium"
+                        [ngClass]="getActiveReviewRating() ? 'text-gray-900' : 'text-gray-500'">
+                        {{ getReviewRatingLabel() }}
+                      </span>
+                    </div>
+                  </div>
+
+                  <textarea
+                    [ngModel]="reviewComment()"
+                    (ngModelChange)="reviewComment.set($event)"
+                    rows="4"
+                    minlength="10"
+                    maxlength="800"
+                    class="w-full resize-none rounded-xl border border-gray-200 bg-white p-3 text-sm text-gray-800 outline-none focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/10"
+                    placeholder="Escribe tu comentario"></textarea>
+
+                  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <p
+                      class="text-xs"
+                      [ngClass]="reviewCommentError() ? 'text-red-600' : 'text-gray-500'">
+                      {{ reviewCommentError() || 'Mínimo 10 caracteres, máximo 800.' }}
+                    </p>
+                    <span class="text-xs text-gray-500">{{ reviewComment().length }}/800</span>
+                  </div>
+
+                  <div class="flex justify-end">
+                    <button
+                      type="button"
+                      (click)="submitReview()"
+                      [disabled]="isSubmittingReview() || !canSubmitReview()"
+                      class="inline-flex items-center gap-2 rounded-xl bg-[#0367A6] px-5 py-3 text-sm font-semibold text-white hover:bg-[#035A91] disabled:opacity-50 disabled:cursor-not-allowed">
+                      <span class="material-symbols-outlined text-base">
+                        {{ isSubmittingReview() ? 'progress_activity' : 'rate_review' }}
+                      </span>
+                      <span>{{ isSubmittingReview() ? 'Publicando...' : 'Publicar reseña' }}</span>
+                    </button>
+                  </div>
+                </div>
+
+                <ng-template #cannotReview>
+                  <div class="rounded-xl border border-gray-200 bg-white p-4">
+                    <p class="text-sm text-gray-700">
+                      {{ reviewEligibility()?.reason || 'Inicia sesión para calificar y comentar este producto.' }}
+                    </p>
+                  </div>
+                </ng-template>
+              </ng-container>
+            </div>
+          </div>
+
+          <div *ngIf="isReviewsLoading()" class="py-8 text-center text-sm text-gray-500">
+            Cargando reseñas...
+          </div>
+
+          <div *ngIf="!isReviewsLoading() && reviews().length === 0" class="rounded-2xl border border-dashed border-gray-300 p-8 text-center">
+            <span class="material-symbols-outlined text-4xl text-gray-300 mb-2">reviews</span>
+            <p class="text-sm text-gray-500">Aún no hay reseñas para este producto.</p>
+          </div>
+
+          <article
+            *ngFor="let review of reviews()"
+            class="rounded-2xl border border-gray-200 bg-white p-5">
+            <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-3">
+              <div class="flex items-center gap-1">
+                <span
+                  *ngFor="let star of reviewStars"
+                  class="material-symbols-outlined text-sm"
+                  [ngClass]="isStarFilled(star, review.calificacion) ? 'text-yellow-400' : 'text-gray-300'">
+                  star
+                </span>
+              </div>
+              <p class="text-xs text-gray-500">{{ getRelativeReviewDate(review.fecha) }}</p>
+            </div>
+            <p class="text-sm leading-6 text-gray-700">{{ review.comentario }}</p>
+          </article>
+        </div>
+      </div>
+    </section>
   </div>
 </div>

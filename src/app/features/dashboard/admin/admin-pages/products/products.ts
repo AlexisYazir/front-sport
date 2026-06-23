@@ -55,6 +55,16 @@ export class Products implements OnInit {
   searchValue: string = '';
   
   filterEstado: string = 'todos';
+  filterMarca: string = 'todos';
+  filterCategoriaPadre: string = 'todos';
+  filterCategoria: string = 'todos';
+  filterColor: string = 'todos';
+  filterTalla: string = 'todos';
+  filterDeporte: string = 'todos';
+  filterPrecio: string = 'todos';
+  coloresDisponibles: string[] = [];
+  tallasDisponibles: string[] = [];
+  deportesDisponibles: string[] = [];
   
   rowsPerPage: number = 10;
   rowsPerPageOptions: number[] = [10];
@@ -157,6 +167,7 @@ export class Products implements OnInit {
     this.productService.getProducts().subscribe({
       next: (products) => {
         this.products = products;
+        this.updateDynamicFilterOptions();
         this.applyFilters();
       },
       error: (error) => {
@@ -181,12 +192,15 @@ export class Products implements OnInit {
     let filtered = [...this.products];
 
     if (this.searchValue) {
-      const term = this.searchValue.toLowerCase();
+      const term = this.normalizeFilter(this.searchValue);
       filtered = filtered.filter(product => 
-        product.nombre.toLowerCase().includes(term) ||
-        product.marca?.toLowerCase().includes(term) ||
-        product.categoria.toLowerCase().includes(term) ||
-        product.id?.toString().includes(term)
+        this.normalizeFilter(product.nombre).includes(term) ||
+        this.normalizeFilter(product.marca).includes(term) ||
+        this.normalizeFilter(product.categoria).includes(term) ||
+        this.normalizeFilter(product.categoria_padre).includes(term) ||
+        this.normalizeFilter(product.id).includes(term) ||
+        this.normalizeFilter(product.deportes?.join(' ')).includes(term) ||
+        this.normalizeFilter(this.getProductVariantSearchText(product)).includes(term)
       );
     }
 
@@ -194,6 +208,46 @@ export class Products implements OnInit {
       filtered = filtered.filter(product => 
         this.filterEstado === 'activo' ? product.activo : !product.activo
       );
+    }
+
+    if (this.filterMarca !== 'todos') {
+      filtered = filtered.filter(product =>
+        this.normalizeFilter(product.marca) === this.normalizeFilter(this.filterMarca)
+      );
+    }
+
+    if (this.filterCategoriaPadre !== 'todos') {
+      const categoriaPadre = this.getCategoryNameById(this.filterCategoriaPadre);
+      filtered = filtered.filter(product =>
+        this.normalizeFilter(product.categoria_padre) === this.normalizeFilter(categoriaPadre)
+      );
+    }
+
+    if (this.filterCategoria !== 'todos') {
+      const categoria = this.getCategoryNameById(this.filterCategoria);
+      filtered = filtered.filter(product =>
+        this.normalizeFilter(product.categoria) === this.normalizeFilter(categoria)
+      );
+    }
+
+    if (this.filterColor !== 'todos') {
+      filtered = filtered.filter(product =>
+        this.productHasAttribute(product, ['color', 'colores'], this.filterColor)
+      );
+    }
+
+    if (this.filterTalla !== 'todos') {
+      filtered = filtered.filter(product =>
+        this.productHasAttribute(product, ['talla', 'tallas'], this.filterTalla)
+      );
+    }
+
+    if (this.filterDeporte !== 'todos') {
+      filtered = filtered.filter(product => this.productMatchesSport(product, this.filterDeporte));
+    }
+
+    if (this.filterPrecio !== 'todos') {
+      filtered = filtered.filter(product => this.productMatchesPrice(product));
     }
 
     this.filteredProducts = filtered;
@@ -212,6 +266,8 @@ export class Products implements OnInit {
       next: (data: Categorie[]) => {
         this.categorias = data;
         this.categoriasPadre = data.filter(c => c.id_padre === null);
+        this.ensureSelectedCategoryStillExists();
+        this.applyFilters();
       },
       error: (error) => {
         console.error('Error loading categories:', error);
@@ -247,6 +303,7 @@ export class Products implements OnInit {
     this.productService.getSports().subscribe({
       next: (data: Sport[]) => {
         this.sports = data;
+        this.updateDynamicFilterOptions();
       },
       error: (error) => {
         console.error('Error loading sports:', error);
@@ -273,6 +330,7 @@ export class Products implements OnInit {
             this.childAttributesByParent.get(attr.id_padre)!.push(attr);
           }
         });
+        this.updateDynamicFilterOptions();
       },
       error: (error) => {
         console.error('Error loading attributes:', error);
@@ -297,7 +355,171 @@ export class Products implements OnInit {
   clearSearch() {
     this.searchValue = '';
     this.filterEstado = 'todos';
+    this.filterMarca = 'todos';
+    this.filterCategoriaPadre = 'todos';
+    this.filterCategoria = 'todos';
+    this.filterColor = 'todos';
+    this.filterTalla = 'todos';
+    this.filterDeporte = 'todos';
+    this.filterPrecio = 'todos';
     this.applyFilters();
+  }
+
+  onProductFilterChange() {
+    this.applyFilters();
+  }
+
+  onFilterCategoriaPadreChange(value: string) {
+    this.filterCategoriaPadre = value;
+    this.filterCategoria = 'todos';
+    this.applyFilters();
+  }
+
+  get categoriasParaFiltro(): Categorie[] {
+    if (this.filterCategoriaPadre === 'todos') {
+      return this.categorias.filter(c => c.id_padre !== null);
+    }
+
+    const idPadre = Number(this.filterCategoriaPadre);
+    return this.categorias.filter(c => c.id_padre === idPadre);
+  }
+
+  hasActiveProductFilters(): boolean {
+    return !!this.searchValue ||
+      this.filterEstado !== 'todos' ||
+      this.filterMarca !== 'todos' ||
+      this.filterCategoriaPadre !== 'todos' ||
+      this.filterCategoria !== 'todos' ||
+      this.filterColor !== 'todos' ||
+      this.filterTalla !== 'todos' ||
+      this.filterDeporte !== 'todos' ||
+      this.filterPrecio !== 'todos';
+  }
+
+  private updateDynamicFilterOptions() {
+    this.coloresDisponibles = this.getAttributeOptions(['color', 'colores']);
+    this.tallasDisponibles = this.getAttributeOptions(['talla', 'tallas']);
+    this.deportesDisponibles = this.getSportOptions();
+  }
+
+  private normalizeFilter(value: unknown): string {
+    return String(value ?? '').trim().toLowerCase();
+  }
+
+  private getCategoryNameById(id: string): string {
+    const category = this.categorias.find(c => c.id_categoria === Number(id));
+    return category?.nombre || '';
+  }
+
+  private ensureSelectedCategoryStillExists() {
+    if (this.filterCategoriaPadre !== 'todos' && !this.getCategoryNameById(this.filterCategoriaPadre)) {
+      this.filterCategoriaPadre = 'todos';
+      this.filterCategoria = 'todos';
+    }
+
+    if (this.filterCategoria !== 'todos' && !this.getCategoryNameById(this.filterCategoria)) {
+      this.filterCategoria = 'todos';
+    }
+  }
+
+  private getProductVariantSearchText(product: Product): string {
+    return (product.variantes || [])
+      .flatMap(variant => [
+        variant.sku,
+        ...Object.values(variant.atributos || {})
+      ])
+      .join(' ');
+  }
+
+  private getAttributeOptions(parentNames: string[]): string[] {
+    const values = new Set<string>();
+    const normalizedParents = parentNames.map(name => this.normalizeFilter(name));
+
+    this.parentAttributes
+      .filter(parent => normalizedParents.includes(this.normalizeFilter(parent.nombre)))
+      .forEach(parent => {
+        const children = this.childAttributesByParent.get(parent.id_atributo) || [];
+        children.forEach(child => {
+          if (child.nombre) values.add(child.nombre);
+        });
+      });
+
+    this.products.forEach(product => {
+      (product.variantes || []).forEach(variant => {
+        Object.entries(variant.atributos || {}).forEach(([key, value]) => {
+          if (normalizedParents.includes(this.normalizeFilter(key)) && value) {
+            values.add(String(value));
+          }
+        });
+      });
+    });
+
+    return Array.from(values).sort((a, b) => a.localeCompare(b));
+  }
+
+  private getSportOptions(): string[] {
+    const values = new Set<string>();
+
+    this.sports.forEach(sport => {
+      if (sport.nombre) values.add(sport.nombre);
+    });
+
+    this.products.forEach(product => {
+      (product.deportes || []).forEach(deporte => {
+        if (deporte) values.add(deporte);
+      });
+
+      (product.variantes || []).forEach(variant => {
+        Object.entries(variant.atributos || {}).forEach(([key, value]) => {
+          if (['deporte', 'sport'].includes(this.normalizeFilter(key)) && value) {
+            values.add(String(value));
+          }
+        });
+      });
+    });
+
+    return Array.from(values).sort((a, b) => a.localeCompare(b));
+  }
+
+  private productHasAttribute(product: Product, parentNames: string[], expectedValue: string): boolean {
+    const normalizedParents = parentNames.map(name => this.normalizeFilter(name));
+    const expected = this.normalizeFilter(expectedValue);
+
+    return (product.variantes || []).some(variant =>
+      Object.entries(variant.atributos || {}).some(([key, value]) =>
+        normalizedParents.includes(this.normalizeFilter(key)) &&
+        this.normalizeFilter(value) === expected
+      )
+    );
+  }
+
+  private productMatchesSport(product: Product, sport: string): boolean {
+    const expected = this.normalizeFilter(sport);
+
+    return (product.deportes || []).some(deporte => this.normalizeFilter(deporte) === expected) ||
+      (product.variantes || []).some(variant =>
+        Object.entries(variant.atributos || {}).some(([key, value]) =>
+          ['deporte', 'sport'].includes(this.normalizeFilter(key)) &&
+          this.normalizeFilter(value) === expected
+        )
+      );
+  }
+
+  private productMatchesPrice(product: Product): boolean {
+    const price = Number(product.precio || 0);
+
+    switch (this.filterPrecio) {
+      case '0-500':
+        return price <= 500;
+      case '500-1000':
+        return price > 500 && price <= 1000;
+      case '1000-2000':
+        return price > 1000 && price <= 2000;
+      case '2000-plus':
+        return price > 2000;
+      default:
+        return true;
+    }
   }
 
   onRowsPerPageChange() {

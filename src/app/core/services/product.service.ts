@@ -1,9 +1,17 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, BehaviorSubject, of } from 'rxjs';
 import { map, catchError, finalize } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
-import { Product, Category, ProductFilters, ProductSearchResult, Categorie, Marca, Attibute, Orders,InventoryProduct, RecientProduct, ProductVariant } from '../models/product.model';
+import { Product, Category, ProductFilters, ProductSearchResult, Categorie, Marca, Attibute, Orders, EmployeeOrder, EmployeeOrderStatus, UserOrder, InventoryProduct, RecientProduct, ProductVariant, ProductReviewsResponse, ProductReview, ProductReviewAdmin, ProductReviewEligibility, CreateProductReviewRequest, UpdateShipmentRequest, CreateReturnRequest, ProductReturn, UpdateReturnStatusRequest, Promotion, CreatePromotionRequest, ShippingMethodAdmin, UpdateShippingMethodRequest } from '../models/product.model';
+import {
+  CheckoutCardInput,
+  CheckoutPostalCodeResponse,
+  CheckoutSummaryResponse,
+  ConfirmCheckoutRequest,
+  ConfirmCheckoutResponse,
+  UserPaymentMethod,
+} from '../models/cart.model';
 import { RequestCacheService } from './request-cache.service';
 
 @Injectable({
@@ -953,6 +961,275 @@ getOrdersById(id: number): Observable<any> {
   return this.cache.getOrSet(
     `products:order-detail:${id}`,
     () => this.http.get<any[]>(`${this.API_URL}/products/get-order-details/${id}`),
+    this.SHORT_CACHE_TTL,
+  );
+}
+
+getEmployeeOrdersList(): Observable<EmployeeOrder[]> {
+  return this.cache.getOrSet(
+    'products:employee-orders',
+    () => this.http.get<EmployeeOrder[]>(`${this.API_URL}/products/orders/employee`),
+    this.SHORT_CACHE_TTL,
+  );
+}
+
+getUserOrdersList(): Observable<UserOrder[]> {
+  return this.cache.getOrSet(
+    'products:user-orders',
+    () => this.http.get<UserOrder[]>(`${this.API_URL}/products/orders/user`),
+    this.SHORT_CACHE_TTL,
+  );
+}
+
+getCheckoutSummary(options?: {
+  codigo_promocion?: string;
+  id_metodo_envio?: number | null;
+}): Observable<CheckoutSummaryResponse> {
+  let params = new HttpParams();
+
+  if (options?.codigo_promocion?.trim()) {
+    params = params.set('codigo_promocion', options.codigo_promocion.trim());
+  }
+
+  if (options?.id_metodo_envio) {
+    params = params.set('id_metodo_envio', String(options.id_metodo_envio));
+  }
+
+  return this.http.get<CheckoutSummaryResponse>(
+    `${this.API_URL}/products/checkout/summary`,
+    { params },
+  );
+}
+
+confirmCheckout(data: ConfirmCheckoutRequest): Observable<ConfirmCheckoutResponse> {
+  return this.http
+    .post<ConfirmCheckoutResponse>(`${this.API_URL}/products/checkout/confirm`, data)
+    .pipe(
+      map((response) => {
+        this.cache.invalidate('products:user-orders');
+        this.cache.invalidate('products:employee-orders');
+        this.cache.invalidate('products:orders');
+        this.invalidateInventoryCaches();
+        return response;
+      }),
+    );
+}
+
+lookupPostalCode(codigoPostal: string): Observable<CheckoutPostalCodeResponse> {
+  return this.http.get<CheckoutPostalCodeResponse>(
+    `${this.API_URL}/products/checkout/postal-code/${codigoPostal}`,
+  );
+}
+
+getPaymentMethods(): Observable<UserPaymentMethod[]> {
+  return this.http.get<UserPaymentMethod[]>(
+    `${this.API_URL}/products/payment-methods`,
+  );
+}
+
+createPaymentMethod(data: CheckoutCardInput): Observable<UserPaymentMethod> {
+  return this.http
+    .post<UserPaymentMethod>(`${this.API_URL}/products/payment-methods`, data)
+    .pipe(
+      map((response) => {
+        this.cache.invalidate('products:user-orders');
+        return response;
+      }),
+    );
+}
+
+deletePaymentMethod(idMetodoPago: number): Observable<{ message: string }> {
+  return this.http.delete<{ message: string }>(
+    `${this.API_URL}/products/payment-methods/${idMetodoPago}`,
+  );
+}
+
+updateEmployeeOrderStatus(
+  idOrden: number,
+  estado: EmployeeOrderStatus,
+): Observable<{ message: string; order: Orders }> {
+  return this.http
+    .put<{ message: string; order: Orders }>(
+      `${this.API_URL}/products/orders/${idOrden}/status`,
+      { estado },
+    )
+    .pipe(
+      map((response) => {
+        this.cache.invalidate('products:employee-orders');
+        this.cache.invalidate('products:orders');
+        return response;
+      }),
+    );
+}
+
+getOrderTracking(idOrden: number): Observable<any> {
+  return this.http.get<any>(`${this.API_URL}/products/orders/${idOrden}/tracking`);
+}
+
+getStaffOrderTracking(idOrden: number): Observable<any> {
+  return this.http.get<any>(
+    `${this.API_URL}/products/orders/${idOrden}/tracking/staff`,
+  );
+}
+
+updateOrderShipment(
+  idOrden: number,
+  data: UpdateShipmentRequest,
+): Observable<{ message: string; tracking: any }> {
+  return this.http
+    .put<{ message: string; tracking: any }>(
+      `${this.API_URL}/products/orders/${idOrden}/shipment`,
+      data,
+    )
+    .pipe(
+      map((response) => {
+        this.cache.invalidate('products:employee-orders');
+        this.cache.invalidate('products:user-orders');
+        this.cache.invalidate('products:orders');
+        return response;
+      }),
+    );
+}
+
+createReturnRequest(data: CreateReturnRequest): Observable<{ message: string; return: ProductReturn }> {
+  return this.http
+    .post<{ message: string; return: ProductReturn }>(
+      `${this.API_URL}/products/returns`,
+      data,
+    )
+    .pipe(
+      map((response) => {
+        this.cache.invalidate('products:user-returns');
+        return response;
+      }),
+    );
+}
+
+getUserReturns(): Observable<ProductReturn[]> {
+  return this.cache.getOrSet(
+    'products:user-returns',
+    () => this.http.get<ProductReturn[]>(`${this.API_URL}/products/returns/user`),
+    this.SHORT_CACHE_TTL,
+  );
+}
+
+getAllReturns(): Observable<ProductReturn[]> {
+  return this.cache.getOrSet(
+    'products:all-returns',
+    () => this.http.get<ProductReturn[]>(`${this.API_URL}/products/returns/admin`),
+    this.SHORT_CACHE_TTL,
+  );
+}
+
+updateReturnStatus(
+  idDevolucion: number,
+  data: UpdateReturnStatusRequest,
+): Observable<{ message: string; return: ProductReturn }> {
+  return this.http
+    .put<{ message: string; return: ProductReturn }>(
+      `${this.API_URL}/products/returns/${idDevolucion}/status`,
+      data,
+    )
+    .pipe(
+      map((response) => {
+        this.cache.invalidate('products:user-returns');
+        this.cache.invalidate('products:all-returns');
+        return response;
+      }),
+    );
+}
+
+getAdminPromotions(): Observable<Promotion[]> {
+  return this.cache.getOrSet(
+    'products:admin-promotions',
+    () => this.http.get<Promotion[]>(`${this.API_URL}/products/promotions/admin`),
+    this.SHORT_CACHE_TTL,
+  );
+}
+
+getPublicPromotions(): Observable<Promotion[]> {
+  return this.http.get<Promotion[]>(`${this.API_URL}/products/promotions/public`);
+}
+
+getOfferProducts(): Observable<Product[]> {
+  return this.http.get<Product[]>(`${this.API_URL}/products/promotions/offers`);
+}
+
+createPromotion(data: CreatePromotionRequest): Observable<Promotion> {
+  return this.http.post<Promotion>(`${this.API_URL}/products/promotions`, data).pipe(
+    map((response) => {
+      this.cache.invalidate('products:admin-promotions');
+      return response;
+    }),
+  );
+}
+
+updatePromotion(id: number, data: Partial<CreatePromotionRequest>): Observable<Promotion> {
+  return this.http.put<Promotion>(`${this.API_URL}/products/promotions/${id}`, data).pipe(
+    map((response) => {
+      this.cache.invalidate('products:admin-promotions');
+      return response;
+    }),
+  );
+}
+
+getAdminShippingMethods(): Observable<ShippingMethodAdmin[]> {
+  return this.cache.getOrSet(
+    'products:admin-shipping-methods',
+    () => this.http.get<ShippingMethodAdmin[]>(`${this.API_URL}/products/shipping-methods/admin`),
+    this.SHORT_CACHE_TTL,
+  );
+}
+
+updateShippingMethod(
+  id: number,
+  data: UpdateShippingMethodRequest,
+): Observable<ShippingMethodAdmin> {
+  return this.http
+    .put<ShippingMethodAdmin>(`${this.API_URL}/products/shipping-methods/${id}`, data)
+    .pipe(
+      map((response) => {
+        this.cache.invalidate('products:admin-shipping-methods');
+        return response;
+      }),
+    );
+}
+
+getProductReviews(idProducto: number): Observable<ProductReviewsResponse> {
+  return this.cache.getOrSet(
+    `products:reviews:${idProducto}`,
+    () => this.http.get<ProductReviewsResponse>(`${this.API_URL}/products/reviews/product/${idProducto}`),
+    this.SHORT_CACHE_TTL,
+  ).pipe(
+    map((response) => ({
+      reviews: response.reviews ?? [],
+      summary: {
+        total: Number(response.summary?.total ?? 0),
+        promedio: Number(response.summary?.promedio ?? 0),
+      },
+    })),
+  );
+}
+
+getProductReviewEligibility(idProducto: number): Observable<ProductReviewEligibility> {
+  return this.http.get<ProductReviewEligibility>(
+    `${this.API_URL}/products/reviews/product/${idProducto}/eligibility`,
+  );
+}
+
+createProductReview(data: CreateProductReviewRequest): Observable<ProductReview> {
+  return this.http.post<ProductReview>(`${this.API_URL}/products/reviews`, data).pipe(
+    map((review) => {
+      this.cache.invalidate(`products:reviews:${data.id_producto}`);
+      return review;
+    }),
+  );
+}
+
+getAllReviewsAdmin(): Observable<ProductReviewAdmin[]> {
+  return this.cache.getOrSet(
+    'products:reviews:admin',
+    () => this.http.get<ProductReviewAdmin[]>(`${this.API_URL}/products/reviews/admin/all`),
     this.SHORT_CACHE_TTL,
   );
 }

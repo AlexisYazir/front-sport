@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { CompanyInfo, CompanyService } from '../../../core/services/company.service';
 
@@ -14,6 +14,7 @@ import { CompanyInfo, CompanyService } from '../../../core/services/company.serv
 export class Footer {
   private authService = inject(AuthService);
   private companyService = inject(CompanyService);
+  private router = inject(Router);
   companyInfo: CompanyInfo | null = null;
 
   constructor() {
@@ -27,9 +28,13 @@ export class Footer {
     });
   }
 
-  // Verificar si el usuario es admin (rol = 3)
-  get isAdmin(): boolean {
+  get hideFooter(): boolean {
     const user = this.authService.currentUser();
-    return user?.rol === 3;
+    const role = Number(user?.rol);
+    return (
+      role === 2 ||
+      role === 3 ||
+      this.router.url.startsWith('/dashboard/usuario')
+    );
   }
 }

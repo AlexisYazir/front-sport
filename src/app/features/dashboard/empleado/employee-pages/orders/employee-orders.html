@@ -1,0 +1,348 @@
+<div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+  <div class="mb-6 p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-100 shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+    <div class="flex items-center gap-3">
+      <div class="bg-[#0367A6]/10 p-3 rounded-xl">
+        <span class="material-symbols-outlined text-[#0367A6] text-2xl">orders</span>
+      </div>
+      <div>
+        <h2 class="text-2xl font-bold text-[#202020]">Pedidos</h2>
+        <p class="text-sm text-[#666666] mt-0.5">Seguimiento y actualización de pedidos de usuarios</p>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="isLoading()" class="flex flex-col items-center justify-center py-16">
+    <div class="relative">
+      <div class="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-[#0367A6]"></div>
+      <div class="absolute inset-0 flex items-center justify-center">
+        <span class="material-symbols-outlined text-[#0367A6] text-xl">orders</span>
+      </div>
+    </div>
+    <p class="text-[#666666] mt-4">Cargando pedidos...</p>
+  </div>
+
+  <ng-container *ngIf="!isLoading()">
+    <div class="flex flex-col gap-4 mb-6">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div class="relative w-full sm:w-96">
+          <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#666666]">
+            <i class="pi pi-search text-lg"></i>
+          </span>
+          <input
+            type="text"
+            [ngModel]="searchTerm()"
+            (ngModelChange)="searchTerm.set($event); onFiltersChange()"
+            placeholder="Buscar por ID, cliente, email, producto o SKU..."
+            class="w-full pl-10 pr-10 py-3 border-2 border-gray-200 rounded-xl focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 transition-all outline-none text-sm">
+          <button
+            *ngIf="searchTerm()"
+            type="button"
+            (click)="clearFilters()"
+            class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#0367A6] transition-colors">
+            <i class="pi pi-times-circle text-lg"></i>
+          </button>
+        </div>
+
+        <div class="flex items-center gap-4">
+          <div class="bg-blue-50 px-4 py-2 rounded-xl border border-blue-100">
+            <span class="text-[#0367A6] font-semibold text-lg">{{ filteredOrders().length }}</span>
+            <span class="text-[#666666] text-sm ml-2">pedidos</span>
+          </div>
+          <button
+            type="button"
+            (click)="refresh()"
+            class="w-10 h-10 rounded-full border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all flex items-center justify-center"
+            title="Actualizar datos">
+            <i class="pi pi-refresh text-lg"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap gap-3 items-center">
+        <div class="flex items-center gap-2">
+          <label class="text-sm font-medium text-[#666666]">Estado:</label>
+          <select
+            [ngModel]="selectedStatus()"
+            (ngModelChange)="selectedStatus.set($event); onFiltersChange()"
+            class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none">
+            <option value="all">Todos</option>
+            <option *ngFor="let status of statuses" [value]="status.value">
+              {{ status.label }}
+            </option>
+          </select>
+        </div>
+
+        <button
+          *ngIf="selectedStatus() !== 'all' || searchTerm()"
+          type="button"
+          (click)="clearFilters()"
+          class="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm flex items-center gap-1">
+          <i class="pi pi-filter-slash"></i>
+          Limpiar filtros
+        </button>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+      <button
+        type="button"
+        (click)="selectedStatus.set('pendiente'); onFiltersChange()"
+        class="text-left bg-yellow-50 rounded-xl border border-yellow-100 p-4 hover:border-yellow-300 transition-all">
+        <p class="text-xs text-[#666666] mb-1">Pendientes</p>
+        <p class="text-2xl font-bold text-yellow-700">{{ pendingCount() }}</p>
+      </button>
+      <button
+        type="button"
+        (click)="selectedStatus.set('en proceso'); onFiltersChange()"
+        class="text-left bg-blue-50 rounded-xl border border-blue-100 p-4 hover:border-blue-300 transition-all">
+        <p class="text-xs text-[#666666] mb-1">En proceso</p>
+        <p class="text-2xl font-bold text-[#0367A6]">{{ inProcessCount() }}</p>
+      </button>
+      <button
+        type="button"
+        (click)="selectedStatus.set('entregado'); onFiltersChange()"
+        class="text-left bg-green-50 rounded-xl border border-green-100 p-4 hover:border-green-300 transition-all">
+        <p class="text-xs text-[#666666] mb-1">Entregados</p>
+        <p class="text-2xl font-bold text-green-700">{{ deliveredCount() }}</p>
+      </button>
+    </div>
+
+    <div class="overflow-x-auto rounded-xl border border-gray-200">
+      <table class="w-full text-sm min-w-[1250px]">
+        <thead class="bg-gray-50 border-b-2 border-gray-200">
+          <tr>
+            <th class="px-4 py-4 text-left font-semibold text-[#202020]">Pedido</th>
+            <th class="px-4 py-4 text-left font-semibold text-[#202020]">Cliente</th>
+            <th class="px-4 py-4 text-left font-semibold text-[#202020]">Productos</th>
+            <th class="px-4 py-4 text-left font-semibold text-[#202020]">Total</th>
+            <th class="px-4 py-4 text-left font-semibold text-[#202020]">Fechas</th>
+            <th class="px-4 py-4 text-left font-semibold text-[#202020]">Envío</th>
+            <th class="px-4 py-4 text-left font-semibold text-[#202020]">Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          <ng-container *ngFor="let order of paginatedOrders()">
+          <tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+            <td class="px-4 py-4">
+              <div class="font-semibold text-[#202020]">#{{ order.id_orden }}</div>
+              <div class="text-xs text-[#666666] mt-0.5">{{ order.metodo_pago || 'Método no registrado' }}</div>
+              <button
+                type="button"
+                (click)="toggleOrderDetails(order)"
+                class="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-[#0367A6] hover:text-[#035A91]">
+                <span class="material-symbols-outlined text-sm">
+                  {{ expandedOrderId() === order.id_orden ? 'expand_less' : 'expand_more' }}
+                </span>
+                Detalles
+              </button>
+            </td>
+            <td class="px-4 py-4">
+              <div class="font-medium text-[#202020]">{{ order.cliente || 'Usuario' }}</div>
+              <div class="text-xs text-[#666666] mt-0.5">{{ order.email || 'Sin email' }}</div>
+            </td>
+            <td class="px-4 py-4">
+              <div class="font-semibold text-[#202020]">{{ order.total_productos || 0 }} productos</div>
+              <div class="text-xs text-[#666666] mt-0.5 line-clamp-2 max-w-[260px]">
+                <ng-container *ngFor="let item of order.items; let last = last">
+                  {{ item.producto || item.sku }}<span *ngIf="!last">, </span>
+                </ng-container>
+              </div>
+            </td>
+            <td class="px-4 py-4">
+              <div class="font-bold text-[#0367A6]">{{ formatCurrency(order.total) }}</div>
+              <div class="text-xs text-[#666666] mt-0.5">Subtotal {{ formatCurrency(order.subtotal) }}</div>
+            </td>
+            <td class="px-4 py-4">
+              <div class="text-xs text-[#666666]">Creado</div>
+              <div class="text-sm text-[#202020] mb-2">{{ formatDate(order.fecha_creacion) }}</div>
+              <div class="text-xs text-[#666666]">Entrega</div>
+              <div class="text-sm text-[#202020]">{{ formatDate(order.fecha_entrega) }}</div>
+            </td>
+            <td class="px-4 py-4">
+              <div class="flex flex-col gap-2">
+                <span [class]="getShipmentStatusClass(order.estado_envio) + ' px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm border inline-flex items-center gap-1 w-fit'">
+                  {{ getShipmentStatusLabel(order.estado_envio) }}
+                </span>
+                <div class="text-xs text-[#666666]">
+                  <div *ngIf="order.paqueteria">{{ order.paqueteria }}</div>
+                  <div *ngIf="order.tracking_number" class="font-semibold text-[#202020]">{{ order.tracking_number }}</div>
+                  <div *ngIf="!order.tracking_number">Sin guía</div>
+                </div>
+                <div class="flex flex-wrap gap-1.5 max-w-[240px]">
+                  <button
+                    *ngFor="let action of shipmentActions"
+                    type="button"
+                    (click)="quickShipmentUpdate(order, action.value)"
+                    [disabled]="updatingOrderId() === order.id_orden || isDelivered(order)"
+                    class="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-gray-200 text-xs font-semibold text-[#666666] hover:text-[#0367A6] hover:bg-[#0367A6]/5 hover:border-[#0367A6]/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+                    <span class="material-symbols-outlined text-sm">{{ action.icon }}</span>
+                    {{ action.label }}
+                  </button>
+                </div>
+              </div>
+            </td>
+            <td class="px-4 py-4">
+              <div class="flex flex-col gap-2">
+                <span [class]="getStatusClass(order.estado) + ' px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm border inline-flex items-center gap-1 w-fit'">
+                  {{ getStatusLabel(order.estado) }}
+                </span>
+                <select
+                  [ngModel]="normalizeStatus(order.estado)"
+                  (ngModelChange)="onStatusChange(order, $event)"
+                  [disabled]="updatingOrderId() === order.id_orden || isDelivered(order)"
+                  class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none disabled:opacity-50 disabled:cursor-not-allowed">
+                  <option *ngFor="let status of statuses" [value]="status.value">
+                    {{ status.label }}
+                  </option>
+                </select>
+                <span *ngIf="isDelivered(order)" class="text-xs text-green-700 font-medium">
+                  Pedido finalizado
+                </span>
+                <span *ngIf="updatingOrderId() === order.id_orden" class="text-xs text-[#666666]">
+                  <i class="pi pi-spin pi-spinner mr-1"></i>
+                  Actualizando...
+                </span>
+              </div>
+            </td>
+          </tr>
+
+          <tr *ngIf="expandedOrderId() === order.id_orden" class="bg-gray-50 border-b border-gray-100">
+            <td colspan="7" class="px-4 py-4">
+              <div class="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-4">
+                <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                  <div class="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[#0367A6]">inventory_2</span>
+                    <h4 class="font-bold text-[#202020]">Productos del pedido</h4>
+                  </div>
+                  <div class="divide-y divide-gray-100">
+                    <div *ngFor="let item of order.items" class="p-4 flex gap-3">
+                      <img
+                        [src]="item.imagen || 'assets/images/no-image.jpg'"
+                        [alt]="item.producto || item.sku"
+                        class="w-16 h-16 rounded-lg border border-gray-200 object-cover bg-gray-50">
+                      <div class="flex-1 min-w-0">
+                        <p class="font-semibold text-[#202020]">{{ item.producto || item.sku }}</p>
+                        <p class="text-xs text-[#666666] mt-0.5">SKU: {{ item.sku || 'Sin SKU' }}</p>
+                        <p *ngIf="item.marca || item.categoria" class="text-xs text-[#666666] mt-0.5">
+                          {{ item.marca || 'Sin marca' }} · {{ item.categoria || 'Sin categoría' }}
+                        </p>
+                        <p *ngIf="getVariantInfo(item)" class="text-xs text-gray-500 mt-0.5">{{ getVariantInfo(item) }}</p>
+                      </div>
+                      <div class="text-right shrink-0">
+                        <p class="text-xs text-[#666666]">Cantidad</p>
+                        <p class="font-semibold text-[#202020]">{{ item.cantidad }}</p>
+                        <p class="text-xs text-[#666666] mt-2">Total</p>
+                        <p class="font-bold text-[#0367A6]">{{ formatCurrency(item.total) }}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="bg-white rounded-xl border border-gray-200 p-4">
+                  <div class="flex items-center gap-2 mb-3">
+                    <span class="material-symbols-outlined text-[#0367A6]">location_on</span>
+                    <h4 class="font-bold text-[#202020]">Entrega</h4>
+                  </div>
+                  <p class="text-sm text-[#666666]">{{ getAddressLabel(order) }}</p>
+                  <div class="mt-4 grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <p class="text-xs text-[#666666]">Paquetería</p>
+                      <p class="font-semibold text-[#202020]">{{ order.paqueteria || 'Pendiente' }}</p>
+                    </div>
+                    <div>
+                      <p class="text-xs text-[#666666]">Guía</p>
+                      <p class="font-semibold text-[#202020]">{{ order.tracking_number || 'Pendiente' }}</p>
+                    </div>
+                    <div>
+                      <p class="text-xs text-[#666666]">Envío</p>
+                      <p class="font-semibold text-[#202020]">{{ formatDate(order.fecha_envio) }}</p>
+                    </div>
+                    <div>
+                      <p class="text-xs text-[#666666]">Estimada</p>
+                      <p class="font-semibold text-[#202020]">{{ formatDate(order.fecha_entrega_estimada || null) }}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          </ng-container>
+
+          <tr *ngIf="filteredOrders().length === 0">
+            <td colspan="7" class="text-center py-12">
+              <div class="flex flex-col items-center gap-3">
+                <i class="pi pi-search text-5xl text-gray-300"></i>
+                <span class="text-[#666666] text-lg font-medium">No se encontraron pedidos</span>
+                <span class="text-sm text-gray-400">Intenta con otros términos o filtros</span>
+                <button
+                  type="button"
+                  class="px-4 py-2 border border-gray-300 rounded-lg text-[#666666] hover:bg-gray-50 transition-all text-sm font-medium mt-2"
+                  (click)="clearFilters()">
+                  <i class="pi pi-times mr-2"></i>
+                  Limpiar filtros
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div *ngIf="filteredOrders().length > 0" class="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
+      <div class="flex items-center gap-3">
+        <span class="text-sm text-[#666666]">Mostrando 10 resultados por página</span>
+      </div>
+
+      <div class="text-sm text-[#666666] order-first sm:order-none">
+        Mostrando {{ firstItem }} a {{ lastItem }} de {{ filteredOrders().length }} pedidos
+      </div>
+
+      <div class="flex gap-2">
+        <button
+          type="button"
+          class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          (click)="goToPage(1)"
+          [disabled]="currentPage() === 1"
+          title="Primera página">
+          <i class="pi pi-angle-double-left"></i>
+        </button>
+        <button
+          type="button"
+          class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          (click)="goToPage(currentPage() - 1)"
+          [disabled]="currentPage() === 1"
+          title="Página anterior">
+          <i class="pi pi-angle-left"></i>
+        </button>
+
+        <div class="flex gap-1">
+          <button
+            *ngFor="let page of pageNumbers()"
+            type="button"
+            class="min-w-[2.5rem] h-10 rounded-lg transition-all font-medium"
+            [ngClass]="currentPage() === page ? 'bg-[#0367A6] text-white hover:bg-[#035A91]' : 'border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6]'"
+            (click)="goToPage(page)">
+            {{ page }}
+          </button>
+        </div>
+
+        <button
+          type="button"
+          class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          (click)="goToPage(currentPage() + 1)"
+          [disabled]="currentPage() === totalPages()"
+          title="Página siguiente">
+          <i class="pi pi-angle-right"></i>
+        </button>
+        <button
+          type="button"
+          class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          (click)="goToPage(totalPages())"
+          [disabled]="currentPage() === totalPages()"
+          title="Última página">
+          <i class="pi pi-angle-double-right"></i>
+        </button>
+      </div>
+    </div>
+  </ng-container>
+</div>

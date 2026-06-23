@@ -1,84 +1,148 @@
-import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { Component, HostListener, OnInit, computed, inject, signal } from '@angular/core';
+import { Router, RouterModule } from '@angular/router';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { AuthService } from '../../../core/services/auth.service';
-import { User } from '../../../core/models/user.model';
+import { CartService } from '../../../core/services/cart.service';
+import { ProductService } from '../../../core/services/product.service';
+import { UserOrder } from '../../../core/models/product.model';
+import { formatMexicoDate } from '../../../core/utils/date-time.util';
 
 @Component({
   selector: 'app-dashboard-usuario',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, MatTooltipModule],
   templateUrl: './dashboard-usuario.html',
-  styleUrl: './dashboard-usuario.css'
+  styleUrl: './dashboard-usuario.css',
 })
 export class DashboardUsuario implements OnInit {
   private authService = inject(AuthService);
-  
-  currentUser: User | null = null;
+  private productService = inject(ProductService);
+  private cartService = inject(CartService);
+  public router = inject(Router);
 
-  // Estadísticas del usuario
-  stats = {
-    pedidos: 12,
-    favoritos: 8,
-    carrito: 3,
-    puntos: 450
-  };
+  sidebarOpen = signal<boolean>(true);
+  navbarOculto = signal<boolean>(false);
+  isLoading = signal<boolean>(false);
+  orders = signal<UserOrder[]>([]);
+  lastScrollTop = 0;
 
-  // Pedidos recientes
-  recentOrders = [
-    {
-      id: 'PED-001',
-      fecha: '2025-10-28',
-      total: 1250.00,
-      estado: 'Entregado',
-      productos: 3
-    },
-    {
-      id: 'PED-002',
-      fecha: '2025-10-15',
-      total: 890.50,
-      estado: 'En camino',
-      productos: 2
-    },
-    {
-      id: 'PED-003',
-      fecha: '2025-10-05',
-      total: 2100.00,
-      estado: 'Entregado',
-      productos: 5
-    }
+  currentUser = computed(() => this.authService.currentUser());
+  cartItemCount = this.cartService.itemCount;
+  cartSummary = this.cartService.summary;
+
+  menuItems = [
+    { icon: 'dashboard', label: 'Dashboard', route: '/dashboard/usuario' },
+    { icon: 'shopping_bag', label: 'Compras', route: '/dashboard/usuario/compras' },
+    { icon: 'account_circle', label: 'Perfil', route: '/dashboard/usuario/profile' },
+    { icon: 'receipt_long', label: 'Facturación', route: '/dashboard/usuario/billing' },
+    { icon: 'settings', label: 'Configuración', route: '/dashboard/usuario/settings' },
   ];
 
-  // Productos favoritos
-  favoriteProducts = [
-    {
-      id: 1,
-      nombre: 'Balón Nike Pro',
-      precio: 450.00,
-      imagen: '/assets/images/products/balon-nike.jpg'
-    },
-    {
-      id: 2,
-      nombre: 'Tenis Adidas Running',
-      precio: 1200.00,
-      imagen: '/assets/images/products/tenis-adidas.jpg'
-    }
-  ];
+  totalOrders = computed(() => this.orders().length);
+  deliveredOrders = computed(() =>
+    this.orders().filter((order) => this.normalizeStatus(order.estado) === 'entregado').length,
+  );
+  activeOrders = computed(() =>
+    this.orders().filter((order) => this.normalizeStatus(order.estado) !== 'entregado').length,
+  );
+  totalSpent = computed(() =>
+    this.orders().reduce((total, order) => total + Number(order.total || 0), 0),
+  );
+  points = computed(() => Math.floor(this.totalSpent() / 10));
+  recentOrders = computed(() => this.orders().slice(0, 3));
+  averageTicket = computed(() =>
+    this.totalOrders() > 0 ? this.totalSpent() / this.totalOrders() : 0,
+  );
+  nextOrder = computed(() =>
+    this.orders().find((order) => this.normalizeStatus(order.estado) !== 'entregado') ?? null,
+  );
+  lastDeliveredOrder = computed(() =>
+    this.orders().find((order) => this.normalizeStatus(order.estado) === 'entregado') ?? null,
+  );
 
-  ngOnInit() {
-    this.currentUser = this.authService.currentUser();
+  get isDashboardRoute(): boolean {
+    return this.router.url === '/dashboard/usuario' || this.router.url === '/dashboard/usuario/';
   }
 
-  getEstadoClass(estado: string): string {
-    switch (estado) {
-      case 'Entregado':
-        return 'bg-green-100 text-green-800';
-      case 'En camino':
-        return 'bg-blue-100 text-blue-800';
-      case 'Procesando':
-        return 'bg-yellow-100 text-yellow-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+  @HostListener('window:scroll', [])
+  onWindowScroll(): void {
+    const currentScroll = window.pageYOffset || document.documentElement.scrollTop;
+
+    if (currentScroll > this.lastScrollTop && currentScroll > 50) {
+      this.navbarOculto.set(true);
+    } else {
+      this.navbarOculto.set(false);
     }
+
+    this.lastScrollTop = currentScroll;
+  }
+
+  ngOnInit(): void {
+    this.loadDashboardData();
+  }
+
+  loadDashboardData(): void {
+    this.isLoading.set(true);
+    this.cartService.loadCart().subscribe();
+    this.productService.getUserOrdersList().subscribe({
+      next: (orders) => {
+        this.orders.set(orders || []);
+        this.isLoading.set(false);
+      },
+      error: () => {
+        this.orders.set([]);
+        this.isLoading.set(false);
+      },
+    });
+  }
+
+  toggleSidebar(): void {
+    this.sidebarOpen.set(!this.sidebarOpen());
+  }
+
+  isActive(route: string): boolean {
+    if (route === '/dashboard/usuario') {
+      return this.isDashboardRoute;
+    }
+
+    return this.router.url.startsWith(route);
+  }
+
+  normalizeStatus(status: string): string {
+    return String(status || '').trim().toLowerCase();
+  }
+
+  getStatusLabel(status: string): string {
+    switch (this.normalizeStatus(status)) {
+      case 'entregado':
+        return 'Entregado';
+      case 'en proceso':
+        return 'En proceso';
+      default:
+        return 'Pendiente';
+    }
+  }
+
+  getStatusClass(status: string): string {
+    switch (this.normalizeStatus(status)) {
+      case 'entregado':
+        return 'bg-green-100 text-green-700 border-green-200';
+      case 'en proceso':
+        return 'bg-blue-100 text-blue-700 border-blue-200';
+      default:
+        return 'bg-yellow-100 text-yellow-700 border-yellow-200';
+    }
+  }
+
+  formatCurrency(value: number | string): string {
+    return Number(value || 0).toLocaleString('es-MX', {
+      style: 'currency',
+      currency: 'MXN',
+    });
+  }
+
+  formatDate(date: string | null): string {
+    return date ? formatMexicoDate(date) : 'Pendiente';
   }
 }

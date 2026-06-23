@@ -1,9 +1,11 @@
 import { Component, inject, OnInit, signal, computed, effect, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { ProductService } from '../../../core/services/product.service';
 import { CartService } from '../../../core/services/cart.service';
-import { Product } from '../../../core/models/product.model';
+import { Product, ProductReview, ProductReviewEligibility, ProductReviewSummary } from '../../../core/models/product.model';
+import { AuthService } from '../../../core/services/auth.service';
 import { ToastrService } from 'ngx-toastr';
 import { Breadcrumbs, BreadcrumbItem } from '../../../shared/components/breadcrumbs/breadcrumbs';
 import { Location } from '@angular/common';
@@ -25,7 +27,7 @@ interface Variant {
 @Component({
   selector: 'app-product-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule, Breadcrumbs],
+  imports: [CommonModule, FormsModule, RouterModule, Breadcrumbs],
   templateUrl: './product-detail.html',
   styleUrl: './product-detail.css',
 })
@@ -34,6 +36,7 @@ export class ProductDetail implements OnInit {
   private router = inject(Router);
   private productService = inject(ProductService);
   private cartService = inject(CartService);
+  private authService = inject(AuthService);
   private toastr = inject(ToastrService);
   private location = inject(Location);
   private destroyRef = inject(DestroyRef);
@@ -62,6 +65,27 @@ export class ProductDetail implements OnInit {
   // UI State
   descriptionExpanded = signal<boolean>(false);
   activeTab = signal<'details' | 'shipping'>('details');
+
+  // Reseñas
+  reviews = signal<ProductReview[]>([]);
+  reviewSummary = signal<ProductReviewSummary>({ total: 0, promedio: 0 });
+  isReviewsLoading = signal<boolean>(false);
+  isReviewEligibilityLoading = signal<boolean>(false);
+  isSubmittingReview = signal<boolean>(false);
+  reviewFormOpen = signal<boolean>(false);
+  reviewEligibility = signal<ProductReviewEligibility | null>(null);
+  selectedRating = signal<number>(0);
+  hoveredRating = signal<number>(0);
+  reviewComment = signal<string>('');
+  reviewStars = [1, 2, 3, 4, 5];
+  private readonly reviewCommentAllowedPattern = /^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ\s.,;:¡!¿?'"()\-_/]+$/;
+  private readonly reviewBlockedPatterns = [
+    /<\s*script/i,
+    /<\/?[a-z][\s\S]*>/i,
+    /\b(select|insert|update|delete|drop|alter|truncate|exec|execute|union)\b/i,
+    /(--|\/\*|\*\/|;)/,
+    /\b(cmd|powershell|bash|sh|curl|wget|chmod|sudo|rm\s+-rf)\b/i,
+  ];
   
   // Precio actual (computado a partir de la variante seleccionada)
   currentPrice = computed(() => {
@@ -92,6 +116,15 @@ export class ProductDetail implements OnInit {
 
   // Total
   totalPrice = computed(() => this.priceWithDiscount() * this.selectedQuantity());
+
+  ratingAverage = computed(() => Number(this.reviewSummary().promedio || 0));
+  ratingRounded = computed(() => Math.round(this.ratingAverage()));
+  reviewCommentError = computed(() => this.getReviewCommentError(this.reviewComment()));
+  canSubmitReview = computed(() =>
+    this.selectedRating() > 0 &&
+    this.reviewComment().trim().length > 0 &&
+    !this.reviewCommentError(),
+  );
 
   // Mensaje de stock
   stockMessage = computed(() => {
@@ -159,7 +192,10 @@ export class ProductDetail implements OnInit {
         this.router.navigate(['/error/400']);
         return;
       }
+      this.resetReviewForm();
       this.loadProduct(extractedProductId);
+      this.loadReviews(extractedProductId);
+      this.loadReviewEligibility(extractedProductId);
     });
   }
 
@@ -194,6 +230,51 @@ export class ProductDetail implements OnInit {
         this.isLoading.set(false);
       }
     });
+  }
+
+  private loadReviews(id: number) {
+    this.isReviewsLoading.set(true);
+
+    this.productService.getProductReviews(id).subscribe({
+      next: (response) => {
+        this.reviews.set(response.reviews);
+        this.reviewSummary.set(response.summary);
+        this.isReviewsLoading.set(false);
+      },
+      error: (error) => {
+        console.error('Error loading reviews:', error);
+        this.reviews.set([]);
+        this.reviewSummary.set({ total: 0, promedio: 0 });
+        this.isReviewsLoading.set(false);
+      },
+    });
+  }
+
+  private loadReviewEligibility(id: number) {
+    if (!this.isUserLoggedIn()) {
+      this.reviewEligibility.set(null);
+      return;
+    }
+
+    this.isReviewEligibilityLoading.set(true);
+    this.productService.getProductReviewEligibility(id).subscribe({
+      next: (eligibility) => {
+        this.reviewEligibility.set(eligibility);
+        this.isReviewEligibilityLoading.set(false);
+      },
+      error: (error) => {
+        console.error('Error loading review eligibility:', error);
+        this.reviewEligibility.set(null);
+        this.isReviewEligibilityLoading.set(false);
+      },
+    });
+  }
+
+  private resetReviewForm(): void {
+    this.reviewFormOpen.set(false);
+    this.selectedRating.set(0);
+    this.hoveredRating.set(0);
+    this.reviewComment.set('');
   }
 
   private selectFirstAvailableCombination() {
@@ -465,6 +546,189 @@ existsSizeForColor(size: string): boolean {
       .map(([key, value]) => ({ key, value: value as string }));
   }
 
+  isUserLoggedIn(): boolean {
+    return this.authService.isLoggedIn();
+  }
+
+  getReviewCountLabel(): string {
+    const total = this.reviewSummary().total;
+    if (total === 0) return 'Sin reseñas';
+    if (total === 1) return '1 reseña';
+    return `${total} reseñas`;
+  }
+
+  isStarFilled(star: number, rating = this.ratingRounded()): boolean {
+    return star <= rating;
+  }
+
+  setRating(rating: number): void {
+    this.selectedRating.set(rating);
+  }
+
+  setHoveredRating(rating: number): void {
+    this.hoveredRating.set(rating);
+  }
+
+  clearHoveredRating(): void {
+    this.hoveredRating.set(0);
+  }
+
+  getActiveReviewRating(): number {
+    return this.hoveredRating() || this.selectedRating();
+  }
+
+  getReviewRatingLabel(rating = this.getActiveReviewRating()): string {
+    switch (rating) {
+      case 1:
+        return 'Muy malo';
+      case 2:
+        return 'Malo';
+      case 3:
+        return 'Regular';
+      case 4:
+        return 'Bueno';
+      case 5:
+        return 'Excelente';
+      default:
+        return 'Haz clic para calificar';
+    }
+  }
+
+  private getReviewCommentError(comment: string): string {
+    const normalized = comment.trim().replace(/\s+/g, ' ');
+
+    if (!normalized) return '';
+    if (normalized.length < 10) return 'El comentario debe tener al menos 10 caracteres.';
+    if (normalized.length > 800) return 'El comentario no puede exceder 800 caracteres.';
+    if (!this.reviewCommentAllowedPattern.test(normalized)) {
+      return 'El comentario contiene caracteres no permitidos.';
+    }
+    if (this.reviewBlockedPatterns.some((pattern) => pattern.test(normalized))) {
+      return 'El comentario contiene contenido no permitido.';
+    }
+
+    return '';
+  }
+
+  goToLoginForReview(): void {
+    const returnUrl = `${this.router.url.split('#')[0]}#reviews`;
+    this.router.navigate(['/auth/login'], {
+      queryParams: { returnUrl },
+    });
+  }
+
+  toggleReviewForm(): void {
+    if (!this.isUserLoggedIn()) {
+      this.goToLoginForReview();
+      return;
+    }
+
+    const nextState = !this.reviewFormOpen();
+    this.reviewFormOpen.set(nextState);
+
+    if (nextState) {
+      const idProducto = this.product()?.id_producto ?? this.product()?.id;
+      if (idProducto) {
+        this.loadReviewEligibility(idProducto);
+      }
+    }
+  }
+
+  getRelativeReviewDate(dateString: string): string {
+    const date = new Date(dateString).getTime();
+
+    if (!Number.isFinite(date)) {
+      return '';
+    }
+
+    const diffMs = Math.max(0, Date.now() - date);
+    const minutes = Math.floor(diffMs / 60_000);
+
+    if (minutes < 1) return 'hace un momento';
+    if (minutes < 60) {
+      return minutes === 1 ? 'hace un minuto' : `hace ${minutes} minutos`;
+    }
+
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) {
+      return hours === 1 ? 'hace una hora' : `hace ${hours} horas`;
+    }
+
+    const days = Math.floor(hours / 24);
+    if (days < 30) {
+      return days === 1 ? 'hace un día' : `hace ${days} días`;
+    }
+
+    const months = Math.floor(days / 30);
+    if (months < 12) {
+      return months === 1 ? 'hace un mes' : `hace ${months} meses`;
+    }
+
+    const years = Math.floor(months / 12);
+    return years === 1 ? 'hace un año' : `hace ${years} años`;
+  }
+
+  submitReview(): void {
+    const product = this.product();
+    if (!product) return;
+
+    if (!this.isUserLoggedIn()) {
+      this.goToLoginForReview();
+      return;
+    }
+
+    if (this.selectedRating() <= 0) {
+      this.toastr.warning('Selecciona una calificación para publicar tu reseña', 'Calificación requerida');
+      return;
+    }
+
+    const eligibility = this.reviewEligibility();
+    if (eligibility && !eligibility.canReview) {
+      this.toastr.warning(eligibility.reason || 'No puedes publicar reseña de este producto', 'Reseñas');
+      return;
+    }
+
+    const comentario = this.reviewComment().trim();
+    if (!comentario) {
+      this.toastr.warning('Escribe un comentario para publicar tu reseña', 'Comentario requerido');
+      return;
+    }
+
+    const commentError = this.getReviewCommentError(comentario);
+    if (commentError) {
+      this.toastr.warning(commentError, 'Comentario inválido');
+      return;
+    }
+
+    const idProducto = product.id_producto ?? product.id;
+    this.isSubmittingReview.set(true);
+
+    this.productService.createProductReview({
+      id_producto: idProducto,
+      calificacion: this.selectedRating(),
+      comentario,
+    }).subscribe({
+      next: () => {
+        this.toastr.success('Tu reseña fue publicada', 'Gracias por comentar');
+        this.resetReviewForm();
+        this.loadReviews(idProducto);
+        this.loadReviewEligibility(idProducto);
+        this.isSubmittingReview.set(false);
+      },
+      error: (error) => {
+        this.isSubmittingReview.set(false);
+        if (error?.status === 401) {
+          this.goToLoginForReview();
+          return;
+        }
+        const backendMessage = Array.isArray(error?.error?.message)
+          ? error.error.message.join(', ')
+          : error?.error?.message;
+        this.toastr.error(backendMessage || 'No se pudo publicar la reseña', 'Error');
+      },
+    });
+  }
+
   addToCart() {
     const product = this.product();
     const variant = this.selectedVariant();
@@ -503,7 +767,6 @@ existsSizeForColor(size: string): boolean {
     };
 
     this.cartService.addItem(cartItem);
-    this.toastr.success('Agregado al carrito', '¡Listo!');
   }
 
   goBack() {

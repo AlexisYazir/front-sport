@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -13,7 +13,7 @@ import { ProductService } from '../../core/services/product.service';
   templateUrl: './cart.html',
   styleUrl: './cart.css'
 })
-export class Cart {
+export class Cart implements OnInit {
   private cartService = inject(CartService);
   private router = inject(Router);
   private productService = inject(ProductService);
@@ -21,6 +21,7 @@ export class Cart {
   // Signals del servicio
   cartItems = this.cartService.cartItems;
   cartSummary = this.cartService.summary;
+  freeShippingTarget = 300;
   
   // Estado local
   isProcessing = signal<boolean>(false);
@@ -32,6 +33,13 @@ export class Cart {
     const validation = this.cartService.validateCartStock();
     return validation.isValid;
   });
+  freeShippingRemaining = computed(() =>
+    Math.max(0, this.freeShippingTarget - this.cartSummary().subtotal),
+  );
+
+  ngOnInit(): void {
+    this.cartService.loadCart().subscribe();
+  }
 
   updateQuantity(item: CartItem, newQuantity: number) {
     if (newQuantity <= 0) {
@@ -88,7 +96,7 @@ export class Cart {
   }
 
   getItemPrice(item: CartItem): number {
-    return this.cartService.getItemPrice(item.product);
+    return this.cartService.getItemPrice(item);
   }
 
   hasDiscount(item: CartItem): boolean {
@@ -132,11 +140,11 @@ export class Cart {
   }
 
   formatCurrency(amount: number): string {
-    return new Intl.NumberFormat('es-CO', {
+    return new Intl.NumberFormat('es-MX', {
       style: 'currency',
-      currency: 'COP',
+      currency: 'MXN',
       minimumFractionDigits: 0,
-      maximumFractionDigits: 0
+      maximumFractionDigits: 0,
     }).format(amount);
   }
 }

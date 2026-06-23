@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit, OnDestroy, signal, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
@@ -14,10 +14,10 @@ import { BreadcrumbItem } from '../../shared/components/breadcrumbs/breadcrumbs'
   styleUrl: './offers.css',
 })
 export class Offers implements OnInit, OnDestroy {
-  private toastr = Inject(ToastrService);
-  private productService = Inject(ProductService);
-  private cartService = Inject(CartService);
-  private router = Inject(Router);
+  private toastr = inject(ToastrService);
+  private productService = inject(ProductService);
+  private cartService = inject(CartService);
+  private router = inject(Router);
 
   // Signals para el estado reactivo
   offerProducts = signal<Product[]>([]);
@@ -56,35 +56,51 @@ export class Offers implements OnInit, OnDestroy {
 
   loadOfferProducts() {
     this.loading.set(true);
-    
-    this.productService.getProducts().subscribe({
+
+    this.productService.getOfferProducts().subscribe({
       next: (products: Product[]) => {
-        // Filtrar productos con descuento
-        const productsWithOffers = products.filter(p => 
-          p.descuento && p.descuento > 0
-        );
-        
-        // Si no hay productos con descuento, usar los primeros productos como ofertas simuladas
-        if (productsWithOffers.length === 0) {
-          const simulatedOffers = products.slice(0, 8).map(product => ({
-            ...product,
-            descuento: Math.floor(Math.random() * 50) + 10 // 10-60% descuento
-          }));
-          this.offerProducts.set(simulatedOffers);
-          this.featuredOffers.set(simulatedOffers.slice(0, 2));
-        } else {
-          this.offerProducts.set(productsWithOffers);
-          this.featuredOffers.set(productsWithOffers.slice(0, 2));
-        }
-        
+        const normalizedOffers = (products || []).map((product) => this.normalizeOfferProduct(product));
+        this.offerProducts.set(normalizedOffers);
+        this.featuredOffers.set(normalizedOffers.slice(0, 2));
         this.loading.set(false);
       },
       error: (error: any) => {
-        console.error('Error loading offer products:', error);
-        this.loading.set(false);
-        this.toastr.error('Error al cargar ofertas');
+        console.error('Error loading real offers:', error);
+        this.loadFallbackOffers();
       }
     });
+  }
+
+  private loadFallbackOffers() {
+    this.productService.getProducts().subscribe({
+      next: (products: Product[]) => {
+        const productsWithOffers = products
+          .filter((product) => product.descuento && product.descuento > 0)
+          .map((product) => this.normalizeOfferProduct(product));
+        this.offerProducts.set(productsWithOffers);
+        this.featuredOffers.set(productsWithOffers.slice(0, 2));
+        this.loading.set(false);
+      },
+      error: () => {
+        this.loading.set(false);
+        this.toastr.error('Error al cargar ofertas');
+      },
+    });
+  }
+
+  private normalizeOfferProduct(product: Product): Product {
+    return {
+      ...product,
+      id: product.id || product.id_producto || 0,
+      imagen:
+        product.imagen ||
+        (Array.isArray(product.imagenes) ? product.imagenes[0] : '') ||
+        'assets/images/no-image.jpg',
+      precio: Number(product.precio || 0),
+      descuento: Number(product.descuento || 0),
+      disponible: product.disponible ?? product.activo === true,
+      stock: Number(product.stock || 1),
+    };
   }
 
   startCountdown() {
@@ -123,7 +139,6 @@ export class Offers implements OnInit, OnDestroy {
 
   addToCart(product: Product) {
     this.cartService.addToCart(product);
-    this.toastr.success(`${product.nombre} agregado al carrito`, 'Producto agregado');
   }
 
   navigateToProduct(productId: number) {
