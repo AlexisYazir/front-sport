@@ -1,0 +1,106 @@
+<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+  <div class="mb-6 p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-100 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+    <div class="flex items-center gap-3">
+      <div class="bg-[#0367A6]/10 p-3 rounded-xl">
+        <span class="material-symbols-outlined text-[#0367A6] text-2xl">settings_voice</span>
+      </div>
+      <div>
+        <h2 class="text-2xl font-bold text-[#202020]">Códigos para Alexa</h2>
+        <p class="text-sm text-[#666666] mt-0.5">Vincula tu cuenta para consultar tus pedidos por voz</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 xl:grid-cols-[1fr_380px] gap-6">
+    <section class="border border-gray-200 rounded-xl p-5">
+      <h3 class="font-bold text-[#202020] text-lg mb-3">Generar código</h3>
+      <p class="text-sm text-[#666666] mb-5">
+        El código se envía a tu correo y también se muestra aquí. Para iniciar sesión en la skill,
+        Alexa debe pedirte tu correo y este código; después recibirá una sesión temporal segura.
+      </p>
+
+      <div class="bg-gray-50 rounded-xl border border-gray-100 p-4 mb-5">
+        <p class="text-xs text-[#666666] mb-1">Correo asociado</p>
+        <p class="font-semibold text-[#202020]">{{ code()?.email || currentUser()?.email || 'Sin correo' }}</p>
+      </div>
+
+      <button
+        type="button"
+        (click)="requestCode()"
+        [disabled]="isLoading() || isChecking() || hasActiveCode()"
+        class="inline-flex items-center justify-center gap-2 px-5 py-3 bg-[#0367A6] text-white rounded-lg font-semibold hover:bg-[#035A91] disabled:opacity-60 transition-all">
+        <span *ngIf="!isLoading()" class="material-symbols-outlined">
+          {{ hasActiveCode() ? 'lock_clock' : 'mark_email_unread' }}
+        </span>
+        <span *ngIf="isLoading()" class="w-5 h-5 rounded-full border-2 border-white border-t-transparent animate-spin"></span>
+        {{ isLoading() ? 'Generando...' : (hasActiveCode() ? 'Ya tienes un código activo' : 'Enviar y mostrar código') }}
+      </button>
+
+      <div *ngIf="isChecking()" class="mt-6 border border-gray-100 bg-gray-50 rounded-xl p-5 flex items-center gap-3">
+        <span class="w-5 h-5 rounded-full border-2 border-[#0367A6] border-t-transparent animate-spin"></span>
+        <p class="text-sm text-[#666666]">Consultando código activo...</p>
+      </div>
+
+      <div *ngIf="!isChecking() && !hasActiveCode()" class="mt-6 border border-gray-100 bg-gray-50 rounded-xl p-5">
+        <div class="flex items-start gap-3">
+          <span class="material-symbols-outlined text-gray-400">info</span>
+          <div>
+            <p class="font-semibold text-[#202020]">No hay código de Alexa activo</p>
+            <p class="text-sm text-[#666666] mt-1">Genera uno nuevo para vincular tu cuenta con la skill.</p>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="hasActiveCode()" class="mt-6 border border-blue-100 bg-blue-50 rounded-xl p-5">
+        <p class="text-sm text-[#666666] mb-2">Código activo</p>
+        <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+          <div class="tracking-[0.3em] text-4xl font-black text-[#0367A6] bg-white border border-blue-100 rounded-xl px-5 py-4 w-fit">
+            {{ code()?.token }}
+          </div>
+          <button
+            type="button"
+            (click)="copyCode()"
+            class="inline-flex items-center justify-center gap-2 px-4 py-3 border border-[#0367A6] text-[#0367A6] rounded-lg font-semibold hover:bg-[#0367A6]/10 transition-all">
+            <span class="material-symbols-outlined">content_copy</span>
+            Copiar
+          </button>
+        </div>
+        <p class="text-sm text-[#666666] mt-4">
+          Expira: <span class="font-semibold text-[#202020]">{{ formatDate(code()!.expiresAt!) }}</span>
+        </p>
+        <p class="text-sm text-[#666666] mt-1">
+          Tiempo restante:
+          <span class="font-semibold text-[#0367A6]">{{ formatRemaining(remainingSeconds()) }}</span>
+        </p>
+      </div>
+    </section>
+
+    <aside class="border border-gray-200 rounded-xl p-5 bg-gray-50">
+      <h3 class="font-bold text-[#202020] text-lg mb-4 flex items-center gap-2">
+        <span class="material-symbols-outlined text-[#0367A6]">shield_lock</span>
+        Flujo seguro
+      </h3>
+      <div class="space-y-4 text-sm text-[#666666]">
+        <div class="flex gap-3">
+          <span class="w-7 h-7 rounded-full bg-[#0367A6] text-white flex items-center justify-center font-bold shrink-0">1</span>
+          <p>Generas el código desde tu cuenta web ya iniciada.</p>
+        </div>
+        <div class="flex gap-3">
+          <span class="w-7 h-7 rounded-full bg-[#0367A6] text-white flex items-center justify-center font-bold shrink-0">2</span>
+          <p>Alexa solicita tu correo y el código de 6 dígitos.</p>
+        </div>
+        <div class="flex gap-3">
+          <span class="w-7 h-7 rounded-full bg-[#0367A6] text-white flex items-center justify-center font-bold shrink-0">3</span>
+          <p>El backend valida ambos datos y crea tokens JWT para consultar tus pedidos.</p>
+        </div>
+      </div>
+
+      <div class="mt-5 bg-white border border-gray-100 rounded-xl p-4">
+        <p class="text-sm font-semibold text-[#202020] mb-1">Importante</p>
+        <p class="text-sm text-[#666666]">
+          El código solo sirve una vez y no permite consultar pedidos por sí solo.
+        </p>
+      </div>
+    </aside>
+  </div>
+</div>

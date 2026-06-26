@@ -144,6 +144,11 @@ export const routes: Routes = [
           import('./features/dashboard/usuario/user-pages/billing/user-billing').then((m) => m.UserBilling),
       },
       {
+        path: 'alexa-codes',
+        loadComponent: () =>
+          import('./features/dashboard/usuario/user-pages/alexa-codes/alexa-codes').then((m) => m.AlexaCodes),
+      },
+      {
         path: 'settings',
         loadComponent: () =>
           import('./features/dashboard/usuario/user-pages/settings/user-settings').then((m) => m.UserSettings),

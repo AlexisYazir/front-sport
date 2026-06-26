@@ -28,6 +28,7 @@ import {
   Roles,
   UpdateProfileData,
   UpdateProfileResponse,
+  AlexaVerificationCodeResponse,
 } from '../models/user.model';
 import { TokenService } from './token.service';
 import { SessionService } from './session.service';
@@ -572,6 +573,25 @@ export class AuthService {
         return throwError(() => error);
       }),
     );
+  }
+
+  requestAlexaVerificationCode(): Observable<AlexaVerificationCodeResponse> {
+    return this.http
+      .post<AlexaVerificationCodeResponse>(`${this.API_URL}/users/alexa/request-code`, {})
+      .pipe(
+        tap(() => {
+          this.toastr.success('Código enviado a tu correo', 'Alexa');
+        }),
+        catchError((error) => {
+          const message = error?.error?.message || 'No fue posible generar el código.';
+          this.toastr.error(message, 'Alexa');
+          return throwError(() => error);
+        }),
+      );
+  }
+
+  getAlexaVerificationCode(): Observable<AlexaVerificationCodeResponse> {
+    return this.http.get<AlexaVerificationCodeResponse>(`${this.API_URL}/users/alexa/code`);
   }
 
   private mapRecentUserCreatedFromApi(u: any): RecentUserCreated {

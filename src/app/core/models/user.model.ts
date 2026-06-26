@@ -36,6 +36,15 @@ export interface LoginResponse {
   refreshTokenExpiresIn: string;
 }
 
+export interface AlexaVerificationCodeResponse {
+  message: string;
+  email: string;
+  token: string | null;
+  expiresAt: string | null;
+  remainingSeconds: number;
+  hasActiveCode: boolean;
+}
+
 // Interface para Register Request
 export interface RegisterRequest {
   nombre: string;

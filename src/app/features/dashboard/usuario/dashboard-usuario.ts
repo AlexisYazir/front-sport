@@ -36,6 +36,7 @@ export class DashboardUsuario implements OnInit {
     { icon: 'shopping_bag', label: 'Compras', route: '/dashboard/usuario/compras' },
     { icon: 'account_circle', label: 'Perfil', route: '/dashboard/usuario/profile' },
     { icon: 'receipt_long', label: 'Facturación', route: '/dashboard/usuario/billing' },
+    { icon: 'settings_voice', label: 'Códigos Alexa', route: '/dashboard/usuario/alexa-codes' },
     { icon: 'settings', label: 'Configuración', route: '/dashboard/usuario/settings' },
   ];
 
