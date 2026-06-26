@@ -6,7 +6,7 @@ import { ProductService } from '../../../../../core/services/product.service';
 import { CreateReturnRequest, ProductReturn, UserOrder } from '../../../../../core/models/product.model';
 import { formatMexicoDateTime } from '../../../../../core/utils/date-time.util';
 
-type OrderFilter = 'all' | 'pendiente' | 'en proceso' | 'entregado';
+type OrderFilter = 'all' | 'pendiente_pago' | 'pendiente' | 'en proceso' | 'entregado';
 
 @Component({
   selector: 'app-user-purchases',
@@ -308,6 +308,7 @@ export class UserPurchases implements OnInit {
   normalizeStatus(status: string): OrderFilter {
     const normalized = String(status || '').trim().toLowerCase();
 
+    if (normalized === 'pendiente_pago') return 'pendiente_pago';
     if (normalized === 'entregado') return 'entregado';
     if (normalized === 'en proceso') return 'en proceso';
     return 'pendiente';
@@ -315,6 +316,8 @@ export class UserPurchases implements OnInit {
 
   getStatusLabel(status: string): string {
     switch (this.normalizeStatus(status)) {
+      case 'pendiente_pago':
+        return 'Pago pendiente';
       case 'entregado':
         return 'Entregado';
       case 'en proceso':
@@ -326,6 +329,8 @@ export class UserPurchases implements OnInit {
 
   getStatusClass(status: string): string {
     switch (this.normalizeStatus(status)) {
+      case 'pendiente_pago':
+        return 'bg-orange-100 text-orange-700 border-orange-200';
       case 'entregado':
         return 'bg-green-100 text-green-700 border-green-200';
       case 'en proceso':

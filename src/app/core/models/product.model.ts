@@ -144,7 +144,7 @@ export interface Orders {
   fecha_creacion:string;
 }
 
-export type EmployeeOrderStatus = 'pendiente' | 'en proceso' | 'entregado';
+export type EmployeeOrderStatus = 'pendiente_pago' | 'pendiente' | 'en proceso' | 'entregado';
 
 export interface EmployeeOrderItem {
   id_variante: number;

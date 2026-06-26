@@ -116,6 +116,8 @@ export class DashboardUsuario implements OnInit {
 
   getStatusLabel(status: string): string {
     switch (this.normalizeStatus(status)) {
+      case 'pendiente_pago':
+        return 'Pago pendiente';
       case 'entregado':
         return 'Entregado';
       case 'en proceso':
@@ -127,6 +129,8 @@ export class DashboardUsuario implements OnInit {
 
   getStatusClass(status: string): string {
     switch (this.normalizeStatus(status)) {
+      case 'pendiente_pago':
+        return 'bg-orange-100 text-orange-700 border-orange-200';
       case 'entregado':
         return 'bg-green-100 text-green-700 border-green-200';
       case 'en proceso':

@@ -178,8 +178,20 @@ export class Checkout implements OnInit {
     this.productService.confirmCheckout(payload).subscribe({
       next: (response) => {
         this.isSubmitting.set(false);
-        this.toastr.success(response.message, 'Checkout');
         this.cartService.loadCart().subscribe();
+        const checkoutUrl =
+          response.checkout?.init_point || response.checkout?.sandbox_init_point;
+
+        if (checkoutUrl) {
+          this.toastr.success('Te llevaremos a Mercado Pago para completar el pago', 'Checkout');
+          window.location.href = checkoutUrl;
+          return;
+        }
+
+        this.toastr.warning(
+          'El pedido se creó, pero no recibimos el enlace de Mercado Pago',
+          'Checkout',
+        );
         this.router.navigate(['/dashboard/usuario/compras']);
       },
       error: (error) => {
@@ -309,7 +321,7 @@ export class Checkout implements OnInit {
     const selectedMethod = this.selectedShippingMethodId();
     const payload: ConfirmCheckoutRequest = {
       id_metodo_envio: selectedMethod,
-      metodo_pago: 'tarjeta',
+      metodo_pago: 'mercado_pago',
       codigo_promocion: this.appliedCouponCode() || undefined,
     };
 
@@ -340,34 +352,6 @@ export class Checkout implements OnInit {
         principal: this.addressForm.principal === true,
       };
     }
-
-    if (this.paymentMode() === 'saved') {
-      const idPaymentMethod = this.selectedPaymentMethodId();
-
-      if (!idPaymentMethod) {
-        this.toastr.warning('Selecciona una tarjeta', 'Checkout');
-        return null;
-      }
-
-      payload.id_metodo_pago_usuario = idPaymentMethod;
-      return payload;
-    }
-
-    if (!this.isCardValid()) {
-      this.toastr.warning('Completa una tarjeta válida', 'Checkout');
-      return null;
-    }
-
-    payload.guardar_tarjeta = this.saveCard();
-    payload.tarjeta = {
-      alias: this.cardForm.alias?.trim() || `${this.cardBrand()} ${this.getCardLast4()}`,
-      titular: this.cardForm.titular.trim(),
-      numero: this.normalizeCardNumber(this.cardForm.numero),
-      exp_mes: Number(this.cardForm.exp_mes),
-      exp_anio: Number(this.cardForm.exp_anio),
-      cvv: String(this.cardForm.cvv || '').trim(),
-      principal: this.cardForm.principal !== false,
-    };
 
     return payload;
   }

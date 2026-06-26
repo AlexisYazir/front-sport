@@ -177,109 +177,27 @@
             Pago
           </h2>
 
-          <div *ngIf="paymentMethods().length > 0" class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-5">
-            <button
-              *ngFor="let method of paymentMethods()"
-              type="button"
-              (click)="useSavedPaymentMethod(method.id_metodo_pago)"
-              class="text-left border rounded-xl p-4 transition-all"
-              [ngClass]="paymentMode() === 'saved' && selectedPaymentMethodId() === method.id_metodo_pago
-                ? 'border-[#0367A6] bg-[#0367A6]/5 shadow-sm'
-                : 'border-gray-200 hover:border-[#0367A6]/50'">
-              <div class="flex items-start justify-between gap-3">
-                <div>
-                  <p class="font-semibold text-[#202020]">{{ getCardLabel(method) }}</p>
-                  <p class="text-sm text-[#666666] mt-1">{{ method.titular }}</p>
-                  <p class="text-xs text-gray-500 mt-1">Vence {{ method.exp_mes }}/{{ method.exp_anio }}</p>
+          <div class="border border-[#0367A6] bg-[#0367A6]/5 rounded-xl p-5">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div class="flex items-start gap-3">
+                <div class="w-11 h-11 rounded-lg bg-[#0367A6] text-white flex items-center justify-center shrink-0">
+                  <span class="material-symbols-outlined">verified_user</span>
                 </div>
-                <span
-                  class="material-symbols-outlined text-xl"
-                  [ngClass]="paymentMode() === 'saved' && selectedPaymentMethodId() === method.id_metodo_pago ? 'text-[#0367A6]' : 'text-gray-300'">
-                  check_circle
-                </span>
+                <div>
+                  <p class="font-bold text-[#202020]">Mercado Pago</p>
+                  <p class="text-sm text-[#666666] mt-1">
+                    Paga con tarjeta de crédito, débito u otros métodos disponibles en Mercado Pago.
+                  </p>
+                  <p class="text-xs text-gray-500 mt-2">
+                    Los datos de tu tarjeta se capturan en Mercado Pago, no en Sport Center.
+                  </p>
+                </div>
               </div>
-            </button>
-
-            <button
-              type="button"
-              (click)="useNewPaymentMethod()"
-              class="text-left border rounded-xl p-4 transition-all"
-              [ngClass]="paymentMode() === 'new'
-                ? 'border-[#0367A6] bg-[#0367A6]/5 shadow-sm'
-                : 'border-gray-200 hover:border-[#0367A6]/50'">
-              <span class="material-symbols-outlined text-[#0367A6]">add_card</span>
-              <p class="font-semibold text-[#202020] mt-2">Nueva tarjeta</p>
-              <p class="text-xs text-gray-500 mt-1">Crédito o débito</p>
-            </button>
-          </div>
-
-          <div *ngIf="paymentMode() === 'new'" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-semibold text-gray-700 mb-1">Titular</label>
-              <input
-                [(ngModel)]="cardForm.titular"
-                autocomplete="cc-name"
-                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0367A6]/20 focus:border-[#0367A6] outline-none">
+              <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-semibold">
+                <span class="material-symbols-outlined text-base">lock</span>
+                Pago seguro
+              </span>
             </div>
-            <div>
-              <label class="block text-sm font-semibold text-gray-700 mb-1">Alias</label>
-              <input
-                [(ngModel)]="cardForm.alias"
-                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0367A6]/20 focus:border-[#0367A6] outline-none">
-            </div>
-            <div class="md:col-span-2">
-              <label class="block text-sm font-semibold text-gray-700 mb-1">Número de tarjeta</label>
-              <div class="relative">
-                <input
-                  [ngModel]="cardForm.numero"
-                  (ngModelChange)="onCardNumberChange($event)"
-                  inputmode="numeric"
-                  autocomplete="cc-number"
-                  maxlength="23"
-                  class="w-full px-4 py-2.5 pr-24 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0367A6]/20 focus:border-[#0367A6] outline-none">
-                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-[#0367A6] bg-[#0367A6]/10 rounded-full px-2 py-1">
-                  {{ cardBrand() }}
-                </span>
-              </div>
-            </div>
-            <div>
-              <label class="block text-sm font-semibold text-gray-700 mb-1">Mes</label>
-              <select
-                [(ngModel)]="cardForm.exp_mes"
-                autocomplete="cc-exp-month"
-                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0367A6]/20 focus:border-[#0367A6] outline-none bg-white">
-                <option *ngFor="let month of [1,2,3,4,5,6,7,8,9,10,11,12]" [ngValue]="month">
-                  {{ month }}
-                </option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-sm font-semibold text-gray-700 mb-1">Año</label>
-              <input
-                [(ngModel)]="cardForm.exp_anio"
-                type="number"
-                min="2026"
-                max="2100"
-                autocomplete="cc-exp-year"
-                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0367A6]/20 focus:border-[#0367A6] outline-none">
-            </div>
-            <div>
-              <label class="block text-sm font-semibold text-gray-700 mb-1">CVV</label>
-              <input
-                [(ngModel)]="cardForm.cvv"
-                inputmode="numeric"
-                maxlength="4"
-                autocomplete="cc-csc"
-                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0367A6]/20 focus:border-[#0367A6] outline-none">
-            </div>
-            <label class="md:col-span-2 inline-flex items-center gap-2 text-sm text-[#666666]">
-              <input
-                [ngModel]="saveCard()"
-                (ngModelChange)="saveCard.set($event)"
-                type="checkbox"
-                class="rounded border-gray-300 text-[#0367A6] focus:ring-[#0367A6]">
-              Guardar tarjeta para futuras compras
-            </label>
           </div>
         </section>
       </div>
@@ -370,7 +288,7 @@
             class="w-full mt-6 bg-[#0367A6] border border-transparent rounded-lg shadow-sm py-3 px-4 text-base font-semibold text-white hover:bg-[#035A91] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0367A6] disabled:opacity-60 disabled:cursor-not-allowed">
             <span *ngIf="!isSubmitting()" class="flex items-center justify-center gap-2">
               <span class="material-symbols-outlined">check_circle</span>
-              Confirmar pedido
+              Pagar con Mercado Pago
             </span>
             <span *ngIf="isSubmitting()" class="flex items-center justify-center gap-2">
               <span class="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin"></span>

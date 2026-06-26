@@ -162,7 +162,7 @@ export interface ConfirmCheckoutRequest {
   id_direccion_envio?: number;
   direccion?: CheckoutAddress;
   id_metodo_envio?: number | null;
-  metodo_pago: 'tarjeta';
+  metodo_pago: 'mercado_pago';
   id_metodo_pago_usuario?: number;
   guardar_tarjeta?: boolean;
   tarjeta?: CheckoutCardInput;
@@ -185,4 +185,11 @@ export interface ConfirmCheckoutResponse {
     fecha_creacion: string;
   };
   totals: CheckoutTotals;
+  checkout?: {
+    provider: string;
+    preference_id?: string;
+    external_reference?: string;
+    init_point?: string;
+    sandbox_init_point?: string;
+  };
 }

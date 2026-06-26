@@ -34,6 +34,7 @@ export class EmployeeOrders implements OnInit {
 
   readonly pageSize = 10;
   readonly statuses: Array<{ value: EmployeeOrderStatus; label: string }> = [
+    { value: 'pendiente_pago', label: 'Pago pendiente' },
     { value: 'pendiente', label: 'Pendiente' },
     { value: 'en proceso', label: 'En proceso' },
     { value: 'entregado', label: 'Entregado' },
@@ -130,6 +131,11 @@ export class EmployeeOrders implements OnInit {
       return;
     }
 
+    if (currentStatus === 'pendiente_pago' || newStatus === 'pendiente_pago') {
+      this.toastr.info('Espera a que Mercado Pago confirme el pago', 'Pedidos');
+      return;
+    }
+
     if (newStatus === currentStatus) {
       return;
     }
@@ -169,6 +175,11 @@ export class EmployeeOrders implements OnInit {
   ): void {
     if (this.isDelivered(order)) {
       this.toastr.info('Los pedidos entregados ya están finalizados', 'Envíos');
+      return;
+    }
+
+    if (this.isPaymentPending(order)) {
+      this.toastr.info('Espera a que Mercado Pago confirme el pago', 'Envíos');
       return;
     }
 
@@ -240,6 +251,7 @@ export class EmployeeOrders implements OnInit {
   normalizeStatus(status: string): EmployeeOrderStatus {
     const normalized = String(status || '').trim().toLowerCase();
 
+    if (normalized === 'pendiente_pago') return 'pendiente_pago';
     if (normalized === 'entregado') return 'entregado';
     if (normalized === 'en proceso') return 'en proceso';
     return 'pendiente';
@@ -253,6 +265,8 @@ export class EmployeeOrders implements OnInit {
 
   getStatusClass(status: string): string {
     switch (this.normalizeStatus(status)) {
+      case 'pendiente_pago':
+        return 'bg-orange-100 text-orange-700 border-orange-200';
       case 'entregado':
         return 'bg-green-100 text-green-700 border-green-200';
       case 'en proceso':
@@ -260,6 +274,10 @@ export class EmployeeOrders implements OnInit {
       default:
         return 'bg-yellow-100 text-yellow-700 border-yellow-200';
     }
+  }
+
+  isPaymentPending(order: EmployeeOrder): boolean {
+    return this.normalizeStatus(order.estado) === 'pendiente_pago';
   }
 
   getShipmentStatusLabel(status: string | null | undefined): string {
