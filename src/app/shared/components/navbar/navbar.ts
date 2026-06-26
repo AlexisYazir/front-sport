@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
 import { CartService } from '../../../core/services/cart.service';
 import { ProductService } from '../../../core/services/product.service';
+import { UserRole } from '../../../core/models/user.model';
 
 @Component({
   selector: 'app-navbar',
@@ -57,6 +58,10 @@ export class Navbar {
   // Exponer servicios para el template
   get authServicePublic() { return this.authService; }
   cartItemCount = this.cartService.itemCount;
+  canUseCart = computed(() => {
+    const user = this.authService.currentUser();
+    return !user || user.rol === UserRole.USUARIO;
+  });
 
   // Métodos para determinar si mostrar los menús
   shouldShowUserMenu(): boolean {

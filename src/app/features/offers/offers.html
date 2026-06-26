@@ -90,7 +90,8 @@
                   ${{product.precio.toFixed(2)}}
                 </span>
               </div>
-              <button (click)="addToCart(product)" 
+              <button *ngIf="canUseCart()"
+                      (click)="addToCart(product)" 
                       [disabled]="!product.disponible || product.stock <= 0"
                       class="bg-[#0367A6] hover:bg-[#035A91] disabled:bg-gray-400 disabled:cursor-not-allowed text-white py-3 px-6 rounded-xl font-semibold transition-all duration-200 flex items-center justify-center gap-2 w-full lg:w-auto">
                 <span class="material-symbols-outlined text-lg font-variation-settings-wght-400">shopping_cart</span>
@@ -178,7 +179,8 @@
                 <span class="material-symbols-outlined text-lg font-variation-settings-wght-400">star_half</span>
               </div>
             </div>
-            <button (click)="addToCart(product)" 
+            <button *ngIf="canUseCart()"
+                    (click)="addToCart(product)" 
                     [disabled]="!product.disponible || product.stock <= 0"
                     class="w-full bg-[#0367A6] hover:bg-[#035A91] disabled:bg-gray-400 disabled:cursor-not-allowed text-white py-3 rounded-xl font-semibold transition-all duration-200 flex items-center justify-center gap-2">
               <span class="material-symbols-outlined text-lg font-variation-settings-wght-400">shopping_cart</span>

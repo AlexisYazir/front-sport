@@ -441,6 +441,7 @@
 
           <!-- Carrito -->
           <a
+            *ngIf="canUseCart()"
             routerLink="/cart"
             routerLinkActive="text-[#0367A6]"
             class="cart-link relative p-2 text-[#666666] hover:text-[#0367A6] rounded-xl hover:bg-blue-50/80 transition-all duration-200 group flex items-center"
@@ -540,6 +541,7 @@
           </div>
 
           <a 
+            *ngIf="canUseCart()"
             routerLink="/cart" 
             (click)="toggleMobileMenu()"
             class="flex items-center px-4 py-3 text-[#666666] hover:text-[#0367A6] hover:bg-blue-50/80 rounded-xl transition-all duration-200"

@@ -19,19 +19,28 @@ export class AlexaCodes {
   isLoading = signal(false);
   isChecking = signal(true);
   now = signal(Date.now());
+  loadedAt = signal(Date.now());
   code = signal<AlexaVerificationCodeResponse | null>(null);
   currentUser = computed(() => this.authService.currentUser());
   hasActiveCode = computed(() => {
     const currentCode = this.code();
     return !!(
       currentCode?.hasActiveCode &&
-      currentCode.token &&
       currentCode.expiresAt &&
       this.remainingSeconds() > 0
     );
   });
+  canShowToken = computed(() => !!this.code()?.token && this.hasActiveCode());
   remainingSeconds = computed(() => {
-    const expiresAt = this.code()?.expiresAt;
+    const currentCode = this.code();
+    if (!currentCode) return 0;
+
+    if (Number(currentCode.remainingSeconds || 0) > 0) {
+      const elapsedSeconds = Math.floor((this.now() - this.loadedAt()) / 1000);
+      return Math.max(0, Number(currentCode.remainingSeconds) - elapsedSeconds);
+    }
+
+    const expiresAt = currentCode.expiresAt;
     if (!expiresAt) return 0;
 
     return Math.max(0, Math.floor((new Date(expiresAt).getTime() - this.now()) / 1000));
@@ -53,7 +62,7 @@ export class AlexaCodes {
     this.isChecking.set(true);
     this.authService.getAlexaVerificationCode().subscribe({
       next: (response) => {
-        this.code.set(response);
+        this.setCode(response);
         this.isChecking.set(false);
       },
       error: () => {
@@ -71,7 +80,7 @@ export class AlexaCodes {
     this.isLoading.set(true);
     this.authService.requestAlexaVerificationCode().subscribe({
       next: (response) => {
-        this.code.set(response);
+        this.setCode(response);
         this.isLoading.set(false);
       },
       error: () => {
@@ -110,5 +119,10 @@ export class AlexaCodes {
     }
 
     return `${remainingSeconds} s`;
+  }
+
+  private setCode(response: AlexaVerificationCodeResponse): void {
+    this.code.set(response);
+    this.loadedAt.set(Date.now());
   }
 }

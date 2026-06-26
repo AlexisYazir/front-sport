@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard, guestGuard } from './core/guards/auth.guard';
-import { adminGuard, empleadoGuard, usuarioGuard } from './core/guards/role.guard';
+import { adminGuard, customerGuard, empleadoGuard, usuarioGuard } from './core/guards/role.guard';
 
 export const routes: Routes = [
   {
@@ -84,12 +84,12 @@ export const routes: Routes = [
   {
     path: 'cart',
     loadComponent: () => import('./features/cart/cart').then((m) => m.Cart),
-    canActivate: [authGuard],
+    canActivate: [authGuard, customerGuard],
   },
   {
     path: 'checkout',
     loadComponent: () => import('./features/products/checkout/checkout').then((m) => m.Checkout),
-    canActivate: [authGuard],
+    canActivate: [authGuard, customerGuard],
   },
   {
     path: 'auth/login',

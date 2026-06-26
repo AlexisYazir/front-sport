@@ -8,6 +8,7 @@ import { environment } from '../../../environments/environment';
 import { CartItem, CartSummary } from '../models/cart.model';
 import { Product } from '../models/product.model';
 import { AuthService } from './auth.service';
+import { UserRole } from '../models/user.model';
 
 export interface AddToCartRequest {
   product: Product;
@@ -90,8 +91,9 @@ export class CartService {
     const userId = user?.id ? Number(user.id) : null;
 
     setTimeout(() => {
-      if (!userId) {
+      if (!userId || !this.canUseCart()) {
         this.lastLoadedUserId = null;
+        this.clearPendingCartAdd();
         this.setCartItems([]);
         return;
       }
@@ -146,7 +148,7 @@ export class CartService {
   }
 
   loadCart(): Observable<ApiCartResponse | null> {
-    if (!this.authService.isLoggedIn()) {
+    if (!this.authService.isLoggedIn() || !this.canUseCart()) {
       this.setCartItems([]);
       return of(null);
     }
@@ -181,6 +183,12 @@ export class CartService {
   }
 
   addItem(request: AddToCartRequest): void {
+    if (!this.canUseCart()) {
+      this.clearPendingCartAdd();
+      this.toastr.info('El carrito solo está disponible para usuarios compradores.', 'Carrito');
+      return;
+    }
+
     const idVariante = this.resolveVariantId(request);
     const quantity = Number(request.quantity || 0);
 
@@ -295,7 +303,7 @@ export class CartService {
   }
 
   clearCart(): void {
-    if (!this.authService.isLoggedIn()) {
+    if (!this.authService.isLoggedIn() || !this.canUseCart()) {
       this.setCartItems([]);
       return;
     }
@@ -380,7 +388,11 @@ export class CartService {
   }
 
   private processPendingCartAdd(): void {
-    if (this.pendingCartProcessing || !this.authService.isLoggedIn()) {
+    if (this.pendingCartProcessing || !this.authService.isLoggedIn() || !this.canUseCart()) {
+      if (!this.canUseCart()) {
+        this.clearPendingCartAdd();
+        this.setCartItems([]);
+      }
       return;
     }
 
@@ -570,6 +582,11 @@ export class CartService {
     this.router.navigate(['/auth/login'], {
       queryParams: { returnUrl: currentUrl },
     });
+  }
+
+  private canUseCart(): boolean {
+    const user = this.authService.currentUser();
+    return !user || user.rol === UserRole.USUARIO;
   }
 
   private getBackendMessage(error: any, fallback: string): string {

@@ -6,6 +6,7 @@ import { ProductService } from '../../../core/services/product.service';
 import { CartService } from '../../../core/services/cart.service';
 import { Product, ProductReview, ProductReviewEligibility, ProductReviewSummary } from '../../../core/models/product.model';
 import { AuthService } from '../../../core/services/auth.service';
+import { UserRole } from '../../../core/models/user.model';
 import { ToastrService } from 'ngx-toastr';
 import { Breadcrumbs, BreadcrumbItem } from '../../../shared/components/breadcrumbs/breadcrumbs';
 import { Location } from '@angular/common';
@@ -103,6 +104,10 @@ export class ProductDetail implements OnInit {
 
   // Disponibilidad
   isProductAvailable = computed(() => this.currentStock() > 0);
+  canUseCart = computed(() => {
+    const user = this.authService.currentUser();
+    return !user || user.rol === UserRole.USUARIO;
+  });
 
   // Precio con descuento
   priceWithDiscount = computed(() => {

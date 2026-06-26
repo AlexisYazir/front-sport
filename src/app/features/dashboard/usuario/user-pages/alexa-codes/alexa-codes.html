@@ -15,8 +15,8 @@
     <section class="border border-gray-200 rounded-xl p-5">
       <h3 class="font-bold text-[#202020] text-lg mb-3">Generar código</h3>
       <p class="text-sm text-[#666666] mb-5">
-        El código se envía a tu correo y también se muestra aquí. Para iniciar sesión en la skill,
-        Alexa debe pedirte tu correo y este código; después recibirá una sesión temporal segura.
+        El código se envía a tu correo y también se muestra aquí al generarlo. Para iniciar sesión en la skill,
+        Alexa solo debe pedirte este código; el backend identifica a qué cuenta pertenece y crea la sesión segura.
       </p>
 
       <div class="bg-gray-50 rounded-xl border border-gray-100 p-4 mb-5">
@@ -53,7 +53,7 @@
 
       <div *ngIf="hasActiveCode()" class="mt-6 border border-blue-100 bg-blue-50 rounded-xl p-5">
         <p class="text-sm text-[#666666] mb-2">Código activo</p>
-        <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+        <div *ngIf="canShowToken(); else hiddenActiveCode" class="flex flex-col sm:flex-row sm:items-center gap-3">
           <div class="tracking-[0.3em] text-4xl font-black text-[#0367A6] bg-white border border-blue-100 rounded-xl px-5 py-4 w-fit">
             {{ code()?.token }}
           </div>
@@ -65,12 +65,26 @@
             Copiar
           </button>
         </div>
+        <ng-template #hiddenActiveCode>
+          <div class="bg-white border border-blue-100 rounded-xl px-5 py-4 flex items-start gap-3">
+            <span class="material-symbols-outlined text-[#0367A6]">lock_clock</span>
+            <div>
+              <p class="font-semibold text-[#202020]">Hay un código activo</p>
+              <p class="text-sm text-[#666666] mt-1">
+                Por seguridad no se vuelve a mostrar el código completo después de recargar la página. Puedes consultar el correo asociado para ver el código o esperar a que expire y generar uno nuevo.
+              </p>
+            </div>
+          </div>
+        </ng-template>
         <p class="text-sm text-[#666666] mt-4">
           Expira: <span class="font-semibold text-[#202020]">{{ formatDate(code()!.expiresAt!) }}</span>
         </p>
         <p class="text-sm text-[#666666] mt-1">
           Tiempo restante:
           <span class="font-semibold text-[#0367A6]">{{ formatRemaining(remainingSeconds()) }}</span>
+        </p>
+        <p *ngIf="!canShowToken()" class="text-xs text-blue-700 mt-3">
+          Si lo perdiste, espera a que expire y genera uno nuevo.
         </p>
       </div>
     </section>
@@ -87,11 +101,11 @@
         </div>
         <div class="flex gap-3">
           <span class="w-7 h-7 rounded-full bg-[#0367A6] text-white flex items-center justify-center font-bold shrink-0">2</span>
-          <p>Alexa solicita tu correo y el código de 6 dígitos.</p>
+          <p>Alexa solicita el código de 6 dígitos.</p>
         </div>
         <div class="flex gap-3">
           <span class="w-7 h-7 rounded-full bg-[#0367A6] text-white flex items-center justify-center font-bold shrink-0">3</span>
-          <p>El backend valida ambos datos y crea tokens JWT para consultar tus pedidos.</p>
+          <p>El backend valida el código, vincula tu usuario de Alexa y crea tokens JWT para consultar tus pedidos.</p>
         </div>
       </div>
 

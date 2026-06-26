@@ -268,7 +268,7 @@
         </div>
 
         <!-- ADD TO CART BUTTON (Azul) -->
-        <div class="mb-6">
+        <div *ngIf="canUseCart()" class="mb-6">
           <button
             (click)="addToCart()"
             [disabled]="!isProductAvailable()"

@@ -4,7 +4,9 @@ import { RouterModule, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { ProductService } from '../../core/services/product.service';
 import { CartService } from '../../core/services/cart.service';
+import { AuthService } from '../../core/services/auth.service';
 import { Product } from '../../core/models/product.model';
+import { UserRole } from '../../core/models/user.model';
 import { BreadcrumbItem } from '../../shared/components/breadcrumbs/breadcrumbs';
 
 @Component({
@@ -17,6 +19,7 @@ export class Offers implements OnInit, OnDestroy {
   private toastr = inject(ToastrService);
   private productService = inject(ProductService);
   private cartService = inject(CartService);
+  private authService = inject(AuthService);
   private router = inject(Router);
 
   // Signals para el estado reactivo
@@ -36,6 +39,10 @@ export class Offers implements OnInit, OnDestroy {
 
   // Computed para el contador del carrito
   cartCount = computed(() => this.cartService.cartItems().length);
+  canUseCart = computed(() => {
+    const user = this.authService.currentUser();
+    return !user || user.rol === UserRole.USUARIO;
+  });
 
   // Breadcrumbs
   breadcrumbs: BreadcrumbItem[] = [
