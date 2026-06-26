@@ -44,13 +44,24 @@
               <span class="material-symbols-outlined text-[#0367A6]">location_on</span>
               Dirección de envío
             </h2>
-            <button
-              *ngIf="addresses().length > 0"
-              type="button"
-              (click)="useNewAddress()"
-              class="text-sm font-semibold text-[#0367A6] hover:text-[#035A91]">
-              Nueva dirección
-            </button>
+            <div class="flex flex-wrap items-center justify-end gap-2">
+              <button
+                type="button"
+                (click)="useCurrentLocation()"
+                [disabled]="isLocating()"
+                class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-[#0367A6] bg-[#0367A6]/5 border border-[#0367A6]/20 rounded-lg hover:bg-[#0367A6]/10 disabled:opacity-60 disabled:cursor-not-allowed transition-all">
+                <span *ngIf="!isLocating()" class="material-symbols-outlined text-lg">my_location</span>
+                <span *ngIf="isLocating()" class="block w-4 h-4 rounded-full border-2 border-[#0367A6] border-t-transparent animate-spin"></span>
+                Usar ubicación
+              </button>
+              <button
+                *ngIf="addresses().length > 0"
+                type="button"
+                (click)="useNewAddress()"
+                class="text-sm font-semibold text-[#0367A6] hover:text-[#035A91]">
+                Nueva dirección
+              </button>
+            </div>
           </div>
 
           <div *ngIf="addresses().length > 0" class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-5">

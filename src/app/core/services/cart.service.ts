@@ -124,7 +124,7 @@ export class CartService {
   shipping = computed(() => {
     const subtotal = this.subtotal();
     if (subtotal === 0) return 0;
-    if (subtotal >= 300) return 0;
+    if (subtotal >= 200) return 0;
     return 130;
   });
 

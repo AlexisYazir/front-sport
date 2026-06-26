@@ -11,6 +11,7 @@ import {
 } from '../../../core/models/cart.model';
 import { CartService } from '../../../core/services/cart.service';
 import { ProductService } from '../../../core/services/product.service';
+import { environment } from '../../../../environments/environment';
 
 type AddressMode = 'existing' | 'new';
 type PaymentMode = 'saved' | 'new';
@@ -33,6 +34,7 @@ export class Checkout implements OnInit {
   isSubmitting = signal(false);
   isApplyingCoupon = signal(false);
   isLookingUpPostalCode = signal(false);
+  isLocating = signal(false);
 
   addressMode = signal<AddressMode>('new');
   selectedAddressId = signal<number | null>(null);
@@ -263,6 +265,77 @@ export class Checkout implements OnInit {
         );
       },
     });
+  }
+
+  useCurrentLocation(): void {
+    if (!navigator.geolocation) {
+      this.toastr.warning('Tu navegador no permite consultar ubicación', 'Dirección');
+      return;
+    }
+
+    this.isLocating.set(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const { latitude, longitude } = position.coords;
+          const url =
+            `https://api.maptiler.com/geocoding/${longitude},${latitude}.json` +
+            `?key=${environment.maptilerApiKey}&language=es&limit=1`;
+          const response = await fetch(url);
+
+          if (!response.ok) {
+            throw new Error('No fue posible consultar la ubicación');
+          }
+
+          const data = await response.json();
+          const feature = data?.features?.[0];
+          const context = Array.isArray(feature?.context) ? feature.context : [];
+          const contextValue = (prefix: string) =>
+            context.find((item: any) => String(item?.id || '').startsWith(prefix))?.text || '';
+          const postcode = contextValue('postcode');
+          const city =
+            contextValue('place') ||
+            contextValue('municipality') ||
+            contextValue('locality');
+          const state = contextValue('region');
+          const neighborhood =
+            contextValue('neighborhood') ||
+            contextValue('locality') ||
+            this.addressForm.colonia;
+
+          this.addressForm.alias = 'Ubicación actual';
+          this.addressForm.calle =
+            [feature?.address, feature?.text].filter(Boolean).join(' ') ||
+            feature?.place_name?.split(',')?.[0] ||
+            this.addressForm.calle;
+          this.addressForm.colonia = neighborhood || this.addressForm.colonia;
+          this.addressForm.ciudad = city || this.addressForm.ciudad;
+          this.addressForm.estado = state || this.addressForm.estado;
+          this.addressForm.codigo_postal = postcode || this.addressForm.codigo_postal;
+          this.addressForm.pais = 'México';
+          this.addressMode.set('new');
+
+          if (postcode && /^\d{5}$/.test(postcode)) {
+            this.lookupPostalCode(postcode);
+          }
+
+          this.toastr.success('Ubicación cargada. Revisa calle y número antes de pagar.', 'Dirección');
+        } catch (error) {
+          this.toastr.error('No fue posible obtener la dirección actual', 'Dirección');
+        } finally {
+          this.isLocating.set(false);
+        }
+      },
+      () => {
+        this.isLocating.set(false);
+        this.toastr.warning('Permite el acceso a tu ubicación para usar esta opción', 'Dirección');
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 60000,
+      },
+    );
   }
 
   onCardNumberChange(value: string): void {

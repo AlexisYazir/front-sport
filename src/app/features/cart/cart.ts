@@ -21,7 +21,7 @@ export class Cart implements OnInit {
   // Signals del servicio
   cartItems = this.cartService.cartItems;
   cartSummary = this.cartService.summary;
-  freeShippingTarget = 300;
+  freeShippingTarget = 200;
   
   // Estado local
   isProcessing = signal<boolean>(false);
