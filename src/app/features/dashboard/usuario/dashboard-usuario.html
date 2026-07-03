@@ -184,14 +184,16 @@
                 <div
                   *ngFor="let order of recentOrders()"
                   class="border border-gray-200 rounded-xl p-4 hover:border-[#0367A6] transition-colors duration-200">
-                  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                    <div class="flex items-center gap-3">
-                      <div class="bg-[#0367A6]/10 p-2 rounded-lg">
-                        <span class="material-symbols-outlined text-[#0367A6]">package_2</span>
-                      </div>
+                  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3" *ngIf="getPrimaryOrderItem(order) as mainItem">
+                    <div class="flex items-center gap-3 min-w-0">
+                      <img
+                        [src]="getOrderImage(order)"
+                        [alt]="getItemName(mainItem)"
+                        class="w-16 h-16 rounded-xl border border-gray-200 object-cover bg-gray-50 flex-shrink-0">
                       <div>
-                        <p class="font-semibold text-[#202020]">Pedido #{{ order.id_orden }}</p>
+                        <p class="font-semibold text-[#202020] truncate">{{ getItemName(mainItem) }}</p>
                         <p class="text-sm text-[#666666]">{{ formatDate(order.fecha_creacion) }}</p>
+                        <p class="text-xs text-[#666666] mt-1 truncate">{{ getItemDescription(mainItem) }}</p>
                       </div>
                     </div>
                     <span [class]="getStatusClass(order.estado) + ' px-3 py-1 rounded-full text-xs font-semibold border w-fit'">

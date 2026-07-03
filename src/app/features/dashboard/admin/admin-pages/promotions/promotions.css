@@ -12,3 +12,55 @@ textarea {
     color 0.2s ease-in-out,
     box-shadow 0.2s ease-in-out;
 }
+
+.promotion-row {
+  animation: promotionRowIn 0.22s ease both;
+}
+
+.promotion-details {
+  animation: promotionDetailsIn 0.24s ease both;
+}
+
+.promotion-help {
+  animation: promotionHelpIn 0.22s ease both;
+}
+
+button:disabled {
+  transform: none;
+}
+
+@keyframes promotionRowIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes promotionDetailsIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes promotionHelpIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -17,9 +17,7 @@ export function roleGuard(allowedRoles: UserRole[]): CanActivateFn {
     // Verificar autenticación
     if (!authService.isLoggedIn()) {
       toastr.warning('Debes iniciar sesión para acceder', 'Acceso Denegado');
-      router.navigate(['/auth/login'], {
-        queryParams: { returnUrl: state.url }
-      });
+      router.navigate(['/auth/login']);
       return false;
     }
 

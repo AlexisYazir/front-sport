@@ -21,10 +21,14 @@ export class Cart implements OnInit {
   // Signals del servicio
   cartItems = this.cartService.cartItems;
   cartSummary = this.cartService.summary;
-  freeShippingTarget = 200;
+  freeShippingRemaining = this.cartService.freeShippingRemaining;
   
   // Estado local
   isProcessing = signal<boolean>(false);
+  clearingCart = signal<boolean>(false);
+  showClearCartModal = signal<boolean>(false);
+  animatingItemKey = signal<string | null>(null);
+  removingItemKeys = signal<Set<string>>(new Set());
 
   // Computed properties
   isEmpty = computed(() => this.cartItems().length === 0);
@@ -33,10 +37,6 @@ export class Cart implements OnInit {
     const validation = this.cartService.validateCartStock();
     return validation.isValid;
   });
-  freeShippingRemaining = computed(() =>
-    Math.max(0, this.freeShippingTarget - this.cartSummary().subtotal),
-  );
-
   ngOnInit(): void {
     this.cartService.loadCart().subscribe();
   }
@@ -46,6 +46,14 @@ export class Cart implements OnInit {
       this.removeItem(item);
       return;
     }
+
+    const itemKey = this.getItemKey(item);
+    this.animatingItemKey.set(itemKey);
+    window.setTimeout(() => {
+      if (this.animatingItemKey() === itemKey) {
+        this.animatingItemKey.set(null);
+      }
+    }, 360);
     
     this.cartService.updateQuantity(
       item.product.id, 
@@ -56,17 +64,44 @@ export class Cart implements OnInit {
   }
 
   removeItem(item: CartItem) {
-    this.cartService.removeItem(
-      item.product.id, 
-      item.selectedSize, 
-      item.selectedColor
-    );
+    const itemKey = this.getItemKey(item);
+    this.removingItemKeys.update((current) => {
+      const next = new Set(current);
+      next.add(itemKey);
+      return next;
+    });
+
+    window.setTimeout(() => {
+      this.cartService.removeItem(
+        item.product.id, 
+        item.selectedSize, 
+        item.selectedColor
+      );
+      this.removingItemKeys.update((current) => {
+        const next = new Set(current);
+        next.delete(itemKey);
+        return next;
+      });
+    }, 260);
   }
 
   clearCart() {
-    if (confirm('¿Estás seguro de que quieres vaciar el carrito?')) {
-      this.cartService.clearCart();
+    this.showClearCartModal.set(true);
+  }
+
+  closeClearCartModal() {
+    if (!this.clearingCart()) {
+      this.showClearCartModal.set(false);
     }
+  }
+
+  confirmClearCart() {
+    this.clearingCart.set(true);
+    window.setTimeout(() => {
+      this.cartService.clearCart();
+      this.clearingCart.set(false);
+      this.showClearCartModal.set(false);
+    }, 280);
   }
 
   continueShopping() {
@@ -133,6 +168,19 @@ export class Cart implements OnInit {
 
   getProductLink(item: CartItem): string[] {
     return this.productService.buildProductDetailRoute(item.product);
+  }
+
+  getItemKey(item: CartItem): string {
+    const variantId = item.id_variante ?? item.variant?.id_variante ?? item.product.id;
+    return `${variantId}-${item.selectedSize || ''}-${item.selectedColor || ''}`;
+  }
+
+  isItemAnimating(item: CartItem): boolean {
+    return this.animatingItemKey() === this.getItemKey(item);
+  }
+
+  isItemRemoving(item: CartItem): boolean {
+    return this.removingItemKeys().has(this.getItemKey(item));
   }
 
   isStockCritical(item: CartItem): boolean {

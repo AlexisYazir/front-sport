@@ -5,8 +5,8 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { AuthService } from '../../../core/services/auth.service';
 import { CartService } from '../../../core/services/cart.service';
 import { ProductService } from '../../../core/services/product.service';
-import { UserOrder } from '../../../core/models/product.model';
-import { formatMexicoDate } from '../../../core/utils/date-time.util';
+import { UserOrder, UserOrderItem } from '../../../core/models/product.model';
+import { formatMexicoDateTime } from '../../../core/utils/date-time.util';
 
 @Component({
   selector: 'app-dashboard-usuario',
@@ -148,6 +148,30 @@ export class DashboardUsuario implements OnInit {
   }
 
   formatDate(date: string | null): string {
-    return date ? formatMexicoDate(date) : 'Pendiente';
+    return date
+      ? formatMexicoDateTime(date, 'es-MX', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        })
+      : 'Pendiente';
+  }
+
+  getPrimaryOrderItem(order: UserOrder): UserOrderItem | null {
+    return order.items?.[0] || null;
+  }
+
+  getOrderImage(order: UserOrder): string {
+    return this.getPrimaryOrderItem(order)?.imagen || 'assets/images/no-image.jpg';
+  }
+
+  getItemName(item: UserOrderItem | null): string {
+    return item?.producto || 'Producto Sport Center';
+  }
+
+  getItemDescription(item: UserOrderItem | null): string {
+    return [item?.marca, item?.categoria].filter(Boolean).join(' · ') || 'Producto de Sport Center';
   }
 }

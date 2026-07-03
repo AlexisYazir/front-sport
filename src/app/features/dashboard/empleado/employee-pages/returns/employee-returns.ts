@@ -24,6 +24,8 @@ export class EmployeeReturns implements OnInit {
   updatingId = signal<number | null>(null);
   searchTerm = signal('');
   selectedStatus = signal<ReturnFilter>('all');
+  currentPage = signal(1);
+  readonly pageSize = 10;
 
   readonly statuses: Array<{ value: UpdateReturnStatusRequest['estado']; label: string }> = [
     { value: 'solicitada', label: 'Solicitada' },
@@ -55,8 +57,29 @@ export class EmployeeReturns implements OnInit {
           .some((value) => String(value).toLowerCase().includes(search));
 
       return matchesStatus && matchesSearch;
-    });
+    }).sort(
+      (a, b) =>
+        new Date(b.fecha_actualizacion || b.fecha_solicitud || 0).getTime() -
+        new Date(a.fecha_actualizacion || a.fecha_solicitud || 0).getTime(),
+    );
   });
+
+  paginatedReturns = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize;
+    return this.filteredReturns().slice(start, start + this.pageSize);
+  });
+
+  totalPages = computed(() =>
+    Math.max(1, Math.ceil(this.filteredReturns().length / this.pageSize)),
+  );
+
+  requestedCount = computed(() => this.statusCount('solicitada'));
+  approvedCount = computed(() =>
+    this.returns().filter((item) => ['aprobada', 'recibida'].includes(this.normalizeStatus(item.estado))).length,
+  );
+  closedCount = computed(() =>
+    this.returns().filter((item) => ['reembolsada', 'cerrada', 'rechazada'].includes(this.normalizeStatus(item.estado))).length,
+  );
 
   ngOnInit(): void {
     this.loadReturns();
@@ -67,6 +90,7 @@ export class EmployeeReturns implements OnInit {
     this.productService.getAllReturns().subscribe({
       next: (returns) => {
         this.returns.set(returns || []);
+        this.currentPage.set(1);
         this.isLoading.set(false);
       },
       error: () => {
@@ -134,6 +158,40 @@ export class EmployeeReturns implements OnInit {
   clearFilters(): void {
     this.searchTerm.set('');
     this.selectedStatus.set('all');
+    this.currentPage.set(1);
+  }
+
+  onFiltersChange(): void {
+    this.currentPage.set(1);
+  }
+
+  goToPage(page: number): void {
+    this.currentPage.set(Math.min(Math.max(1, page), this.totalPages()));
+  }
+
+  pageNumbers(): number[] {
+    return Array.from({ length: this.totalPages() }, (_, index) => index + 1);
+  }
+
+  get firstItem(): number {
+    if (this.filteredReturns().length === 0) return 0;
+    return (this.currentPage() - 1) * this.pageSize + 1;
+  }
+
+  get lastItem(): number {
+    return Math.min(this.currentPage() * this.pageSize, this.filteredReturns().length);
+  }
+
+  statusCount(status: UpdateReturnStatusRequest['estado']): number {
+    return this.returns().filter((item) => this.normalizeStatus(item.estado) === status).length;
+  }
+
+  getReturnImage(item: ProductReturn): string {
+    return item.items?.[0]?.imagen || 'assets/images/no-image.jpg';
+  }
+
+  getMainProductName(item: ProductReturn): string {
+    return item.items?.[0]?.producto || item.items?.[0]?.sku || 'Producto';
   }
 
   formatCurrency(value: number | string | undefined): string {

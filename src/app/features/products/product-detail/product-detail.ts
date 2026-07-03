@@ -11,6 +11,7 @@ import { ToastrService } from 'ngx-toastr';
 import { Breadcrumbs, BreadcrumbItem } from '../../../shared/components/breadcrumbs/breadcrumbs';
 import { Location } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { CartItem } from '../../../core/models/cart.model';
 
 interface Variant {
   id_variante: number;
@@ -23,6 +24,15 @@ interface Variant {
     Talla?: string;
     [key: string]: string | undefined;
   };
+}
+
+interface LastAddedCartPreview {
+  productName: string;
+  image: string;
+  quantity: number;
+  selectedSize?: string;
+  selectedColor?: string;
+  price: number;
 }
 
 @Component({
@@ -66,6 +76,11 @@ export class ProductDetail implements OnInit {
   // UI State
   descriptionExpanded = signal<boolean>(false);
   activeTab = signal<'details' | 'shipping'>('details');
+  isAddingToCart = signal<boolean>(false);
+  showCartPreview = signal<boolean>(false);
+  lastAddedPreview = signal<LastAddedCartPreview | null>(null);
+  previewCartItems = this.cartService.cartItems;
+  previewCartSummary = this.cartService.summary;
 
   // Reseñas
   reviews = signal<ProductReview[]>([]);
@@ -771,7 +786,47 @@ existsSizeForColor(size: string): boolean {
       image: this.getMainImage()
     };
 
+    const shouldShowPreview = this.authService.isLoggedIn() && this.canUseCart();
+    this.isAddingToCart.set(true);
+    this.lastAddedPreview.set({
+      productName: product.nombre || product.producto || 'Producto',
+      image: this.getMainImage(),
+      quantity: this.selectedQuantity(),
+      selectedSize: this.selectedSize(),
+      selectedColor: this.selectedColor(),
+      price: this.priceWithDiscount(),
+    });
+
     this.cartService.addItem(cartItem);
+
+    window.setTimeout(() => {
+      this.isAddingToCart.set(false);
+      if (shouldShowPreview) {
+        this.showCartPreview.set(true);
+      }
+    }, 520);
+  }
+
+  closeCartPreview(): void {
+    this.showCartPreview.set(false);
+  }
+
+  goToCart(): void {
+    this.showCartPreview.set(false);
+    this.router.navigate(['/cart']);
+  }
+
+  getPreviewItemTotal(item: CartItem): number {
+    return this.cartService.getItemTotal(item);
+  }
+
+  formatMoney(value: number | string | null | undefined): string {
+    return Number(value || 0).toLocaleString('es-MX', {
+      style: 'currency',
+      currency: 'MXN',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    });
   }
 
   goBack() {

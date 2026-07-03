@@ -57,6 +57,22 @@ interface ApiCartResponse {
   items: ApiCartItem[];
 }
 
+interface ApiCheckoutSummaryForCart {
+  selectedShippingMethod?: {
+    id_metodo_envio: number | null;
+    costo_base: number;
+    envio_gratis_desde?: number | null;
+  } | null;
+  totals?: {
+    subtotal: number;
+    discount: number;
+    shipping: number;
+    total: number;
+    itemCount: number;
+    freeShippingRemaining: number;
+  };
+}
+
 interface PendingCartAdd {
   id_variante: number;
   cantidad: number;
@@ -82,6 +98,8 @@ export class CartService {
 
   cartItems = signal<CartItem[]>([]);
   isLoading = signal<boolean>(false);
+  checkoutTotals = signal<ApiCheckoutSummaryForCart['totals'] | null>(null);
+  selectedShippingMethod = signal<ApiCheckoutSummaryForCart['selectedShippingMethod'] | null>(null);
 
   private lastLoadedUserId: number | null = null;
   private pendingCartProcessing = false;
@@ -121,18 +139,36 @@ export class CartService {
     }, 0),
   );
 
-  discount = computed(() => 0);
+  discount = computed(() => Number(this.checkoutTotals()?.discount || 0));
 
   shipping = computed(() => {
+    const syncedShipping = this.checkoutTotals()?.shipping;
+    if (syncedShipping !== undefined && syncedShipping !== null) {
+      return Number(syncedShipping || 0);
+    }
+
     const subtotal = this.subtotal();
+    const method = this.selectedShippingMethod();
+    const threshold = method?.envio_gratis_desde;
     if (subtotal === 0) return 0;
-    if (subtotal >= 200) return 0;
-    return 130;
+    if (threshold !== null && threshold !== undefined && subtotal >= Number(threshold)) return 0;
+    return Number(method?.costo_base ?? 0);
   });
 
   tax = computed(() => 0);
 
   total = computed(() => this.subtotal() - this.discount() + this.shipping());
+
+  freeShippingRemaining = computed(() => {
+    const syncedRemaining = this.checkoutTotals()?.freeShippingRemaining;
+    if (syncedRemaining !== undefined && syncedRemaining !== null) {
+      return Number(syncedRemaining || 0);
+    }
+
+    const threshold = this.selectedShippingMethod()?.envio_gratis_desde;
+    if (threshold === null || threshold === undefined) return 0;
+    return Math.max(0, Number(threshold) - (this.subtotal() - this.discount()));
+  });
 
   summary = computed((): CartSummary => ({
     subtotal: this.subtotal(),
@@ -150,6 +186,7 @@ export class CartService {
   loadCart(): Observable<ApiCartResponse | null> {
     if (!this.authService.isLoggedIn() || !this.canUseCart()) {
       this.setCartItems([]);
+      this.setCheckoutSummary(null);
       return of(null);
     }
 
@@ -160,6 +197,7 @@ export class CartService {
       catchError((error) => {
         console.error('Error loading cart:', error);
         this.setCartItems([]);
+        this.setCheckoutSummary(null);
         return of(null);
       }),
       finalize(() => this.isLoading.set(false)),
@@ -432,6 +470,29 @@ export class CartService {
       : [];
 
     this.setCartItems(items);
+    if (items.length === 0) {
+      this.setCheckoutSummary(null);
+      return;
+    }
+
+    this.refreshCheckoutSummary();
+  }
+
+  private refreshCheckoutSummary(): void {
+    if (!this.authService.isLoggedIn() || !this.canUseCart() || this.cartItems().length === 0) {
+      this.setCheckoutSummary(null);
+      return;
+    }
+
+    this.http
+      .get<ApiCheckoutSummaryForCart>(`${this.API_URL}/products/checkout/summary`)
+      .pipe(catchError(() => of(null)))
+      .subscribe((summary) => this.setCheckoutSummary(summary));
+  }
+
+  private setCheckoutSummary(summary: ApiCheckoutSummaryForCart | null): void {
+    this.checkoutTotals.set(summary?.totals ?? null);
+    this.selectedShippingMethod.set(summary?.selectedShippingMethod ?? null);
   }
 
   private mapCartItemFromApi(item: ApiCartItem): CartItem {

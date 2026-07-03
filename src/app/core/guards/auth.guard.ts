@@ -15,16 +15,14 @@ export const authGuard: CanActivateFn = (route, state) => {
     // Verificar si el usuario está activo
     if (!authService.isUserActive()) {
       toastr.warning('Tu cuenta está pendiente de activación', 'Cuenta Inactiva');
-      authService.logout();
+      authService.logout(true, false);
       return false;
     }
     return true;
   }
 
   toastr.warning('Debes iniciar sesión para acceder a esta página', 'Acceso Denegado');
-  router.navigate(['/auth/login'], {
-    queryParams: { returnUrl: state.url }
-  });
+  router.navigate(['/auth/login']);
   return false;
 };
 

@@ -6,8 +6,48 @@
   to { transform: rotate(360deg); }
 }
 
+@keyframes addCartGlow {
+  0% {
+    box-shadow: 0 8px 24px rgba(3, 103, 166, 0.22);
+  }
+
+  50% {
+    box-shadow: 0 14px 34px rgba(3, 103, 166, 0.38);
+    transform: scale(1.01);
+  }
+
+  100% {
+    box-shadow: 0 8px 24px rgba(3, 103, 166, 0.22);
+  }
+}
+
+@keyframes cartPreviewIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 .animate-spin {
   animation: spin 1s linear infinite;
+}
+
+.add-cart-button {
+  box-shadow: 0 10px 24px rgba(3, 103, 166, 0.22);
+}
+
+.add-cart-loading,
+.add-cart-success {
+  animation: addCartGlow 0.55s ease;
+}
+
+.cart-preview-modal {
+  animation: cartPreviewIn 0.24s ease both;
 }
 
 /* Transiciones suaves */

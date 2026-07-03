@@ -25,6 +25,10 @@ export class Promotions implements OnInit {
   shippingMethods = signal<ShippingMethodAdmin[]>([]);
   isLoading = signal(false);
   isSaving = signal(false);
+  savingPromotionId = signal<number | null>(null);
+  savingShippingId = signal<number | null>(null);
+  expandedPromotions = signal<Set<number>>(new Set());
+  showPromotionHelp = signal(false);
 
   activePromotions = computed(() => this.promotions().filter((item) => item.activo).length);
 
@@ -89,6 +93,11 @@ export class Promotions implements OnInit {
     }).subscribe({
       next: (promotion) => {
         this.promotions.set([promotion, ...this.promotions()]);
+        this.expandedPromotions.update((current) => {
+          const next = new Set(current);
+          next.add(promotion.id_promocion);
+          return next;
+        });
         this.isSaving.set(false);
         this.toastr.success('Promoción creada correctamente', 'Promociones');
         this.resetForm();
@@ -100,20 +109,67 @@ export class Promotions implements OnInit {
     });
   }
 
-  togglePromotion(promotion: Promotion): void {
-    this.productService.updatePromotion(promotion.id_promocion, { activo: !promotion.activo }).subscribe({
+  togglePromotionDetails(idPromotion: number): void {
+    this.expandedPromotions.update((current) => {
+      const next = new Set(current);
+      if (next.has(idPromotion)) {
+        next.delete(idPromotion);
+      } else {
+        next.add(idPromotion);
+      }
+      return next;
+    });
+  }
+
+  isPromotionExpanded(idPromotion: number): boolean {
+    return this.expandedPromotions().has(idPromotion);
+  }
+
+  togglePromotionHelp(): void {
+    this.showPromotionHelp.update((current) => !current);
+  }
+
+  togglePromotionStatus(promotion: Promotion): void {
+    if (this.savingPromotionId()) return;
+
+    const currentActive = promotion.activo === true;
+    const nextActive = !currentActive;
+    const previousPromotions = this.promotions();
+
+    this.savingPromotionId.set(promotion.id_promocion);
+    this.promotions.set(
+      previousPromotions.map((item) =>
+        item.id_promocion === promotion.id_promocion ? { ...item, activo: nextActive } : item,
+      ),
+    );
+
+    this.productService.updatePromotion(promotion.id_promocion, { activo: nextActive }).subscribe({
       next: (updated) => {
         this.promotions.set(
           this.promotions().map((item) =>
-            item.id_promocion === updated.id_promocion ? updated : item,
+            item.id_promocion === updated.id_promocion
+              ? { ...updated, activo: updated.activo === true }
+              : item,
           ),
         );
+        this.savingPromotionId.set(null);
+        this.toastr.success(
+          updated.activo ? 'Promoción activada' : 'Promoción desactivada',
+          'Promociones',
+        );
       },
-      error: () => this.toastr.error('No fue posible actualizar promoción', 'Promociones'),
+      error: () => {
+        this.promotions.set(previousPromotions);
+        this.savingPromotionId.set(null);
+        this.toastr.error('No fue posible actualizar promoción', 'Promociones');
+      },
     });
   }
 
   updateShipping(method: ShippingMethodAdmin): void {
+    if (this.savingShippingId()) return;
+
+    this.savingShippingId.set(method.id_metodo_envio);
     this.productService.updateShippingMethod(method.id_metodo_envio, {
       nombre: method.nombre,
       descripcion: method.descripcion,
@@ -124,7 +180,6 @@ export class Promotions implements OnInit {
           : Number(method.envio_gratis_desde),
       dias_min: Number(method.dias_min),
       dias_max: Number(method.dias_max),
-      activo: method.activo,
     }).subscribe({
       next: (updated) => {
         this.shippingMethods.set(
@@ -132,9 +187,13 @@ export class Promotions implements OnInit {
             item.id_metodo_envio === updated.id_metodo_envio ? updated : item,
           ),
         );
+        this.savingShippingId.set(null);
         this.toastr.success('Método de envío actualizado', 'Envíos');
       },
-      error: () => this.toastr.error('No fue posible actualizar método', 'Envíos'),
+      error: () => {
+        this.savingShippingId.set(null);
+        this.toastr.error('No fue posible actualizar método', 'Envíos');
+      },
     });
   }
 

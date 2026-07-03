@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import {
   EmployeeOrder,
@@ -22,6 +23,8 @@ type StatusFilter = EmployeeOrderStatus | 'all';
 export class EmployeeOrders implements OnInit {
   private readonly productService = inject(ProductService);
   private readonly toastr = inject(ToastrService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   orders = signal<EmployeeOrder[]>([]);
   isLoading = signal(false);
@@ -31,6 +34,10 @@ export class EmployeeOrders implements OnInit {
   selectedStatus = signal<StatusFilter>('all');
   currentPage = signal(1);
   expandedOrderId = signal<number | null>(null);
+  selectedOrderId = signal<number | null>(null);
+  shipmentModal = signal<{ order: EmployeeOrder; status: UpdateShipmentRequest['estado'] } | null>(null);
+  shipmentTracking = signal('');
+  shipmentCarrier = signal('');
 
   readonly pageSize = 10;
   readonly statuses: Array<{ value: EmployeeOrderStatus; label: string }> = [
@@ -72,7 +79,15 @@ export class EmployeeOrders implements OnInit {
           .some((value) => String(value).toLowerCase().includes(search));
 
       return matchesStatus && matchesSearch;
-    });
+    }).sort(
+      (a, b) => new Date(b.fecha_creacion || 0).getTime() - new Date(a.fecha_creacion || 0).getTime(),
+    );
+  });
+
+  selectedOrder = computed(() => {
+    const id = this.selectedOrderId();
+    if (!id) return null;
+    return this.orders().find((order) => Number(order.id_orden) === Number(id)) ?? null;
   });
 
   paginatedOrders = computed(() => {
@@ -89,6 +104,10 @@ export class EmployeeOrders implements OnInit {
   deliveredCount = computed(() => this.statusCount('entregado'));
 
   ngOnInit(): void {
+    this.route.paramMap.subscribe((params) => {
+      const id = Number(params.get('id'));
+      this.selectedOrderId.set(Number.isFinite(id) && id > 0 ? id : null);
+    });
     this.loadOrders();
   }
 
@@ -183,24 +202,32 @@ export class EmployeeOrders implements OnInit {
       return;
     }
 
+    this.shipmentTracking.set(order.tracking_number || '');
+    this.shipmentCarrier.set(order.paqueteria || '');
+    this.shipmentModal.set({ order, status });
+  }
+
+  closeShipmentModal(): void {
+    if (!this.updatingOrderId()) {
+      this.shipmentModal.set(null);
+      this.shipmentTracking.set('');
+      this.shipmentCarrier.set('');
+    }
+  }
+
+  confirmShipmentUpdate(): void {
+    const modal = this.shipmentModal();
+    if (!modal) return;
+
+    const { order, status } = modal;
     const payload: UpdateShipmentRequest = {
       estado: status,
       comentario: `Actualización de envío: ${this.getShipmentStatusLabel(status)}`,
     };
 
     if (['enviado', 'en_transito', 'en transito'].includes(status)) {
-      payload.tracking_number =
-        window.prompt('Número de guía / tracking', order.tracking_number || '')?.trim() ||
-        order.tracking_number ||
-        undefined;
-      payload.paqueteria =
-        window.prompt('Paquetería', order.paqueteria || '')?.trim() ||
-        order.paqueteria ||
-        undefined;
-    }
-
-    if (status === 'entregado' && !confirm('¿Marcar este pedido como entregado?')) {
-      return;
+      payload.tracking_number = this.shipmentTracking().trim() || order.tracking_number || undefined;
+      payload.paqueteria = this.shipmentCarrier().trim() || order.paqueteria || undefined;
     }
 
     this.updatingOrderId.set(order.id_orden);
@@ -226,6 +253,7 @@ export class EmployeeOrders implements OnInit {
           ),
         );
         this.updatingOrderId.set(null);
+        this.closeShipmentModal();
         this.toastr.success(response.message, 'Envíos');
       },
       error: (error) => {
@@ -234,6 +262,35 @@ export class EmployeeOrders implements OnInit {
         this.toastr.error(message, 'Envíos');
       },
     });
+  }
+
+  viewOrder(order: EmployeeOrder): void {
+    this.router.navigate(['/dashboard/empleado/orders', order.id_orden]);
+  }
+
+  backToOrders(): void {
+    this.router.navigate(['/dashboard/empleado/orders']);
+  }
+
+  getOrderImage(order: EmployeeOrder): string {
+    return this.getPrimaryOrderItem(order)?.imagen || 'assets/images/no-image.jpg';
+  }
+
+  getPrimaryOrderItem(order: EmployeeOrder): any {
+    return order.items?.[0] || null;
+  }
+
+  getItemName(item: any): string {
+    return item?.producto || item?.nombre || 'Producto';
+  }
+
+  getItemDescription(item: any): string {
+    return item?.descripcion || [item?.marca, item?.categoria].filter(Boolean).join(' · ') || 'Producto de Sport Center';
+  }
+
+  getItemAttributes(item: any): string {
+    const attrs = this.getVariantInfo(item);
+    return attrs || [item?.marca, item?.categoria].filter(Boolean).join(' · ');
   }
 
   goToPage(page: number): void {
@@ -325,6 +382,16 @@ export class EmployeeOrders implements OnInit {
 
   formatDate(date: string | null): string {
     return date ? formatMexicoDateTime(date) : 'Pendiente';
+  }
+
+  formatLongDate(date: string | null): string {
+    if (!date) return 'Pendiente';
+
+    return new Intl.DateTimeFormat('es-MX', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    }).format(new Date(date));
   }
 
   getVariantInfo(item: any): string {

@@ -135,6 +135,11 @@ export const routes: Routes = [
           import('./features/dashboard/usuario/user-pages/purchases/user-purchases').then((m) => m.UserPurchases),
       },
       {
+        path: 'compras/:id',
+        loadComponent: () =>
+          import('./features/dashboard/usuario/user-pages/purchases/user-purchases').then((m) => m.UserPurchases),
+      },
+      {
         path: 'profile',
         loadComponent: () => import('./features/dashboard/pofile/profile').then((m) => m.Profile),
       },
@@ -168,6 +173,11 @@ export const routes: Routes = [
       },
       {
         path: 'orders',
+        loadComponent: () =>
+          import('./features/dashboard/empleado/employee-pages/orders/employee-orders').then((m) => m.EmployeeOrders),
+      },
+      {
+        path: 'orders/:id',
         loadComponent: () =>
           import('./features/dashboard/empleado/employee-pages/orders/employee-orders').then((m) => m.EmployeeOrders),
       },

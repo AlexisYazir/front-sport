@@ -399,10 +399,13 @@ export class AuthService {
     return this.refreshRequest$;
   }
 
-  logout(notifyServer = true): void {
+  logout(notifyServer = true, showNotification = notifyServer): void {
     const finalizeLogout = () => {
       this.clearAuthState(false);
       this.router.navigate(['/home']);
+      if (showNotification) {
+        this.toastr.success('Tu sesión se cerró correctamente', 'Sesión cerrada');
+      }
     };
 
     if (!notifyServer || (!this.tokenService.getAccessToken() && !this.getStoredUser())) {

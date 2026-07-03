@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { ProductService } from '../../../../../core/services/product.service';
 import { CreateReturnRequest, ProductReturn, UserOrder } from '../../../../../core/models/product.model';
@@ -18,6 +19,8 @@ type OrderFilter = 'all' | 'pendiente_pago' | 'pendiente' | 'en proceso' | 'entr
 export class UserPurchases implements OnInit {
   private productService = inject(ProductService);
   private toastr = inject(ToastrService);
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
 
   orders = signal<UserOrder[]>([]);
   returns = signal<ProductReturn[]>([]);
@@ -25,6 +28,8 @@ export class UserPurchases implements OnInit {
   isSubmittingReturn = signal(false);
   searchTerm = signal('');
   selectedStatus = signal<OrderFilter>('all');
+  currentPage = signal(1);
+  selectedOrderId = signal<number | null>(null);
   expandedOrderId = signal<number | null>(null);
   returnOrder = signal<UserOrder | null>(null);
   returnReason = signal('');
@@ -50,7 +55,24 @@ export class UserPurchases implements OnInit {
           .some((value) => String(value).toLowerCase().includes(search));
 
       return matchesStatus && matchesSearch;
-    });
+    }).sort(
+      (a, b) => new Date(b.fecha_creacion || 0).getTime() - new Date(a.fecha_creacion || 0).getTime(),
+    );
+  });
+
+  paginatedOrders = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize;
+    return this.filteredOrders().slice(start, start + this.pageSize);
+  });
+
+  totalPages = computed(() =>
+    Math.max(1, Math.ceil(this.filteredOrders().length / this.pageSize)),
+  );
+
+  selectedOrder = computed(() => {
+    const id = this.selectedOrderId();
+    if (!id) return null;
+    return this.orders().find((order) => Number(order.id_orden) === Number(id)) ?? null;
   });
 
   totalSpent = computed(() =>
@@ -68,7 +90,13 @@ export class UserPurchases implements OnInit {
     ),
   );
 
+  readonly pageSize = 10;
+
   ngOnInit(): void {
+    this.route.paramMap.subscribe((params) => {
+      const id = Number(params.get('id'));
+      this.selectedOrderId.set(Number.isFinite(id) && id > 0 ? id : null);
+    });
     this.loadOrders();
     this.loadReturns();
   }
@@ -78,6 +106,7 @@ export class UserPurchases implements OnInit {
     this.productService.getUserOrdersList().subscribe({
       next: (orders) => {
         this.orders.set(orders || []);
+        this.currentPage.set(1);
         this.isLoading.set(false);
       },
       error: () => {
@@ -97,10 +126,52 @@ export class UserPurchases implements OnInit {
   clearFilters(): void {
     this.searchTerm.set('');
     this.selectedStatus.set('all');
+    this.currentPage.set(1);
+  }
+
+  onFiltersChange(): void {
+    this.currentPage.set(1);
+  }
+
+  goToPage(page: number): void {
+    this.currentPage.set(Math.min(Math.max(1, page), this.totalPages()));
+  }
+
+  pageNumbers(): number[] {
+    return Array.from({ length: this.totalPages() }, (_, index) => index + 1);
   }
 
   toggleTracking(order: UserOrder): void {
     this.expandedOrderId.set(this.expandedOrderId() === order.id_orden ? null : order.id_orden);
+  }
+
+  viewOrder(order: UserOrder): void {
+    this.router.navigate(['/dashboard/usuario/compras', order.id_orden]);
+  }
+
+  backToPurchases(): void {
+    this.router.navigate(['/dashboard/usuario/compras']);
+  }
+
+  getOrderImage(order: UserOrder): string {
+    return this.getPrimaryOrderItem(order)?.imagen || 'assets/images/no-image.jpg';
+  }
+
+  getPrimaryOrderItem(order: UserOrder): any {
+    return order.items?.[0] || null;
+  }
+
+  getItemName(item: any): string {
+    return item?.producto || item?.nombre || 'Producto';
+  }
+
+  getItemDescription(item: any): string {
+    return item?.descripcion || [item?.marca, item?.categoria].filter(Boolean).join(' · ') || 'Producto de Sport Center';
+  }
+
+  getItemAttributes(item: any): string {
+    const attrs = this.getVariantInfo(item);
+    return attrs || [item?.marca, item?.categoria].filter(Boolean).join(' · ');
   }
 
   openReturn(order: UserOrder): void {
@@ -246,6 +317,24 @@ export class UserPurchases implements OnInit {
     return labels[normalized] || 'Pendiente';
   }
 
+  getShipmentStatusClass(status: string | null | undefined): string {
+    const normalized = this.normalizeShipmentStatus(status);
+
+    if (normalized === 'entregado') {
+      return 'bg-green-100 text-green-700 border-green-200';
+    }
+
+    if (['preparando', 'enviado', 'en_transito'].includes(normalized)) {
+      return 'bg-blue-100 text-blue-700 border-blue-200';
+    }
+
+    if (normalized === 'incidencia') {
+      return 'bg-red-100 text-red-700 border-red-200';
+    }
+
+    return 'bg-yellow-100 text-yellow-700 border-yellow-200';
+  }
+
   getReturnStatusLabel(status: string | null | undefined): string {
     const normalized = String(status || '').trim().toLowerCase();
     const labels: Record<string, string> = {
@@ -344,6 +433,15 @@ export class UserPurchases implements OnInit {
     return this.filteredOrders().filter((order) => this.normalizeStatus(order.estado) === status).length;
   }
 
+  get firstItem(): number {
+    if (this.filteredOrders().length === 0) return 0;
+    return (this.currentPage() - 1) * this.pageSize + 1;
+  }
+
+  get lastItem(): number {
+    return Math.min(this.currentPage() * this.pageSize, this.filteredOrders().length);
+  }
+
   formatCurrency(value: number | string): string {
     return Number(value || 0).toLocaleString('es-MX', {
       style: 'currency',
@@ -353,5 +451,15 @@ export class UserPurchases implements OnInit {
 
   formatDate(date: string | null): string {
     return date ? formatMexicoDateTime(date) : 'Pendiente';
+  }
+
+  formatLongDate(date: string | null): string {
+    if (!date) return 'Pendiente';
+
+    return new Intl.DateTimeFormat('es-MX', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    }).format(new Date(date));
   }
 }
