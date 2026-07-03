@@ -204,6 +204,12 @@ export interface EmployeeOrder {
   costo_envio?: number | string | null;
   fecha_entrega_estimada?: string | null;
   fecha_entrega_real?: string | null;
+  codigo_confirmacion_entrega?: string | null;
+  codigo_confirmacion_generado_en?: string | null;
+  entrega_confirmada_por_usuario?: boolean;
+  entrega_confirmada_en?: string | null;
+  entrega_validada_por_empleado?: boolean;
+  entrega_validada_en?: string | null;
   eventos_envio?: ShipmentEvent[];
   direccion_envio?: ShippingAddressSnapshot;
 }
@@ -235,6 +241,11 @@ export interface UserOrder {
   costo_envio?: number | string | null;
   fecha_entrega_estimada?: string | null;
   fecha_entrega_real?: string | null;
+  codigo_confirmacion_generado_en?: string | null;
+  entrega_confirmada_por_usuario?: boolean;
+  entrega_confirmada_en?: string | null;
+  entrega_validada_por_empleado?: boolean;
+  entrega_validada_en?: string | null;
   eventos_envio?: ShipmentEvent[];
   direccion_envio?: ShippingAddressSnapshot;
 }

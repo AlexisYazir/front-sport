@@ -41,6 +41,7 @@
     "@tailwindcss/postcss": "^4.1.16",
     "chart.js": "^4.5.1",
     "choices.js": "^11.1.0",
+    "jspdf": "^4.2.1",
     "jwt-decode": "^4.0.0",
     "leaflet": "^1.9.4",
     "maplibre-gl": "^5.19.0",

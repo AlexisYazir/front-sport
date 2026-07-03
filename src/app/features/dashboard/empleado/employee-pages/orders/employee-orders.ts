@@ -38,6 +38,7 @@ export class EmployeeOrders implements OnInit {
   shipmentModal = signal<{ order: EmployeeOrder; status: UpdateShipmentRequest['estado'] } | null>(null);
   shipmentTracking = signal('');
   shipmentCarrier = signal('');
+  generatingCodeOrderId = signal<number | null>(null);
 
   readonly pageSize = 10;
   readonly statuses: Array<{ value: EmployeeOrderStatus; label: string }> = [
@@ -192,6 +193,11 @@ export class EmployeeOrders implements OnInit {
     order: EmployeeOrder,
     status: UpdateShipmentRequest['estado'],
   ): void {
+    if (!this.isShipmentActionAllowed(order, status)) {
+      this.toastr.info(this.getShipmentActionBlockedMessage(order, status), 'Envíos');
+      return;
+    }
+
     if (this.isDelivered(order)) {
       this.toastr.info('Los pedidos entregados ya están finalizados', 'Envíos');
       return;
@@ -225,7 +231,7 @@ export class EmployeeOrders implements OnInit {
       comentario: `Actualización de envío: ${this.getShipmentStatusLabel(status)}`,
     };
 
-    if (['enviado', 'en_transito', 'en transito'].includes(status)) {
+    if (status === 'enviado') {
       payload.tracking_number = this.shipmentTracking().trim() || order.tracking_number || undefined;
       payload.paqueteria = this.shipmentCarrier().trim() || order.paqueteria || undefined;
     }
@@ -247,6 +253,12 @@ export class EmployeeOrders implements OnInit {
                   fecha_entrega: tracking.fecha_entrega || item.fecha_entrega,
                   fecha_entrega_estimada: tracking.fecha_entrega_estimada,
                   fecha_entrega_real: tracking.fecha_entrega_real,
+                  codigo_confirmacion_entrega: tracking.codigo_confirmacion_entrega ?? item.codigo_confirmacion_entrega,
+                  codigo_confirmacion_generado_en: tracking.codigo_confirmacion_generado_en,
+                  entrega_confirmada_por_usuario: tracking.entrega_confirmada_por_usuario,
+                  entrega_confirmada_en: tracking.entrega_confirmada_en,
+                  entrega_validada_por_empleado: tracking.entrega_validada_por_empleado,
+                  entrega_validada_en: tracking.entrega_validada_en,
                   eventos_envio: tracking.eventos_envio || item.eventos_envio,
                 }
               : item,
@@ -260,6 +272,67 @@ export class EmployeeOrders implements OnInit {
         this.updatingOrderId.set(null);
         const message = error?.error?.message || 'No fue posible actualizar el envío';
         this.toastr.error(message, 'Envíos');
+      },
+    });
+  }
+
+  generateDeliveryCode(order: EmployeeOrder): void {
+    if (this.isPaymentPending(order) || this.isDelivered(order)) {
+      this.toastr.info('Este pedido no permite generar código de entrega', 'Entrega');
+      return;
+    }
+
+    if (this.normalizeShipmentStatus(order.estado_envio) === 'pendiente') {
+      this.toastr.info('Primero marca el pedido como preparado', 'Entrega');
+      return;
+    }
+
+    if (order.entrega_confirmada_por_usuario) {
+      this.toastr.info('El cliente ya confirmó este pedido', 'Entrega');
+      return;
+    }
+
+    if (order.codigo_confirmacion_entrega) {
+      this.toastr.info('Código listo para imprimir', 'Entrega');
+      this.openDeliveryCodePdf(order, order.codigo_confirmacion_entrega);
+      return;
+    }
+
+    this.generatingCodeOrderId.set(order.id_orden);
+    this.productService.generateDeliveryConfirmationCode(order.id_orden).subscribe({
+      next: (response) => {
+        const tracking = response.tracking;
+        this.orders.set(
+          this.orders().map((item) =>
+            item.id_orden === order.id_orden
+              ? {
+                  ...item,
+                  codigo_confirmacion_entrega: response.code,
+                  codigo_confirmacion_generado_en: tracking.codigo_confirmacion_generado_en,
+                  entrega_confirmada_por_usuario: tracking.entrega_confirmada_por_usuario,
+                  entrega_confirmada_en: tracking.entrega_confirmada_en,
+                  entrega_validada_por_empleado: tracking.entrega_validada_por_empleado,
+                  entrega_validada_en: tracking.entrega_validada_en,
+                  eventos_envio: tracking.eventos_envio || item.eventos_envio,
+                }
+              : item,
+          ),
+        );
+        this.generatingCodeOrderId.set(null);
+        this.toastr.success(response.message, 'Entrega');
+        this.openDeliveryCodePdf(
+          {
+            ...order,
+            codigo_confirmacion_entrega: response.code,
+            codigo_confirmacion_generado_en: tracking.codigo_confirmacion_generado_en,
+          },
+          response.code,
+        );
+      },
+      error: (error) => {
+        this.generatingCodeOrderId.set(null);
+        const message = error?.error?.message || 'No fue posible generar el código';
+        this.toastr.error(message, 'Entrega');
       },
     });
   }
@@ -373,6 +446,62 @@ export class EmployeeOrders implements OnInit {
     return this.normalizeStatus(order.estado) === 'entregado';
   }
 
+  isShipmentActionAllowed(
+    order: EmployeeOrder,
+    status: UpdateShipmentRequest['estado'],
+  ): boolean {
+    if (this.isDelivered(order) || this.isPaymentPending(order)) return false;
+    const current = this.normalizeShipmentStatus(order.estado_envio);
+    const nextByCurrent: Record<string, string> = {
+      pendiente: 'preparando',
+      preparando: 'enviado',
+      enviado: 'en_transito',
+      en_transito: 'entregado',
+    };
+
+    if (status !== nextByCurrent[current]) return false;
+    if (status === 'enviado' && !order.codigo_confirmacion_entrega) return false;
+    if (status === 'entregado' && !order.entrega_confirmada_por_usuario) return false;
+    return true;
+  }
+
+  getShipmentActionBlockedMessage(
+    order: EmployeeOrder,
+    status: UpdateShipmentRequest['estado'],
+  ): string {
+    if (this.isDelivered(order)) return 'El pedido ya fue finalizado';
+    if (this.isPaymentPending(order)) return 'Espera la confirmación de pago';
+    if (
+      this.normalizeShipmentStatus(order.estado_envio) === 'preparando' &&
+      !order.codigo_confirmacion_entrega
+    ) {
+      return 'Genera e imprime el código de confirmación antes de enviar';
+    }
+
+    if (status === 'entregado' && !order.entrega_confirmada_por_usuario) {
+      return 'El cliente debe confirmar el código incluido en el paquete';
+    }
+
+    const current = this.normalizeShipmentStatus(order.estado_envio);
+    const nextLabel = this.getShipmentStatusLabel({
+      pendiente: 'preparando',
+      preparando: 'enviado',
+      enviado: 'en_transito',
+      en_transito: 'entregado',
+    }[current] || 'pendiente');
+
+    return `El siguiente paso válido es: ${nextLabel}`;
+  }
+
+  canGenerateDeliveryCode(order: EmployeeOrder): boolean {
+    return (
+      !this.isDelivered(order) &&
+      !this.isPaymentPending(order) &&
+      this.normalizeShipmentStatus(order.estado_envio) !== 'pendiente' &&
+      !order.entrega_confirmada_por_usuario
+    );
+  }
+
   formatCurrency(value: number | string): string {
     return Number(value || 0).toLocaleString('es-MX', {
       style: 'currency',
@@ -417,8 +546,226 @@ export class EmployeeOrders implements OnInit {
       .join(', ');
   }
 
-  private normalizeShipmentStatus(status: string | null | undefined): string {
+  normalizeShipmentStatus(status: string | null | undefined): string {
     return String(status || 'pendiente').trim().toLowerCase().replace(/\s+/g, '_');
+  }
+
+  private async openDeliveryCodePdf(order: EmployeeOrder, code: string): Promise<void> {
+    try {
+      const safeCode = String(code || '').replace(/[^A-Z0-9]/g, '');
+      const filename = `codigo-entrega-${order.id_orden}.pdf`;
+      const pdfBlob = await this.buildDeliveryCodePdf(order, safeCode);
+      const pdfFile = new File([pdfBlob], filename, { type: 'application/pdf' });
+      const pdfUrl = URL.createObjectURL(pdfFile);
+      const preview = window.open('', '_blank', 'width=1100,height=760');
+
+      if (!preview) {
+        this.downloadBlob(pdfBlob, filename);
+        this.toastr.info('Se descargó el PDF porque el navegador bloqueó la vista previa', 'Entrega');
+        return;
+      }
+
+      preview.document.write(`
+        <!doctype html>
+        <html lang="es">
+          <head>
+            <title>${filename}</title>
+            <style>
+              html, body {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                overflow: hidden;
+                background: #2f2f2f;
+              }
+
+              iframe {
+                width: 100%;
+                height: 100%;
+                border: 0;
+                display: block;
+              }
+
+              .download-pdf {
+                position: fixed;
+                top: 10px;
+                right: 86px;
+                z-index: 10;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 32px;
+                height: 32px;
+                border-radius: 999px;
+                border: 1px solid rgba(255, 255, 255, .24);
+                background: #0367A6;
+                color: #fff;
+                text-decoration: none;
+                box-shadow: 0 8px 18px rgba(0, 0, 0, .28);
+              }
+
+              .download-pdf:hover {
+                background: #035A91;
+              }
+
+              .download-pdf svg {
+                width: 18px;
+                height: 18px;
+                display: block;
+              }
+            </style>
+          </head>
+          <body>
+            <a class="download-pdf" href="${pdfUrl}" download="${filename}" title="Descargar PDF" aria-label="Descargar PDF">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M12 3v11m0 0 4-4m-4 4-4-4" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M5 17v2a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+              </svg>
+            </a>
+            <iframe src="${pdfUrl}"></iframe>
+          </body>
+        </html>
+      `);
+      preview.document.close();
+    } catch (error) {
+      console.error(error);
+      this.toastr.error('No fue posible generar el PDF', 'Entrega');
+    }
+  }
+
+  private async buildDeliveryCodePdf(order: EmployeeOrder, code: string): Promise<Blob> {
+    const { jsPDF } = await import('jspdf');
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'letter' });
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    pdf.setProperties({
+      title: `codigo-entrega-${order.id_orden}`,
+      subject: 'Código de confirmación de entrega',
+      author: 'Sport Center Huejutla',
+      creator: 'Sport Center',
+    });
+    const watermarkUrl =
+      'https://res.cloudinary.com/dcktzxrmw/image/upload/v1783069223/logoSPORT-center-02_4_blnw8s.png';
+
+    pdf.setFillColor(255, 255, 255);
+    pdf.rect(0, 0, pageWidth, pageHeight, 'F');
+
+    try {
+      const watermark = await this.loadImageAsDataUrl(watermarkUrl);
+      const watermarkLayer = await this.createCenteredWatermarkLayer(
+        watermark,
+        pageWidth,
+        pageHeight,
+      );
+      pdf.addImage(watermarkLayer, 'PNG', 0, 0, pageWidth, pageHeight, undefined, 'FAST');
+    } catch {
+      pdf.setTextColor(235, 235, 235);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(118);
+      pdf.text('SPORT', pageWidth / 2, 330, { align: 'center', angle: -28 });
+      pdf.text('CENTER', pageWidth / 2, 455, { align: 'center', angle: -28 });
+    }
+
+    pdf.setTextColor(0, 0, 0);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(16);
+    pdf.text('ESTE ES TU CODIGO DE CONFIRMACION DE ENTREGA', pageWidth / 2, 320, {
+      align: 'center',
+    });
+
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(76);
+    pdf.text(code, pageWidth / 2, 410, { align: 'center' });
+
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(17);
+    pdf.text('EMITIDO POR SPORT CENTER HUEJUTLA', pageWidth / 2, 490, {
+      align: 'center',
+    });
+
+    pdf.setTextColor(80, 80, 80);
+    pdf.setFontSize(11);
+    pdf.text(`Pedido #${order.id_orden}`, pageWidth / 2, 540, { align: 'center' });
+
+    return pdf.output('blob');
+  }
+
+  private async loadImageAsDataUrl(url: string): Promise<string> {
+    const response = await fetch(url, { mode: 'cors' });
+    if (!response.ok) {
+      throw new Error('No se pudo cargar la marca de agua');
+    }
+
+    const blob = await response.blob();
+    return await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  private async createCenteredWatermarkLayer(
+    dataUrl: string,
+    pageWidth: number,
+    pageHeight: number,
+  ): Promise<string> {
+    const scale = 2;
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(pageWidth * scale);
+    canvas.height = Math.round(pageHeight * scale);
+
+    const context = canvas.getContext('2d');
+    if (!context) {
+      throw new Error('No se pudo crear la marca de agua');
+    }
+
+    const image = await this.loadImageElement(dataUrl);
+    const maxWidth = canvas.width * 1.08;
+    const maxHeight = canvas.height * 0.78;
+    const imageRatio = image.naturalWidth / image.naturalHeight;
+
+    let targetWidth = maxWidth;
+    let targetHeight = targetWidth / imageRatio;
+
+    if (targetHeight > maxHeight) {
+      targetHeight = maxHeight;
+      targetWidth = targetHeight * imageRatio;
+    }
+
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.save();
+    context.globalAlpha = 0.075;
+    context.translate(canvas.width / 2, canvas.height / 2);
+    context.rotate((-28 * Math.PI) / 180);
+    context.drawImage(
+      image,
+      -targetWidth / 2,
+      -targetHeight / 2,
+      targetWidth,
+      targetHeight,
+    );
+    context.restore();
+
+    return canvas.toDataURL('image/png');
+  }
+
+  private loadImageElement(dataUrl: string): Promise<HTMLImageElement> {
+    return new Promise((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = () => reject(new Error('No se pudo cargar la imagen'));
+      image.src = dataUrl;
+    });
+  }
+
+  private downloadBlob(blob: Blob, filename: string): void {
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = filename;
+    anchor.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
   statusCount(status: EmployeeOrderStatus): number {

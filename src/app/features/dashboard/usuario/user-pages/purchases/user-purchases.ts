@@ -35,6 +35,8 @@ export class UserPurchases implements OnInit {
   returnReason = signal('');
   returnComment = signal('');
   returnSelection = signal<Record<number, { selected: boolean; cantidad: number; motivo: string }>>({});
+  deliveryCode = signal('');
+  confirmingDeliveryId = signal<number | null>(null);
 
   filteredOrders = computed(() => {
     const search = this.searchTerm().trim().toLowerCase();
@@ -151,6 +153,45 @@ export class UserPurchases implements OnInit {
 
   backToPurchases(): void {
     this.router.navigate(['/dashboard/usuario/compras']);
+  }
+
+  confirmDelivery(order: UserOrder): void {
+    const code = this.deliveryCode().trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+
+    if (!/^[A-Z0-9]{10}$/.test(code)) {
+      this.toastr.info('El código debe tener 10 caracteres', 'Confirmar entrega');
+      return;
+    }
+
+    this.confirmingDeliveryId.set(order.id_orden);
+    this.productService.confirmDeliveryCode(order.id_orden, code).subscribe({
+      next: (response) => {
+        const tracking = response.tracking;
+        this.orders.set(
+          this.orders().map((item) =>
+            item.id_orden === order.id_orden
+              ? {
+                  ...item,
+                  estado_envio: tracking.estado_envio,
+                  entrega_confirmada_por_usuario: tracking.entrega_confirmada_por_usuario,
+                  entrega_confirmada_en: tracking.entrega_confirmada_en,
+                  entrega_validada_por_empleado: tracking.entrega_validada_por_empleado,
+                  entrega_validada_en: tracking.entrega_validada_en,
+                  eventos_envio: tracking.eventos_envio || item.eventos_envio,
+                }
+              : item,
+          ),
+        );
+        this.deliveryCode.set('');
+        this.confirmingDeliveryId.set(null);
+        this.toastr.success(response.message, 'Confirmar entrega');
+      },
+      error: (error) => {
+        this.confirmingDeliveryId.set(null);
+        const message = error?.error?.message || 'No fue posible confirmar la entrega';
+        this.toastr.error(message, 'Confirmar entrega');
+      },
+    });
   }
 
   getOrderImage(order: UserOrder): string {

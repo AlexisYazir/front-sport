@@ -1091,6 +1091,42 @@ updateOrderShipment(
     );
 }
 
+generateDeliveryConfirmationCode(
+  idOrden: number,
+): Observable<{ message: string; code: string; tracking: any }> {
+  return this.http
+    .post<{ message: string; code: string; tracking: any }>(
+      `${this.API_URL}/products/orders/${idOrden}/delivery-code`,
+      {},
+    )
+    .pipe(
+      map((response) => {
+        this.cache.invalidate('products:employee-orders');
+        this.cache.invalidate('products:user-orders');
+        this.cache.invalidate('products:orders');
+        return response;
+      }),
+    );
+}
+
+confirmDeliveryCode(
+  idOrden: number,
+  codigo: string,
+): Observable<{ message: string; tracking: any }> {
+  return this.http
+    .post<{ message: string; tracking: any }>(
+      `${this.API_URL}/products/orders/${idOrden}/confirm-delivery`,
+      { codigo },
+    )
+    .pipe(
+      map((response) => {
+        this.cache.invalidate('products:user-orders');
+        this.cache.invalidate('products:employee-orders');
+        return response;
+      }),
+    );
+}
+
 createReturnRequest(data: CreateReturnRequest): Observable<{ message: string; return: ProductReturn }> {
   return this.http
     .post<{ message: string; return: ProductReturn }>(
