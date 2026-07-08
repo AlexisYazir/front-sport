@@ -300,6 +300,34 @@ export class ProductMarca implements OnInit {
     this.router.navigate(this.productService.buildProductDetailRoute(product));
   }
 
+  getProductLink(product: Product): string[] {
+    return this.productService.buildProductDetailRoute(product);
+  }
+
+  async shareProduct(product: Product, event?: Event): Promise<void> {
+    event?.preventDefault();
+    event?.stopPropagation();
+
+    const route = this.getProductLink(product).join('/');
+    const url = `${window.location.origin}${route}`;
+    const title = product.nombre || product.producto || 'Producto Sport Center';
+    const text = `Mira este producto en Sport Center: ${title}`;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({ title, text, url });
+        return;
+      }
+
+      await navigator.clipboard.writeText(url);
+      this.toastr.success('Link copiado al portapapeles', 'Compartir');
+    } catch (error) {
+      if ((error as DOMException)?.name !== 'AbortError') {
+        this.toastr.error('No se pudo compartir el producto', 'Compartir');
+      }
+    }
+  }
+
   goBack() {
     this.router.navigate(['/']);
   }

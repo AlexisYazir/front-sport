@@ -6,6 +6,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { CartService } from '../../../core/services/cart.service';
 import { ProductService } from '../../../core/services/product.service';
 import { UserRole } from '../../../core/models/user.model';
+import { DashboardPreferencesService } from '../../../core/services/dashboard-preferences.service';
 
 @Component({
   selector: 'app-navbar',
@@ -21,6 +22,7 @@ export class Navbar {
   private cartService = inject(CartService);
   private router = inject(Router);
   private productService = inject(ProductService);
+  public preferences = inject(DashboardPreferencesService);
   private closeTimeout: any;
   private infoTimeout: any;
   private supportTimeout: any;
@@ -55,6 +57,13 @@ export class Navbar {
     return user?.rol === 3;
   });
 
+  isEmployee = computed(() => {
+    const user = this.authService.currentUser();
+    return user?.rol === UserRole.EMPLEADO;
+  });
+
+  shouldShowCatalogNavigation = computed(() => !this.isEmployee());
+
   // Exponer servicios para el template
   get authServicePublic() { return this.authService; }
   cartItemCount = this.cartService.itemCount;
@@ -62,6 +71,31 @@ export class Navbar {
     const user = this.authService.currentUser();
     return !user || user.rol === UserRole.USUARIO;
   });
+
+  mobileDashboardItems = computed(() => {
+    const user = this.authService.currentUser();
+    if (user?.rol !== UserRole.USUARIO) {
+      return [];
+    }
+
+    return [
+      { icon: 'dashboard', label: 'Dashboard', route: '/dashboard/usuario' },
+      { icon: 'shopping_bag', label: 'Compras', route: '/dashboard/usuario/compras' },
+      { icon: 'account_circle', label: 'Perfil', route: '/dashboard/usuario/profile' },
+      { icon: 'receipt_long', label: 'Facturación', route: '/dashboard/usuario/billing' },
+      { icon: 'settings_voice', label: 'Códigos Alexa', route: '/dashboard/usuario/alexa-codes' },
+      { icon: 'settings', label: 'Configuración', route: '/dashboard/usuario/settings' },
+    ];
+  });
+
+  getSessionIconClass(): string {
+    const user = this.authService.currentUser();
+    return user?.rol === UserRole.EMPLEADO ? 'session-icon--employee' : 'session-icon--user';
+  }
+
+  isMobileMenuDark(): boolean {
+    return this.authService.isLoggedIn() && this.preferences.isDarkTheme();
+  }
 
   // Métodos para determinar si mostrar los menús
   shouldShowUserMenu(): boolean {
@@ -311,7 +345,12 @@ export class Navbar {
   }
 
   goToProfile() {
-    this.router.navigate(['/dashboard/usuario/profile']);
+    const user = this.authService.currentUser();
+    if (user?.rol === UserRole.EMPLEADO) {
+      this.router.navigate(['/dashboard/empleado/profile']);
+    } else {
+      this.router.navigate(['/dashboard/usuario/profile']);
+    }
     this.closeAllMenus();
   }
 
@@ -323,6 +362,8 @@ export class Navbar {
   goToSettings() {
     if (this.isAdmin()) {
       this.router.navigate(['/dashboard/admin/settings']);
+    } else if (this.isEmployee()) {
+      this.router.navigate(['/dashboard/empleado/settings']);
     } else {
       this.router.navigate(['/dashboard/usuario/settings']);
     }

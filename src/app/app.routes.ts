@@ -190,6 +190,11 @@ export const routes: Routes = [
         path: 'profile',
         loadComponent: () => import('./features/dashboard/pofile/profile').then((m) => m.Profile),
       },
+      {
+        path: 'settings',
+        loadComponent: () =>
+          import('./features/dashboard/empleado/employee-pages/settings/employee-settings').then((m) => m.EmployeeSettings),
+      },
     ],
   },
   {
@@ -267,6 +272,11 @@ export const routes: Routes = [
         path: 'promotions',
         loadComponent: () =>
           import('./features/dashboard/admin/admin-pages/promotions/promotions').then((m) => m.Promotions),
+      },
+      {
+        path: 'banner',
+        loadComponent: () =>
+          import('./features/dashboard/admin/admin-pages/banner/banner').then((m) => m.BannerAdmin),
       },
       {
         path: 'returns',

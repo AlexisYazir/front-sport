@@ -164,6 +164,30 @@ export class ProductDetail implements OnInit {
     ];
   });
 
+  async shareCurrentProduct(): Promise<void> {
+    const product = this.product();
+    if (!product) return;
+
+    const route = this.productService.buildProductDetailRoute(product).join('/');
+    const url = `${window.location.origin}${route}`;
+    const title = product.nombre || product.producto || 'Producto Sport Center';
+    const text = `Mira este producto en Sport Center: ${title}`;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({ title, text, url });
+        return;
+      }
+
+      await navigator.clipboard.writeText(url);
+      this.toastr.success('Link copiado al portapapeles', 'Compartir');
+    } catch (error) {
+      if ((error as DOMException)?.name !== 'AbortError') {
+        this.toastr.error('No se pudo compartir el producto', 'Compartir');
+      }
+    }
+  }
+
   // Mapeo de colores
   colorMap = new Map<string, { name: string, hex: string, bgClass: string }>([
     ['Negro', { name: 'Negro', hex: '#000000', bgClass: 'bg-black' }],

@@ -122,6 +122,280 @@ body {
   border-color: var(--spurt-primary) !important;
 }
 
+/* ================= DASHBOARD THEME ================= */
+
+.dashboard-theme {
+  --sc-bg: #f8fafc;
+  --sc-card: #ffffff;
+  --sc-soft: #f8fafc;
+  --sc-soft-hover: #eef6fc;
+  --sc-text: #202020;
+  --sc-muted: #666666;
+  --sc-border: #e5e7eb;
+  --sc-input: #ffffff;
+  --sc-shadow: 0 10px 24px -18px rgba(15, 23, 42, 0.35);
+
+  background: var(--sc-bg) !important;
+  color: var(--sc-text);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.dashboard-theme-dark {
+  --sc-bg: #121212;
+  --sc-card: #181818;
+  --sc-soft: #202020;
+  --sc-soft-hover: #2a2a2a;
+  --sc-text: #f8fafc;
+  --sc-muted: #c9d1d9;
+  --sc-border: #343434;
+  --sc-input: #151515;
+  --sc-table-head: #202020;
+  --sc-table-row-hover: #242424;
+  --sc-shadow: 0 18px 42px -24px rgba(0, 0, 0, 0.9);
+
+  color-scheme: dark;
+}
+
+.dashboard-theme .dashboard-card,
+.dashboard-theme .dashboard-soft-row,
+.dashboard-theme .dashboard-link-row {
+  background: var(--sc-card);
+  border-color: var(--sc-border);
+  color: var(--sc-text);
+}
+
+.dashboard-theme .dashboard-soft-row,
+.dashboard-theme .dashboard-link-row {
+  background: var(--sc-soft);
+}
+
+.dashboard-theme .dashboard-link-row:hover {
+  background: var(--sc-soft-hover);
+}
+
+.dashboard-theme .dashboard-title {
+  color: var(--sc-text) !important;
+}
+
+.dashboard-theme .dashboard-muted {
+  color: var(--sc-muted) !important;
+}
+
+.dashboard-theme-dark .bg-white,
+.dashboard-theme-dark .bg-gray-50,
+.dashboard-theme-dark .bg-gray-100,
+.dashboard-theme-dark .bg-\[\#F8F9FA\] {
+  background-color: var(--sc-card) !important;
+}
+
+.dashboard-theme-dark .acrylic-user-menu,
+.dashboard-theme-dark .acrylic-user-menu__header {
+  background-color: #ffffff !important;
+  color: #202020 !important;
+}
+
+.dashboard-theme-dark .acrylic-user-menu {
+  border-color: #e5e7eb !important;
+}
+
+.dashboard-theme-dark .acrylic-user-menu .text-\[\#666666\],
+.dashboard-theme-dark .acrylic-user-menu .text-\[\#202020\] {
+  color: inherit !important;
+}
+
+.dashboard-theme-dark .bg-gradient-to-r.from-gray-50.to-white,
+.dashboard-theme-dark .bg-gradient-to-r.from-white.to-gray-50,
+.dashboard-theme-dark .bg-gradient-to-r.from-gray-50,
+.dashboard-theme-dark .bg-gradient-to-r.to-white {
+  background-image: none !important;
+  background-color: var(--sc-card) !important;
+}
+
+.dashboard-theme-dark .bg-blue-50,
+.dashboard-theme-dark .bg-blue-100 {
+  background-color: #10263a !important;
+}
+
+.dashboard-theme-dark .bg-purple-50,
+.dashboard-theme-dark .bg-purple-100 {
+  background-color: #231a34 !important;
+}
+
+.dashboard-theme-dark .bg-green-50,
+.dashboard-theme-dark .bg-green-100 {
+  background-color: #13291d !important;
+}
+
+.dashboard-theme-dark .bg-amber-50,
+.dashboard-theme-dark .bg-amber-100,
+.dashboard-theme-dark .bg-yellow-50,
+.dashboard-theme-dark .bg-yellow-100,
+.dashboard-theme-dark .bg-orange-50,
+.dashboard-theme-dark .bg-orange-100 {
+  background-color: #2c2112 !important;
+}
+
+.dashboard-theme-dark .bg-gradient-to-br.from-blue-50,
+.dashboard-theme-dark .bg-gradient-to-br.from-purple-50,
+.dashboard-theme-dark .bg-gradient-to-br.from-green-50,
+.dashboard-theme-dark .bg-gradient-to-br.from-amber-50,
+.dashboard-theme-dark .bg-gradient-to-br.to-white {
+  background-image: linear-gradient(135deg, var(--sc-soft), var(--sc-card)) !important;
+}
+
+.dashboard-theme-dark .hover\:bg-gray-50:hover,
+.dashboard-theme-dark .hover\:bg-blue-50:hover,
+.dashboard-theme-dark .hover\:bg-purple-50:hover,
+.dashboard-theme-dark .hover\:bg-green-50:hover,
+.dashboard-theme-dark .hover\:bg-amber-50:hover,
+.dashboard-theme-dark .hover\:bg-orange-50:hover,
+.dashboard-theme-dark .hover\:bg-\[\#0367A6\]\/10:hover {
+  background-color: var(--sc-soft-hover) !important;
+}
+
+.dashboard-theme-dark .text-\[\#202020\],
+.dashboard-theme-dark .text-gray-900,
+.dashboard-theme-dark .text-gray-800,
+.dashboard-theme-dark .text-gray-700,
+.dashboard-theme-dark .text-black {
+  color: var(--sc-text) !important;
+}
+
+.dashboard-theme-dark .text-\[\#666666\],
+.dashboard-theme-dark .text-gray-600,
+.dashboard-theme-dark .text-gray-500,
+.dashboard-theme-dark .text-gray-400 {
+  color: var(--sc-muted) !important;
+}
+
+.dashboard-theme-dark .border-gray-100,
+.dashboard-theme-dark .border-gray-200,
+.dashboard-theme-dark .border-gray-300 {
+  border-color: var(--sc-border) !important;
+}
+
+.dashboard-theme-dark .shadow-sm,
+.dashboard-theme-dark .shadow-md,
+.dashboard-theme-dark .shadow-lg,
+.dashboard-theme-dark .shadow-xl {
+  box-shadow: var(--sc-shadow) !important;
+}
+
+.dashboard-theme-dark input,
+.dashboard-theme-dark select,
+.dashboard-theme-dark textarea {
+  background-color: var(--sc-input) !important;
+  border-color: var(--sc-border) !important;
+  color: var(--sc-text) !important;
+}
+
+.dashboard-theme-dark input::placeholder,
+.dashboard-theme-dark textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+.dashboard-theme-dark table,
+.dashboard-theme-dark thead,
+.dashboard-theme-dark tbody,
+.dashboard-theme-dark tr {
+  border-color: var(--sc-border) !important;
+}
+
+.dashboard-theme-dark table {
+  background-color: var(--sc-card) !important;
+  color: var(--sc-text) !important;
+}
+
+.dashboard-theme-dark thead,
+.dashboard-theme-dark thead.bg-gray-50,
+.dashboard-theme-dark thead.sticky,
+.dashboard-theme-dark tr.bg-gray-50 {
+  background-color: var(--sc-table-head) !important;
+}
+
+.dashboard-theme-dark th,
+.dashboard-theme-dark td {
+  border-color: var(--sc-border) !important;
+  color: var(--sc-text) !important;
+}
+
+.dashboard-theme-dark th {
+  background-color: var(--sc-table-head) !important;
+}
+
+.dashboard-theme-dark tbody tr:hover,
+.dashboard-theme-dark tr.hover\:bg-gray-50:hover {
+  background-color: var(--sc-table-row-hover) !important;
+}
+
+.dashboard-theme-dark app-empresa .company-card,
+.dashboard-theme-dark app-empresa .company-card--highlight {
+  background: var(--sc-card) !important;
+  border-color: var(--sc-border) !important;
+  box-shadow: var(--sc-shadow) !important;
+}
+
+.dashboard-theme-dark app-empresa .company-card__header h3,
+.dashboard-theme-dark app-empresa .info-row strong,
+.dashboard-theme-dark app-empresa .faq-cell strong {
+  color: var(--sc-text) !important;
+}
+
+.dashboard-theme-dark app-empresa .company-card__header p,
+.dashboard-theme-dark app-empresa .info-row span,
+.dashboard-theme-dark app-empresa .faq-cell small,
+.dashboard-theme-dark app-empresa .faq-pagination,
+.dashboard-theme-dark app-empresa .faq-inline-filter,
+.dashboard-theme-dark app-empresa .logo-upload-box__empty {
+  color: var(--sc-muted) !important;
+}
+
+.dashboard-theme-dark app-empresa .location-state,
+.dashboard-theme-dark app-empresa .logo-upload-box,
+.dashboard-theme-dark app-empresa .logo-upload-box__preview,
+.dashboard-theme-dark app-empresa .logo-upload-box__empty,
+.dashboard-theme-dark app-empresa .mini-btn,
+.dashboard-theme-dark app-empresa .faq-table th {
+  background: var(--sc-soft) !important;
+  border-color: var(--sc-border) !important;
+  color: var(--sc-text) !important;
+}
+
+.dashboard-theme-dark app-empresa .value-chip {
+  background: #10263a !important;
+  color: #93c5fd !important;
+}
+
+.dashboard-theme-dark app-empresa .company-location-map,
+.dashboard-theme-dark app-empresa .location-preview {
+  border-color: var(--sc-border) !important;
+}
+
+.dashboard-theme-dark .divide-gray-100 > :not([hidden]) ~ :not([hidden]),
+.dashboard-theme-dark .divide-gray-200 > :not([hidden]) ~ :not([hidden]) {
+  border-color: var(--sc-border) !important;
+}
+
+.dashboard-reduced-motion *,
+.dashboard-reduced-motion *::before,
+.dashboard-reduced-motion *::after {
+  transition-duration: 0.01ms !important;
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  scroll-behavior: auto !important;
+}
+
+@media (max-width: 767px) {
+  .dashboard-theme .dashboard-sidebar,
+  .dashboard-theme .admin-sidebar {
+    display: none !important;
+  }
+
+  .dashboard-theme main {
+    margin-left: 0 !important;
+  }
+}
+
 /* Clamp */
 .line-clamp-2 {
   overflow: hidden;

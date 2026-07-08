@@ -352,11 +352,13 @@ getProductById(id: number): Observable<Product | null> {
       map(response => {
         // Si el endpoint devuelve un array con un solo producto
         if (Array.isArray(response) && response.length > 0) {
-          return this.mapProductFromApi(response[0]);
+          const product = this.mapProductFromApi(response[0]);
+          return this.isPublicProductAvailable(product) ? product : null;
         }
         // Si devuelve un objeto directamente
         else if (response && typeof response === 'object') {
-          return this.mapProductFromApi(response);
+          const product = this.mapProductFromApi(response);
+          return this.isPublicProductAvailable(product) ? product : null;
         }
         
         return null;
@@ -1015,6 +1017,14 @@ confirmCheckout(data: ConfirmCheckoutRequest): Observable<ConfirmCheckoutRespons
     );
 }
 
+private isPublicProductAvailable(product: Product): boolean {
+  if (product.activo === false) return false;
+  if (Array.isArray(product.variantes) && product.variantes.length > 0) {
+    return product.variantes.some((variant) => Number(variant.stock || 0) > 0);
+  }
+  return Number(product.stock || 0) > 0;
+}
+
 lookupPostalCode(codigoPostal: string): Observable<CheckoutPostalCodeResponse> {
   return this.http.get<CheckoutPostalCodeResponse>(
     `${this.API_URL}/products/checkout/postal-code/${codigoPostal}`,
@@ -1214,6 +1224,14 @@ getAdminShippingMethods(): Observable<ShippingMethodAdmin[]> {
     'products:admin-shipping-methods',
     () => this.http.get<ShippingMethodAdmin[]>(`${this.API_URL}/products/shipping-methods/admin`),
     this.SHORT_CACHE_TTL,
+  );
+}
+
+getActiveShippingMethods(): Observable<ShippingMethodAdmin[]> {
+  return this.cache.getOrSet(
+    'products:shipping-methods:active',
+    () => this.http.get<ShippingMethodAdmin[]>(`${this.API_URL}/products/shipping-methods`),
+    this.CACHE_TTL,
   );
 }
 

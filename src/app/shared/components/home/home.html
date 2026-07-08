@@ -2,36 +2,58 @@
 <div class="home-page min-h-screen bg-white">
 
   <!-- ═══════════════════════════════ HERO -->
-  <section class="relative overflow-hidden bg-[#0367A6] text-white">
-    <!-- Acento naranja esquina derecha -->
-    <div class="pointer-events-none absolute -right-20 -top-20 h-[26rem] w-[26rem] rounded-full bg-[#FF7A00]/10"></div>
-    <!-- Bloque oscuro esquina inferior derecha -->
-    <div class="pointer-events-none absolute bottom-0 right-0 h-44 w-80 rounded-tl-[5rem] bg-[#025486]"></div>
+  <section class="relative overflow-hidden bg-[#0367A6] text-white min-h-[430px] sm:min-h-[520px]">
+    <div *ngIf="bannerImages().length > 0" class="absolute inset-0">
+      <img
+        *ngFor="let banner of bannerImages(); let i = index"
+        [src]="banner.url_imagen"
+        [alt]="banner.alt_text || banner.titulo || 'Banner Sport Center'"
+        class="home-hero-bg"
+        [class.home-hero-bg--active]="i === currentBannerIndex()">
+      <div class="absolute inset-0 bg-gradient-to-r from-black/75 via-[#025486]/55 to-black/20"></div>
+      <div class="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-black/15"></div>
+    </div>
+    <ng-container *ngIf="bannerImages().length === 0">
+      <div class="pointer-events-none absolute -right-20 -top-20 h-[26rem] w-[26rem] rounded-full bg-[#FF7A00]/10"></div>
+      <div class="pointer-events-none absolute bottom-0 right-0 h-44 w-80 rounded-tl-[5rem] bg-[#025486]"></div>
+      <div class="pointer-events-none absolute left-0 top-0 h-full w-1/2 bg-gradient-to-r from-[#025486]/45 to-transparent"></div>
+    </ng-container>
 
-    <div class="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 lg:py-20">
+    <div class="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 sm:py-16 lg:py-24 min-h-[430px] sm:min-h-[520px] flex items-center">
       <div class="max-w-2xl">
 
-        <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.02] tracking-tight mb-5">
+        <h1 class="text-3xl sm:text-5xl lg:text-6xl font-bold leading-[1.04] sm:leading-[1.02] tracking-tight mb-4 sm:mb-5">
           Equípate<br/>para el
           <span class="text-[#FF7A00]">Éxito.</span>
         </h1>
 
-        <p class="text-base sm:text-lg text-white/70 mb-7 max-w-xl leading-relaxed">
+        <p class="text-sm sm:text-lg text-white/75 mb-6 sm:mb-7 max-w-xl leading-relaxed">
           La mejor selección de ropa y equipo deportivo. Calidad profesional para atletas de todos los niveles.
         </p>
 
         <div class="flex flex-wrap gap-3">
           <button routerLink="/products"
-            class="inline-flex items-center gap-2 rounded-lg bg-white px-7 py-3.5 text-sm font-bold text-[#0367A6] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#EEF6FD]">
+            class="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-lg bg-white px-5 sm:px-7 py-3 sm:py-3.5 text-sm font-bold text-[#0367A6] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#EEF6FD]">
             <span class="material-symbols-outlined text-[1.1rem]">shopping_bag</span>
             Explorar Catálogo
           </button>
           <button routerLink="/offers"
-            class="inline-flex items-center gap-2 rounded-lg border border-white/25 px-7 py-3.5 text-sm font-bold text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/10">
+            class="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-lg border border-white/25 px-5 sm:px-7 py-3 sm:py-3.5 text-sm font-bold text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/10">
             <span class="material-symbols-outlined text-[1.1rem]">local_offer</span>
             Ver Ofertas
           </button>
         </div>
+      </div>
+
+      <div *ngIf="bannerImages().length > 1" class="absolute bottom-7 left-4 sm:left-6 lg:left-8 flex items-center gap-2">
+        <button
+          *ngFor="let banner of bannerImages(); let i = index"
+          type="button"
+          class="home-hero-dot"
+          [class.home-hero-dot--active]="i === currentBannerIndex()"
+          [attr.aria-label]="'Ver banner ' + (i + 1)"
+          (click)="setBanner(i)">
+        </button>
       </div>
     </div>
   </section>
@@ -39,22 +61,22 @@
   <!-- ═══════════════════════════════ PROMO STRIP -->
   <div class="bg-[#025486]">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-2.5
-                flex flex-wrap items-center justify-center gap-6 sm:gap-10
-                text-[10px] font-bold uppercase tracking-[0.1em] text-white/80">
-      <span class="flex items-center gap-2">
+                grid items-center justify-center gap-3 sm:flex sm:flex-wrap sm:gap-10
+                text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.1em] text-white/85">
+      <span class="flex items-center justify-center gap-2">
         <span class="material-symbols-outlined text-[#FF7A00] text-sm">local_shipping</span>
-        Envío gratis +$999
+        {{ freeShippingLabel() }}
       </span>
       <span class="hidden sm:block h-3 w-px bg-white/20"></span>
-      <span class="flex items-center gap-2">
+      <span class="flex items-center justify-center gap-2">
         <span class="material-symbols-outlined text-[#FF7A00] text-sm">workspace_premium</span>
         Productos 100% originales
       </span>
       <span class="hidden sm:block h-3 w-px bg-white/20"></span>
-      <span class="flex items-center gap-2">
+      <a routerLink="/support/preguntas-frecuentes" class="flex items-center justify-center gap-2 text-white/85 transition-colors hover:text-white">
         <span class="material-symbols-outlined text-[#FF7A00] text-sm">replay</span>
-        Devoluciones 30 días
-      </span>
+        Preguntas frecuentes
+      </a>
     </div>
   </div>
 
@@ -111,16 +133,21 @@
         <h2 class="text-2xl sm:text-3xl font-bold text-[#202020]">Categorías</h2>
       </div>
     </div>
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-      <a *ngFor="let cat of staticCategories" [routerLink]="cat.route"
-         class="group relative rounded-xl border border-[#D9E6F2] bg-gradient-to-b from-[#EEF6FD] to-white p-5
-                flex flex-col items-center gap-3 cursor-pointer text-center">
-        <div class="home-category-icon flex h-11 w-11 items-center justify-center rounded-full bg-[#0367A6]/10 text-[#0367A6]
-                    transition-all duration-200">
-          <span class="material-symbols-outlined text-xl">{{ cat.icon }}</span>
-        </div>
-        <span class="text-xs font-bold text-[#202020]">{{ cat.label }}</span>
-      </a>
+    <div class="category-marquee">
+      <div class="category-fade category-fade--l"></div>
+      <div class="category-fade category-fade--r"></div>
+      <div class="category-track">
+        <a *ngFor="let cat of categoryCarouselItems(); let index = index"
+           [routerLink]="cat.route"
+           [attr.aria-hidden]="index >= staticCategories.length ? 'true' : null"
+           class="category-chip group">
+          <div class="home-category-icon flex h-11 w-11 items-center justify-center rounded-full bg-[#0367A6]/10 text-[#0367A6]
+                      transition-all duration-200">
+            <span class="material-symbols-outlined text-xl">{{ cat.icon }}</span>
+          </div>
+          <span class="text-xs font-bold text-[#202020]">{{ cat.label }}</span>
+        </a>
+      </div>
     </div>
   </section>
 
@@ -130,9 +157,9 @@
 
       <div class="flex flex-wrap items-end justify-between gap-4 mb-6">
         <div>
-          <p class="text-[10px] font-bold uppercase tracking-[0.13em] text-[#0367A6] mb-1">Lo más buscado</p>
-        <h2 class="text-2xl sm:text-3xl font-bold text-[#202020]">Productos Destacados</h2>
-          <p class="mt-1 text-sm text-[#4F6479] max-w-md">Selección curada de los productos más populares.</p>
+          <p class="text-[10px] font-bold uppercase tracking-[0.13em] text-[#0367A6] mb-1">Recién agregados</p>
+        <h2 class="text-2xl sm:text-3xl font-bold text-[#202020]">Productos más recientes</h2>
+          <p class="mt-1 text-sm text-[#4F6479] max-w-md">Lo último que llegó al catálogo de Sport Center.</p>
         </div>
         <div class="flex items-center gap-2">
           <button type="button" class="home-scroll-button" aria-label="Izquierda" (click)="scrollProducts('left')">
@@ -157,9 +184,17 @@
         <div class="flex gap-3 min-w-max">
 
           <div *ngFor="let product of featuredProducts()"
-               class="group flex-shrink-0 w-52 bg-white rounded-lg sm:rounded-xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border border-gray-100 overflow-hidden"
+               class="group relative flex-shrink-0 w-52 bg-white rounded-lg sm:rounded-xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border border-gray-100 overflow-hidden"
                [routerLink]="getProductLink(product)"
                [title]="product.nombre">
+            <button
+              type="button"
+              (click)="shareProduct(product, $event)"
+              class="absolute right-2 top-2 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-[#0367A6] shadow-sm transition-all duration-200 hover:bg-[#0367A6] hover:text-white"
+              title="Compartir producto"
+              aria-label="Compartir producto">
+              <span class="material-symbols-outlined text-[1.1rem]">share</span>
+            </button>
             <!-- Imagen -->
             <div class="w-full pt-[75%] relative overflow-hidden bg-white">
               <img [src]="product.imagen" [alt]="product.nombre" loading="lazy"
@@ -167,22 +202,22 @@
                    onerror="this.src='https://ui-avatars.com/api/?name='+encodeURIComponent(product.nombre)+'&background=0367A6&color=fff&size=128'">
             </div>
             <!-- Info -->
-            <div class="p-2 sm:p-3">
+            <div class="p-2 sm:p-3 bg-gradient-to-br from-[#F6F9FC] via-[#EEF4F8] to-[#E7EEF5]">
               <div class="flex items-center gap-1 mb-1">
-                <span class="text-[10px] sm:text-xs font-medium text-gray-700 bg-gray-100 px-1.5 sm:px-2 py-0.5 rounded-full truncate max-w-[80px] sm:max-w-full">
+                <span class="text-[10px] sm:text-xs font-semibold text-[#0367A6] bg-[#DDECF7] px-1.5 sm:px-2 py-0.5 rounded-full truncate max-w-[80px] sm:max-w-full">
                   {{ product.marca }}
                 </span>
               </div>
 
-              <h3 class="text-xs sm:text-sm font-semibold text-gray-900 mb-1 line-clamp-2 h-8 sm:h-10" [title]="product.nombre">
+              <h3 class="text-xs sm:text-sm font-semibold text-[#102033] mb-1 line-clamp-2 h-8 sm:h-10" [title]="product.nombre">
                 {{ product.nombre }}
               </h3>
 
               <div class="flex items-center justify-between mt-1 sm:mt-2">
-                <span class="text-sm sm:text-lg font-bold text-[#202020]">${{ product.precio }}</span>
+                <span class="text-sm sm:text-lg font-bold text-[#0367A6]">${{ product.precio }}</span>
                 <div class="flex items-center">
                   <span class="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full mr-1 bg-green-500"></span>
-                  <span class="text-[8px] sm:text-[10px] font-medium text-green-600">
+                  <span class="text-[8px] sm:text-[10px] font-bold text-green-600">
                     Disp
                   </span>
                 </div>

@@ -13,14 +13,14 @@ export interface BreadcrumbItem {
   standalone: true,
   imports: [CommonModule, RouterModule],
   template: `
-    <nav class="mb-6" aria-label="Breadcrumb" *ngIf="items().length > 0">
-      <div class="inline-block bg-white/40 backdrop-blur-[2px] px-3 py-1.5 rounded-full shadow-sm border border-white/30">
+    <nav class="mb-3" aria-label="Breadcrumb" *ngIf="items().length > 0">
+      <div class="breadcrumb-shell inline-block px-2.5 py-1 rounded-full">
         <ol class="flex items-center flex-wrap gap-0.5">
           <!-- Home Item -->
           <li class="flex items-center">
             <a routerLink="/" 
-               class="breadcrumb-link flex items-center text-xs sm:text-sm font-medium text-gray-600 hover:text-[#0367A6] transition-colors px-1.5 py-0.5 rounded-full">
-              <span class="material-symbols-outlined text-base sm:text-lg mr-0.5 text-gray-500">home</span>
+               class="breadcrumb-link flex items-center text-[11px] sm:text-xs font-medium transition-colors px-1.5 py-0.5 rounded-full">
+              <span class="material-symbols-outlined text-sm sm:text-base mr-0.5">home</span>
               <span class="hidden sm:inline">Inicio</span>
             </a>
           </li>
@@ -31,16 +31,16 @@ export interface BreadcrumbItem {
               [attr.aria-current]="isLast ? 'page' : null">
             
             <!-- Separator with fade -->
-            <span class="breadcrumb-separator flex items-center text-gray-300 mx-0.5">
-              <span class="material-symbols-outlined text-sm sm:text-base">chevron_right</span>
+            <span class="breadcrumb-separator flex items-center mx-0.5">
+              <span class="material-symbols-outlined text-xs sm:text-sm">chevron_right</span>
             </span>
 
             <!-- Item Content -->
             <ng-container *ngIf="item.url && !isLast; else staticItem">
               <a [routerLink]="item.url" 
-                 class="breadcrumb-link flex items-center text-xs sm:text-sm font-medium text-gray-700 hover:text-[#0367A6] transition-colors px-1.5 py-0.5 rounded-full">
+                 class="breadcrumb-link flex items-center text-[11px] sm:text-xs font-medium transition-colors px-1.5 py-0.5 rounded-full">
                 <span *ngIf="item.icon" 
-                      class="material-symbols-outlined text-base sm:text-lg mr-0.5 text-gray-500">
+                      class="material-symbols-outlined text-sm sm:text-base mr-0.5">
                   {{ item.icon }}
                 </span>
                 <span class="breadcrumb-text">{{ item.label }}</span>
@@ -48,11 +48,10 @@ export interface BreadcrumbItem {
             </ng-container>
 
             <ng-template #staticItem>
-              <span class="flex items-center text-xs sm:text-sm font-medium px-1.5 py-0.5 rounded-full"
-                    [ngClass]="isLast ? 'text-[#0367A6] font-semibold bg-white/60' : 'text-gray-600'">
+              <span class="breadcrumb-static flex items-center text-[11px] sm:text-xs font-medium px-1.5 py-0.5 rounded-full"
+                    [ngClass]="isLast ? 'breadcrumb-current font-semibold' : ''">
                 <span *ngIf="item.icon" 
-                      class="material-symbols-outlined text-base sm:text-lg mr-0.5"
-                      [ngClass]="isLast ? 'text-[#0367A6]' : 'text-gray-400'">
+                      class="material-symbols-outlined text-sm sm:text-base mr-0.5">
                   {{ item.icon }}
                 </span>
                 <span class="breadcrumb-text">{{ item.label }}</span>
@@ -64,29 +63,30 @@ export interface BreadcrumbItem {
     </nav>
   `,
   styles: [`
-    /* Container with subtle white background - fits content */
-    .inline-block {
-      background: rgba(255, 255, 255, 0.4);
-      backdrop-filter: blur(2px);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+    .breadcrumb-shell {
+      color: inherit;
+      background: rgba(255, 255, 255, 0.14);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      box-shadow: none;
       transition: all 0.2s ease;
     }
 
-    .inline-block:hover {
-      background: rgba(255, 255, 255, 0.6);
-      border-color: rgba(255, 255, 255, 0.5);
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
+    .breadcrumb-shell:hover {
+      background: rgba(255, 255, 255, 0.2);
     }
 
     /* Base styles */
     .breadcrumb-link {
       position: relative;
       transition: all 0.2s ease;
+      color: inherit;
+      opacity: 0.72;
     }
 
     .breadcrumb-link:hover {
-      background: rgba(3, 103, 166, 0.05);
+      background: rgba(255, 255, 255, 0.16);
+      opacity: 1;
     }
 
     /* Subtle underline animation - only on hover */
@@ -98,7 +98,7 @@ export interface BreadcrumbItem {
       transform: translateX(-50%);
       width: 0;
       height: 1.5px;
-      background: linear-gradient(90deg, #0367A6, #035A91);
+      background: currentColor;
       transition: width 0.2s ease;
       border-radius: 2px;
       opacity: 0.6;
@@ -129,12 +129,23 @@ export interface BreadcrumbItem {
 
     /* Separator animation */
     .breadcrumb-separator {
+      opacity: 0.34;
       transition: all 0.2s ease;
     }
 
     li:hover .breadcrumb-separator {
-      color: #0367A6;
+      opacity: 0.7;
       transform: translateX(1px);
+    }
+
+    .breadcrumb-static {
+      color: inherit;
+      opacity: 0.74;
+    }
+
+    .breadcrumb-current {
+      background: rgba(255, 255, 255, 0.18);
+      opacity: 1;
     }
 
     /* Active/current page styling */
@@ -144,7 +155,7 @@ export interface BreadcrumbItem {
 
     /* Responsive adjustments */
     @media (max-width: 640px) {
-      .inline-block {
+      .breadcrumb-shell {
         padding: 0.5rem 0.75rem;
         border-radius: 9999px;
       }
@@ -176,11 +187,11 @@ export interface BreadcrumbItem {
 
     /* Hover effect for active item */
     [aria-current="page"]:hover span:last-child {
-      color: #035A91;
+      color: inherit;
     }
 
     /* Ensure the container only takes the width it needs */
-    .inline-block {
+    .breadcrumb-shell {
       width: fit-content;
       max-width: 100%;
     }
@@ -191,10 +202,7 @@ export interface BreadcrumbItem {
     }
 
     /* Subtle background for current item */
-    [aria-current="page"] {
-      background: rgba(3, 103, 166, 0.04);
-      border-radius: 9999px;
-    }
+    [aria-current="page"] { border-radius: 9999px; }
   `]
 })
 export class Breadcrumbs {

@@ -1,0 +1,113 @@
+<div class="space-y-6">
+  <section class="dashboard-card rounded-xl border p-5">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-5">
+      <div>
+        <h3 class="dashboard-title font-bold text-lg flex items-center gap-2">
+          <span class="material-symbols-outlined text-[#0367A6]">palette</span>
+          Apariencia
+        </h3>
+        <p class="dashboard-muted text-sm mt-1">
+          Estos ajustes solo aplican dentro de los dashboards de Sport Center.
+        </p>
+      </div>
+
+      <button
+        type="button"
+        (click)="reset()"
+        class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border text-sm font-semibold transition-colors dashboard-soft-button">
+        <span class="material-symbols-outlined text-base">restart_alt</span>
+        Restablecer
+      </button>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <button
+        type="button"
+        (click)="setTheme('light')"
+        class="dashboard-option-card rounded-xl border p-4 text-left transition-all"
+        [class.dashboard-option-active]="preferences.theme() === 'light'">
+        <div class="flex items-center gap-3">
+          <span class="material-symbols-outlined option-icon">light_mode</span>
+          <div>
+            <p class="font-bold">Tema claro</p>
+            <p class="dashboard-muted text-sm">Fondos blancos y lectura limpia.</p>
+          </div>
+        </div>
+      </button>
+
+      <button
+        type="button"
+        (click)="setTheme('dark')"
+        class="dashboard-option-card rounded-xl border p-4 text-left transition-all"
+        [class.dashboard-option-active]="preferences.theme() === 'dark'">
+        <div class="flex items-center gap-3">
+          <span class="material-symbols-outlined option-icon">dark_mode</span>
+          <div>
+            <p class="font-bold">Tema oscuro</p>
+            <p class="dashboard-muted text-sm">Más cómodo para sesiones largas.</p>
+          </div>
+        </div>
+      </button>
+    </div>
+  </section>
+
+  <section class="dashboard-card rounded-xl border p-5">
+    <h3 class="dashboard-title font-bold text-lg flex items-center gap-2 mb-4">
+      <span class="material-symbols-outlined text-[#0367A6]">tune</span>
+      Preferencias menores
+    </h3>
+
+    <div class="space-y-3">
+      <div class="dashboard-setting-row">
+        <div>
+          <p class="font-semibold">Menú desplegado por defecto</p>
+          <p class="dashboard-muted text-sm">Define si el menú lateral inicia abierto o compacto.</p>
+        </div>
+        <button
+          type="button"
+          class="sc-switch"
+          [class.sc-switch-on]="preferences.sidebarDefaultOpen()"
+          (click)="setSidebarDefault(!preferences.sidebarDefaultOpen())"
+          [attr.aria-pressed]="preferences.sidebarDefaultOpen()">
+          <span></span>
+        </button>
+      </div>
+
+      <div class="dashboard-setting-row">
+        <div>
+          <p class="font-semibold">Reducir animaciones</p>
+          <p class="dashboard-muted text-sm">Disminuye transiciones visuales dentro del dashboard.</p>
+        </div>
+        <button
+          type="button"
+          class="sc-switch"
+          [class.sc-switch-on]="preferences.reducedMotion()"
+          (click)="setReducedMotion(!preferences.reducedMotion())"
+          [attr.aria-pressed]="preferences.reducedMotion()">
+          <span></span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <section class="dashboard-card rounded-xl border p-5">
+    <h3 class="dashboard-title font-bold text-lg flex items-center gap-2 mb-3">
+      <span class="material-symbols-outlined text-[#0367A6]">tips_and_updates</span>
+      Otras opciones que se podrían agregar
+    </h3>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+      <div class="dashboard-suggestion rounded-lg border p-3">
+        <p class="font-semibold">Vista compacta</p>
+        <p class="dashboard-muted mt-1">Reducir espacios en tablas y tarjetas.</p>
+      </div>
+      <div class="dashboard-suggestion rounded-lg border p-3">
+        <p class="font-semibold">Densidad de tablas</p>
+        <p class="dashboard-muted mt-1">Mostrar más filas por pantalla.</p>
+      </div>
+      <div class="dashboard-suggestion rounded-lg border p-3">
+        <p class="font-semibold">Panel inicial</p>
+        <p class="dashboard-muted mt-1">Elegir la primera pantalla al entrar.</p>
+      </div>
+    </div>
+  </section>
+</div>

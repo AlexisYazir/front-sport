@@ -1,4 +1,7 @@
-<div class="min-h-screen bg-gray-50">
+<div
+  class="dashboard-theme min-h-screen bg-gray-50"
+  [class.dashboard-theme-dark]="preferences.isDarkTheme()"
+  [class.dashboard-reduced-motion]="preferences.reducedMotion()">
   <!-- Contenedor principal con sidebar y contenido -->
   <div class="flex">
     <!-- Sidebar -->
@@ -6,10 +9,10 @@
            [class.w-16]="!sidebarOpen()"
            [class.top-16]="!navbarOculto()"
            [class.top-0]="navbarOculto()"
-           class="bg-white shadow-md border-r border-gray-200 h-screen fixed left-0 transition-all duration-300 z-20 overflow-visible">
+           class="admin-sidebar bg-white shadow-md border-r border-gray-200 fixed left-0 bottom-0 transition-all duration-300 z-20 overflow-hidden flex flex-col">
       
       <!-- Cabecera del sidebar -->
-   <div class="flex items-center justify-between px-3 py-4 border-b border-gray-100">
+   <div class="flex items-center justify-between px-3 py-4 border-b border-gray-100 shrink-0">
 
   <div *ngIf="sidebarOpen()" class="flex items-center gap-2">
     <div class="w-1 h-5 bg-[#0367A6] rounded-full"></div>
@@ -35,8 +38,8 @@
 </div>
 
       <!-- Menú -->
-      <nav class="h-full flex flex-col">
-        <div class="flex-1 overflow-y-auto">
+      <nav class="flex-1 min-h-0 flex flex-col">
+        <div class="admin-sidebar-scroll flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
           <ul class="py-2 px-2 space-y-1">
    <li *ngFor="let item of menuItems">
   <a

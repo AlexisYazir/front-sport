@@ -1,9 +1,9 @@
-import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Component } from '@angular/core';
 import { DashboardPreferencesPanel } from '../../../shared/dashboard-preferences-panel/dashboard-preferences-panel';
 
 @Component({
-  selector: 'app-settings',
+  selector: 'app-employee-settings',
   standalone: true,
   imports: [CommonModule, DashboardPreferencesPanel],
   template: `
@@ -18,9 +18,8 @@ import { DashboardPreferencesPanel } from '../../../shared/dashboard-preferences
         </div>
       </div>
     </div>
-    <app-dashboard-preferences-panel />
-  `
-})
-export class Settings {
 
-}
+    <app-dashboard-preferences-panel />
+  `,
+})
+export class EmployeeSettings {}

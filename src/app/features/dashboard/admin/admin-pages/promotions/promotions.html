@@ -141,16 +141,16 @@
                   type="button"
                   (click)="togglePromotionStatus(promotion)"
                   [disabled]="savingPromotionId() === promotion.id_promocion"
-                  class="inline-flex items-center justify-center gap-2 min-w-32 px-3 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-[#666666] hover:text-[#0367A6] hover:bg-[#0367A6]/5 disabled:opacity-70 disabled:cursor-wait">
-                  <span *ngIf="savingPromotionId() === promotion.id_promocion" class="w-4 h-4 rounded-full border-2 border-[#0367A6] border-t-transparent animate-spin"></span>
-                  <span *ngIf="savingPromotionId() !== promotion.id_promocion" class="material-symbols-outlined text-lg">
-                    {{ promotion.activo ? 'toggle_off' : 'toggle_on' }}
+                  class="inline-flex items-center gap-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-gray-50 disabled:opacity-70 disabled:cursor-wait">
+                  <span class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
+                        [class.bg-green-600]="promotion.activo"
+                        [class.bg-gray-300]="!promotion.activo">
+                    <span class="inline-block h-5 w-5 transform rounded-full bg-white transition-transform"
+                          [class.translate-x-5]="promotion.activo"
+                          [class.translate-x-0.5]="!promotion.activo"></span>
                   </span>
-                  {{
-                    savingPromotionId() === promotion.id_promocion
-                      ? (promotion.activo ? 'Desactivando...' : 'Activando...')
-                      : (promotion.activo ? 'Desactivar' : 'Activar')
-                  }}
+                  <span class="text-sm text-gray-600">{{ promotion.activo ? 'Activo' : 'Inactivo' }}</span>
+                  <span *ngIf="savingPromotionId() === promotion.id_promocion" class="w-4 h-4 rounded-full border-2 border-[#0367A6] border-t-transparent animate-spin"></span>
                 </button>
               </div>
             </div>
@@ -193,11 +193,7 @@
                 <input [(ngModel)]="method.dias_max" type="number" min="1" class="w-full px-3 py-2 border border-gray-300 rounded-lg outline-none focus:border-[#0367A6]">
               </label>
             </div>
-            <div class="flex items-center justify-between gap-3">
-              <span class="inline-flex items-center gap-2 text-sm text-green-700 bg-green-50 border border-green-100 rounded-lg px-3 py-2">
-                <span class="material-symbols-outlined text-base">check_circle</span>
-                Método activo
-              </span>
+            <div class="flex items-center justify-end gap-3">
               <button
                 type="button"
                 (click)="updateShipping(method)"

@@ -7,6 +7,7 @@ import { ProductService } from '../../../core/services/product.service';
 import { RecentUserCreated, getRoleName } from '../../../core/models/user.model';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { formatMexicoDate } from '../../../core/utils/date-time.util';
+import { DashboardPreferencesService } from '../../../core/services/dashboard-preferences.service';
 
 @Component({
   selector: 'app-dashboard-admin',
@@ -18,9 +19,10 @@ import { formatMexicoDate } from '../../../core/utils/date-time.util';
 export class DashboardAdmin implements OnInit {
   public authService = inject(AuthService);
   private productService = inject(ProductService);
+  public preferences = inject(DashboardPreferencesService);
   
   // Estado del menú lateral (inicialmente abierto)
-  sidebarOpen = signal<boolean>(true);
+  sidebarOpen = this.preferences.sidebarDefaultOpen;
 
   // Estado del navbar (oculto o visible)
   navbarOculto = signal<boolean>(false);
@@ -59,6 +61,7 @@ export class DashboardAdmin implements OnInit {
     { icon: 'article', label: 'Logs', route: '/dashboard/admin/logs' },
     { icon: 'reviews', label: 'Reseñas', route: '/dashboard/admin/reviews' },
     { icon: 'local_offer', label: 'Promos & Envíos', route: '/dashboard/admin/promotions' },
+    { icon: 'wallpaper', label: 'Banner inicio', route: '/dashboard/admin/banner' },
     { icon: 'assignment_return', label: 'Devoluciones', route: '/dashboard/admin/returns' },
     { icon: 'domain', label: 'Perfil Empresa', route: '/dashboard/admin/empresa' },
     { icon: 'monitoring', label: 'Predicción ventas', route: '/dashboard/admin/predictions' },
@@ -187,7 +190,9 @@ export class DashboardAdmin implements OnInit {
   }
 
   toggleSidebar() {
-    this.sidebarOpen.set(!this.sidebarOpen());
+    const nextValue = !this.sidebarOpen();
+    this.sidebarOpen.set(nextValue);
+    this.preferences.setSidebarDefaultOpen(nextValue);
   }
 
   // Método para obtener el nombre del rol usando el helper del modelo

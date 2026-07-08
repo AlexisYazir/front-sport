@@ -1,0 +1,194 @@
+<div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+  <div class="mb-6 p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-100 shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+    <div class="flex items-center gap-3">
+      <div class="bg-[#0367A6]/10 p-3 rounded-xl">
+        <span class="material-symbols-outlined text-[#0367A6] text-2xl">wallpaper</span>
+      </div>
+      <div>
+        <h2 class="text-2xl font-bold text-[#202020]">Banner principal</h2>
+        <p class="text-sm text-[#666666] mt-0.5">Administra las imágenes del carrusel público del inicio</p>
+      </div>
+    </div>
+    <div class="bg-blue-50 px-4 py-2 rounded-xl border border-blue-100">
+      <span class="text-[#0367A6] font-semibold text-lg">{{ activeCount() }}</span>
+      <span class="text-[#666666] text-sm ml-2">activas de 4</span>
+    </div>
+  </div>
+
+  <div *ngIf="isLoading()" class="flex flex-col items-center justify-center py-16">
+    <div class="animate-spin rounded-full h-14 w-14 border-4 border-gray-200 border-t-[#0367A6]"></div>
+    <p class="text-[#666666] mt-4">Cargando imágenes del banner...</p>
+  </div>
+
+  <ng-container *ngIf="!isLoading()">
+    <section class="border border-gray-200 rounded-xl p-4 mb-6">
+      <div class="mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <div>
+          <h3 class="font-bold text-[#202020]">Nueva imagen</h3>
+          <p class="text-sm text-[#666666]">Sube a Cloudinary o pega una URL ya existente para guardarla en esta lista.</p>
+        </div>
+        <label class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-[#0367A6]/30 bg-[#0367A6]/5 text-[#0367A6] font-semibold cursor-pointer hover:bg-[#0367A6]/10">
+          <span *ngIf="!uploading()" class="material-symbols-outlined text-lg">cloud_upload</span>
+          <span *ngIf="uploading()" class="w-4 h-4 rounded-full border-2 border-[#0367A6] border-t-transparent animate-spin"></span>
+          {{ uploading() ? 'Subiendo...' : 'Subir imagen' }}
+          <input type="file" accept="image/*" class="hidden" [disabled]="uploading()" (change)="uploadImage($event)">
+        </label>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] gap-4">
+        <div class="banner-preview rounded-xl border border-gray-200 overflow-hidden bg-gray-50">
+          <img *ngIf="form.url_imagen; else emptyPreview" [src]="form.url_imagen" alt="Vista previa banner" class="w-full h-full object-cover">
+          <ng-template #emptyPreview>
+            <div class="h-full min-h-[230px] flex flex-col items-center justify-center text-[#7B8FA1]">
+              <span class="material-symbols-outlined text-5xl opacity-50">image</span>
+              <p class="text-sm mt-2">Vista previa del banner</p>
+            </div>
+          </ng-template>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <input [(ngModel)]="form.url_imagen" placeholder="URL de imagen" class="sm:col-span-2 px-4 py-2.5 border border-gray-300 rounded-lg outline-none focus:border-[#0367A6]">
+          <input [(ngModel)]="form.titulo" placeholder="Título interno" class="px-4 py-2.5 border border-gray-300 rounded-lg outline-none focus:border-[#0367A6]">
+          <input [(ngModel)]="form.orden" type="number" min="1" placeholder="Orden" class="px-4 py-2.5 border border-gray-300 rounded-lg outline-none focus:border-[#0367A6]">
+          <input [(ngModel)]="form.alt_text" placeholder="Texto alternativo" class="sm:col-span-2 px-4 py-2.5 border border-gray-300 rounded-lg outline-none focus:border-[#0367A6]">
+          <textarea [(ngModel)]="form.descripcion" rows="2" placeholder="Descripción interna" class="sm:col-span-2 px-4 py-2.5 border border-gray-300 rounded-lg outline-none focus:border-[#0367A6]"></textarea>
+          <label class="inline-flex items-center gap-2 text-sm text-[#666666]">
+            <input [(ngModel)]="form.activo" type="checkbox" class="rounded border-gray-300 text-[#0367A6]">
+            Activar al guardar
+          </label>
+          <button
+            type="button"
+            (click)="createBanner()"
+            [disabled]="isSaving() || uploading()"
+            class="inline-flex items-center justify-center gap-2 px-5 py-3 bg-[#0367A6] text-white rounded-lg font-semibold hover:bg-[#035A91] disabled:opacity-70 disabled:cursor-wait">
+            <span *ngIf="!isSaving()" class="material-symbols-outlined">add_photo_alternate</span>
+            <span *ngIf="isSaving()" class="w-5 h-5 rounded-full border-2 border-white border-t-transparent animate-spin"></span>
+            {{ isSaving() ? 'Guardando...' : 'Guardar imagen' }}
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="border border-gray-200 rounded-xl overflow-hidden">
+      <div class="bg-gray-50 px-4 py-3 border-b border-gray-200 flex items-center justify-between gap-3">
+        <h3 class="font-bold text-[#202020]">Imágenes guardadas</h3>
+        <button type="button" (click)="loadBanners()" class="inline-flex items-center justify-center w-10 h-10 rounded-full border border-gray-200 text-[#0367A6] hover:bg-white">
+          <span class="material-symbols-outlined">refresh</span>
+        </button>
+      </div>
+
+      <div *ngIf="banners().length === 0" class="py-12 text-center text-[#666666]">
+        No hay imágenes registradas para el banner.
+      </div>
+
+      <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 p-4">
+        <article *ngFor="let banner of banners()" class="rounded-xl border border-gray-200 overflow-hidden bg-white shadow-sm">
+          <div class="relative h-44 bg-gray-100">
+            <img [src]="banner.url_imagen" [alt]="banner.alt_text || banner.titulo || 'Banner'" class="w-full h-full object-cover">
+            <span class="absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-bold" [ngClass]="banner.activo ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'">
+              {{ banner.activo ? 'Activa' : 'Inactiva' }}
+            </span>
+          </div>
+
+          <div class="p-4 space-y-4">
+            <div>
+              <h4 class="font-bold text-[#202020]">{{ banner.titulo || 'Imagen de banner' }}</h4>
+              <p class="text-sm text-[#666666] break-all mt-1">{{ banner.url_imagen }}</p>
+              <p *ngIf="banner.cloudinary_public_id" class="text-xs text-[#7B8FA1] break-all mt-1">
+                Cloudinary: {{ banner.cloudinary_public_id }}
+              </p>
+            </div>
+
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <label class="inline-flex items-center gap-2 text-sm text-[#666666]">
+                Orden
+                <input
+                  type="number"
+                  min="1"
+                  [ngModel]="getOrderValue(banner)"
+                  (ngModelChange)="updateOrder(banner, $event)"
+                  class="w-20 px-3 py-2 border border-gray-300 rounded-lg outline-none focus:border-[#0367A6]">
+              </label>
+
+              <div class="flex items-center gap-2">
+                <button
+                  *ngIf="hasOrderChange(banner)"
+                  type="button"
+                  (click)="saveOrder(banner)"
+                  [disabled]="savingBannerId() === banner.id_banner"
+                  class="inline-flex items-center justify-center gap-1 px-3 py-2 rounded-lg bg-[#0367A6] text-white text-xs font-bold hover:bg-[#035A91] disabled:opacity-60 disabled:cursor-wait">
+                  <span *ngIf="savingBannerId() !== banner.id_banner" class="material-symbols-outlined text-base">save</span>
+                  <span *ngIf="savingBannerId() === banner.id_banner" class="w-3.5 h-3.5 rounded-full border-2 border-white border-t-transparent animate-spin"></span>
+                  Guardar
+                </button>
+                <button
+                  type="button"
+                  (click)="toggleActive(banner)"
+                  [disabled]="savingBannerId() === banner.id_banner"
+                  class="inline-flex items-center gap-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-gray-50 disabled:opacity-60">
+                  <span class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
+                        [class.bg-green-600]="banner.activo"
+                        [class.bg-gray-300]="!banner.activo">
+                    <span class="inline-block h-5 w-5 transform rounded-full bg-white transition-transform"
+                          [class.translate-x-5]="banner.activo"
+                          [class.translate-x-0.5]="!banner.activo"></span>
+                  </span>
+                  <span class="text-sm text-gray-600">{{ banner.activo ? 'Activo' : 'Inactivo' }}</span>
+                  <span *ngIf="savingBannerId() === banner.id_banner" class="w-4 h-4 rounded-full border-2 border-[#0367A6] border-t-transparent animate-spin"></span>
+                </button>
+                <button
+                  type="button"
+                  (click)="deleteBanner(banner)"
+                  [disabled]="savingBannerId() === banner.id_banner"
+                  class="inline-flex items-center justify-center w-10 h-10 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-60">
+                  <span class="material-symbols-outlined">delete</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+  </ng-container>
+
+  <div
+    *ngIf="pendingDelete() as banner"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
+    <div class="w-full max-w-xl rounded-2xl bg-white p-6 shadow-2xl">
+      <div class="flex items-start gap-4">
+        <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-600">
+          <span class="material-symbols-outlined text-3xl">warning</span>
+        </div>
+        <div class="min-w-0">
+          <h3 class="text-xl font-bold text-[#202020]">Eliminar imagen del banner</h3>
+          <p class="mt-2 text-[#666666]">
+            Se quitará <strong>{{ banner.titulo || 'esta imagen' }}</strong> del carrusel principal.
+          </p>
+        </div>
+      </div>
+
+      <div class="mt-5 h-36 overflow-hidden rounded-xl border border-gray-100 bg-gray-50">
+        <img [src]="banner.url_imagen" [alt]="banner.alt_text || banner.titulo || 'Banner'" class="h-full w-full object-cover">
+      </div>
+
+      <div class="mt-6 flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
+        <button
+          type="button"
+          (click)="cancelDeleteBanner()"
+          [disabled]="savingBannerId() === banner.id_banner"
+          class="rounded-xl border border-gray-300 px-5 py-3 font-semibold text-[#334155] hover:bg-gray-50 disabled:opacity-60">
+          Cancelar
+        </button>
+        <button
+          type="button"
+          (click)="confirmDeleteBanner()"
+          [disabled]="savingBannerId() === banner.id_banner"
+          class="inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-3 font-bold text-white hover:bg-red-700 disabled:opacity-60">
+          <span *ngIf="savingBannerId() !== banner.id_banner" class="material-symbols-outlined">delete</span>
+          <span *ngIf="savingBannerId() === banner.id_banner" class="w-5 h-5 rounded-full border-2 border-white border-t-transparent animate-spin"></span>
+          {{ savingBannerId() === banner.id_banner ? 'Eliminando...' : 'Eliminar imagen' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

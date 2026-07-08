@@ -142,7 +142,7 @@ export class ProductList implements OnInit {
         this.router.navigate(['/error/400']);
         return;
       }
-      this.onSearch();
+      this.onSearch(false);
     });
   }
 
@@ -287,7 +287,7 @@ export class ProductList implements OnInit {
     return true;
   }
 
-  onSearch() {
+  onSearch(resetPage = true) {
     // Validar precios antes de buscar
     if (this.minPrice() !== null && this.maxPrice() !== null) {
       if (this.minPrice()! > this.maxPrice()!) {
@@ -318,8 +318,9 @@ export class ProductList implements OnInit {
       next: (result) => {
         this.searchResults.set(result);
         this.isLoading.set(false);
-        // Resetear a primera página
-        this.currentPage.set(1);
+        if (resetPage) {
+          this.currentPage.set(1);
+        }
       },
       error: (error) => {
         console.error('Error en búsqueda:', error);
@@ -330,13 +331,18 @@ export class ProductList implements OnInit {
   }
 
   onCategoryChange() { 
-    this.onSearch();
+    this.onFilterChange();
     if (this.isMobile()) this.mobileFiltersOpen.set(false);
   }
   
   onBrandChange() { 
-    this.onSearch();
+    this.onFilterChange();
     if (this.isMobile()) this.mobileFiltersOpen.set(false);
+  }
+
+  onFilterChange() {
+    this.currentPage.set(1);
+    this.updateQueryParams(1);
   }
   
   onPriceChange() {
@@ -347,7 +353,7 @@ export class ProductList implements OnInit {
         return;
       }
     }
-    this.onSearch();
+    this.onFilterChange();
   }
 
   clearFilters() {
@@ -360,8 +366,7 @@ export class ProductList implements OnInit {
     this.showOnlyAvailable.set(false);
     this.currentPage.set(1);
     
-    // Si no hay filtros activos, igual cargamos productos
-    this.onSearch();
+    this.updateQueryParams(1);
     
     if (this.isMobile()) {
       this.mobileFiltersOpen.set(false);
@@ -399,7 +404,24 @@ export class ProductList implements OnInit {
 
   onPageChange(page: number) {
     this.currentPage.set(page);
+    this.updateQueryParams(page);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  private updateQueryParams(page = this.currentPage()) {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {
+        search: this.searchTerm() || null,
+        category: !this.routeSubcategoria() && this.selectedCategory() ? this.selectedCategory() : null,
+        brand: this.selectedBrand() || null,
+        minPrice: this.minPrice() ?? null,
+        maxPrice: this.maxPrice() ?? null,
+        available: this.showOnlyAvailable() ? true : null,
+        sort: this.sortBy() || null,
+        page: page > 1 ? page : null,
+      },
+    });
   }
 
   // Métodos para variantes
@@ -458,6 +480,30 @@ getProductSlug(product: Product): string {
 
 getProductLink(product: Product): string[] {
   return this.productService.buildProductDetailRoute(product);
+}
+
+async shareProduct(product: Product, event?: Event): Promise<void> {
+  event?.preventDefault();
+  event?.stopPropagation();
+
+  const route = this.getProductLink(product).join('/');
+  const url = `${window.location.origin}${route}`;
+  const title = product.nombre || product.producto || 'Producto Sport Center';
+  const text = `Mira este producto en Sport Center: ${title}`;
+
+  try {
+    if (navigator.share) {
+      await navigator.share({ title, text, url });
+      return;
+    }
+
+    await navigator.clipboard.writeText(url);
+    this.toastr.success('Link copiado al portapapeles', 'Compartir');
+  } catch (error) {
+    if ((error as DOMException)?.name !== 'AbortError') {
+      this.toastr.error('No se pudo compartir el producto', 'Compartir');
+    }
+  }
 }
 
 private formatSlugLabel(value: string): string {

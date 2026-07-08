@@ -1,0 +1,10 @@
+.banner-preview {
+  min-height: 230px;
+  aspect-ratio: 16 / 7;
+}
+
+@media (max-width: 640px) {
+  .banner-preview {
+    aspect-ratio: 16 / 10;
+  }
+}

@@ -7,6 +7,7 @@ import { CartService } from '../../../core/services/cart.service';
 import { ProductService } from '../../../core/services/product.service';
 import { UserOrder, UserOrderItem } from '../../../core/models/product.model';
 import { formatMexicoDateTime } from '../../../core/utils/date-time.util';
+import { DashboardPreferencesService } from '../../../core/services/dashboard-preferences.service';
 
 @Component({
   selector: 'app-dashboard-usuario',
@@ -19,9 +20,10 @@ export class DashboardUsuario implements OnInit {
   private authService = inject(AuthService);
   private productService = inject(ProductService);
   private cartService = inject(CartService);
+  public preferences = inject(DashboardPreferencesService);
   public router = inject(Router);
 
-  sidebarOpen = signal<boolean>(true);
+  sidebarOpen = this.preferences.sidebarDefaultOpen;
   navbarOculto = signal<boolean>(false);
   isLoading = signal<boolean>(false);
   orders = signal<UserOrder[]>([]);
@@ -99,7 +101,9 @@ export class DashboardUsuario implements OnInit {
   }
 
   toggleSidebar(): void {
-    this.sidebarOpen.set(!this.sidebarOpen());
+    const nextValue = !this.sidebarOpen();
+    this.sidebarOpen.set(nextValue);
+    this.preferences.setSidebarDefaultOpen(nextValue);
   }
 
   isActive(route: string): boolean {

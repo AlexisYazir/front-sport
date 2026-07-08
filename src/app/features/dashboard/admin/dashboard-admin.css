@@ -28,3 +28,40 @@
 body.sidebar-open-mobile {
   overflow: hidden;
 }
+
+.admin-sidebar {
+  max-height: 100vh;
+}
+
+.admin-sidebar-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(3, 103, 166, 0.22) transparent;
+  overscroll-behavior: contain;
+}
+
+.admin-sidebar-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.admin-sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.admin-sidebar-scroll::-webkit-scrollbar-thumb {
+  background: rgba(3, 103, 166, 0.14);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+.admin-sidebar-scroll:hover::-webkit-scrollbar-thumb {
+  background: rgba(3, 103, 166, 0.34);
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+@media (max-width: 640px) {
+  .admin-sidebar-scroll {
+    -webkit-overflow-scrolling: touch;
+  }
+}

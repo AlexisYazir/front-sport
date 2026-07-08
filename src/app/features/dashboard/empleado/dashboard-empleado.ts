@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { AuthService } from '../../../core/services/auth.service';
+import { DashboardPreferencesService } from '../../../core/services/dashboard-preferences.service';
 
 @Component({
   selector: 'app-dashboard-empleado',
@@ -14,8 +15,9 @@ import { AuthService } from '../../../core/services/auth.service';
 export class DashboardEmpleado {
   public authService = inject(AuthService);
   public router = inject(Router);
+  public preferences = inject(DashboardPreferencesService);
 
-  sidebarOpen = signal<boolean>(true);
+  sidebarOpen = this.preferences.sidebarDefaultOpen;
   navbarOculto = signal<boolean>(false);
   currentUser = this.authService.currentUser();
   lastScrollTop = 0;
@@ -24,6 +26,7 @@ export class DashboardEmpleado {
     { icon: 'orders', label: 'Pedidos', route: '/dashboard/empleado/orders' },
     { icon: 'assignment_return', label: 'Devoluciones', route: '/dashboard/empleado/returns' },
     { icon: 'account_circle', label: 'Perfil', route: '/dashboard/empleado/profile' },
+    { icon: 'settings', label: 'Configuración', route: '/dashboard/empleado/settings' },
   ];
 
   @HostListener('window:scroll', [])
@@ -40,7 +43,9 @@ export class DashboardEmpleado {
   }
 
   toggleSidebar(): void {
-    this.sidebarOpen.set(!this.sidebarOpen());
+    const nextValue = !this.sidebarOpen();
+    this.sidebarOpen.set(nextValue);
+    this.preferences.setSidebarDefaultOpen(nextValue);
   }
 
   isActive(route: string): boolean {

@@ -8,6 +8,38 @@
   font-family: inherit;
 }
 
+.home-hero-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transform: scale(1.03);
+  transition: opacity 900ms ease, transform 6000ms ease;
+}
+
+.home-hero-bg--active {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.home-hero-dot {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  transition: width 180ms ease, background 180ms ease, border-color 180ms ease;
+}
+
+.home-hero-dot--active {
+  width: 2rem;
+  background: #FF7A00;
+  border-color: #FF7A00;
+}
+
 .section-shell {
   border: 1px solid #D9E6F2;
   border-radius: 1.25rem;
@@ -121,6 +153,65 @@
   transform: translateY(-3px) scale(1.04);
 }
 
+/* ─── Marquee de categorías ─────────────────────────────── */
+.category-marquee {
+  position: relative;
+  overflow: hidden;
+}
+
+.category-fade {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 5rem;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.category-fade--l {
+  left: 0;
+  background: linear-gradient(90deg, #ffffff 20%, transparent);
+}
+
+.category-fade--r {
+  right: 0;
+  background: linear-gradient(270deg, #ffffff 20%, transparent);
+}
+
+.category-track {
+  display: flex;
+  gap: 0.75rem;
+  width: max-content;
+  animation: category-marquee-right 34s linear infinite;
+  will-change: transform;
+}
+
+.category-marquee:hover .category-track {
+  animation-play-state: paused;
+}
+
+@keyframes category-marquee-right {
+  from { transform: translateX(-50%); }
+  to   { transform: translateX(0); }
+}
+
+.category-chip {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.85rem;
+  flex-shrink: 0;
+  min-width: 10.5rem;
+  min-height: 7rem;
+  border: 1px solid #D9E6F2;
+  border-radius: 1rem;
+  background: linear-gradient(180deg, #EEF6FD 0%, #ffffff 100%);
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
 .home-category-icon {
   transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, color 0.2s ease;
 }
@@ -144,6 +235,20 @@
 
   .brands-fade {
     width: 2.5rem;
+  }
+
+  .category-track {
+    animation-duration: 24s;
+  }
+
+  .category-fade {
+    width: 2.25rem;
+  }
+
+  .category-chip {
+    min-width: 8.75rem;
+    min-height: 6.25rem;
+    gap: 0.7rem;
   }
 
   .brand-chip {
