@@ -15,8 +15,8 @@
     <section class="border border-gray-200 rounded-xl p-5">
       <h3 class="font-bold text-[#202020] text-lg mb-3">Generar código</h3>
       <p class="text-sm text-[#666666] mb-5">
-        El código se enviará a tu correo asociado. Por seguridad ya no se muestra en esta página;
-        abre tu correo, dile el código a Alexa y podrás consultar tus pedidos por voz.
+        El código se enviará a tu correo asociado y se mostrará aquí solo al generarlo.
+        Si recargas la página, ya no se volverá a mostrar; podrás consultarlo en tu correo mientras siga vigente.
       </p>
 
       <div class="bg-gray-50 rounded-xl border border-gray-100 p-4 mb-5">
@@ -33,7 +33,7 @@
           {{ hasActiveCode() ? 'lock_clock' : 'mark_email_unread' }}
         </span>
         <span *ngIf="isLoading()" class="w-5 h-5 rounded-full border-2 border-white border-t-transparent animate-spin"></span>
-        {{ isLoading() ? 'Generando...' : (hasActiveCode() ? 'Ya tienes un código activo' : 'Enviar código al correo') }}
+        {{ isLoading() ? 'Generando...' : (hasActiveCode() ? 'Ya tienes un código activo' : 'Enviar y mostrar código') }}
       </button>
 
       <div *ngIf="isLinked()" class="mt-5 border border-green-100 bg-green-50 rounded-xl p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -93,7 +93,7 @@
             <div>
               <p class="font-semibold text-[#202020]">Hay un código activo</p>
               <p class="text-sm text-[#666666] mt-1">
-                El código se envió a tu correo. Si no lo encuentras, espera a que expire y genera uno nuevo.
+                Por seguridad no se vuelve a mostrar después de recargar la página. Revisa tu correo o espera a que expire para generar otro.
               </p>
             </div>
           </div>

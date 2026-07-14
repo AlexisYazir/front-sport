@@ -31,7 +31,7 @@ export class AlexaCodes {
       this.remainingSeconds() > 0
     );
   });
-  canShowToken = computed(() => false);
+  canShowToken = computed(() => !!this.code()?.token && this.hasActiveCode());
   isLinked = computed(() => !!this.code()?.isLinked);
   remainingSeconds = computed(() => {
     const currentCode = this.code();
