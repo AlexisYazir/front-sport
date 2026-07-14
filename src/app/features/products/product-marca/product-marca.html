@@ -1,24 +1,19 @@
 <div class="min-h-screen bg-white">
   <!-- Header con información de la marca - Mismo estilo que products -->
   <div class="bg-gradient-to-r from-[#0367A6] to-[#035A91] text-white">
-    <div class="container mx-auto px-4 sm:px-6 py-5 sm:py-6">
+    <div class="container mx-auto px-4 sm:px-6 py-4 sm:py-5">
       
-      <!-- Fila superior con navegación -->
-      <div class="flex items-center justify-between mb-2">
-        <button (click)="goBack()" 
-                class="flex items-center gap-2 text-white/80 hover:text-white transition-colors group">
-          <span class="material-symbols-outlined text-lg sm:text-xl group-hover:-translate-x-1 transition-transform">arrow_back</span>
-          <span class="text-sm sm:text-base hidden sm:inline">Volver</span>
-        </button>
+      <!-- Breadcrumbs compactos -->
+      <div class="mb-3">
+        <app-breadcrumbs [items]="breadcrumbs()"></app-breadcrumbs>
       </div>
       
       <!-- Fila principal: Título a la izquierda, resultados y filtros a la derecha -->
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <!-- Título de la marca -->
         <div>
-          <h1 class="text-2xl sm:text-3xl lg:text-4xl font-light text-white">
-            Productos <span class="font-bold">{{ marcaNombre() }}</span>
-          </h1>
+          <h1 class="text-xl sm:text-2xl font-bold text-white">Productos de la marca {{ marcaNombre() }}</h1>
+          
           <p class="text-white/70 text-xs sm:text-sm mt-1">
             Explora todos los productos de esta marca
           </p>
@@ -254,8 +249,19 @@
       <div class="flex-1">
         
         <!-- Loading State -->
-        <div *ngIf="loading()" class="flex justify-center items-center py-12 sm:py-20">
-          <div class="animate-spin rounded-full h-12 w-12 sm:h-16 sm:w-16 border-b-2 border-[#0367A6]"></div>
+        <div *ngIf="loading()" class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
+          <div *ngFor="let item of [1,2,3,4,5,6,7,8]" class="skeleton-card">
+            <div class="skeleton-block w-full pt-[75%] rounded-none"></div>
+            <div class="p-3 space-y-3 bg-[#f8fafc]">
+              <div class="skeleton-line w-16"></div>
+              <div class="skeleton-line w-full"></div>
+              <div class="skeleton-line w-4/5"></div>
+              <div class="flex items-center justify-between pt-1">
+                <div class="skeleton-line w-16 h-5"></div>
+                <div class="skeleton-line w-10"></div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Error State -->

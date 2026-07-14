@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
 import { CartService } from '../../../core/services/cart.service';
 import { ProductService } from '../../../core/services/product.service';
+import { Product } from '../../../core/models/product.model';
 import { UserRole } from '../../../core/models/user.model';
 import { DashboardPreferencesService } from '../../../core/services/dashboard-preferences.service';
 
@@ -74,8 +75,28 @@ export class Navbar {
 
   mobileDashboardItems = computed(() => {
     const user = this.authService.currentUser();
-    if (user?.rol !== UserRole.USUARIO) {
+    if (!user) {
       return [];
+    }
+
+    if (user.rol === 3) {
+      return [
+        { icon: 'dashboard', label: 'Dashboard', route: '/dashboard/admin' },
+        { icon: 'inventory_2', label: 'Productos', route: '/dashboard/admin/products' },
+        { icon: 'inventory', label: 'Inventario', route: '/dashboard/admin/inventory' },
+        { icon: 'local_offer', label: 'Promos y envíos', route: '/dashboard/admin/promotions' },
+        { icon: 'image', label: 'Banner inicio', route: '/dashboard/admin/banner' },
+        { icon: 'settings', label: 'Configuración', route: '/dashboard/admin/settings' },
+      ];
+    }
+
+    if (user.rol === UserRole.EMPLEADO) {
+      return [
+        { icon: 'shopping_bag', label: 'Pedidos', route: '/dashboard/empleado/orders' },
+        { icon: 'assignment_return', label: 'Devoluciones', route: '/dashboard/empleado/returns' },
+        { icon: 'account_circle', label: 'Perfil', route: '/dashboard/empleado/profile' },
+        { icon: 'settings', label: 'Configuración', route: '/dashboard/empleado/settings' },
+      ];
     }
 
     return [
@@ -90,7 +111,15 @@ export class Navbar {
 
   getSessionIconClass(): string {
     const user = this.authService.currentUser();
+    if (user?.rol === 3) return 'session-icon--admin';
     return user?.rol === UserRole.EMPLEADO ? 'session-icon--employee' : 'session-icon--user';
+  }
+
+  getSessionRoleLabel(): string {
+    const user = this.authService.currentUser();
+    if (user?.rol === 3) return 'Admin';
+    if (user?.rol === UserRole.EMPLEADO) return 'Empleado';
+    return '';
   }
 
   isMobileMenuDark(): boolean {
@@ -283,7 +312,7 @@ export class Navbar {
     switch(user.rol) {
       case 1: return 'Usuario';
       case 2: return 'Empleado';
-      case 3: return 'Administrador';
+      case 3: return 'Admin';
       default: return 'Usuario';
     }
   }
@@ -370,6 +399,7 @@ export class Navbar {
     this.closeAllMenus();
   }
   menuData = signal<any>(null);
+menuProducts = signal<Product[]>([]);
 menuLoading = signal<boolean>(false);
 
 // Estados para los submenús (hover)
@@ -509,6 +539,52 @@ ngOnInit() {
       console.error('Error loading menu:', error);
       this.menuLoading.set(false);
     }
+  });
+
+  this.productService.getProducts().subscribe({
+    next: (products) => this.menuProducts.set(products),
+    error: (error) => console.error('Error loading menu products:', error)
+  });
+}
+
+getAudienceMenuItems(genero: 'hombres' | 'mujeres' | 'ninos', group: 'clothing' | 'accessories'): any[] {
+  const items = this.menuData()?.[group] || [];
+  const products = this.menuProducts();
+
+  if (!products.length) {
+    return items;
+  }
+
+  const parentSlug = group === 'clothing' ? 'ropa' : 'accesorios';
+
+  return items.filter((item: any) => {
+    const itemSlug = this.productService.generateSlug(item.nombre || '');
+    return products.some(product => {
+      const productCategorySlug = this.productService.generateSlug(product.categoria || '');
+      const productParentSlug = this.productService.generateSlug(product.categoria_padre || '');
+
+      if (productCategorySlug !== itemSlug || productParentSlug !== parentSlug) {
+        return false;
+      }
+
+      return this.productMatchesAudience(product, genero);
+    });
+  });
+}
+
+private productMatchesAudience(product: Product, genero: 'hombres' | 'mujeres' | 'ninos'): boolean {
+  const targetGender = this.productService.normalizeGenderSlug(genero);
+
+  return (product.variantes || []).some(variant => {
+    const atributos = variant.atributos || {};
+    const generoValue =
+      atributos['Genero'] ||
+      atributos['Género'] ||
+      atributos['genero'] ||
+      atributos['género'] ||
+      atributos['sexo'];
+
+    return this.productService.normalizeGenderSlug(String(generoValue || '')) === targetGender;
   });
 }
 

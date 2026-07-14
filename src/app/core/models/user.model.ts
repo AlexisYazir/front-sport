@@ -43,6 +43,8 @@ export interface AlexaVerificationCodeResponse {
   expiresAt: string | null;
   remainingSeconds: number;
   hasActiveCode: boolean;
+  isLinked?: boolean;
+  linkedAt?: string | null;
 }
 
 // Interface para Register Request

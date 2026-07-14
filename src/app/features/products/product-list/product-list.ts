@@ -57,15 +57,25 @@ export class ProductList implements OnInit {
     total: 0, 
     hasResults: false
   });
+  allProducts = signal<Product[]>([]);
   categories = signal<Category[]>([]);
   brands = signal<string[]>([]);
   isLoading = signal<boolean>(false);
   
   // Categorías filtradas
   filteredCategories = computed(() => {
-    return this.categories().filter(c => 
+    const categories = this.categories().filter(c => 
       c.nombre.toLowerCase() !== 'todos' && 
       c.nombre.toLowerCase() !== 'todas'
+    );
+
+    const products = this.allProducts();
+    if (!products.length) {
+      return categories;
+    }
+
+    return categories.filter(category =>
+      products.some(product => this.productMatchesCurrentContext(product, category.nombre))
     );
   });
   
@@ -148,6 +158,15 @@ export class ProductList implements OnInit {
 
   private loadFilterMetadata() {
     this.isLoading.set(true);
+
+    this.productService.getProducts().subscribe({
+      next: (products) => {
+        this.allProducts.set(products);
+      },
+      error: (error) => {
+        console.error('Error cargando productos para filtros:', error);
+      }
+    });
     
     this.productService.getCategories().subscribe({
       next: (categories) => {
@@ -510,5 +529,40 @@ private formatSlugLabel(value: string): string {
   return value
     .replace(/-/g, ' ')
     .replace(/\b\w/g, letter => letter.toUpperCase());
+}
+
+private productMatchesCurrentContext(product: Product, categoryName?: string): boolean {
+  if (categoryName && this.productService.generateSlug(product.categoria || '') !== this.productService.generateSlug(categoryName)) {
+    return false;
+  }
+
+  if (this.routeCategoriaPadre() && this.productService.generateSlug(product.categoria_padre || '') !== this.routeCategoriaPadre()) {
+    return false;
+  }
+
+  if (this.routeDeporte()) {
+    const sportSlug = this.routeDeporte();
+    const hasSport = (product.deportes || []).some(deporte => this.productService.generateSlug(deporte) === sportSlug);
+    if (!hasSport) {
+      return false;
+    }
+  }
+
+  if (!this.routeGenero()) {
+    return true;
+  }
+
+  const targetGender = this.productService.normalizeGenderSlug(this.routeGenero());
+  return (product.variantes || []).some(variant => {
+    const atributos = variant.atributos || {};
+    const genero =
+      atributos['Genero'] ||
+      atributos['Género'] ||
+      atributos['genero'] ||
+      atributos['género'] ||
+      atributos['sexo'];
+
+    return this.productService.normalizeGenderSlug(String(genero || '')) === targetGender;
+  });
 }
 }

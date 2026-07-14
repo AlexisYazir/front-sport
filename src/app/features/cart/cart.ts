@@ -24,6 +24,7 @@ export class Cart implements OnInit {
   freeShippingRemaining = this.cartService.freeShippingRemaining;
   
   // Estado local
+  isLoading = signal<boolean>(true);
   isProcessing = signal<boolean>(false);
   clearingCart = signal<boolean>(false);
   showClearCartModal = signal<boolean>(false);
@@ -38,7 +39,11 @@ export class Cart implements OnInit {
     return validation.isValid;
   });
   ngOnInit(): void {
-    this.cartService.loadCart().subscribe();
+    this.isLoading.set(true);
+    this.cartService.loadCart().subscribe({
+      complete: () => this.isLoading.set(false),
+      error: () => this.isLoading.set(false),
+    });
   }
 
   updateQuantity(item: CartItem, newQuantity: number) {

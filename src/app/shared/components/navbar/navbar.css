@@ -36,12 +36,21 @@
   overflow: hidden;
 }
 
+.mega-menu-panel--audience {
+  min-width: 0;
+  width: min(460px, calc(100vw - 2rem));
+}
+
 .mega-menu-content {
   padding: 1.5rem 1.65rem 1.25rem;
 }
 
 .mega-menu-content--three {
   padding: 1.7rem 1.95rem 1.25rem;
+}
+
+.mega-menu-content--audience {
+  padding: 1.05rem 1.25rem 0.95rem;
 }
 
 .mega-menu-content--compact {
@@ -58,8 +67,13 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.mega-menu-grid--audience {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
 .mega-menu-title {
-  margin: 0 0 0.85rem;
+  margin: 0 0 0.6rem;
   color: #172033;
   font-size: 0.72rem;
   font-weight: 800;
@@ -75,10 +89,10 @@
 
 .mega-menu-link {
   display: block;
-  padding: 0.4rem 0.55rem;
+  padding: 0.34rem 0.5rem;
   border-radius: 0.8rem;
   color: #526173;
-  font-size: 0.93rem;
+  font-size: 0.88rem;
   font-weight: 500;
   transition: background-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
 }
@@ -101,8 +115,8 @@
 }
 
 .mega-menu-footer {
-  margin-top: 1.35rem;
-  padding-top: 1rem;
+  margin-top: 0.85rem;
+  padding-top: 0.85rem;
   border-top: 1px solid #edf2f7;
 }
 
@@ -111,7 +125,7 @@
   align-items: center;
   gap: 0.35rem;
   color: #0367a6;
-  font-size: 0.95rem;
+  font-size: 0.88rem;
   font-weight: 700;
   transition: color 0.18s ease, transform 0.18s ease;
 }
@@ -180,6 +194,10 @@
   background: #7c3aed;
 }
 
+.session-icon--admin {
+  background: #ff7a00;
+}
+
 .session-role-label {
   color: #4b5563;
   font-size: 0.9rem;
@@ -194,13 +212,19 @@
 
 @media (max-width: 640px) {
   .session-role-label {
-    display: none;
+    display: inline-flex;
+    font-size: 0.78rem;
   }
 
   .session-icon-button--with-role,
   .admin-session-icon-button {
+    width: auto;
+    min-width: 3.15rem;
+    padding-inline: 0.5rem 0.65rem;
+  }
+
+  .session-icon-button:not(.session-icon-button--with-role) {
     width: 3.15rem;
-    padding-inline: 0.45rem;
   }
 }
 

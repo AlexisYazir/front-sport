@@ -6,8 +6,8 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
       
       <!-- Breadcrumbs en blanco -->
-      <div class="mb-2">
-        <app-breadcrumbs [items]="breadcrumbs()" class="text-white/80"></app-breadcrumbs>
+      <div class="mb-3">
+        <app-breadcrumbs [items]="breadcrumbs()"></app-breadcrumbs>
       </div>
       
       <!-- Fila con título y controles -->
@@ -300,8 +300,19 @@
       <div class="flex-1">
         
         <!-- Loading -->
-        <div *ngIf="isLoading()" class="flex justify-center py-16">
-          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div *ngIf="isLoading()" class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
+          <div *ngFor="let item of [1,2,3,4,5,6,7,8]" class="skeleton-card">
+            <div class="skeleton-block w-full pt-[75%] rounded-none"></div>
+            <div class="p-3 space-y-3 bg-[#f8fafc]">
+              <div class="skeleton-line w-16"></div>
+              <div class="skeleton-line w-full"></div>
+              <div class="skeleton-line w-4/5"></div>
+              <div class="flex items-center justify-between pt-1">
+                <div class="skeleton-line w-16 h-5"></div>
+                <div class="skeleton-line w-10"></div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- No Results -->

@@ -27,14 +27,15 @@ body {
 /* ================= TOAST STYLES ================= */
 
 .toast-container .ngx-toastr {
+  width: min(330px, calc(100vw - 24px)) !important;
   border-radius: 12px !important;
-  padding: 16px 20px !important;
+  padding: 13px 42px 13px 16px !important;
   box-shadow:
     0 10px 25px -5px rgba(0, 0, 0, 0.1),
     0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
   border: none !important;
   font-family: 'Inter', sans-serif !important;
-  min-height: 60px !important;
+  min-height: 52px !important;
   transition: all 0.2s ease !important;
 }
 
@@ -66,12 +67,12 @@ body {
 /* Texto */
 .toast-title {
   font-weight: 600 !important;
-  font-size: 16px !important;
-  margin-bottom: 4px !important;
+  font-size: 14px !important;
+  margin-bottom: 2px !important;
 }
 
 .toast-message {
-  font-size: 14px !important;
+  font-size: 13px !important;
   opacity: 0.95 !important;
   line-height: 1.4 !important;
 }
@@ -120,6 +121,23 @@ body {
 
 .focus\:border-spurt-primary:focus {
   border-color: var(--spurt-primary) !important;
+}
+
+.toast-top-right {
+  top: 18px !important;
+  right: 18px !important;
+}
+
+@media (max-width: 640px) {
+  .toast-top-right {
+    top: 76px !important;
+    right: 12px !important;
+    left: auto !important;
+  }
+
+  .toast-container .ngx-toastr {
+    width: min(300px, calc(100vw - 24px)) !important;
+  }
 }
 
 /* ================= DASHBOARD THEME ================= */
@@ -540,4 +558,41 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
   transform: translateY(-1px) !important;
   box-shadow: 0 10px 20px -4px rgba(0, 0, 0, 0.5) !important;
   transition: all 0.2s ease !important;
+}
+
+/* Skeleton loaders */
+.skeleton-block,
+.skeleton-line,
+.skeleton-circle {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(90deg, #f3f6f9 0%, #ffffff 42%, #eef3f7 78%);
+  background-size: 220% 100%;
+  animation: skeletonShimmer 1.25s ease-in-out infinite;
+}
+
+.skeleton-line {
+  height: 0.85rem;
+  border-radius: 999px;
+}
+
+.skeleton-block {
+  border-radius: 0.9rem;
+}
+
+.skeleton-circle {
+  border-radius: 999px;
+}
+
+.skeleton-card {
+  border: 1px solid #eef2f7;
+  border-radius: 0.95rem;
+  background: #ffffff;
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.04);
+  overflow: hidden;
+}
+
+@keyframes skeletonShimmer {
+  0% { background-position: 120% 0; }
+  100% { background-position: -120% 0; }
 }

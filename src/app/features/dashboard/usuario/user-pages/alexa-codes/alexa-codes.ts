@@ -18,6 +18,7 @@ export class AlexaCodes {
 
   isLoading = signal(false);
   isChecking = signal(true);
+  isUnlinking = signal(false);
   now = signal(Date.now());
   loadedAt = signal(Date.now());
   code = signal<AlexaVerificationCodeResponse | null>(null);
@@ -30,7 +31,8 @@ export class AlexaCodes {
       this.remainingSeconds() > 0
     );
   });
-  canShowToken = computed(() => !!this.code()?.token && this.hasActiveCode());
+  canShowToken = computed(() => false);
+  isLinked = computed(() => !!this.code()?.isLinked);
   remainingSeconds = computed(() => {
     const currentCode = this.code();
     if (!currentCode) return 0;
@@ -97,6 +99,21 @@ export class AlexaCodes {
       () => this.toastr.success('Código copiado', 'Alexa'),
       () => this.toastr.info(`Código: ${token}`, 'Alexa'),
     );
+  }
+
+  unlinkAlexa(): void {
+    if (!this.isLinked() || this.isUnlinking()) return;
+
+    this.isUnlinking.set(true);
+    this.authService.unlinkAlexaAccount().subscribe({
+      next: () => {
+        this.isUnlinking.set(false);
+        this.loadCurrentCode();
+      },
+      error: () => {
+        this.isUnlinking.set(false);
+      },
+    });
   }
 
   formatDate(date: string): string {

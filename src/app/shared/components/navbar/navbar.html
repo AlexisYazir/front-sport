@@ -58,19 +58,19 @@
       <span class="text-sm font-medium">Hombres</span>
     </button>
 
-    <!-- Dropdown Hombres - 3 columnas -->
+    <!-- Dropdown Hombres -->
     <div *ngIf="shouldShowHombresMenu()" 
-         class="mega-menu-panel"
+         class="mega-menu-panel mega-menu-panel--audience"
          (mouseenter)="cancelMenuClose('hombres')" 
          (mouseleave)="onMenuMouseLeave('hombres')">
-      <div class="mega-menu-content mega-menu-content--three">
-        <div class="mega-menu-grid mega-menu-grid--three">
+      <div class="mega-menu-content mega-menu-content--audience">
+        <div class="mega-menu-grid mega-menu-grid--audience">
           
           <!-- Columna Ropa -->
           <div>
             <h3 class="mega-menu-title">Ropa</h3>
             <div class="mega-menu-links">
-              <a *ngFor="let cat of menuData()?.clothing || []" 
+              <a *ngFor="let cat of getAudienceMenuItems('hombres', 'clothing')" 
                  [routerLink]="getAudienceRoute('hombres', 'ropa', cat.nombre)"
                  (click)="closeAllMenus()"
                  class="mega-menu-link">
@@ -83,24 +83,11 @@
           <div>
             <h3 class="mega-menu-title">Accesorios</h3>
             <div class="mega-menu-links">
-              <a *ngFor="let acc of menuData()?.accessories || []" 
+              <a *ngFor="let acc of getAudienceMenuItems('hombres', 'accessories')" 
                  [routerLink]="getAudienceRoute('hombres', 'accesorios', acc.nombre)"
                  (click)="closeAllMenus()"
                  class="mega-menu-link">
                 {{ acc.nombre }}
-              </a>
-            </div>
-          </div>
-          
-          <!-- Columna Deportes -->
-          <div>
-            <h3 class="mega-menu-title">Deportes</h3>
-            <div class="mega-menu-links">
-              <a *ngFor="let sport of menuData()?.sports || []" 
-                 [routerLink]="getSportRoute(sport.nombre)"
-                 (click)="closeAllMenus()"
-                 class="mega-menu-link">
-                {{ sport.nombre }}
               </a>
             </div>
           </div>
@@ -128,19 +115,19 @@
       <span class="text-sm font-medium">Mujeres</span>
     </button>
 
-    <!-- Dropdown Mujeres - 3 columnas -->
+    <!-- Dropdown Mujeres -->
     <div *ngIf="shouldShowMujeresMenu()" 
-         class="mega-menu-panel"
+         class="mega-menu-panel mega-menu-panel--audience"
          (mouseenter)="cancelMenuClose('mujeres')" 
          (mouseleave)="onMenuMouseLeave('mujeres')">
-      <div class="mega-menu-content mega-menu-content--three">
-        <div class="mega-menu-grid mega-menu-grid--three">
+      <div class="mega-menu-content mega-menu-content--audience">
+        <div class="mega-menu-grid mega-menu-grid--audience">
           
           <!-- Columna Ropa -->
           <div>
             <h3 class="mega-menu-title">Ropa</h3>
             <div class="mega-menu-links">
-              <a *ngFor="let cat of menuData()?.clothing || []" 
+              <a *ngFor="let cat of getAudienceMenuItems('mujeres', 'clothing')" 
                  [routerLink]="getAudienceRoute('mujeres', 'ropa', cat.nombre)"
                  (click)="closeAllMenus()"
                  class="mega-menu-link">
@@ -153,24 +140,11 @@
           <div>
             <h3 class="mega-menu-title">Accesorios</h3>
             <div class="mega-menu-links">
-              <a *ngFor="let acc of menuData()?.accessories || []" 
+              <a *ngFor="let acc of getAudienceMenuItems('mujeres', 'accessories')" 
                  [routerLink]="getAudienceRoute('mujeres', 'accesorios', acc.nombre)"
                  (click)="closeAllMenus()"
                  class="mega-menu-link">
                 {{ acc.nombre }}
-              </a>
-            </div>
-          </div>
-          
-          <!-- Columna Deportes -->
-          <div>
-            <h3 class="mega-menu-title">Deportes</h3>
-            <div class="mega-menu-links">
-              <a *ngFor="let sport of menuData()?.sports || []" 
-                 [routerLink]="getSportRoute(sport.nombre)"
-                 (click)="closeAllMenus()"
-                 class="mega-menu-link">
-                {{ sport.nombre }}
               </a>
             </div>
           </div>
@@ -198,19 +172,19 @@
       <span class="text-sm font-medium">Niños</span>
     </button>
 
-    <!-- Dropdown Niños - 3 columnas -->
+    <!-- Dropdown Niños -->
     <div *ngIf="shouldShowNinosMenu()" 
-         class="mega-menu-panel"
+         class="mega-menu-panel mega-menu-panel--audience"
          (mouseenter)="cancelMenuClose('ninos')" 
          (mouseleave)="onMenuMouseLeave('ninos')">
-      <div class="mega-menu-content mega-menu-content--three">
-        <div class="mega-menu-grid mega-menu-grid--three">
+      <div class="mega-menu-content mega-menu-content--audience">
+        <div class="mega-menu-grid mega-menu-grid--audience">
           
           <!-- Columna Ropa -->
           <div>
             <h3 class="mega-menu-title">Ropa</h3>
             <div class="mega-menu-links">
-              <a *ngFor="let cat of menuData()?.clothing || []" 
+              <a *ngFor="let cat of getAudienceMenuItems('ninos', 'clothing')" 
                  [routerLink]="getAudienceRoute('ninos', 'ropa', cat.nombre)"
                  (click)="closeAllMenus()"
                  class="mega-menu-link">
@@ -223,24 +197,11 @@
           <div>
             <h3 class="mega-menu-title">Accesorios</h3>
             <div class="mega-menu-links">
-              <a *ngFor="let acc of menuData()?.accessories || []" 
+              <a *ngFor="let acc of getAudienceMenuItems('ninos', 'accessories')" 
                  [routerLink]="getAudienceRoute('ninos', 'accesorios', acc.nombre)"
                  (click)="closeAllMenus()"
                  class="mega-menu-link">
                 {{ acc.nombre }}
-              </a>
-            </div>
-          </div>
-          
-          <!-- Columna Deportes -->
-          <div>
-            <h3 class="mega-menu-title">Deportes</h3>
-            <div class="mega-menu-links">
-              <a *ngFor="let sport of menuData()?.sports || []" 
-                 [routerLink]="getSportRoute(sport.nombre)"
-                 (click)="closeAllMenus()"
-                 class="mega-menu-link">
-                {{ sport.nombre }}
               </a>
             </div>
           </div>
@@ -355,10 +316,10 @@
                       class="session-icon-button"
                       [class.session-icon-button--with-role]="isEmployee()"
                       aria-label="Abrir menú de usuario">
-                <span *ngIf="isEmployee()" class="session-role-label">Empleado</span>
                 <div class="session-icon" [ngClass]="getSessionIconClass()">
                   <span class="material-symbols-outlined text-white text-xl">person</span>
                 </div>
+                <span *ngIf="getSessionRoleLabel()" class="session-role-label">{{ getSessionRoleLabel() }}</span>
               </button>
 
               <!-- Dropdown menu -->
@@ -469,7 +430,7 @@
   </nav>
 
   <!-- Mobile menu content - las opciones siguen disponibles -->
-  <div *ngIf="mobileMenuOpen()" class="md:hidden fixed inset-0 z-40 bg-black/20 backdrop-blur-sm transition-opacity duration-300" (click)="toggleMobileMenu()">
+  <div *ngIf="mobileMenuOpen()" class="md:hidden fixed inset-0 z-[1000] bg-black/20 backdrop-blur-sm transition-opacity duration-300" (click)="toggleMobileMenu()">
     <div
       class="acrylic-mobile-menu absolute right-0 top-0 h-full w-80 shadow-2xl transform transition-transform duration-300"
       [class.mobile-menu-dark]="isMobileMenuDark()"
@@ -628,10 +589,10 @@
             <button (click)="toggleAdminMenu()" 
                     class="admin-session-icon-button"
                     aria-label="Abrir menú de administrador">
-              <span class="session-role-label session-role-label--admin">Administrador</span>
-              <div class="w-8 h-8 bg-[#FF7A00] rounded-lg flex items-center justify-center">
+              <div class="session-icon session-icon--admin">
                 <span class="material-symbols-outlined text-white text-xl">shield</span>
               </div>
+              <span class="session-role-label session-role-label--admin">Admin</span>
             </button>
 
             <!-- Dropdown menu -->
@@ -669,10 +630,90 @@
               </div>
             </div>
           </div>
+
+          <div class="md:hidden">
+            <button
+              (click)="toggleMobileMenu()"
+              class="p-2 text-white/90 hover:text-white rounded-xl hover:bg-white/15 transition-all duration-200"
+              aria-label="Abrir menú"
+            >
+              <span class="material-symbols-outlined text-2xl">
+                {{ mobileMenuOpen() ? 'close' : 'menu' }}
+              </span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
   </nav>
+
+  <div *ngIf="mobileMenuOpen()" class="md:hidden fixed inset-0 z-[1000] bg-black/20 backdrop-blur-sm transition-opacity duration-300" (click)="toggleMobileMenu()">
+    <div
+      class="acrylic-mobile-menu absolute right-0 top-0 h-full w-80 shadow-2xl transform transition-transform duration-300"
+      [class.mobile-menu-dark]="isMobileMenuDark()"
+      (click)="$event.stopPropagation()">
+      <div class="p-6">
+        <div class="flex justify-between items-center mb-6">
+          <span class="mobile-menu-title text-lg font-semibold">Menú</span>
+          <button (click)="toggleMobileMenu()" class="mobile-menu-close p-2 rounded-xl transition-colors">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+
+        <div class="space-y-1">
+          <div *ngIf="mobileDashboardItems().length" class="mobile-menu-section border-b pb-2 mb-2">
+            <p class="mobile-menu-section-title text-xs font-semibold px-4 mb-1 uppercase tracking-wider">Panel</p>
+            <a
+              *ngFor="let item of mobileDashboardItems()"
+              [routerLink]="item.route"
+              (click)="toggleMobileMenu()"
+              class="mobile-menu-link flex items-center px-4 py-3 rounded-xl transition-all duration-200">
+              <span class="material-symbols-outlined mr-3 text-xl">{{ item.icon }}</span>
+              <span class="text-sm font-medium">{{ item.label }}</span>
+            </a>
+          </div>
+
+          <div class="mobile-menu-section border-b pb-2 mb-2">
+            <p class="mobile-menu-section-title text-xs font-semibold px-4 mb-1 uppercase tracking-wider">Soporte</p>
+            <a routerLink="/support/contact" (click)="toggleMobileMenu()"
+               class="mobile-menu-link flex items-center px-4 py-3 rounded-xl transition-all duration-200">
+              <span class="material-symbols-outlined mr-3 text-xl">mail</span>
+              <span class="text-sm font-medium">Contacto</span>
+            </a>
+            <a routerLink="/support/preguntas-frecuentes" (click)="toggleMobileMenu()"
+               class="mobile-menu-link flex items-center px-4 py-3 rounded-xl transition-all duration-200">
+              <span class="material-symbols-outlined mr-3 text-xl">help</span>
+              <span class="text-sm font-medium">Preguntas Frecuentes</span>
+            </a>
+          </div>
+
+          <div class="mobile-menu-section border-b pb-2 mb-2">
+            <p class="mobile-menu-section-title text-xs font-semibold px-4 mb-1 uppercase tracking-wider">Información</p>
+            <a routerLink="/info/nosotros" (click)="toggleMobileMenu()"
+               class="mobile-menu-link flex items-center px-4 py-3 rounded-xl transition-all duration-200">
+              <span class="material-symbols-outlined mr-3 text-xl">business</span>
+              <span class="text-sm font-medium">Información de Empresa</span>
+            </a>
+            <a routerLink="/info/ubicacion" (click)="toggleMobileMenu()"
+               class="mobile-menu-link flex items-center px-4 py-3 rounded-xl transition-all duration-200">
+              <span class="material-symbols-outlined mr-3 text-xl">location_on</span>
+              <span class="text-sm font-medium">Ubicación</span>
+            </a>
+          </div>
+        </div>
+
+        <div class="mt-6 pt-6 border-t border-gray-200">
+          <button
+            (click)="adminLogout(); toggleMobileMenu()"
+            class="w-full flex items-center px-4 py-3 text-red-600 hover:bg-red-50 rounded-xl transition-all duration-200 mt-2"
+          >
+            <span class="material-symbols-outlined mr-3 text-xl">logout</span>
+            <span class="text-sm font-medium">Cerrar Sesión</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 </ng-container>
 
 <!-- Espaciador -->

@@ -597,6 +597,24 @@ export class AuthService {
     return this.http.get<AlexaVerificationCodeResponse>(`${this.API_URL}/users/alexa/code`);
   }
 
+  unlinkAlexaAccount(): Observable<{ message: string; isLinked: boolean; linkedAt: string | null }> {
+    return this.http
+      .post<{ message: string; isLinked: boolean; linkedAt: string | null }>(
+        `${this.API_URL}/users/alexa/unlink`,
+        {},
+      )
+      .pipe(
+        tap(() => {
+          this.toastr.success('Alexa se desvinculó correctamente', 'Alexa');
+        }),
+        catchError((error) => {
+          const message = error?.error?.message || 'No fue posible desvincular Alexa.';
+          this.toastr.error(message, 'Alexa');
+          return throwError(() => error);
+        }),
+      );
+  }
+
   private mapRecentUserCreatedFromApi(u: any): RecentUserCreated {
     return {
       id: u.id,

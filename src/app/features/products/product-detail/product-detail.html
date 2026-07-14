@@ -1,24 +1,61 @@
 <!-- product-detail.html - Layout vertical estilo Nike con colores azul/negro -->
 
 <!-- Loading State -->
-<div *ngIf="isLoading()" class="min-h-screen flex items-center justify-center bg-gray-50">
-  <div class="text-center">
-    <div class="w-16 h-16 border-4 border-[#0367A6] border-t-gray-900 rounded-full animate-spin mx-auto mb-4"></div>
-    <p class="text-gray-600 font-medium">Cargando producto...</p>
+<div *ngIf="isLoading()" class="min-h-screen bg-white">
+  <div class="bg-white border-b border-gray-100 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
+      <div class="skeleton-block h-8 w-full max-w-sm"></div>
+    </div>
+  </div>
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-8 lg:py-12">
+    <div class="flex flex-col lg:flex-row lg:gap-x-12 xl:gap-x-16">
+      <div class="lg:w-1/2 mb-8 lg:mb-0">
+        <div class="hidden lg:flex lg:gap-4">
+          <div class="w-20 flex flex-col gap-3">
+            <div *ngFor="let item of [1,2,3]" class="skeleton-block w-20 h-20"></div>
+          </div>
+          <div class="flex-1">
+            <div class="skeleton-block aspect-square rounded-2xl"></div>
+          </div>
+        </div>
+        <div class="lg:hidden">
+          <div class="skeleton-block aspect-square rounded-2xl"></div>
+          <div class="flex gap-3 mt-4">
+            <div *ngFor="let item of [1,2,3]" class="skeleton-block w-16 h-16 rounded-lg"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="lg:w-1/2">
+        <div class="space-y-5">
+          <div class="skeleton-line w-28"></div>
+          <div class="space-y-3">
+            <div class="skeleton-line h-9 w-full"></div>
+            <div class="skeleton-line h-9 w-4/5"></div>
+          </div>
+          <div class="skeleton-line w-48"></div>
+          <div class="skeleton-line h-10 w-32"></div>
+          <div class="skeleton-line w-72 max-w-full"></div>
+          <div class="skeleton-block h-20 w-full rounded-xl"></div>
+          <div class="skeleton-block h-14 w-full rounded-xl"></div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
 <!-- Product Detail Container -->
 <div *ngIf="!isLoading() && product()" class="bg-white min-h-screen">
   
-  <!-- Header con breadcrumbs -->
-  <div class="bg-white border-b border-gray-100 sticky top-0 z-40 shadow-sm">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-      <app-breadcrumbs [items]="breadcrumbs()" class="text-gray-500 text-sm"></app-breadcrumbs>
+  <!-- Breadcrumbs compactos pegados al navbar -->
+  <div class="bg-white border-b border-gray-100 shadow-sm relative z-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-1">
+      <app-breadcrumbs [items]="breadcrumbs()"></app-breadcrumbs>
     </div>
   </div>
 
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-8 lg:py-12">
     
     <div class="flex flex-col lg:flex-row lg:gap-x-12 xl:gap-x-16">
       

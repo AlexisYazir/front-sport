@@ -6,11 +6,12 @@ import { NgxPaginationModule } from 'ngx-pagination';
 import { ProductService } from '../../../core/services/product.service';
 import { Product, ProductFilters } from '../../../core/models/product.model';
 import { ToastrService } from 'ngx-toastr';
+import { Breadcrumbs, BreadcrumbItem } from '../../../shared/components/breadcrumbs/breadcrumbs';
 
 @Component({
   selector: 'app-product-marca',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, NgxPaginationModule],
+  imports: [CommonModule, RouterModule, FormsModule, NgxPaginationModule, Breadcrumbs],
   templateUrl: './product-marca.html',
   styleUrl: './product-marca.css',
 })
@@ -46,6 +47,11 @@ export class ProductMarca implements OnInit {
   // Paginación
   currentPage = signal<number>(1);
   itemsPerPage = signal<number>(window.innerWidth < 640 ? 6 : 12);
+
+  breadcrumbs = computed((): BreadcrumbItem[] => [
+    { label: 'Productos', url: '/products', icon: 'storefront' },
+    { label: this.marcaNombre() ? `Marca: ${this.marcaNombre()}` : 'Marca', icon: 'branding_watermark' },
+  ]);
   
   // Categorías disponibles (extraídas de los productos)
   availableCategories = computed(() => {
