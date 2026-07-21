@@ -61,7 +61,6 @@ export class Users implements OnInit {
     // ✅ CORREGIDO: Llamar al signal como función
     const currentUser = this.authService.currentUser(); // 👈 AHORA SÍ
     this.currentUserId = currentUser?.id || null;
-    console.log('Usuario actual ID:', this.currentUserId); // Para verificar
     
     this.loadUsers();
     this.loadRoles();
@@ -303,7 +302,7 @@ export class Users implements OnInit {
   refreshData() {
     this.loadUsers();
     this.loadRoles();
-    this.toastr.success('Datos actualizados', 'Éxito');
+    this.toastr.success('Datos actualizados correctamente', 'Actualización');
   }
 
   // ===== UTILIDADES =====

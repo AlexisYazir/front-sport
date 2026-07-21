@@ -6,7 +6,7 @@
   <div class="flex">
     <!-- Sidebar -->
     <aside [class.w-52]="sidebarOpen()" 
-           [class.w-16]="!sidebarOpen()"
+           [class.sidebar-collapsed]="!sidebarOpen()"
            [class.top-16]="!navbarOculto()"
            [class.top-0]="navbarOculto()"
            class="admin-sidebar bg-white shadow-md border-r border-gray-200 fixed left-0 bottom-0 transition-all duration-300 z-20 overflow-hidden flex flex-col">
@@ -44,13 +44,13 @@
    <li *ngFor="let item of menuItems">
   <a
     [routerLink]="item.route"
-    routerLinkActive="bg-[#0367A6] text-white shadow-sm"
+    routerLinkActive="sidebar-link-active"
     [routerLinkActiveOptions]="{exact: item.route === '/dashboard/admin'}"
 
     class="group flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer
            transition-all duration-200 text-sm"
 
-    [class.text-white]="isActive(item.route)"
+    [class.text-[#0367A6]]="isActive(item.route)"
     [class.text-[#666666]]="!isActive(item.route)"
     [class.hover:bg-[#0367A6]/10]="!isActive(item.route)"
     [class.hover:text-[#0367A6]]="!isActive(item.route)"
@@ -63,7 +63,7 @@
     <!-- ICONO -->
     <span
       class="material-symbols-outlined text-xl transition-colors duration-200"
-      [class.text-white]="isActive(item.route)"
+      [class.text-[#0367A6]]="isActive(item.route)"
       [class.group-hover:text-[#0367A6]]="!isActive(item.route)">
       {{ item.icon }}
     </span>
@@ -82,10 +82,15 @@
 
     <!-- Main Content -->
     <main [class.ml-52]="sidebarOpen()" 
-          [class.ml-16]="!sidebarOpen()"
+          [class.dashboard-main-collapsed]="!sidebarOpen()"
           [class.pt-2]="!navbarOculto()"
           [class.pt-0]="navbarOculto()"
-          class="flex-1 p-2 transition-all duration-300 overflow-y-auto h-screen">
+          class="dashboard-route-host relative flex-1 p-2 transition-all duration-300 overflow-y-auto h-screen">
+
+      <app-dashboard-route-skeleton
+        *ngIf="navigationLoading.loading()"
+        [route]="router.url">
+      </app-dashboard-route-skeleton>
       
       <!-- Ruta principal del dashboard -->
       <ng-container *ngIf="router.url === '/dashboard/admin' || router.url === '/dashboard/admin/'">
@@ -188,37 +193,48 @@
             <h2 class="text-lg font-semibold text-[#202020]">Accesos Rápidos</h2>
           </div>
           
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div class="quick-access-grid">
             <a routerLink="/dashboard/admin/products" 
-               class="flex flex-col items-center gap-2 p-3 bg-gradient-to-br from-blue-50 to-white rounded-xl border border-blue-100 hover:shadow-md hover:border-[#0367A6]/30 transition-all">
-              <div class="bg-[#0367A6] p-2 rounded-lg">
+               class="quick-access-card quick-access-card--blue">
+              <div class="quick-access-icon">
                 <span class="material-symbols-outlined text-white text-xl">add_box</span>
               </div>
               <span class="text-xs font-medium text-[#202020]">Nuevo Producto</span>
             </a>
 
-            <a routerLink="/dashboard/admin/db" 
-               class="flex flex-col items-center gap-2 p-3 bg-gradient-to-br from-purple-50 to-white rounded-xl border border-purple-100 hover:shadow-md hover:border-purple-300 transition-all">
-              <div class="bg-purple-600 p-2 rounded-lg">
+            <a routerLink="/dashboard/admin/inventory" class="quick-access-card quick-access-card--green">
+              <div class="quick-access-icon">
+                <span class="material-symbols-outlined text-white text-xl">inventory</span>
+              </div>
+              <span class="text-xs font-medium text-[#202020]">Inventario</span>
+            </a>
+
+            <a routerLink="/dashboard/admin/db" class="quick-access-card quick-access-card--purple">
+              <div class="quick-access-icon">
                 <span class="material-symbols-outlined text-white text-xl">storage</span>
               </div>
               <span class="text-xs font-medium text-[#202020]">DB Admin</span>
             </a>
 
-            <a routerLink="/dashboard/admin/users" 
-               class="flex flex-col items-center gap-2 p-3 bg-gradient-to-br from-green-50 to-white rounded-xl border border-green-100 hover:shadow-md hover:border-green-300 transition-all">
-              <div class="bg-green-600 p-2 rounded-lg">
-                <span class="material-symbols-outlined text-white text-xl">group_add</span>
+            <a routerLink="/dashboard/admin/promotions" class="quick-access-card quick-access-card--orange">
+              <div class="quick-access-icon">
+                <span class="material-symbols-outlined text-white text-xl">local_offer</span>
               </div>
-              <span class="text-xs font-medium text-[#202020]">Nuevo Usuario</span>
+              <span class="text-xs font-medium text-[#202020]">Promos y envíos</span>
             </a>
 
-            <a routerLink="/dashboard/admin/predictions" 
-               class="flex flex-col items-center gap-2 p-3 bg-gradient-to-br from-amber-50 to-white rounded-xl border border-amber-100 hover:shadow-md hover:border-amber-300 transition-all">
-              <div class="bg-amber-600 p-2 rounded-lg">
-                <span class="material-symbols-outlined text-white text-xl">monitoring</span>
+            <a routerLink="/dashboard/admin/reports" class="quick-access-card quick-access-card--cyan">
+              <div class="quick-access-icon">
+                <span class="material-symbols-outlined text-white text-xl">query_stats</span>
               </div>
-              <span class="text-xs font-medium text-[#202020]">Predicción ventas</span>
+              <span class="text-xs font-medium text-[#202020]">Reportes</span>
+            </a>
+
+            <a routerLink="/dashboard/admin/banner" class="quick-access-card quick-access-card--rose">
+              <div class="quick-access-icon">
+                <span class="material-symbols-outlined text-white text-xl">wallpaper</span>
+              </div>
+              <span class="text-xs font-medium text-[#202020]">Banner inicio</span>
             </a>
           </div>
         </div>

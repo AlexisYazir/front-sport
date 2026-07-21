@@ -5,6 +5,13 @@
   max-height: 100vh;
 }
 
+.sidebar-collapsed { width: 4.5rem; }
+.dashboard-main-collapsed { margin-left: 4.5rem; }
+.sidebar-link-active { background: #dcecf6 !important; color: #0367a6 !important; box-shadow: 0 4px 12px rgba(3, 103, 166, 0.1); }
+.sidebar-link-active:hover { background: #d4e8f4 !important; }
+.dashboard-theme-dark .sidebar-link-active { background: #263746 !important; color: #7dd3fc !important; }
+.dashboard-theme-dark .sidebar-link-active:hover { background: #2c4051 !important; }
+
 .dashboard-sidebar-scroll {
   scrollbar-width: thin;
   scrollbar-color: rgba(3, 103, 166, 0.22) transparent;

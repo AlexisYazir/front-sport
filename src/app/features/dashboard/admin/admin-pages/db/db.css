@@ -199,11 +199,50 @@
 
 .db-modal-card {
   width: 100%;
-  max-width: 34rem;
-  border-radius: 1.25rem;
+  max-width: 38rem;
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 1rem;
   background: #ffffff;
-  padding: 1.5rem;
-  box-shadow: 0 30px 60px rgba(15, 23, 42, 0.22);
+  padding: 1.75rem;
+  box-shadow: 0 32px 80px rgba(15, 23, 42, 0.34);
+  animation: db-modal-enter 180ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.db-modal-card--large {
+  max-width: 46rem;
+}
+
+@media (max-width: 640px) {
+  .db-modal-card {
+    max-height: calc(100dvh - 1.3rem);
+    padding: 1rem;
+    border-radius: 0.85rem;
+  }
+
+  .db-modal-card .flex.justify-end.gap-3 {
+    align-items: stretch;
+    flex-direction: column-reverse;
+  }
+
+  .db-modal-card .db-primary-button,
+  .db-modal-card .db-secondary-button,
+  .db-modal-card .db-danger-button {
+    width: 100%;
+  }
+}
+
+@keyframes db-modal-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .db-modal-icon {

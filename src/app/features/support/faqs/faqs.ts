@@ -42,7 +42,6 @@ export class Faqs implements OnInit {
         this.isLoading.set(false);
       },
       error: (error) => {
-        console.error('Error cargando FAQs:', error);
         this.toastr.error('Error al cargar las preguntas frecuentes', 'Error');
         this.isLoading.set(false);
       }
@@ -98,7 +97,6 @@ export class Faqs implements OnInit {
         }
       },
       error: (error) => {
-        console.error('Error al marcar como útil:', error);
         this.toastr.error('No se pudo registrar tu voto', 'Error');
       }
     });

@@ -25,7 +25,6 @@ export class Nosotros implements OnInit {
         this.companyInfo = info;
       },
       error: (error) => {
-        console.error('Error cargando info de empresa:', error);
       }
     });
   }

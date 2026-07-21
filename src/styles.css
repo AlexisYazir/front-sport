@@ -10,7 +10,7 @@
 /* ================= GLOBAL ================= */
 
 body {
-  font-family: 'Inter', sans-serif !important;;
+  font-family: 'Inter', sans-serif !important;
   margin: 0;
   padding: 0;
 }
@@ -27,61 +27,141 @@ body {
 /* ================= TOAST STYLES ================= */
 
 .toast-container .ngx-toastr {
-  width: min(330px, calc(100vw - 24px)) !important;
-  border-radius: 12px !important;
-  padding: 13px 42px 13px 16px !important;
-  box-shadow:
-    0 10px 25px -5px rgba(0, 0, 0, 0.1),
-    0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
-  border: none !important;
+  --toast-bg: #0367a6;
+  --toast-shadow: rgba(3, 103, 166, 0.34);
+  width: min(370px, calc(100vw - 28px)) !important;
+  min-height: 0 !important;
+  margin: 0 0 0.55rem !important;
+  padding: 0.72rem 2.6rem 0.72rem 1rem !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 10px !important;
+  background: var(--toast-bg) !important;
+  background-image: none !important;
+  color: #ffffff !important;
+  box-shadow: 0 16px 34px -16px var(--toast-shadow), 0 7px 18px rgba(15, 23, 42, 0.2) !important;
   font-family: 'Inter', sans-serif !important;
-  min-height: 52px !important;
-  transition: all 0.2s ease !important;
+  animation: sc-toast-arrive 420ms cubic-bezier(0.2, 0.9, 0.25, 1.18) both !important;
+  transition: transform 180ms ease, box-shadow 180ms ease !important;
 }
 
 .toast-container .ngx-toastr:hover {
-  transform: translateY(-2px) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 20px 40px -16px var(--toast-shadow), 0 9px 20px rgba(15, 23, 42, 0.24) !important;
 }
 
 /* Variantes */
 .toast-success {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
-  color: #fff !important;
+  --toast-bg: #0aa86e !important;
+  --toast-shadow: rgba(10, 168, 110, 0.44) !important;
 }
 
 .toast-error {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
-  color: #fff !important;
+  --toast-bg: #ef3340 !important;
+  --toast-shadow: rgba(239, 51, 64, 0.44) !important;
 }
 
 .toast-info {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
-  color: #fff !important;
+  --toast-bg: #0367a6 !important;
+  --toast-shadow: rgba(3, 103, 166, 0.42) !important;
 }
 
 .toast-warning {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
-  color: #fff !important;
+  --toast-bg: #f28c00 !important;
+  --toast-shadow: rgba(242, 140, 0, 0.44) !important;
 }
 
 /* Texto */
 .toast-title {
-  font-weight: 600 !important;
-  font-size: 14px !important;
-  margin-bottom: 2px !important;
+  margin: 0 0 0.12rem !important;
+  color: #ffffff !important;
+  font-size: 0.82rem !important;
+  font-weight: 750 !important;
+  line-height: 1.25 !important;
+}
+
+/* Contadores compactos y consistentes en navegación y acciones. */
+.sc-count-badge {
+  display: inline-grid !important;
+  min-width: 1.25rem !important;
+  height: 1.25rem !important;
+  padding: 0 0.26rem !important;
+  place-items: center !important;
+  border: 2px solid #fff !important;
+  border-radius: 999px !important;
+  background: #ff7a00 !important;
+  color: #fff !important;
+  box-shadow: 0 3px 9px rgba(194, 65, 12, 0.3) !important;
+  font-size: 0.64rem !important;
+  font-weight: 800 !important;
+  line-height: 1 !important;
+  letter-spacing: 0 !important;
+}
+
+/* Fundido corto para el cambio de tema, compartido por navbar y Configuración. */
+html.sc-theme-transitioning::after {
+  content: '';
+  position: fixed;
+  z-index: 99999;
+  inset: 0;
+  pointer-events: none;
+  animation: sc-theme-soft-fade 460ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  backdrop-filter: blur(5px) saturate(0.96);
+  -webkit-backdrop-filter: blur(5px) saturate(0.96);
+}
+
+html.sc-theme-transitioning--dark::after {
+  background: rgba(18, 18, 18, 0.2);
+}
+
+html.sc-theme-transitioning--light::after {
+  background: rgba(248, 250, 252, 0.28);
+}
+
+@keyframes sc-theme-soft-fade {
+  0% { opacity: 0; backdrop-filter: blur(0); -webkit-backdrop-filter: blur(0); }
+  36% { opacity: 1; }
+  58% { opacity: 0.72; }
+  100% { opacity: 0; backdrop-filter: blur(0); -webkit-backdrop-filter: blur(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.sc-theme-transitioning::after { display: none; }
 }
 
 .toast-message {
-  font-size: 13px !important;
-  opacity: 0.95 !important;
-  line-height: 1.4 !important;
+  color: rgba(255, 255, 255, 0.92) !important;
+  font-size: 0.76rem !important;
+  line-height: 1.35 !important;
 }
 
 /* Progress bar */
 .toast-progress {
-  height: 3px !important;
-  border-radius: 0 0 12px 12px !important;
-  background: rgba(255, 255, 255, 0.3) !important;
+  height: 2px !important;
+  border-radius: 0 0 8px 8px !important;
+  background: #ffffff !important;
+  opacity: 0.72 !important;
+}
+
+.toast-close-button {
+  top: 0.55rem !important;
+  right: 0.68rem !important;
+  color: #ffffff !important;
+  font-size: 1.15rem !important;
+  font-weight: 500 !important;
+  line-height: 1 !important;
+  opacity: 0.8 !important;
+  text-shadow: none !important;
+}
+
+.toast-close-button:hover {
+  color: #ffffff !important;
+  opacity: 1 !important;
+}
+
+@keyframes sc-toast-arrive {
+  0% { opacity: 0; transform: translateY(-20px) scale(0.94); }
+  65% { opacity: 1; transform: translateY(3px) scale(1.01); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 /* ================= SPORT CENTER COLORS ================= */
@@ -123,21 +203,26 @@ body {
   border-color: var(--spurt-primary) !important;
 }
 
-.toast-top-right {
-  top: 18px !important;
-  right: 18px !important;
+.toast-top-center {
+  top: 74px !important;
+  left: 50% !important;
+  width: min(370px, calc(100vw - 28px)) !important;
+  transform: translateX(-50%) !important;
 }
 
 @media (max-width: 640px) {
-  .toast-top-right {
-    top: 76px !important;
-    right: 12px !important;
-    left: auto !important;
+  .toast-top-center {
+    top: 70px !important;
+    width: calc(100vw - 24px) !important;
   }
 
   .toast-container .ngx-toastr {
-    width: min(300px, calc(100vw - 24px)) !important;
+    width: 100% !important;
   }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast-container .ngx-toastr { animation: none !important; }
 }
 
 /* ================= DASHBOARD THEME ================= */
@@ -155,7 +240,26 @@ body {
 
   background: var(--sc-bg) !important;
   color: var(--sc-text);
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition: background-color 0.42s ease, color 0.32s ease;
+}
+
+.dashboard-theme .bg-white,
+.dashboard-theme .bg-gray-50,
+.dashboard-theme .bg-gray-100,
+.dashboard-theme .dashboard-card,
+.dashboard-theme .dashboard-soft-row,
+.dashboard-theme .dashboard-page-toolbar,
+.dashboard-theme input,
+.dashboard-theme select,
+.dashboard-theme textarea,
+.dashboard-theme table,
+.dashboard-theme th,
+.dashboard-theme td {
+  transition:
+    background-color 0.38s ease,
+    border-color 0.38s ease,
+    color 0.3s ease,
+    box-shadow 0.38s ease;
 }
 
 .dashboard-theme-dark {
@@ -394,6 +498,170 @@ body {
   border-color: var(--sc-border) !important;
 }
 
+.dashboard-route-host {
+  min-width: 0;
+  overflow-x: hidden;
+  transform: none !important;
+  filter: none !important;
+  perspective: none !important;
+  contain: none !important;
+}
+
+.dashboard-route-host router-outlet + * {
+  /* A transform/animation here makes position: fixed relative to the scrollable
+     dashboard instead of the viewport, trapping modals below navbar/sidebar. */
+  animation: none !important;
+  transform: none !important;
+  filter: none !important;
+  perspective: none !important;
+  contain: none !important;
+}
+
+/* Los overlays deben usar siempre la ventana como referencia y quedar sobre navbar/sidebar. */
+.dashboard-route-host .fixed.inset-0 {
+  position: fixed !important;
+  z-index: 2147483000 !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  max-width: none !important;
+  height: 100dvh !important;
+  min-height: 100dvh !important;
+  margin: 0 !important;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right))
+    max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left)) !important;
+}
+
+.dashboard-route-host .fixed.inset-0 > * {
+  position: relative;
+  z-index: 1;
+  max-height: calc(100dvh - 2rem);
+}
+
+.cdk-overlay-container {
+  z-index: 2147483001 !important;
+}
+
+body:has(.dashboard-route-host .fixed.inset-0) {
+  overflow: hidden !important;
+}
+
+.dashboard-page-toolbar {
+  gap: 1rem;
+}
+
+.dashboard-page-toolbar > :first-child,
+.dashboard-page-toolbar > :first-child > div:last-child {
+  min-width: 0;
+}
+
+.dashboard-page-actions {
+  align-items: stretch;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.dashboard-page-actions > a,
+.dashboard-page-actions > button,
+.dashboard-page-actions > ng-container > a,
+.dashboard-page-actions > ng-container > button {
+  min-height: 2.65rem;
+  justify-content: center;
+  white-space: normal;
+  text-align: center;
+}
+
+.dashboard-data-skeleton {
+  display: grid;
+  gap: 1rem;
+  padding: 0.25rem 0 1rem;
+  animation: dashboard-content-enter 180ms ease-out both;
+}
+
+.dashboard-skeleton-block {
+  position: relative;
+  display: block;
+  height: 2.7rem;
+  overflow: hidden;
+  border-radius: 0.65rem;
+  background: var(--sc-soft, #eef2f6);
+}
+
+.dashboard-skeleton-block::after {
+  position: absolute;
+  inset: 0;
+  content: '';
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(148, 163, 184, 0.2), transparent);
+  animation: dashboard-skeleton-shimmer 1.35s infinite;
+}
+
+.dashboard-data-skeleton__tools {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.dashboard-data-skeleton__search { width: min(28rem, 70%); height: 3rem; }
+.dashboard-data-skeleton__counter { width: 8rem; height: 3rem; }
+.dashboard-data-skeleton__filters { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+.dashboard-data-skeleton__filters .dashboard-skeleton-block { width: 9rem; height: 2.5rem; }
+.dashboard-data-skeleton__table { overflow: hidden; border: 1px solid var(--sc-border, #e5e7eb); border-radius: 0.75rem; }
+.dashboard-data-skeleton__row { display: grid; grid-template-columns: 3.5rem 2fr repeat(3, 1fr); min-height: 5rem; align-items: center; gap: 1.25rem; padding: 0 1.25rem; border-bottom: 1px solid var(--sc-border, #e5e7eb); }
+.dashboard-data-skeleton__avatar { width: 3rem; height: 3rem; border-radius: 0.65rem; }
+.dashboard-data-skeleton__line { width: 80%; height: 0.75rem; }
+
+/* Convierte los loaders heredados de cada vista en un skeleton consistente. */
+.dashboard-theme .flex.flex-col.items-center.justify-center.py-16,
+.dashboard-theme .dashboard-loading-surface {
+  position: relative;
+  display: block !important;
+  min-height: 22rem;
+  overflow: hidden;
+  border: 1px solid var(--sc-border, #e5e7eb);
+  border-radius: 0.8rem;
+  background:
+    linear-gradient(var(--sc-soft, #eef2f6) 0 0) 1.25rem 1.25rem / 35% 1.25rem no-repeat,
+    linear-gradient(var(--sc-soft, #eef2f6) 0 0) calc(100% - 1.25rem) 1.1rem / 8rem 2.8rem no-repeat,
+    linear-gradient(var(--sc-soft, #eef2f6) 0 0) 1.25rem 5.4rem / calc(100% - 2.5rem) 3.6rem no-repeat,
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 4.9rem,
+      var(--sc-border, #e5e7eb) 5rem,
+      transparent 5.05rem
+    ),
+    var(--sc-card, #fff);
+}
+
+.dashboard-theme .flex.flex-col.items-center.justify-center.py-16 > *,
+.dashboard-theme .dashboard-loading-surface > * {
+  visibility: hidden;
+}
+
+.dashboard-theme .flex.flex-col.items-center.justify-center.py-16::after,
+.dashboard-theme .dashboard-loading-surface::after {
+  position: absolute;
+  inset: 0;
+  content: '';
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(148, 163, 184, 0.16), transparent);
+  animation: dashboard-skeleton-shimmer 1.35s infinite;
+}
+
+@keyframes dashboard-content-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes dashboard-skeleton-shimmer {
+  to { transform: translateX(100%); }
+}
+
 .dashboard-reduced-motion *,
 .dashboard-reduced-motion *::before,
 .dashboard-reduced-motion *::after {
@@ -404,6 +672,19 @@ body {
 }
 
 @media (max-width: 767px) {
+  .dashboard-route-host .fixed.inset-0 {
+    align-items: flex-start !important;
+    padding: max(0.65rem, env(safe-area-inset-top)) 0.65rem max(0.65rem, env(safe-area-inset-bottom)) !important;
+  }
+
+  .dashboard-route-host .fixed.inset-0 > * {
+    width: 100%;
+    max-height: calc(100dvh - 1.3rem);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border-radius: 0.85rem !important;
+  }
+
   .dashboard-theme .dashboard-sidebar,
   .dashboard-theme .admin-sidebar {
     display: none !important;
@@ -411,6 +692,94 @@ body {
 
   .dashboard-theme main {
     margin-left: 0 !important;
+    min-width: 0;
+    padding: 0.4rem !important;
+    overflow-x: hidden !important;
+  }
+
+  .dashboard-page-shell {
+    width: 100%;
+    min-width: 0;
+    padding: 0.7rem !important;
+    border-radius: 0.65rem !important;
+  }
+
+  .dashboard-page-toolbar {
+    align-items: stretch !important;
+    flex-direction: column;
+    padding: 0.85rem !important;
+  }
+
+  .dashboard-page-toolbar > :first-child {
+    align-items: flex-start;
+  }
+
+  .dashboard-page-toolbar h1,
+  .dashboard-page-toolbar h2 {
+    font-size: clamp(1.2rem, 7vw, 1.55rem) !important;
+    line-height: 1.18;
+    overflow-wrap: anywhere;
+  }
+
+  .dashboard-page-toolbar p {
+    line-height: 1.35;
+  }
+
+  .dashboard-page-actions {
+    display: grid !important;
+    width: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem !important;
+  }
+
+  .dashboard-page-actions > a,
+  .dashboard-page-actions > button,
+  .dashboard-page-actions > ng-container,
+  .dashboard-page-actions > ng-container > a,
+  .dashboard-page-actions > ng-container > button {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .dashboard-page-actions > ng-container {
+    display: contents;
+  }
+
+  .dashboard-page-shell > .flex.border-b {
+    max-width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .dashboard-page-shell > .flex.border-b::-webkit-scrollbar { display: none; }
+  .dashboard-page-shell > .flex.border-b button { flex: 0 0 auto; padding-inline: 1rem !important; }
+  .dashboard-data-skeleton__tools { flex-direction: column; }
+  .dashboard-data-skeleton__search, .dashboard-data-skeleton__counter { width: 100%; }
+  .dashboard-data-skeleton__filters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dashboard-data-skeleton__filters .dashboard-skeleton-block { width: 100%; }
+  .dashboard-data-skeleton__row { grid-template-columns: 3.5rem 1fr; gap: 0.75rem; padding: 0 0.85rem; }
+  .dashboard-data-skeleton__row .dashboard-data-skeleton__line:nth-last-child(-n + 3) { display: none; }
+
+  .dashboard-theme .flex.flex-col.items-center.justify-center.py-16,
+  .dashboard-theme .dashboard-loading-surface {
+    min-height: 18rem;
+    background:
+      linear-gradient(var(--sc-soft, #eef2f6) 0 0) 1rem 1rem / 62% 1.1rem no-repeat,
+      linear-gradient(var(--sc-soft, #eef2f6) 0 0) 1rem 4rem / calc(100% - 2rem) 4.5rem no-repeat,
+      repeating-linear-gradient(
+        to bottom,
+        transparent 0,
+        transparent 5.2rem,
+        var(--sc-border, #e5e7eb) 5.3rem,
+        transparent 5.35rem
+      ),
+      var(--sc-card, #fff);
+  }
+}
+
+@media (max-width: 430px) {
+  .dashboard-page-actions {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -424,7 +793,7 @@ body {
 
 
 html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+body { margin: 0; }
 /* Reset total de estilos por defecto */
 .mat-mdc-tooltip,
 .mdc-tooltip,

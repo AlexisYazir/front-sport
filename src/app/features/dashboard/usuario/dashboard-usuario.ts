@@ -8,11 +8,14 @@ import { ProductService } from '../../../core/services/product.service';
 import { UserOrder, UserOrderItem } from '../../../core/models/product.model';
 import { formatMexicoDateTime } from '../../../core/utils/date-time.util';
 import { DashboardPreferencesService } from '../../../core/services/dashboard-preferences.service';
+import { DashboardNavigationLoadingService } from '../../../core/services/dashboard-navigation-loading.service';
+import { DashboardRouteSkeleton } from '../shared/dashboard-route-skeleton/dashboard-route-skeleton';
+import { ToastrService } from 'ngx-toastr';
 
 @Component({
   selector: 'app-dashboard-usuario',
   standalone: true,
-  imports: [CommonModule, RouterModule, MatTooltipModule],
+  imports: [CommonModule, RouterModule, MatTooltipModule, DashboardRouteSkeleton],
   templateUrl: './dashboard-usuario.html',
   styleUrl: './dashboard-usuario.css',
 })
@@ -20,8 +23,10 @@ export class DashboardUsuario implements OnInit {
   private authService = inject(AuthService);
   private productService = inject(ProductService);
   private cartService = inject(CartService);
+  private toastr = inject(ToastrService);
   public preferences = inject(DashboardPreferencesService);
   public router = inject(Router);
+  public navigationLoading = inject(DashboardNavigationLoadingService);
 
   sidebarOpen = this.preferences.sidebarDefaultOpen;
   navbarOculto = signal<boolean>(false);
@@ -52,7 +57,6 @@ export class DashboardUsuario implements OnInit {
   totalSpent = computed(() =>
     this.orders().reduce((total, order) => total + Number(order.total || 0), 0),
   );
-  points = computed(() => Math.floor(this.totalSpent() / 10));
   recentOrders = computed(() => this.orders().slice(0, 3));
   averageTicket = computed(() =>
     this.totalOrders() > 0 ? this.totalSpent() / this.totalOrders() : 0,
@@ -98,6 +102,12 @@ export class DashboardUsuario implements OnInit {
         this.isLoading.set(false);
       },
     });
+  }
+
+  refreshDashboard(): void {
+    this.productService.clearRequestCache();
+    this.loadDashboardData();
+    this.toastr.success('Datos actualizados correctamente', 'Actualización');
   }
 
   toggleSidebar(): void {

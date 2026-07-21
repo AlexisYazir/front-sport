@@ -86,7 +86,6 @@ export class Register implements OnInit {
         });
       }, 300);
     } else {
-      console.warn('⚠️ Google Client ID no está configurado');
     }
   }
 
@@ -292,11 +291,9 @@ export class Register implements OnInit {
   registerWithGoogle() {
     // El servicio de Google maneja todo automáticamente cuando el usuario hace click
     // Solo necesita que el botón esté renderizado
-    console.log('Google Sign-In iniciado...');
   }
 
   registerWithFacebook() {
-    console.log('Facebook register - proximamente');
   }
 
 

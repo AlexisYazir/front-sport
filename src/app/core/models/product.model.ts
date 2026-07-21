@@ -259,46 +259,6 @@ export interface UpdateShipmentRequest {
   fecha_entrega_estimada?: string;
 }
 
-export interface ReturnRequestItem {
-  id_variante: number;
-  cantidad: number;
-  motivo?: string;
-}
-
-export interface CreateReturnRequest {
-  id_orden: number;
-  motivo: string;
-  comentario?: string;
-  items: ReturnRequestItem[];
-}
-
-export interface ProductReturn {
-  id_devolucion: number;
-  id_orden: number;
-  id_usuario: number;
-  estado: string;
-  motivo: string;
-  comentario?: string;
-  resolucion?: string;
-  fecha_solicitud: string;
-  fecha_actualizacion: string;
-  fecha_resolucion?: string | null;
-  cliente?: string;
-  email?: string;
-  total_pedido?: number | string;
-  items: Array<ReturnRequestItem & {
-    sku?: string;
-    producto?: string;
-    imagen?: string;
-  }>;
-  eventos: ShipmentEvent[];
-}
-
-export interface UpdateReturnStatusRequest {
-  estado: 'solicitada' | 'aprobada' | 'rechazada' | 'recibida' | 'reembolsada' | 'cerrada';
-  comentario?: string;
-}
-
 export interface Promotion {
   id_promocion: number;
   nombre: string;

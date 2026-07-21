@@ -1,0 +1,67 @@
+<section class="route-skeleton" role="status" aria-live="polite" aria-label="Cargando contenido del panel">
+  <div class="route-skeleton__header">
+    <span class="skeleton-block skeleton-icon"></span>
+    <div class="route-skeleton__heading">
+      <span class="skeleton-block skeleton-title"></span>
+      <span class="skeleton-block skeleton-subtitle"></span>
+    </div>
+    <span class="skeleton-block skeleton-action"></span>
+  </div>
+
+  <ng-container [ngSwitch]="layout">
+    <div *ngSwitchCase="'dashboard'" class="skeleton-dashboard">
+      <div class="skeleton-kpis">
+        <article *ngFor="let item of [1, 2, 3, 4]" class="skeleton-panel skeleton-kpi">
+          <span class="skeleton-block skeleton-label"></span>
+          <span class="skeleton-block skeleton-number"></span>
+          <span class="skeleton-block skeleton-caption"></span>
+        </article>
+      </div>
+      <div class="skeleton-dashboard__body">
+        <article class="skeleton-panel skeleton-chart">
+          <span class="skeleton-block skeleton-section-title"></span>
+          <div class="skeleton-bars">
+            <i *ngFor="let item of [1, 2, 3, 4, 5, 6]" [style.--bar]="item"></i>
+          </div>
+        </article>
+        <article class="skeleton-panel skeleton-list">
+          <span class="skeleton-block skeleton-section-title"></span>
+          <div *ngFor="let item of [1, 2, 3, 4]" class="skeleton-list__row">
+            <span class="skeleton-block skeleton-avatar"></span>
+            <span class="skeleton-block skeleton-line"></span>
+          </div>
+        </article>
+      </div>
+    </div>
+
+    <div *ngSwitchCase="'form'" class="skeleton-form">
+      <article class="skeleton-panel skeleton-form__panel">
+        <span class="skeleton-block skeleton-section-title"></span>
+        <div class="skeleton-form__grid">
+          <div *ngFor="let item of [1, 2, 3, 4, 5, 6]">
+            <span class="skeleton-block skeleton-label"></span>
+            <span class="skeleton-block skeleton-input"></span>
+          </div>
+        </div>
+        <span class="skeleton-block skeleton-submit"></span>
+      </article>
+    </div>
+
+    <div *ngSwitchDefault class="skeleton-table-view">
+      <div class="skeleton-tools">
+        <span class="skeleton-block skeleton-search"></span>
+        <span class="skeleton-block skeleton-counter"></span>
+      </div>
+      <article class="skeleton-panel skeleton-table">
+        <div class="skeleton-table__head">
+          <span *ngFor="let item of [1, 2, 3, 4, 5]" class="skeleton-block skeleton-line"></span>
+        </div>
+        <div *ngFor="let row of [1, 2, 3, 4, 5, 6]" class="skeleton-table__row">
+          <span class="skeleton-block skeleton-avatar"></span>
+          <span *ngFor="let item of [1, 2, 3, 4]" class="skeleton-block skeleton-line"></span>
+        </div>
+      </article>
+    </div>
+  </ng-container>
+  <span class="sr-only">Cargando...</span>
+</section>

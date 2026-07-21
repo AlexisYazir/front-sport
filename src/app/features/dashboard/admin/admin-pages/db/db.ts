@@ -265,6 +265,11 @@ export class DbPage implements OnInit, OnDestroy {
     if (tab === 'vacuum') this.loadVacuumTab();
   }
 
+  refreshCurrentTab(): void {
+    this.loadCurrentTab();
+    this.toastr.success('Datos actualizados correctamente', 'Actualización');
+  }
+
   loadBackupsTab() {
     this.isLoadingBackups.set(true);
     this.backupService.listBackups().subscribe({

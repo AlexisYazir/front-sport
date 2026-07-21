@@ -1,6 +1,7 @@
 import { Injectable, inject, signal, effect } from '@angular/core';
 import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
+import { frontendLogger } from './frontend-logger.service';
 
 /**
  * Gestiona sesiones, timeouts de inactividad y bloqueo de cuenta
@@ -110,7 +111,7 @@ export class SessionService {
    * Logout automático
    */
   autoLogout(reason: string = 'Session timeout') {
-    console.warn('Auto-logout:', reason);
+    frontendLogger.warn('Auto-logout', reason);
     this.clearSession();
     
     // Limpiar localStorage sin inyectar AuthService

@@ -329,6 +329,11 @@ export class Empresa implements OnInit, OnDestroy {
     });
   }
 
+  refreshFaqs(): void {
+    this.loadFaqs();
+    this.toastr.success('Datos actualizados correctamente', 'Actualización');
+  }
+
   hasLocation(): boolean {
     return !!this.parseLocation(this.companyInfo?.mapa_ubicacion);
   }

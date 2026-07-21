@@ -101,10 +101,8 @@ export class NewProducts implements OnInit {
         this.products = data;
         this.applyFilters();
         this.isLoading.set(false);
-        console.log('Productos recientes:', data);
       },
       error: (error) => {
-        console.error('Error al cargar productos recientes:', error);
         this.isLoading.set(false);
         this.toastr.error('Error al cargar productos recientes', 'Error');
       }
@@ -133,11 +131,8 @@ export class NewProducts implements OnInit {
         });
         
         this.loadingAttributes = false;
-        console.log('Atributos padre:', this.parentAttributes);
-        console.log('Atributos hijos por padre:', this.childAttributesByParent);
       },
       error: (err) => {
-        console.error('Error al cargar atributos:', err);
         this.loadingAttributes = false;
         this.toastr.error('Error al cargar atributos', 'Error');
       }
@@ -256,7 +251,8 @@ export class NewProducts implements OnInit {
   // Acciones
   refreshData() {
     this.loadRecentProducts();
-    this.loadAttributes(); 
+    this.loadAttributes();
+    this.toastr.success('Datos actualizados correctamente', 'Actualización');
   }
 
   // ===== FUNCIONES DEL MODAL =====
@@ -410,7 +406,6 @@ export class NewProducts implements OnInit {
             failed.push(file.name);
           }
         } catch (error) {
-          console.error('Error al subir imagen:', error);
           failed.push(file.name);
         }
       }
@@ -671,20 +666,17 @@ export class NewProducts implements OnInit {
         atributos: variante.atributos
       };
       
-      console.log('Enviando variante:', variantData);
       
       this.productService.createProductVariant(variantData).subscribe({
         next: (res) => {
           completadas++;
           exitosas++;
-          console.log(`✅ Variante guardada:`, res);
           
           if (completadas === this.variantes.length) {
             this.procesarResultado(exitosas, this.variantes.length, errores);
           }
         },
         error: (err) => {
-          console.error('❌ Error al crear variante:', err);
           completadas++;
           errores.push(`SKU ${variante.sku}: ${err.error?.message || 'Error desconocido'}`);
           

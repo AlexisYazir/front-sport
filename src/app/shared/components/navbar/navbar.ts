@@ -8,6 +8,17 @@ import { ProductService } from '../../../core/services/product.service';
 import { Product } from '../../../core/models/product.model';
 import { UserRole } from '../../../core/models/user.model';
 import { DashboardPreferencesService } from '../../../core/services/dashboard-preferences.service';
+import { frontendLogger } from '../../../core/services/frontend-logger.service';
+
+interface NavbarNotification {
+  id: string;
+  icon: string;
+  title: string;
+  description: string;
+  route: string;
+  time: string;
+  tone: 'blue' | 'green' | 'orange' | 'purple';
+}
 
 @Component({
   selector: 'app-navbar',
@@ -34,6 +45,8 @@ export class Navbar {
   userMenuOpen = signal<boolean>(false);
   guestMenuOpen = signal<boolean>(false);
   adminMenuOpen = signal<boolean>(false);
+  notificationOpen = signal<boolean>(false);
+  private readonly readNotificationIds = signal<Set<string>>(this.loadReadNotificationIds());
   
   // Estados de hover - para desktop
   userHovered = false;
@@ -46,6 +59,30 @@ export class Navbar {
   
   // Estado de búsqueda
   searchTerm = signal<string>('');
+  searchPanelOpen = signal(false);
+  recentSearches = signal<string[]>(this.loadRecentSearches());
+  searchSuggestions = computed(() => {
+    const term = this.normalizeSearchText(this.searchTerm());
+    if (term.length < 2) return [];
+
+    return this.menuProducts()
+      .filter((product) => product.activo !== false && product.disponible !== false && Number(product.stock || 0) > 0)
+      .filter((product) => {
+        const searchable = this.normalizeSearchText([
+          product.nombre,
+          product.descripcion,
+          product.marca,
+          product.categoria,
+          product.categoria_padre,
+        ].filter(Boolean).join(' '));
+        return searchable.includes(term);
+      })
+      .slice(0, 5);
+  });
+  popularSearches = computed(() => {
+    const terms = this.menuProducts().flatMap((product) => [product.categoria, product.marca || '']);
+    return [...new Set(terms.filter(Boolean))].slice(0, 6);
+  });
   // Estado del menú móvil
   mobileMenuOpen = signal<boolean>(false);
   // Estado para mostrar/ocultar navbar al hacer scroll
@@ -68,6 +105,86 @@ export class Navbar {
   // Exponer servicios para el template
   get authServicePublic() { return this.authService; }
   cartItemCount = this.cartService.itemCount;
+  notifications = computed<NavbarNotification[]>(() => {
+    const user = this.authService.currentUser();
+    if (!user) return [];
+
+    if (user.rol === UserRole.ADMIN) {
+      return [
+        {
+          id: 'admin-reports',
+          icon: 'analytics',
+          title: 'Reportes disponibles',
+          description: 'Consulta indicadores de ventas y desempeño del catálogo.',
+          route: '/dashboard/admin/reports',
+          time: 'Actualizado',
+          tone: 'blue',
+        },
+        {
+          id: 'admin-inventory',
+          icon: 'inventory',
+          title: 'Control de inventario',
+          description: 'Verifica existencias y productos con stock bajo.',
+          route: '/dashboard/admin/inventory',
+          time: 'Recordatorio',
+          tone: 'purple',
+        },
+      ];
+    }
+
+    if (user.rol === UserRole.EMPLEADO) {
+      return [
+        {
+          id: 'employee-orders',
+          icon: 'package_2',
+          title: 'Pedidos por atender',
+          description: 'Revisa los pedidos pendientes de preparación.',
+          route: '/dashboard/empleado/orders',
+          time: 'Pendiente',
+          tone: 'blue',
+        },
+      ];
+    }
+
+    const items: NavbarNotification[] = [
+      {
+        id: 'user-orders',
+        icon: 'local_shipping',
+        title: 'Consulta tus compras',
+        description: 'Revisa el estado y seguimiento de tus pedidos.',
+        route: '/dashboard/usuario/compras',
+        time: 'Disponible',
+        tone: 'blue',
+      },
+      {
+        id: 'user-alexa',
+        icon: 'settings_voice',
+        title: 'Vincula tu cuenta con Alexa',
+        description: 'Genera un código temporal desde tu dashboard.',
+        route: '/dashboard/usuario/alexa-codes',
+        time: 'Recordatorio',
+        tone: 'purple',
+      },
+    ];
+
+    if (this.cartItemCount() > 0) {
+      items.unshift({
+        id: 'user-cart',
+        icon: 'shopping_cart',
+        title: 'Tienes productos en el carrito',
+        description: `${this.cartItemCount()} producto${this.cartItemCount() === 1 ? '' : 's'} esperando por ti.`,
+        route: '/cart',
+        time: 'Ahora',
+        tone: 'green',
+      });
+    }
+
+    return items;
+  });
+  unreadNotificationCount = computed(() => {
+    const readIds = this.readNotificationIds();
+    return this.notifications().filter((item) => !readIds.has(item.id)).length;
+  });
   canUseCart = computed(() => {
     const user = this.authService.currentUser();
     return !user || user.rol === UserRole.USUARIO;
@@ -84,8 +201,16 @@ export class Navbar {
         { icon: 'dashboard', label: 'Dashboard', route: '/dashboard/admin' },
         { icon: 'inventory_2', label: 'Productos', route: '/dashboard/admin/products' },
         { icon: 'inventory', label: 'Inventario', route: '/dashboard/admin/inventory' },
+        { icon: 'branding_watermark', label: 'Marcas y categorías', route: '/dashboard/admin/marcas-categorias' },
+        { icon: 'people', label: 'Usuarios', route: '/dashboard/admin/users' },
+        { icon: 'database', label: 'DB Admin', route: '/dashboard/admin/db' },
+        { icon: 'article', label: 'Logs', route: '/dashboard/admin/logs' },
+        { icon: 'reviews', label: 'Reseñas', route: '/dashboard/admin/reviews' },
         { icon: 'local_offer', label: 'Promos y envíos', route: '/dashboard/admin/promotions' },
         { icon: 'image', label: 'Banner inicio', route: '/dashboard/admin/banner' },
+        { icon: 'domain', label: 'Perfil empresa', route: '/dashboard/admin/empresa' },
+        { icon: 'analytics', label: 'Reportes', route: '/dashboard/admin/reports' },
+        { icon: 'monitoring', label: 'Predicción de ventas', route: '/dashboard/admin/predictions' },
         { icon: 'settings', label: 'Configuración', route: '/dashboard/admin/settings' },
       ];
     }
@@ -93,7 +218,6 @@ export class Navbar {
     if (user.rol === UserRole.EMPLEADO) {
       return [
         { icon: 'shopping_bag', label: 'Pedidos', route: '/dashboard/empleado/orders' },
-        { icon: 'assignment_return', label: 'Devoluciones', route: '/dashboard/empleado/returns' },
         { icon: 'account_circle', label: 'Perfil', route: '/dashboard/empleado/profile' },
         { icon: 'settings', label: 'Configuración', route: '/dashboard/empleado/settings' },
       ];
@@ -120,6 +244,48 @@ export class Navbar {
     if (user?.rol === 3) return 'Admin';
     if (user?.rol === UserRole.EMPLEADO) return 'Empleado';
     return '';
+  }
+
+  getSessionDisplayName(): string {
+    const user = this.authService.currentUser();
+    if (!user) return 'Usuario';
+    return [user.nombre, user.aPaterno].filter(Boolean).join(' ').trim() || user.email;
+  }
+
+  toggleDashboardTheme(): void {
+    const target = this.preferences.isDarkTheme() ? 'light' : 'dark';
+    this.preferences.setTheme(target);
+  }
+
+  isDashboardArea(): boolean {
+    return this.router.url.startsWith('/dashboard');
+  }
+
+  getPanelIdentity(): string {
+    return this.isEmployee() ? 'Panel Empleado' : 'Mi Sport Center';
+  }
+
+  toggleNotifications(): void {
+    this.notificationOpen.update((open) => !open);
+    this.userMenuOpen.set(false);
+    this.guestMenuOpen.set(false);
+    this.adminMenuOpen.set(false);
+  }
+
+  openNotification(notification: NavbarNotification): void {
+    this.markNotificationRead(notification.id);
+    this.notificationOpen.set(false);
+    this.router.navigateByUrl(notification.route);
+  }
+
+  markAllNotificationsRead(): void {
+    const next = new Set(this.readNotificationIds());
+    this.notifications().forEach((item) => next.add(item.id));
+    this.persistReadNotificationIds(next);
+  }
+
+  isNotificationRead(id: string): boolean {
+    return this.readNotificationIds().has(id);
   }
 
   isMobileMenuDark(): boolean {
@@ -174,6 +340,12 @@ export class Navbar {
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent) {
     const target = event.target as HTMLElement;
+    if (!target.closest('.notification-shell')) {
+      this.notificationOpen.set(false);
+    }
+    if (!target.closest('.catalog-search-shell')) {
+      this.searchPanelOpen.set(false);
+    }
     if (!target.closest('.relative')) {
       this.userMenuOpen.set(false);
       this.guestMenuOpen.set(false);
@@ -267,24 +439,28 @@ export class Navbar {
     this.userMenuOpen.update(val => !val);
     this.guestMenuOpen.set(false);
     this.adminMenuOpen.set(false);
+    this.notificationOpen.set(false);
   }
 
   toggleGuestMenu() {
     this.guestMenuOpen.update(val => !val);
     this.userMenuOpen.set(false);
     this.adminMenuOpen.set(false);
+    this.notificationOpen.set(false);
   }
 
   toggleAdminMenu() {
     this.adminMenuOpen.update(val => !val);
     this.userMenuOpen.set(false);
     this.guestMenuOpen.set(false);
+    this.notificationOpen.set(false);
   }
 
   closeAllMenus() {
     this.userMenuOpen.set(false);
     this.guestMenuOpen.set(false);
     this.adminMenuOpen.set(false);
+    this.notificationOpen.set(false);
     this.userHovered = false;
     this.guestHovered = false;
     this.adminHovered = false;
@@ -317,26 +493,99 @@ export class Navbar {
     }
   }
 
-  onSearch() {
-    const term = this.searchTerm().trim();
+  onSearch(termOverride?: string) {
+    const term = (termOverride ?? this.searchTerm()).trim();
     if (term) {
+      this.searchTerm.set(term);
+      this.saveRecentSearch(term);
       this.router.navigate(['/products'], { 
         queryParams: { search: term }
       });
     } else {
       this.router.navigate(['/products']);
     }
+    this.searchPanelOpen.set(false);
+    this.mobileMenuOpen.set(false);
   }
 
   clearSearch() {
     this.searchTerm.set('');
-    this.onSearch();
+    this.searchPanelOpen.set(true);
   }
 
   onSearchKeyPress(event: KeyboardEvent) {
     if (event.key === 'Enter') {
       this.onSearch();
     }
+  }
+
+  onSearchInput(): void {
+    this.searchPanelOpen.set(true);
+  }
+
+  openSearchPanel(): void {
+    this.searchPanelOpen.set(true);
+  }
+
+  selectSearchSuggestion(product: Product): void {
+    this.saveRecentSearch(product.nombre);
+    this.searchPanelOpen.set(false);
+    this.mobileMenuOpen.set(false);
+    this.router.navigate(['/products', product.id || product.id_producto]);
+  }
+
+  selectRecentSearch(term: string): void {
+    this.onSearch(term);
+  }
+
+  clearRecentSearches(event?: Event): void {
+    event?.stopPropagation();
+    this.recentSearches.set([]);
+    try {
+      localStorage.removeItem('sportcenter_recent_searches');
+    } catch {
+      // El buscador sigue funcionando cuando el almacenamiento está restringido.
+    }
+  }
+
+  getSearchProductImage(product: Product): string {
+    return product.imagen || product.imagenes?.[0] || 'assets/images/no-image.jpg';
+  }
+
+  private saveRecentSearch(term: string): void {
+    const cleanTerm = term.trim().replace(/\s+/g, ' ');
+    if (!cleanTerm) return;
+
+    const updated = [
+      cleanTerm,
+      ...this.recentSearches().filter((item) => this.normalizeSearchText(item) !== this.normalizeSearchText(cleanTerm)),
+    ].slice(0, 6);
+
+    this.recentSearches.set(updated);
+    try {
+      localStorage.setItem('sportcenter_recent_searches', JSON.stringify(updated));
+    } catch {
+      // El historial es una mejora opcional, no debe bloquear la búsqueda.
+    }
+  }
+
+  private loadRecentSearches(): string[] {
+    try {
+      const stored = JSON.parse(localStorage.getItem('sportcenter_recent_searches') || '[]');
+      return Array.isArray(stored)
+        ? stored.filter((item): item is string => typeof item === 'string' && item.trim().length > 0).slice(0, 6)
+        : [];
+    } catch {
+      return [];
+    }
+  }
+
+  private normalizeSearchText(value: string): string {
+    return value
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
   }
 
   logout() {
@@ -381,6 +630,29 @@ export class Navbar {
       this.router.navigate(['/dashboard/usuario/profile']);
     }
     this.closeAllMenus();
+  }
+
+  private markNotificationRead(id: string): void {
+    const next = new Set(this.readNotificationIds());
+    next.add(id);
+    this.persistReadNotificationIds(next);
+  }
+
+  private loadReadNotificationIds(): Set<string> {
+    if (typeof localStorage === 'undefined') return new Set();
+    try {
+      const value = JSON.parse(localStorage.getItem('sc_read_notifications') || '[]');
+      return new Set(Array.isArray(value) ? value : []);
+    } catch {
+      return new Set();
+    }
+  }
+
+  private persistReadNotificationIds(ids: Set<string>): void {
+    this.readNotificationIds.set(ids);
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('sc_read_notifications', JSON.stringify([...ids]));
+    }
   }
 
   goToProfileAdmin() {
@@ -536,14 +808,14 @@ ngOnInit() {
       this.menuLoading.set(false);
     },
     error: (error) => {
-      console.error('Error loading menu:', error);
+      frontendLogger.error('Error loading menu', error);
       this.menuLoading.set(false);
     }
   });
 
   this.productService.getProducts().subscribe({
     next: (products) => this.menuProducts.set(products),
-    error: (error) => console.error('Error loading menu products:', error)
+    error: (error) => frontendLogger.error('Error loading menu products', error)
   });
 }
 

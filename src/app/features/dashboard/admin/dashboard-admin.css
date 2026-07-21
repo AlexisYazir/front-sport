@@ -33,6 +33,13 @@ body.sidebar-open-mobile {
   max-height: 100vh;
 }
 
+.sidebar-collapsed { width: 4.5rem; }
+.dashboard-main-collapsed { margin-left: 4.5rem; }
+.sidebar-link-active { background: #dcecf6 !important; color: #0367a6 !important; box-shadow: 0 4px 12px rgba(3, 103, 166, 0.1); }
+.sidebar-link-active:hover { background: #d4e8f4 !important; }
+.dashboard-theme-dark .sidebar-link-active { background: #263746 !important; color: #7dd3fc !important; }
+.dashboard-theme-dark .sidebar-link-active:hover { background: #2c4051 !important; }
+
 .admin-sidebar-scroll {
   scrollbar-width: thin;
   scrollbar-color: rgba(3, 103, 166, 0.22) transparent;
@@ -64,4 +71,63 @@ body.sidebar-open-mobile {
   .admin-sidebar-scroll {
     -webkit-overflow-scrolling: touch;
   }
+}
+
+.quick-access-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.quick-access-card {
+  display: flex;
+  min-width: 0;
+  min-height: 7rem;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 0.85rem 0.55rem;
+  border: 1px solid color-mix(in srgb, var(--quick-color) 28%, var(--sc-border, #e5e7eb));
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, var(--quick-color) 7%, var(--sc-card, #fff));
+  text-align: center;
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+}
+
+.quick-access-card:hover {
+  border-color: color-mix(in srgb, var(--quick-color) 58%, transparent);
+  background: color-mix(in srgb, var(--quick-color) 11%, var(--sc-card, #fff));
+  box-shadow: 0 10px 22px -16px color-mix(in srgb, var(--quick-color) 55%, transparent);
+  transform: translateY(-2px);
+}
+
+.quick-access-card > span:last-child {
+  color: var(--sc-text, #202020) !important;
+  line-height: 1.25;
+}
+
+.quick-access-icon {
+  display: grid;
+  width: 2.75rem;
+  height: 2.75rem;
+  place-items: center;
+  border-radius: 0.65rem;
+  background: var(--quick-color);
+}
+
+.quick-access-card--blue { --quick-color: #0367a6; }
+.quick-access-card--green { --quick-color: #059669; }
+.quick-access-card--purple { --quick-color: #7c3aed; }
+.quick-access-card--orange { --quick-color: #ea580c; }
+.quick-access-card--cyan { --quick-color: #0891b2; }
+.quick-access-card--rose { --quick-color: #e11d48; }
+
+@media (max-width: 1100px) {
+  .quick-access-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 560px) {
+  .quick-access-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .quick-access-card { min-height: 6.4rem; }
 }

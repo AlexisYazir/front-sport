@@ -55,6 +55,11 @@ export class BannerAdmin implements OnInit {
     });
   }
 
+  refreshBanners(): void {
+    this.loadBanners();
+    this.toastr.success('Datos actualizados correctamente', 'Actualización');
+  }
+
   uploadImage(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];

@@ -4,11 +4,13 @@ import { Router, RouterModule } from '@angular/router';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { AuthService } from '../../../core/services/auth.service';
 import { DashboardPreferencesService } from '../../../core/services/dashboard-preferences.service';
+import { DashboardNavigationLoadingService } from '../../../core/services/dashboard-navigation-loading.service';
+import { DashboardRouteSkeleton } from '../shared/dashboard-route-skeleton/dashboard-route-skeleton';
 
 @Component({
   selector: 'app-dashboard-empleado',
   standalone: true,
-  imports: [CommonModule, RouterModule, MatTooltipModule],
+  imports: [CommonModule, RouterModule, MatTooltipModule, DashboardRouteSkeleton],
   templateUrl: './dashboard-empleado.html',
   styleUrl: './dashboard-empleado.css',
 })
@@ -16,6 +18,7 @@ export class DashboardEmpleado {
   public authService = inject(AuthService);
   public router = inject(Router);
   public preferences = inject(DashboardPreferencesService);
+  public navigationLoading = inject(DashboardNavigationLoadingService);
 
   sidebarOpen = this.preferences.sidebarDefaultOpen;
   navbarOculto = signal<boolean>(false);
@@ -24,7 +27,6 @@ export class DashboardEmpleado {
 
   menuItems = [
     { icon: 'orders', label: 'Pedidos', route: '/dashboard/empleado/orders' },
-    { icon: 'assignment_return', label: 'Devoluciones', route: '/dashboard/empleado/returns' },
     { icon: 'account_circle', label: 'Perfil', route: '/dashboard/empleado/profile' },
     { icon: 'settings', label: 'Configuración', route: '/dashboard/empleado/settings' },
   ];

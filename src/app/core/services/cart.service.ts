@@ -9,6 +9,7 @@ import { CartItem, CartSummary } from '../models/cart.model';
 import { Product } from '../models/product.model';
 import { AuthService } from './auth.service';
 import { UserRole } from '../models/user.model';
+import { frontendLogger } from './frontend-logger.service';
 
 export interface AddToCartRequest {
   product: Product;
@@ -195,7 +196,7 @@ export class CartService {
     return this.http.get<ApiCartResponse>(`${this.API_URL}/products/cart`).pipe(
       tap((response) => this.applyCartResponse(response)),
       catchError((error) => {
-        console.error('Error loading cart:', error);
+        frontendLogger.error('Error loading cart', error);
         this.setCartItems([]);
         this.setCheckoutSummary(null);
         return of(null);

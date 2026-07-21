@@ -171,7 +171,6 @@ export class ProductMarca implements OnInit {
         this.loading.set(false);
       },
       error: (error) => {
-        console.error('Error cargando productos:', error);
         this.error.set('Error al cargar los productos');
         this.toastr.error('Error al cargar los productos', 'Error');
         this.loading.set(false);

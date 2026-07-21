@@ -564,7 +564,6 @@ export class Prediction implements OnInit {
         this.isLoading.set(false);
       },
       error: (error) => {
-        console.error('Error loading data:', error);
         this.toastr.error('Error al cargar la información', 'Error');
         this.isLoading.set(false);
       },
@@ -692,6 +691,7 @@ export class Prediction implements OnInit {
 
   refreshData(): void {
     this.loadInitialData();
+    this.toastr.success('Datos actualizados correctamente', 'Actualización');
   }
 
   getFirstImage(order: OrderProduct): string {
@@ -776,7 +776,6 @@ export class Prediction implements OnInit {
         this.isLoadingDetails.set(false);
       },
       error: (error) => {
-        console.error('Error loading sales detail:', error);
         this.toastr.error('Error al cargar los detalles de venta', 'Error');
         this.isLoadingDetails.set(false);
       }
@@ -1021,7 +1020,6 @@ export class Prediction implements OnInit {
         this.isLoadingPrediction.set(false);
       },
       error: (error) => {
-        console.error('Error loading prediction detail:', error);
         this.toastr.error('Error al cargar la información para la predicción', 'Error');
         this.isLoadingPrediction.set(false);
       }

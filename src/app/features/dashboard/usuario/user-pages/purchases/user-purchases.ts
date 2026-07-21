@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { ProductService } from '../../../../../core/services/product.service';
-import { CreateReturnRequest, ProductReturn, UserOrder } from '../../../../../core/models/product.model';
+import { UserOrder } from '../../../../../core/models/product.model';
 import { formatMexicoDateTime } from '../../../../../core/utils/date-time.util';
 
 type OrderFilter = 'all' | 'pendiente_pago' | 'pendiente' | 'en proceso' | 'entregado';
@@ -23,18 +23,12 @@ export class UserPurchases implements OnInit {
   private router = inject(Router);
 
   orders = signal<UserOrder[]>([]);
-  returns = signal<ProductReturn[]>([]);
   isLoading = signal(false);
-  isSubmittingReturn = signal(false);
   searchTerm = signal('');
   selectedStatus = signal<OrderFilter>('all');
   currentPage = signal(1);
   selectedOrderId = signal<number | null>(null);
   expandedOrderId = signal<number | null>(null);
-  returnOrder = signal<UserOrder | null>(null);
-  returnReason = signal('');
-  returnComment = signal('');
-  returnSelection = signal<Record<number, { selected: boolean; cantidad: number; motivo: string }>>({});
   deliveryCode = signal('');
   confirmingDeliveryId = signal<number | null>(null);
 
@@ -84,14 +78,6 @@ export class UserPurchases implements OnInit {
   activeCount = computed(() =>
     this.filteredOrders().filter((order) => this.normalizeStatus(order.estado) !== 'entregado').length,
   );
-  visibleReturns = computed(() =>
-    [...this.returns()].sort(
-      (a, b) =>
-        new Date(b.fecha_actualizacion || b.fecha_solicitud).getTime() -
-        new Date(a.fecha_actualizacion || a.fecha_solicitud).getTime(),
-    ),
-  );
-
   readonly pageSize = 10;
 
   ngOnInit(): void {
@@ -100,7 +86,6 @@ export class UserPurchases implements OnInit {
       this.selectedOrderId.set(Number.isFinite(id) && id > 0 ? id : null);
     });
     this.loadOrders();
-    this.loadReturns();
   }
 
   loadOrders(): void {
@@ -118,11 +103,10 @@ export class UserPurchases implements OnInit {
     });
   }
 
-  loadReturns(): void {
-    this.productService.getUserReturns().subscribe({
-      next: (returns) => this.returns.set(returns || []),
-      error: () => this.returns.set([]),
-    });
+  refreshOrders(): void {
+    this.productService.clearRequestCache();
+    this.loadOrders();
+    this.toastr.success('Datos actualizados correctamente', 'Actualización');
   }
 
   clearFilters(): void {
@@ -215,131 +199,6 @@ export class UserPurchases implements OnInit {
     return attrs || [item?.marca, item?.categoria].filter(Boolean).join(' · ');
   }
 
-  openReturn(order: UserOrder): void {
-    if (this.normalizeStatus(order.estado) !== 'entregado') {
-      this.toastr.info('Solo puedes devolver pedidos entregados', 'Devoluciones');
-      return;
-    }
-
-    if (this.hasActiveReturn(order)) {
-      this.toastr.info('Este pedido ya tiene una devolución activa', 'Devoluciones');
-      return;
-    }
-
-    const selection: Record<number, { selected: boolean; cantidad: number; motivo: string }> = {};
-    for (const item of order.items || []) {
-      selection[Number(item.id_variante)] = {
-        selected: false,
-        cantidad: 1,
-        motivo: '',
-      };
-    }
-
-    this.returnOrder.set(order);
-    this.returnReason.set('');
-    this.returnComment.set('');
-    this.returnSelection.set(selection);
-  }
-
-  closeReturn(): void {
-    this.returnOrder.set(null);
-    this.returnReason.set('');
-    this.returnComment.set('');
-    this.returnSelection.set({});
-  }
-
-  toggleReturnItem(idVariante: number, selected: boolean): void {
-    const current = { ...this.returnSelection() };
-    current[idVariante] = {
-      ...(current[idVariante] || { cantidad: 1, motivo: '' }),
-      selected,
-    };
-    this.returnSelection.set(current);
-  }
-
-  updateReturnQuantity(idVariante: number, quantity: number): void {
-    const current = { ...this.returnSelection() };
-    current[idVariante] = {
-      ...(current[idVariante] || { selected: true, motivo: '' }),
-      cantidad: Math.max(1, Number(quantity || 1)),
-    };
-    this.returnSelection.set(current);
-  }
-
-  updateReturnReason(idVariante: number, reason: string): void {
-    const current = { ...this.returnSelection() };
-    current[idVariante] = {
-      ...(current[idVariante] || { selected: true, cantidad: 1 }),
-      motivo: reason,
-    };
-    this.returnSelection.set(current);
-  }
-
-  submitReturn(): void {
-    const order = this.returnOrder();
-    const reason = this.returnReason().trim();
-
-    if (!order) return;
-
-    if (!reason) {
-      this.toastr.warning('Indica el motivo general de la devolución', 'Devoluciones');
-      return;
-    }
-
-    const selection = this.returnSelection();
-    const items = (order.items || [])
-      .filter((item) => selection[Number(item.id_variante)]?.selected)
-      .map((item) => ({
-        id_variante: Number(item.id_variante),
-        cantidad: Math.min(
-          Number(selection[Number(item.id_variante)]?.cantidad || 1),
-          Number(item.cantidad || 1),
-        ),
-        motivo: selection[Number(item.id_variante)]?.motivo?.trim() || undefined,
-      }));
-
-    if (items.length === 0) {
-      this.toastr.warning('Selecciona al menos un producto', 'Devoluciones');
-      return;
-    }
-
-    const payload: CreateReturnRequest = {
-      id_orden: order.id_orden,
-      motivo: reason,
-      comentario: this.returnComment().trim() || undefined,
-      items,
-    };
-
-    this.isSubmittingReturn.set(true);
-    this.productService.createReturnRequest(payload).subscribe({
-      next: (response) => {
-        this.toastr.success(response.message, 'Devoluciones');
-        this.isSubmittingReturn.set(false);
-        this.closeReturn();
-        this.loadReturns();
-      },
-      error: (error) => {
-        this.isSubmittingReturn.set(false);
-        const message = error?.error?.message || 'No fue posible solicitar la devolución';
-        this.toastr.error(message, 'Devoluciones');
-      },
-    });
-  }
-
-  hasActiveReturn(order: UserOrder): boolean {
-    return this.returns().some(
-      (item) =>
-        Number(item.id_orden) === Number(order.id_orden) &&
-        ['solicitada', 'aprobada', 'recibida'].includes(
-          String(item.estado || '').trim().toLowerCase(),
-        ),
-    );
-  }
-
-  getReturnsForOrder(order: UserOrder): ProductReturn[] {
-    return this.returns().filter((item) => Number(item.id_orden) === Number(order.id_orden));
-  }
-
   getOrderEvents(order: UserOrder): any[] {
     return order.eventos_envio || [];
   }
@@ -371,38 +230,6 @@ export class UserPurchases implements OnInit {
 
     if (normalized === 'incidencia') {
       return 'bg-red-100 text-red-700 border-red-200';
-    }
-
-    return 'bg-yellow-100 text-yellow-700 border-yellow-200';
-  }
-
-  getReturnStatusLabel(status: string | null | undefined): string {
-    const normalized = String(status || '').trim().toLowerCase();
-    const labels: Record<string, string> = {
-      solicitada: 'En revisión',
-      aprobada: 'Aprobada',
-      rechazada: 'Rechazada',
-      recibida: 'Recibida',
-      reembolsada: 'Reembolsada',
-      cerrada: 'Cerrada',
-    };
-
-    return labels[normalized] || 'En revisión';
-  }
-
-  getReturnStatusClass(status: string | null | undefined): string {
-    const normalized = String(status || '').trim().toLowerCase();
-
-    if (['aprobada', 'recibida', 'reembolsada'].includes(normalized)) {
-      return 'bg-green-100 text-green-700 border-green-200';
-    }
-
-    if (normalized === 'rechazada') {
-      return 'bg-red-100 text-red-700 border-red-200';
-    }
-
-    if (normalized === 'cerrada') {
-      return 'bg-gray-100 text-gray-700 border-gray-200';
     }
 
     return 'bg-yellow-100 text-yellow-700 border-yellow-200';

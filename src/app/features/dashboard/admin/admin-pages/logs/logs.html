@@ -1,5 +1,5 @@
-<div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
-  <div class="mb-6 p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
+<div class="dashboard-page-shell bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+  <div class="dashboard-page-toolbar mb-6 p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
     <div class="flex items-center gap-3">
       <div class="bg-[#0367A6]/10 p-3 rounded-xl">
         <span class="material-symbols-outlined text-[#0367A6] text-2xl">article</span>
@@ -94,7 +94,7 @@
   </div>
 
   <div class="rounded-2xl border border-gray-200 overflow-hidden bg-white">
-    <div *ngIf="isLoading()" class="py-16 text-center text-[#666666]">
+    <div *ngIf="isLoading()" class="dashboard-loading-surface py-16 text-center text-[#666666]">
       Cargando logs...
     </div>
 

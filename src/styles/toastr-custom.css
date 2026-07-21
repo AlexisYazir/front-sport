@@ -1,8 +1,8 @@
 /* toastr-custom.css - Estilos claros para toastr */
 .toast-success {
-  background-color: #4caf50 !important;
+  background-color: #0aa86e !important;
   color: white !important;
-  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.2) !important;
+  box-shadow: 0 10px 24px rgba(10, 168, 110, 0.34) !important;
   border-radius: 8px !important;
   background-image: none !important;
 }
@@ -17,9 +17,9 @@
 }
 
 .toast-error {
-  background-color: #f44336 !important;
+  background-color: #ef3340 !important;
   color: white !important;
-  box-shadow: 0 4px 12px rgba(244, 67, 54, 0.2) !important;
+  box-shadow: 0 10px 24px rgba(239, 51, 64, 0.34) !important;
   border-radius: 8px !important;
   background-image: none !important;
 }
@@ -34,9 +34,9 @@
 }
 
 .toast-info {
-  background-color: #2196f3 !important;
+  background-color: #0367a6 !important;
   color: white !important;
-  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.2) !important;
+  box-shadow: 0 10px 24px rgba(3, 103, 166, 0.34) !important;
   border-radius: 8px !important;
   background-image: none !important;
 }
@@ -51,9 +51,9 @@
 }
 
 .toast-warning {
-  background-color: #ff9800 !important;
+  background-color: #f28c00 !important;
   color: white !important;
-  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.2) !important;
+  box-shadow: 0 10px 24px rgba(242, 140, 0, 0.34) !important;
   border-radius: 8px !important;
   background-image: none !important;
 }

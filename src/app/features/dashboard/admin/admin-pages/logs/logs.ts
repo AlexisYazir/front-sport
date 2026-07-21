@@ -98,7 +98,7 @@ export class LogsPage implements OnInit, OnDestroy {
           this.applyFilters();
           this.isLoading.set(false);
           if (showToast) {
-            this.toastr.success('Logs actualizados', 'Logs');
+            this.toastr.success('Datos actualizados correctamente', 'Actualización');
           }
         },
         error: () => {

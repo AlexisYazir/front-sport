@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { CompanyInfo, CompanyService } from '../../../core/services/company.service';
+import { DashboardPreferencesService } from '../../../core/services/dashboard-preferences.service';
 
 @Component({
   selector: 'app-footer',
@@ -15,6 +16,7 @@ export class Footer {
   private authService = inject(AuthService);
   private companyService = inject(CompanyService);
   private router = inject(Router);
+  private preferences = inject(DashboardPreferencesService);
   companyInfo: CompanyInfo | null = null;
 
   constructor() {
@@ -33,8 +35,15 @@ export class Footer {
     const role = Number(user?.rol);
     return (
       role === 2 ||
-      role === 3 ||
-      this.router.url.startsWith('/dashboard/usuario')
+      role === 3
     );
+  }
+
+  get isUserDashboard(): boolean {
+    return this.router.url.startsWith('/dashboard/usuario');
+  }
+
+  get isUserSidebarCollapsed(): boolean {
+    return !this.preferences.sidebarDefaultOpen();
   }
 }

@@ -1,0 +1,358 @@
+<div class="reports-page">
+  <header class="reports-header report-enter">
+    <div class="reports-heading">
+      <div class="heading-icon" aria-hidden="true">
+        <span class="material-symbols-outlined">query_stats</span>
+      </div>
+      <div>
+        <h1>Reportes de ventas</h1>
+        <p>Indicadores comerciales y operativos para tomar mejores decisiones</p>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <button
+        type="button"
+        class="icon-action"
+        (click)="refresh()"
+        [disabled]="isLoading() || isRefreshing()"
+        title="Actualizar reporte"
+        aria-label="Actualizar reporte">
+        <span class="material-symbols-outlined" [class.spinning]="isRefreshing()">refresh</span>
+      </button>
+      <button
+        type="button"
+        class="primary-action"
+        (click)="exportToExcel()"
+        [disabled]="!report() || isExporting()">
+        <span *ngIf="!isExporting()" class="material-symbols-outlined">download</span>
+        <span *ngIf="isExporting()" class="button-spinner" aria-hidden="true"></span>
+        <span>{{ isExporting() ? 'Generando...' : 'Exportar Excel' }}</span>
+      </button>
+    </div>
+  </header>
+
+  <section class="filters-panel report-enter" aria-label="Filtros del reporte">
+    <div class="preset-group" aria-label="Periodos rápidos">
+      <button type="button" [class.active]="selectedPreset === '7d'" (click)="selectPreset('7d')">7 días</button>
+      <button type="button" [class.active]="selectedPreset === '30d'" (click)="selectPreset('30d')">30 días</button>
+      <button type="button" [class.active]="selectedPreset === 'month'" (click)="selectPreset('month')">Este mes</button>
+      <button type="button" [class.active]="selectedPreset === '90d'" (click)="selectPreset('90d')">90 días</button>
+      <button type="button" [class.active]="selectedPreset === 'year'" (click)="selectPreset('year')">Este año</button>
+    </div>
+
+    <div class="custom-filters">
+      <label>
+        <span>Desde</span>
+        <input type="date" [(ngModel)]="fromDate" (ngModelChange)="markCustomRange()" [max]="toDate">
+      </label>
+      <label>
+        <span>Hasta</span>
+        <input type="date" [(ngModel)]="toDate" (ngModelChange)="markCustomRange()" [min]="fromDate">
+      </label>
+      <label>
+        <span>Agrupar</span>
+        <select [(ngModel)]="granularity">
+          <option value="auto">Automático</option>
+          <option value="day">Por día</option>
+          <option value="week">Por semana</option>
+          <option value="month">Por mes</option>
+        </select>
+      </label>
+      <button type="button" class="apply-button" (click)="applyFilters()" [disabled]="isLoading() || isRefreshing()">
+        <span class="material-symbols-outlined">filter_alt</span>
+        Aplicar
+      </button>
+    </div>
+  </section>
+
+  <div *ngIf="isRefreshing()" class="refresh-progress" aria-label="Actualizando reporte">
+    <span></span>
+  </div>
+
+  <section *ngIf="isLoading()" class="report-skeleton" aria-label="Cargando reporte">
+    <div class="skeleton-context skeleton-block"></div>
+    <div class="skeleton-kpis">
+      <div *ngFor="let item of [1, 2, 3, 4]" class="skeleton-card">
+        <div class="skeleton-line short"></div>
+        <div class="skeleton-line value"></div>
+        <div class="skeleton-line medium"></div>
+      </div>
+    </div>
+    <div class="skeleton-charts">
+      <div class="skeleton-chart skeleton-block"></div>
+      <div class="skeleton-chart small skeleton-block"></div>
+    </div>
+    <span class="sr-only">Cargando indicadores de ventas</span>
+  </section>
+
+  <section *ngIf="!isLoading() && errorMessage() && !report()" class="error-state report-enter">
+    <div class="state-icon error">
+      <span class="material-symbols-outlined">cloud_off</span>
+    </div>
+    <h2>No pudimos cargar el reporte</h2>
+    <p>{{ errorMessage() }} Revisa tu conexión e inténtalo nuevamente.</p>
+    <button type="button" class="primary-action" (click)="retry()">
+      <span class="material-symbols-outlined">refresh</span>
+      Reintentar
+    </button>
+  </section>
+
+  <ng-container *ngIf="report() as data">
+    <section class="period-context report-enter">
+      <div>
+        <span class="context-label">Periodo analizado</span>
+        <strong>{{ formatDate(data.meta.from) }} - {{ formatDate(data.meta.to) }}</strong>
+      </div>
+      <div class="comparison-context">
+        <span class="material-symbols-outlined">compare_arrows</span>
+        <span>Comparado con {{ formatDate(data.meta.previousFrom) }} - {{ formatDate(data.meta.previousTo) }}</span>
+      </div>
+      <div class="generated-context">
+        <span class="material-symbols-outlined">schedule</span>
+        <span>Actualizado {{ data.meta.generatedAt | date:'HH:mm' }}</span>
+      </div>
+    </section>
+
+    <div *ngIf="data.summary.orders === 0" class="no-activity report-enter">
+      <span class="material-symbols-outlined">event_busy</span>
+      <div>
+        <strong>Sin movimientos en este periodo</strong>
+        <p>Prueba con un rango de fechas más amplio para consultar actividad comercial.</p>
+      </div>
+    </div>
+
+    <section class="kpi-grid" aria-label="Indicadores principales">
+      <article *ngFor="let card of kpiCards(); let index = index" class="kpi-card report-enter" [style.--delay]="index * 55 + 'ms'">
+        <div class="kpi-topline">
+          <div class="kpi-icon" [ngClass]="card.tone">
+            <span class="material-symbols-outlined">{{ card.icon }}</span>
+          </div>
+          <span class="change-pill" [ngClass]="changeClass(card.change)">
+            <span class="material-symbols-outlined">{{ changeIcon(card.change) }}</span>
+            {{ changeText(card.change) }}
+          </span>
+        </div>
+        <p class="kpi-label">{{ card.label }}</p>
+        <p class="kpi-value">{{ card.value }}</p>
+        <p class="kpi-caption">{{ card.caption }}</p>
+        <span class="comparison-label">vs. periodo anterior</span>
+      </article>
+    </section>
+
+    <section class="financial-strip financial-strip--three report-enter" aria-label="Desglose financiero">
+      <div>
+        <span class="material-symbols-outlined metric-blue">account_balance_wallet</span>
+        <p><span>Venta cobrada</span><strong>{{ formatCurrency(data.summary.grossSales) }}</strong></p>
+      </div>
+      <div>
+        <span class="material-symbols-outlined metric-purple">sell</span>
+        <p><span>Descuentos aplicados</span><strong>{{ formatCurrency(data.summary.discounts) }}</strong></p>
+      </div>
+      <div>
+        <span class="material-symbols-outlined metric-orange">local_shipping</span>
+        <p><span>Ingresos por envío</span><strong>{{ formatCurrency(data.summary.shippingRevenue) }}</strong></p>
+      </div>
+    </section>
+
+    <section class="insights-section report-enter">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">LECTURA EJECUTIVA</span>
+          <h2>Hallazgos del periodo</h2>
+        </div>
+        <span class="section-hint">Generados con los datos seleccionados</span>
+      </div>
+      <div class="insights-grid">
+        <article *ngFor="let insight of data.insights" class="insight-item" [ngClass]="insight.type">
+          <span class="material-symbols-outlined">{{ insight.icon }}</span>
+          <div>
+            <h3>{{ insight.title }}</h3>
+            <p>{{ insight.message }}</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="charts-grid">
+      <article class="report-card trend-card report-enter">
+        <div class="card-heading">
+          <div>
+            <span class="eyebrow">COMPORTAMIENTO</span>
+            <h2>Tendencia de ventas</h2>
+            <p>Venta cobrada y neta durante el periodo</p>
+          </div>
+          <span class="granularity-badge">
+            {{ data.meta.granularity === 'day' ? 'Por día' : data.meta.granularity === 'week' ? 'Por semana' : 'Por mes' }}
+          </span>
+        </div>
+        <div class="chart-frame chart-large">
+          <canvas baseChart [type]="'line'" [data]="salesChartData()" [options]="lineChartOptions()"></canvas>
+        </div>
+      </article>
+
+      <article class="report-card status-card report-enter">
+        <div class="card-heading compact">
+          <div>
+            <span class="eyebrow">OPERACIÓN</span>
+            <h2>Estado de pedidos</h2>
+            <p>Pedidos cobrados del periodo</p>
+          </div>
+        </div>
+        <div *ngIf="data.orderStatuses.length > 0" class="chart-frame chart-doughnut">
+          <canvas baseChart [type]="'doughnut'" [data]="statusChartData()" [options]="doughnutChartOptions()"></canvas>
+          <div class="doughnut-total">
+            <strong>{{ formatInteger(data.summary.orders) }}</strong>
+            <span>pedidos</span>
+          </div>
+        </div>
+        <div *ngIf="data.orderStatuses.length === 0" class="mini-empty">
+          <span class="material-symbols-outlined">donut_large</span>
+          <p>Sin pedidos para distribuir</p>
+        </div>
+      </article>
+    </section>
+
+    <section class="analysis-grid analysis-grid--single">
+      <article class="report-card category-card report-enter">
+        <div class="card-heading compact">
+          <div>
+            <span class="eyebrow">MEZCLA COMERCIAL</span>
+            <h2>Ventas por categoría</h2>
+            <p>Ingresos generados por familia de productos</p>
+          </div>
+        </div>
+        <div *ngIf="data.categories.length > 0" class="chart-frame chart-categories">
+          <canvas baseChart [type]="'bar'" [data]="categoryChartData()" [options]="barChartOptions()"></canvas>
+        </div>
+        <div *ngIf="data.categories.length === 0" class="mini-empty">
+          <span class="material-symbols-outlined">category</span>
+          <p>Sin categorías con ventas</p>
+        </div>
+      </article>
+
+    </section>
+
+    <section class="report-card ranking-section report-enter">
+      <div class="card-heading ranking-heading">
+        <div>
+          <span class="eyebrow">DESEMPEÑO DE CATÁLOGO</span>
+          <h2>Productos con mayores ventas</h2>
+          <p>Ordenados por ingresos generados en el periodo</p>
+        </div>
+        <span class="section-hint">Top {{ data.topProducts.length }}</span>
+      </div>
+
+      <div *ngIf="data.topProducts.length > 0" class="ranking-table-wrap">
+        <table class="ranking-table">
+          <thead>
+            <tr>
+              <th>Pos.</th>
+              <th>Producto</th>
+              <th>Categoría</th>
+              <th class="numeric">Unidades</th>
+              <th class="numeric">Pedidos</th>
+              <th class="numeric">Participación</th>
+              <th class="numeric">Ingresos</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let product of data.topProducts; let index = index">
+              <td><span class="rank-number" [class.top-three]="index < 3">{{ index + 1 }}</span></td>
+              <td>
+                <div class="product-cell">
+                  <div class="product-image">
+                    <img *ngIf="product.image" [src]="product.image" [alt]="product.name" (error)="hideBrokenImage($event)">
+                    <span class="material-symbols-outlined">inventory_2</span>
+                  </div>
+                  <div>
+                    <strong>{{ product.name }}</strong>
+                    <span>{{ product.brand }}</span>
+                  </div>
+                </div>
+              </td>
+              <td><span class="category-chip">{{ product.category }}</span></td>
+              <td class="numeric">{{ formatInteger(product.units) }}</td>
+              <td class="numeric">{{ formatInteger(product.orders) }}</td>
+              <td class="numeric">
+                <div class="contribution-cell">
+                  <span>{{ formatPercent(product.contribution) }}</span>
+                  <span class="progress-track"><span [style.width.%]="product.contribution"></span></span>
+                </div>
+              </td>
+              <td class="numeric revenue-cell">{{ formatCurrency(product.revenue) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div *ngIf="data.topProducts.length === 0" class="mini-empty spacious">
+        <span class="material-symbols-outlined">inventory_2</span>
+        <p>No hay productos vendidos en el periodo.</p>
+      </div>
+    </section>
+
+    <section class="bottom-grid">
+      <article class="report-card promotions-card report-enter">
+        <div class="card-heading compact">
+          <div>
+            <span class="eyebrow">EFECTIVIDAD</span>
+            <h2>Promociones utilizadas</h2>
+            <p>Ventas asociadas y descuento concedido</p>
+          </div>
+        </div>
+        <div *ngIf="data.promotions.length > 0" class="promotion-list">
+          <div *ngFor="let promotion of data.promotions" class="promotion-item">
+            <div class="promotion-icon"><span class="material-symbols-outlined">local_offer</span></div>
+            <div class="promotion-main">
+              <strong>{{ promotion.name }}</strong>
+              <span>{{ promotion.code || 'Promoción automática' }} · {{ promotion.uses }} usos</span>
+            </div>
+            <div class="promotion-values">
+              <strong>{{ formatCurrency(promotion.associatedRevenue) }}</strong>
+              <span>-{{ formatCurrency(promotion.discount) }} en descuentos</span>
+            </div>
+          </div>
+        </div>
+        <div *ngIf="data.promotions.length === 0" class="mini-empty spacious">
+          <span class="material-symbols-outlined">sell</span>
+          <p>No se utilizaron promociones en el periodo.</p>
+        </div>
+      </article>
+
+      <article class="report-card customers-card report-enter">
+        <div class="card-heading compact">
+          <div>
+            <span class="eyebrow">CLIENTES</span>
+            <h2>Clientes con mayor compra</h2>
+            <p>Ordenados por importe acumulado</p>
+          </div>
+        </div>
+        <div *ngIf="data.topCustomers.length > 0" class="customer-list">
+          <div *ngFor="let customer of data.topCustomers; let index = index" class="customer-item">
+            <span class="customer-rank">{{ index + 1 }}</span>
+            <div class="customer-avatar">{{ customer.name.charAt(0).toUpperCase() }}</div>
+            <div class="customer-main">
+              <strong>{{ customer.name }}</strong>
+              <span>{{ customer.orders }} pedidos · {{ customer.units }} unidades</span>
+            </div>
+            <div class="customer-total">
+              <strong>{{ formatCurrency(customer.total) }}</strong>
+              <span>Ticket {{ formatCurrency(customer.averageTicket) }}</span>
+            </div>
+          </div>
+        </div>
+        <div *ngIf="data.topCustomers.length === 0" class="mini-empty spacious">
+          <span class="material-symbols-outlined">group</span>
+          <p>No hay clientes con compras en el periodo.</p>
+        </div>
+      </article>
+    </section>
+
+    <footer class="report-note report-enter">
+      <span class="material-symbols-outlined">info</span>
+      <p>
+        El reporte considera pedidos con pago aprobado. La venta neta descuenta los reembolsos resueltos dentro del periodo seleccionado.
+      </p>
+    </footer>
+  </ng-container>
+</div>

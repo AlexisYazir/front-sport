@@ -132,7 +132,6 @@ export class Marcas implements OnInit {
         this.isLoading.set(false);
       },
       error: (error) => {
-        console.error('Error loading marcas:', error);
         this.toastr.error('Error al cargar marcas', 'Error');
         this.isLoading.set(false);
       }
@@ -283,7 +282,6 @@ export class Marcas implements OnInit {
         }, 1500);
       },
       error: (err) => {
-        console.error('Error al crear marca:', err);
         this.creatingMarca = false;
         this.toastr.error(err.error?.message || 'Error al crear la marca', 'Error');
       }
@@ -368,7 +366,6 @@ export class Marcas implements OnInit {
         }, 1500);
       },
       error: (err) => {
-        console.error('Error al actualizar marca:', err);
         this.editingMarca = false;
         this.toastr.error(err.error?.message || 'Error al actualizar la marca', 'Error');
       }
@@ -391,7 +388,6 @@ export class Marcas implements OnInit {
         this.isLoading.set(false);
       },
       error: (error) => {
-        console.error('Error loading categorias:', error);
         this.toastr.error('Error al cargar categorías', 'Error');
         this.isLoading.set(false);
       }
@@ -557,7 +553,6 @@ export class Marcas implements OnInit {
         }, 1500);
       },
       error: (err) => {
-        console.error('Error al crear categoría:', err);
         this.creatingCategoria = false;
         this.toastr.error(err.error?.message || 'Error al crear la categoría', 'Error');
       }
@@ -649,6 +644,7 @@ export class Marcas implements OnInit {
     } else {
       this.loadCategorias();
     }
+    this.toastr.success('Datos actualizados correctamente', 'Actualización');
   }
 
   // Métodos para mantener compatibilidad con el HTML (opcional)

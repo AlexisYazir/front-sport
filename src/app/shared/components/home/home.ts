@@ -131,11 +131,9 @@ export class Home implements OnInit, OnDestroy {
       next: (data: Product[]) => {
         this.products = data;
         this.featuredProducts.set(data.slice(0, 8));
-        console.log('Productos cargados:', data);
         this.loading.set(false);
       },
       error: (error) => {
-        console.error('Error cargando productos:', error);
         this.toastr.error('Error al cargar los productos', 'Error');
         this.loading.set(false);
       }
@@ -147,11 +145,9 @@ export class Home implements OnInit, OnDestroy {
     this.productService.getMarcas().subscribe({
       next: (data: Marca[]) => {
         this.marcas = data;
-        console.log('Marcas cargadas:', data);
         this.loadingMarcas.set(false);
       },
       error: (error) => {
-        console.error('Error cargando marcas:', error);
         this.toastr.error('Error al cargar las marcas', 'Error');
         this.loadingMarcas.set(false);
       }

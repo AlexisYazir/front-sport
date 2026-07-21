@@ -108,6 +108,7 @@ export class ReviewsPage implements OnInit {
   refresh(): void {
     this.productService.clearRequestCache();
     this.loadReviews();
+    this.toastr.success('Datos actualizados correctamente', 'Actualización');
   }
 
   onFiltersChange(): void {

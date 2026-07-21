@@ -5,7 +5,7 @@
   <div class="flex">
     <aside
       [class.w-52]="sidebarOpen()"
-      [class.w-16]="!sidebarOpen()"
+      [class.sidebar-collapsed]="!sidebarOpen()"
       [class.top-16]="!navbarOculto()"
       [class.top-0]="navbarOculto()"
       class="dashboard-sidebar bg-white shadow-md border-r border-gray-200 fixed left-0 bottom-0 transition-all duration-300 z-20 overflow-hidden flex flex-col">
@@ -38,9 +38,9 @@
             <li *ngFor="let item of menuItems">
               <a
                 [routerLink]="item.route"
-                routerLinkActive="bg-[#0367A6] text-white shadow-sm"
+                routerLinkActive="sidebar-link-active"
                 class="group flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200 text-sm"
-                [class.text-white]="isActive(item.route)"
+                [class.text-[#0367A6]]="isActive(item.route)"
                 [class.text-[#666666]]="!isActive(item.route)"
                 [class.hover:bg-[#0367A6]/10]="!isActive(item.route)"
                 [class.hover:text-[#0367A6]]="!isActive(item.route)"
@@ -51,7 +51,7 @@
 
                 <span
                   class="material-symbols-outlined text-xl transition-colors duration-200"
-                  [class.text-white]="isActive(item.route)"
+                  [class.text-[#0367A6]]="isActive(item.route)"
                   [class.group-hover:text-[#0367A6]]="!isActive(item.route)">
                   {{ item.icon }}
                 </span>
@@ -68,10 +68,14 @@
 
     <main
       [class.ml-52]="sidebarOpen()"
-      [class.ml-16]="!sidebarOpen()"
+      [class.dashboard-main-collapsed]="!sidebarOpen()"
       [class.pt-2]="!navbarOculto()"
       [class.pt-0]="navbarOculto()"
-      class="flex-1 p-2 transition-all duration-300 overflow-y-auto h-screen">
+      class="dashboard-route-host relative flex-1 p-2 transition-all duration-300 overflow-y-auto h-screen">
+      <app-dashboard-route-skeleton
+        *ngIf="navigationLoading.loading()"
+        [route]="router.url">
+      </app-dashboard-route-skeleton>
       <router-outlet></router-outlet>
     </main>
   </div>

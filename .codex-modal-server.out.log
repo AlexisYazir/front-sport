@@ -1,0 +1,47 @@
+
+> ecommerce-app@1.0.0 start
+> ng serve --port 4212
+
+[33m>[39m Building...
+[32m√[39m Building...
+[1mInitial chunk files[22m[2m | [22m[1mNames[22m          [2m | [22m [1mRaw size[22m
+[32mmain.js[39m            [2m | [22m[2mmain[22m           [2m | [22m[36m248.18 kB[39m[2m | [22m
+[32mstyles.css[39m         [2m | [22m[2mstyles[22m         [2m | [22m[36m244.50 kB[39m[2m | [22m
+[32mchunk-3DNIM74H.js[39m  [2m | [22m[2m-[22m              [2m | [22m [36m30.70 kB[39m[2m | [22m
+[32mchunk-TPGVVA5B.js[39m  [2m | [22m[2m-[22m              [2m | [22m [36m29.85 kB[39m[2m | [22m
+[32mchunk-NTFWVS4I.js[39m  [2m | [22m[2m-[22m              [2m | [22m [36m16.81 kB[39m[2m | [22m
+[32mchunk-X2L5GOVF.js[39m  [2m | [22m[2m-[22m              [2m | [22m  [36m7.74 kB[39m[2m | [22m
+[32mchunk-J3OSPFD2.js[39m  [2m | [22m[2m-[22m              [2m | [22m  [36m3.52 kB[39m[2m | [22m
+[32mchunk-BAGXRU4A.js[39m  [2m | [22m[2m-[22m              [2m | [22m  [36m2.02 kB[39m[2m | [22m
+[32mchunk-Y5RQAIA6.js[39m  [2m | [22m[2m-[22m              [2m | [22m  [36m1.50 kB[39m[2m | [22m
+[32mchunk-F3HV5K3K.js[39m  [2m | [22m[2m-[22m              [2m | [22m  [36m1.00 kB[39m[2m | [22m
+[32mchunk-CIBUGW4Q.js[39m  [2m | [22m[2m-[22m              [2m | [22m[36m656 bytes[39m[2m | [22m
+[32mpolyfills.js[39m       [2m | [22m[2mpolyfills[22m      [2m | [22m [36m95 bytes[39m[2m | [22m
+
+[1m [22m                  [2m | [22m[1mInitial total[22m  [2m | [22m[1m586.57 kB[22m
+
+[1mLazy chunk files[22m   [2m | [22m[1mNames[22m          [2m | [22m [1mRaw size[22m
+[32mchunk-SR7DTZHS.js[39m  [2m | [22m[2mdb[22m             [2m | [22m[36m322.37 kB[39m[2m | [22m
+[32mchunk-JC6ZPOV6.js[39m  [2m | [22m[2mproducts[22m       [2m | [22m[36m200.61 kB[39m[2m | [22m
+[32mchunk-XVLNTR7P.js[39m  [2m | [22m[2minventario[22m     [2m | [22m[36m174.26 kB[39m[2m | [22m
+[32mchunk-2ZWWX4DJ.js[39m  [2m | [22m[2mempresa[22m        [2m | [22m[36m150.97 kB[39m[2m | [22m
+[32mchunk-EXIG4QC7.js[39m  [2m | [22m[2mprediction[22m     [2m | [22m[36m146.52 kB[39m[2m | [22m
+[32mchunk-U7DSUWQI.js[39m  [2m | [22m[2mreports[22m        [2m | [22m[36m130.52 kB[39m[2m | [22m
+[32mchunk-ADLUGVLS.js[39m  [2m | [22m[2mproduct-detail[22m [2m | [22m[36m130.02 kB[39m[2m | [22m
+[32mchunk-ZB5OXN46.js[39m  [2m | [22m[2mmarcas[22m         [2m | [22m[36m127.31 kB[39m[2m | [22m
+[32mchunk-ZTTDJFHL.js[39m  [2m | [22m[2mproduct-list[22m   [2m | [22m[36m106.87 kB[39m[2m | [22m
+[32mchunk-XD5VG76T.js[39m  [2m | [22m[2memployee-orders[22m[2m | [22m[36m104.03 kB[39m[2m | [22m
+[32mchunk-KOWWV2YB.js[39m  [2m | [22m[2mnew-products[22m   [2m | [22m [36m93.18 kB[39m[2m | [22m
+[32mchunk-4OETAPET.js[39m  [2m | [22m[2mproduct-marca[22m  [2m | [22m [36m86.15 kB[39m[2m | [22m
+[32mchunk-7WBSWYJH.js[39m  [2m | [22m[2mforgot-password[22m[2m | [22m [36m82.75 kB[39m[2m | [22m
+[32mchunk-QEHFBGSE.js[39m  [2m | [22m[2mcheckout[22m       [2m | [22m [36m80.36 kB[39m[2m | [22m
+[32mchunk-UMV34DUD.js[39m  [2m | [22m[2mcategories[22m     [2m | [22m [36m75.95 kB[39m[2m | [22m
+[2m...and 37 more lazy chunks files. Use "--verbose" to show all the files.[22m
+
+Application bundle generation complete. [13.065 seconds] - 2026-07-21T12:03:59.666Z
+
+Watch mode enabled. Watching for file changes...
+NOTE: Raw file sizes do not reflect development server per-request transformations.
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m4212[22m/[39m
+[2m[32m  ➜[39m[22m[2m  press [22m[1mh + enter[22m[2m to show help[22m
+[33m>[39m Changes detected. Rebuilding...

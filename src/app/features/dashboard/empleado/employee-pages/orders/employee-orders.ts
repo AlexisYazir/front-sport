@@ -130,6 +130,7 @@ export class EmployeeOrders implements OnInit {
   refresh(): void {
     this.productService.clearRequestCache();
     this.loadOrders();
+    this.toastr.success('Datos actualizados correctamente', 'Actualización');
   }
 
   onFiltersChange(): void {
@@ -628,7 +629,6 @@ export class EmployeeOrders implements OnInit {
       `);
       preview.document.close();
     } catch (error) {
-      console.error(error);
       this.toastr.error('No fue posible generar el PDF', 'Entrega');
     }
   }

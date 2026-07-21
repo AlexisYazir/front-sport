@@ -113,7 +113,6 @@ export class ContactPage implements OnInit {
       },
       error: (error) => {
         this.isLoading.set(false);
-        console.error('Error al enviar mensaje:', error);
         
         if (error.status === 401) {
           this.toastr.error('Tu sesión ha expirado. Inicia sesión nuevamente.', 'Sesión expirada');

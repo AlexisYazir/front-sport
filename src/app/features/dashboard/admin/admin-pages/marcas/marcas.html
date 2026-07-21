@@ -1,7 +1,7 @@
-<div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+<div class="dashboard-page-shell bg-white rounded-xl shadow-lg border border-gray-100 p-6">
   <!-- Toolbar con pestañas -->
   <div class="mb-6 p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-100 shadow-sm">
-    <div class="flex items-center justify-between">
+    <div class="dashboard-page-toolbar flex items-center justify-between">
       <div class="flex items-center gap-3">
         <div class="bg-[#0367A6]/10 p-3 rounded-xl">
           <span class="material-symbols-outlined text-[#0367A6] text-2xl">
@@ -19,7 +19,7 @@
       </div>
       
       <!-- Botón de acción según pestaña -->
-      <div class="flex gap-3">
+      <div class="dashboard-page-actions flex gap-3">
         <button *ngIf="activeTab === 'marcas'" 
                 class="px-4 py-2 bg-[#0367A6] hover:bg-[#035A91] text-white rounded-lg flex items-center gap-2"
                 (click)="openCreateMarcaModal()">

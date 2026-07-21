@@ -3,7 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, BehaviorSubject, of } from 'rxjs';
 import { map, catchError, finalize } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
-import { Product, Category, ProductFilters, ProductSearchResult, Categorie, Marca, Attibute, Orders, EmployeeOrder, EmployeeOrderStatus, UserOrder, InventoryProduct, RecientProduct, ProductVariant, ProductReviewsResponse, ProductReview, ProductReviewAdmin, ProductReviewEligibility, CreateProductReviewRequest, UpdateShipmentRequest, CreateReturnRequest, ProductReturn, UpdateReturnStatusRequest, Promotion, CreatePromotionRequest, ShippingMethodAdmin, UpdateShippingMethodRequest } from '../models/product.model';
+import { Product, Category, ProductFilters, ProductSearchResult, Categorie, Marca, Attibute, Orders, EmployeeOrder, EmployeeOrderStatus, UserOrder, InventoryProduct, RecientProduct, ProductVariant, ProductReviewsResponse, ProductReview, ProductReviewAdmin, ProductReviewEligibility, CreateProductReviewRequest, UpdateShipmentRequest, Promotion, CreatePromotionRequest, ShippingMethodAdmin, UpdateShippingMethodRequest } from '../models/product.model';
 import {
   CheckoutCardInput,
   CheckoutPostalCodeResponse,
@@ -13,6 +13,7 @@ import {
   UserPaymentMethod,
 } from '../models/cart.model';
 import { RequestCacheService } from './request-cache.service';
+import { frontendLogger } from './frontend-logger.service';
 
 @Injectable({
   providedIn: 'root'
@@ -364,7 +365,7 @@ getProductById(id: number): Observable<Product | null> {
         return null;
       }),
       catchError(error => {
-        console.error('Error fetching product details:', error);
+        frontendLogger.error('Error fetching product details', error);
         return of(null); // Retorna null en caso de error
       }),
       finalize(() => this.isLoading.set(false))
@@ -1132,54 +1133,6 @@ confirmDeliveryCode(
       map((response) => {
         this.cache.invalidate('products:user-orders');
         this.cache.invalidate('products:employee-orders');
-        return response;
-      }),
-    );
-}
-
-createReturnRequest(data: CreateReturnRequest): Observable<{ message: string; return: ProductReturn }> {
-  return this.http
-    .post<{ message: string; return: ProductReturn }>(
-      `${this.API_URL}/products/returns`,
-      data,
-    )
-    .pipe(
-      map((response) => {
-        this.cache.invalidate('products:user-returns');
-        return response;
-      }),
-    );
-}
-
-getUserReturns(): Observable<ProductReturn[]> {
-  return this.cache.getOrSet(
-    'products:user-returns',
-    () => this.http.get<ProductReturn[]>(`${this.API_URL}/products/returns/user`),
-    this.SHORT_CACHE_TTL,
-  );
-}
-
-getAllReturns(): Observable<ProductReturn[]> {
-  return this.cache.getOrSet(
-    'products:all-returns',
-    () => this.http.get<ProductReturn[]>(`${this.API_URL}/products/returns/admin`),
-    this.SHORT_CACHE_TTL,
-  );
-}
-
-updateReturnStatus(
-  idDevolucion: number,
-  data: UpdateReturnStatusRequest,
-): Observable<{ message: string; return: ProductReturn }> {
-  return this.http
-    .put<{ message: string; return: ProductReturn }>(
-      `${this.API_URL}/products/returns/${idDevolucion}/status`,
-      data,
-    )
-    .pipe(
-      map((response) => {
-        this.cache.invalidate('products:user-returns');
-        this.cache.invalidate('products:all-returns');
         return response;
       }),
     );

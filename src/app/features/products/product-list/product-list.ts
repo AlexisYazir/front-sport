@@ -164,7 +164,6 @@ export class ProductList implements OnInit {
         this.allProducts.set(products);
       },
       error: (error) => {
-        console.error('Error cargando productos para filtros:', error);
       }
     });
     
@@ -173,7 +172,6 @@ export class ProductList implements OnInit {
         this.categories.set(categories);
       },
       error: (error) => {
-        console.error('Error cargando categorías:', error);
         this.toastr.error('Error al cargar categorías', 'Error');
       }
     });
@@ -183,7 +181,6 @@ export class ProductList implements OnInit {
         this.brands.set(brands);
       },
       error: (error) => {
-        console.error('Error cargando marcas:', error);
         this.toastr.error('Error al cargar marcas', 'Error');
       }
     });
@@ -342,7 +339,6 @@ export class ProductList implements OnInit {
         }
       },
       error: (error) => {
-        console.error('Error en búsqueda:', error);
         this.toastr.error('Error al buscar productos', 'Error');
         this.isLoading.set(false);
       }

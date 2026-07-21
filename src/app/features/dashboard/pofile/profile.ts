@@ -84,7 +84,6 @@ export class Profile implements OnInit {
     
     this.authService.getProfile().subscribe({
       next: (profile) => {
-        console.log('Perfil cargado:', profile);
         this.user.set(profile);
         
         this.profileForm = {
@@ -98,7 +97,6 @@ export class Profile implements OnInit {
         this.isLoading.set(false);
       },
       error: (error) => {
-        console.error('Error al cargar perfil:', error);
         this.isLoading.set(false);
         this.toastr.error('Error al cargar el perfil', 'Error');
       }

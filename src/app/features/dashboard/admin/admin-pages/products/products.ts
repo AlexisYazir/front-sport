@@ -171,7 +171,6 @@ export class Products implements OnInit {
         this.applyFilters();
       },
       error: (error) => {
-        console.error('Error loading products:', error);
         this.toastr.error('Error al cargar productos', 'Error');
       }
     });
@@ -183,7 +182,6 @@ export class Products implements OnInit {
         this.newProductsCount = data.length;
       },
       error: (error) => {
-        console.error('Error al cargar productos nuevos:', error);
       }
     });
   }
@@ -270,7 +268,6 @@ export class Products implements OnInit {
         this.applyFilters();
       },
       error: (error) => {
-        console.error('Error loading categories:', error);
         this.toastr.error('Error al cargar categorías', 'Error');
       }
     });
@@ -293,7 +290,6 @@ export class Products implements OnInit {
         this.marcas = data;
       },
       error: (error) => {
-        console.error('Error loading marcas:', error);
         this.toastr.error('Error al cargar marcas', 'Error');
       }
     });
@@ -306,7 +302,6 @@ export class Products implements OnInit {
         this.updateDynamicFilterOptions();
       },
       error: (error) => {
-        console.error('Error loading sports:', error);
         this.toastr.error('Error al cargar deportes', 'Error');
       }
     });
@@ -333,7 +328,6 @@ export class Products implements OnInit {
         this.updateDynamicFilterOptions();
       },
       error: (error) => {
-        console.error('Error loading attributes:', error);
         this.toastr.error('Error al cargar atributos', 'Error');
       }
     });
@@ -564,11 +558,10 @@ export class Products implements OnInit {
   refreshData() {
     this.loadProducts();
     this.loadNewProductsCount();
-    this.toastr.success('Datos actualizados correctamente', 'Éxito');
+    this.toastr.success('Datos actualizados correctamente', 'Actualización');
   }
 
   deleteProduct(product: Product) {
-    console.log('Eliminar:', product);
   }
 
   openCreateModal() {
@@ -661,14 +654,12 @@ export class Products implements OnInit {
               err.error?.message || 'El producto se creo, pero no se pudieron guardar los deportes',
               'Atencion'
             );
-            console.error('Error al asignar deportes:', err);
           }
         });
       },
       error: (err) => {
         this.creatingProduct = false;
         this.toastr.error(err.error?.message || 'Error al crear producto', 'Error');
-        console.error('Error al crear producto:', err);
       }
     });
   }
@@ -704,7 +695,6 @@ export class Products implements OnInit {
     this.loadingVariants = true;
     this.productService.getProductVariants(productId).subscribe({
       next: (variants: any[]) => {
-        console.log('📦 Variantes cargadas:', variants);
         
         this.productVariants = variants.map(v => ({
           id_variante: v.id_variante,
@@ -716,11 +706,9 @@ export class Products implements OnInit {
           expanded: false
         }));
         
-        console.log('✅ Variantes mapeadas:', this.productVariants);
         this.loadingVariants = false;
       },
       error: (err) => {
-        console.error('Error al cargar variantes:', err);
         this.loadingVariants = false;
         this.toastr.error('Error al cargar las variantes', 'Error');
       }
@@ -793,7 +781,6 @@ export class Products implements OnInit {
       error: (err) => {
         this.savingProduct = false;
         this.toastr.error(err.error?.message || 'Error al guardar los datos del producto', 'Error');
-        console.error('Error al guardar producto:', err);
       }
     });
   }
@@ -809,8 +796,6 @@ export class Products implements OnInit {
   }
 
   selectVariant(variant: ExistingVariant) {
-    console.log('🎯 Variante seleccionada:', variant);
-    console.log('🎯 Atributos de la variante:', variant.atributos);
     
     this.selectedVariant = variant;
     this.editVariantData = {
@@ -826,7 +811,6 @@ export class Products implements OnInit {
     this.variantAttributes = [];
     
     if (variant.atributos && Object.keys(variant.atributos).length > 0) {
-      console.log('📋 Procesando atributos:', variant.atributos);
       
       Object.entries(variant.atributos).forEach(([key, value]) => {
         const valorStr = String(value);
@@ -845,7 +829,6 @@ export class Products implements OnInit {
             });
           } else {
             // Si no encuentra el hijo, usar el valor como texto
-            console.warn(`Hijo no encontrado: ${key}=${valorStr}`);
             this.variantAttributes.push({
               id_atributo_padre: padre.id_atributo,
               id_atributo_hijo: 0,
@@ -855,7 +838,6 @@ export class Products implements OnInit {
           }
         } else {
           // Si no encuentra el padre, crear un atributo temporal
-          console.warn(`Atributo padre no encontrado: ${key}`);
           this.variantAttributes.push({
             id_atributo_padre: 0,
             id_atributo_hijo: 0,
@@ -866,7 +848,6 @@ export class Products implements OnInit {
       });
     }
     
-    console.log('✅ Atributos para UI:', this.variantAttributes);
     
     // Guardar copia original de atributos
     this.originalVariantAttributes = JSON.parse(JSON.stringify(this.variantAttributes));
@@ -1106,7 +1087,6 @@ export class Products implements OnInit {
       atributos: this.editVariantData.atributos
     };
 
-    console.log('Enviando datos de variante:', updateData);
 
     this.productService.updateProductVariant(updateData).subscribe({
       next: () => {
@@ -1140,7 +1120,6 @@ export class Products implements OnInit {
         }
       },
       error: (err) => {
-        console.error('Error al guardar variante:', err);
         this.savingVariant = false;
         this.toastr.error(err.error?.message || 'Error al guardar la variante', 'Error');
       }
@@ -1189,7 +1168,6 @@ export class Products implements OnInit {
           this.loadingViewVariants = false;
         },
         error: (err) => {
-          console.error('Error al cargar variantes:', err);
           this.toastr.error('Error al cargar variantes', 'Error');
           this.viewProductVariants = [];
           this.loadingViewVariants = false;

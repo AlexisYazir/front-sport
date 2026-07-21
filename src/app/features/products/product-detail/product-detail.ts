@@ -12,6 +12,7 @@ import { Breadcrumbs, BreadcrumbItem } from '../../../shared/components/breadcru
 import { Location } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CartItem } from '../../../core/models/cart.model';
+import { frontendLogger } from '../../../core/services/frontend-logger.service';
 
 interface Variant {
   id_variante: number;
@@ -268,7 +269,7 @@ export class ProductDetail implements OnInit {
         this.isLoading.set(false);
       },
       error: (error) => {
-        console.error('Error loading product:', error);
+        frontendLogger.error('Error loading product', error);
         this.toastr.error('Error al cargar el producto', 'Error');
         this.router.navigate(['/error/500']);
         this.isLoading.set(false);
@@ -286,7 +287,7 @@ export class ProductDetail implements OnInit {
         this.isReviewsLoading.set(false);
       },
       error: (error) => {
-        console.error('Error loading reviews:', error);
+        frontendLogger.error('Error loading reviews', error);
         this.reviews.set([]);
         this.reviewSummary.set({ total: 0, promedio: 0 });
         this.isReviewsLoading.set(false);
@@ -307,7 +308,7 @@ export class ProductDetail implements OnInit {
         this.isReviewEligibilityLoading.set(false);
       },
       error: (error) => {
-        console.error('Error loading review eligibility:', error);
+        frontendLogger.error('Error loading review eligibility', error);
         this.reviewEligibility.set(null);
         this.isReviewEligibilityLoading.set(false);
       },

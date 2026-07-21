@@ -1,0 +1,17 @@
+footer.dashboard-user-footer {
+  width: auto;
+  margin-left: 13rem;
+  transition: margin-left 220ms ease;
+}
+
+footer.dashboard-user-footer--collapsed {
+  margin-left: 4.5rem;
+}
+
+@media (max-width: 767px) {
+  footer.dashboard-user-footer,
+  footer.dashboard-user-footer--collapsed {
+    width: 100%;
+    margin-left: 0;
+  }
+}

@@ -3,7 +3,7 @@ import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 
 import { provideAnimations } from '@angular/platform-browser/animations';
-import { provideToastr } from 'ngx-toastr'
+import { provideToastr } from 'ngx-toastr';
 
 import { routes } from './app.routes';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
@@ -17,13 +17,13 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(withInterceptors([authInterceptor, errorInterceptor])),
     provideAnimations(),
     provideToastr({
-  timeOut: 3000,
-  positionClass: 'toast-top-right',
-  preventDuplicates: true,
-  closeButton: true,
-  progressBar: true,
-  toastClass: 'ngx-toastr custom-toast-light'
-})
+      timeOut: 3200,
+      positionClass: 'toast-top-center',
+      preventDuplicates: true,
+      closeButton: true,
+      progressBar: true,
+      newestOnTop: true,
+      toastClass: 'ngx-toastr sc-toast'
+    })
   ]
-  
 };

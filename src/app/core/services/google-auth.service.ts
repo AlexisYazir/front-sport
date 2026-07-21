@@ -5,6 +5,7 @@ import { ToastrService } from 'ngx-toastr';
 import { environment } from '../../../environments/environment';
 import { LoginResponse } from '../models/user.model';
 import { AuthService } from './auth.service';
+import { frontendLogger } from './frontend-logger.service';
 
 declare const google: any;
 
@@ -25,7 +26,7 @@ export class GoogleAuthService {
 
   initializeGoogle(clientId: string): void {
     if (!clientId) {
-      console.error('Google Client ID no está configurado');
+      frontendLogger.error('Google Client ID no está configurado');
       return;
     }
 
@@ -37,7 +38,7 @@ export class GoogleAuthService {
         itp_support: true,
       });
     } catch (error) {
-      console.error('Error inicializando Google:', error);
+      frontendLogger.error('Error inicializando Google', error);
     }
   }
 
@@ -55,7 +56,7 @@ export class GoogleAuthService {
         defaultOptions,
       );
     } catch (error) {
-      console.error('Error renderizando botón de Google:', error);
+      frontendLogger.error('Error renderizando botón de Google', error);
     }
   }
 
@@ -87,7 +88,7 @@ export class GoogleAuthService {
         successMessage: '¡Bienvenido! Autenticación exitosa',
       });
     } catch (error) {
-      console.error('Error procesando respuesta de Google:', error);
+      frontendLogger.error('Error procesando respuesta de Google', error);
       this.toastr.error('Error al procesar autenticación', 'Error');
     } finally {
       this.authService.setAuthenticationInProgress(false);
@@ -108,7 +109,7 @@ export class GoogleAuthService {
     try {
       google.accounts.id.disableAutoSelect();
     } catch (error) {
-      console.error('Error deshabilitando Google auto select:', error);
+      frontendLogger.error('Error deshabilitando Google auto select', error);
     }
 
     this.authService.logout();

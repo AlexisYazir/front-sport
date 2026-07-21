@@ -35,13 +35,11 @@ export const guestGuard: CanActivateFn = (route, state) => {
 
   // Si hay autenticación en progreso (ej: Google OAuth), permitir navegación sin redirigir
   if (authService.isAuthenticationInProgress()) {
-    // console.log('🔐 Google OAuth en progreso - permitiendo navegación sin redirigir');
     return true;
   }
 
   // Si AuthService ya está navegando (login normal), permitir sin redirigir
   if (authService.isNavigationInProgress()) {
-    // console.log('🚀 AuthService ya está redirigiendo - permitiendo navegación');
     return true;
   }
 

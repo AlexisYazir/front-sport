@@ -363,7 +363,6 @@ export class ForgotPassword implements OnDestroy {
         return JSON.parse(stored);
       }
     } catch (e) {
-      console.error('Error parsing rate limit state:', e);
     }
     
     return {
@@ -381,7 +380,6 @@ export class ForgotPassword implements OnDestroy {
     try {
       localStorage.setItem(this.rateLimitKey, JSON.stringify(state));
     } catch (e) {
-      console.error('Error saving rate limit state:', e);
     }
   }
 
@@ -394,7 +392,6 @@ export class ForgotPassword implements OnDestroy {
         localStorage.removeItem(this.rateLimitKey);
       }
     } catch (e) {
-      console.error('Error clearing rate limit:', e);
     }
     
     this.isRateLimited.set(false);

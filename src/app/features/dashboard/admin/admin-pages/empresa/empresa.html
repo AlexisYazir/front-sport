@@ -1,5 +1,5 @@
-<div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
-  <div class="mb-6 p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-100 shadow-sm flex items-center justify-between gap-4 flex-wrap">
+<div class="dashboard-page-shell bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+  <div class="dashboard-page-toolbar mb-6 p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-100 shadow-sm flex items-center justify-between gap-4 flex-wrap">
     <div class="flex items-center gap-3">
       <div class="bg-[#0367A6]/10 p-3 rounded-xl">
         <span class="material-symbols-outlined text-[#0367A6] text-2xl">domain</span>
@@ -10,7 +10,7 @@
       </div>
     </div>
 
-    <div class="flex gap-3 flex-wrap">
+    <div class="dashboard-page-actions flex gap-3 flex-wrap">
       <button class="px-4 py-2 bg-[#0367A6] hover:bg-[#035A91] text-white rounded-lg flex items-center gap-2" (click)="openModal('general')">
         <span class="material-symbols-outlined text-base">edit_note</span>
         Editar empresa
@@ -168,7 +168,7 @@
           </div>
           <button class="w-10 h-10 rounded-full border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all"
                   type="button"
-                  (click)="loadFaqs()"
+                  (click)="refreshFaqs()"
                   [disabled]="isLoadingFaqs"
                   title="Actualizar FAQs">
             <i class="pi pi-refresh text-lg" [class.pi-spin]="isLoadingFaqs"></i>
@@ -538,7 +538,7 @@
 
           <label class="form-field">
             <span>Sección</span>
-            <input [(ngModel)]="faqForm.seccion" type="text" placeholder="Pagos, envíos, devoluciones..." />
+            <input [(ngModel)]="faqForm.seccion" type="text" placeholder="Pagos, envíos, pedidos..." />
           </label>
 
           <label class="form-field">

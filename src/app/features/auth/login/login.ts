@@ -52,7 +52,6 @@ export class Login implements OnInit {
     if (rememberedEmail && rememberMeFlag) {
       this.credentials.email = rememberedEmail;
       this.rememberMe = true;
-      console.log('✅ Credenciales recuperadas del localStorage');
     }
   }
 
@@ -76,7 +75,6 @@ export class Login implements OnInit {
         });
       }, 300);
     } else {
-      console.warn('⚠️ Google Client ID no está configurado');
     }
   }
 
@@ -93,11 +91,9 @@ export class Login implements OnInit {
     if (this.rememberMe) {
       localStorage.setItem('sc_remember_email', this.credentials.email);
       localStorage.setItem('sc_remember_me', 'true');
-      //console.log('💾 Credenciales guardadas para próxima vez');
     } else {
       localStorage.removeItem('sc_remember_email');
       localStorage.removeItem('sc_remember_me');
-      //console.log('🗑️ Credenciales removidas del localStorage');
     }
 
     this.isLoading = true;

@@ -190,7 +190,6 @@ export class Inventario implements OnInit {
         this.isLoading.set(false);
       },
       error: (error) => {
-        console.error('Error loading inventory:', error);
         this.toastr.error('Error al cargar el inventario', 'Error');
         this.isLoading.set(false);
       }
@@ -339,6 +338,11 @@ export class Inventario implements OnInit {
     return 'pi pi-check-circle';
   }
 
+  getStockIconClass(stock: number): string {
+    const color = stock <= 0 ? 'text-red-600' : stock <= 5 ? 'text-amber-500' : 'text-green-600';
+    return `${this.getStockIcon(stock)} ${color} text-base`;
+  }
+
   getStatusClass(activo: boolean): string {
     return activo ? 'bg-green-100 text-green-700 border-green-200' : 'bg-red-100 text-red-700 border-red-200';
   }
@@ -390,7 +394,6 @@ export class Inventario implements OnInit {
         );
       },
       error: (err) => {
-        console.error('Error al cambiar estado:', err);
         product.activo = previousState;
         this.togglingActive[productId] = false;
         this.toastr.error('Error al cambiar el estado del producto', 'Error');
@@ -417,7 +420,6 @@ export class Inventario implements OnInit {
         this.loadingVariants = false;
       },
       error: (err) => {
-        console.error('Error al cargar variantes:', err);
         this.loadingVariants = false;
         this.toastr.error('Error al cargar las variantes', 'Error');
         this.closeVariantsModal();
@@ -464,7 +466,7 @@ export class Inventario implements OnInit {
   refreshData() {
     this.loadInventory();
     this.loadMovements();
-    this.toastr.success('Datos actualizados', 'Éxito');
+    this.toastr.success('Datos actualizados correctamente', 'Actualización');
   }
 
   viewVariants(product: InventoryProduct) {
@@ -510,12 +512,10 @@ loadMovements() {
       // Si la respuesta es un array directamente
       if (Array.isArray(response)) {
         this.movements = response;
-        console.log('Primer movimiento:', response[0]); // 👈 VERIFICA AQUÍ
       } 
       // Si la respuesta tiene propiedad data
       else if (response && response.data) {
         this.movements = response.data;
-        console.log('Primer movimiento:', response.data[0]); // 👈 VERIFICA AQUÍ
       } else {
         this.movements = [];
       }
@@ -524,7 +524,6 @@ loadMovements() {
       this.loadingMovements = false;
     },
     error: (error) => {
-      console.error('Error loading movements:', error);
       this.toastr.error('Error al cargar movimientos', 'Error');
       this.movements = [];
       this.loadingMovements = false;
@@ -596,13 +595,11 @@ if (this.searchMovementValue) {
 // Filtros de movimientos - CORREGIDOS
 onFechaInicioChange(value: string) {  // Cambiado de event a value
   this.filterFechaInicio = value;
-  console.log('Fecha inicio seleccionada:', this.filterFechaInicio);
   this.applyMovementsFilters();
 }
 
 onFechaFinChange(value: string) {  // Cambiado de event a value
   this.filterFechaFin = value;
-  console.log('Fecha fin seleccionada:', this.filterFechaFin);
   this.applyMovementsFilters();
 }
 
@@ -732,7 +729,6 @@ onFechaFinChange(value: string) {  // Cambiado de event a value
         this.loadingVariantsForSearch = false;
       },
       error: (error) => {
-        console.error('Error loading variants for search:', error);
         this.toastr.error('Error al cargar variantes', 'Error');
         this.loadingVariantsForSearch = false;
       }
@@ -817,7 +813,6 @@ onFechaFinChange(value: string) {  // Cambiado de event a value
         this.loadInventory();
       },
       error: (error) => {
-        console.error('Error al crear movimiento:', error);
         this.savingMovement = false;
         this.toastr.error(error.error?.message || 'Error al registrar movimiento', 'Error');
       }
@@ -1000,7 +995,6 @@ onFechaFinChange(value: string) {  // Cambiado de event a value
         }
 
       } catch (error) {
-        console.error('Error al leer Excel:', error);
         this.toastr.error('Error al leer el archivo Excel', 'Error');
       }
     };
@@ -1029,7 +1023,6 @@ onFechaFinChange(value: string) {  // Cambiado de event a value
         }
         
         if (result.errors && result.errors.length > 0) {
-          console.warn('Errores en importación:', result.errors);
           this.toastr.warning(
             `${result.errors.length} registros con errores. Revisa la consola.`,
             'Importación con errores'
@@ -1041,7 +1034,6 @@ onFechaFinChange(value: string) {  // Cambiado de event a value
         this.loadInventory();
       },
       error: (error) => {
-        console.error('Error al importar:', error);
         this.importing = false;
         this.toastr.error(error.error?.message || 'Error al importar datos', 'Error');
       }
@@ -1118,7 +1110,6 @@ private exportToExcel(data: any[], filename: string) {
     
     this.toastr.success(`Exportados ${data.length} movimientos`, 'Éxito');
   } catch (error) {
-    console.error('Error al exportar:', error);
     this.toastr.error('Error al exportar los datos', 'Error');
   }
 }

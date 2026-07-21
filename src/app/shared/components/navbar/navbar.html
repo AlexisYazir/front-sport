@@ -14,32 +14,47 @@
               class="h-10 w-auto transition-transform duration-300 group-hover:scale-105" 
             />
           </a>
+
+          <div
+            *ngIf="authServicePublic.isLoggedIn() && isDashboardArea()"
+            class="normal-panel-identity"
+            [class.normal-panel-identity--customer]="!isEmployee()">
+            <span></span>
+            <strong>{{ getPanelIdentity() }}</strong>
+          </div>
           
           <!-- Search Bar -->
           <div *ngIf="shouldShowCatalogNavigation()" class="hidden lg:block ml-4">
-            <div class="relative w-80">
+            <div class="catalog-search-shell w-80">
               <input
                 type="text"
                 [(ngModel)]="searchTerm"
+                (input)="onSearchInput()"
+                (focus)="openSearchPanel()"
                 (keypress)="onSearchKeyPress($event)"
                 placeholder="Buscar en SportCenter..."
-                class="w-full pl-4 pr-12 py-2.5 bg-gray-50 border border-gray-300 rounded-full text-sm placeholder-gray-500 focus:bg-white focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none transition-all duration-200"
+                class="catalog-search-input"
               />
+              <span class="material-symbols-outlined catalog-search-leading-icon">search</span>
               <button
                 (click)="onSearch()"
-                class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-gray-500 hover:text-[#0367A6] rounded-full hover:bg-gray-100 transition-colors"
+                class="catalog-search-submit"
                 aria-label="Buscar"
               >
-                <span class="material-symbols-outlined text-xl">search</span>
+                <span class="material-symbols-outlined">arrow_forward</span>
               </button>
               <button
                 *ngIf="searchTerm()"
                 (click)="clearSearch()"
-                class="absolute right-12 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 rounded-full"
+                class="catalog-search-clear"
                 aria-label="Limpiar"
               >
-                <span class="material-symbols-outlined text-lg">close</span>
+                <span class="material-symbols-outlined">close</span>
               </button>
+
+              <div *ngIf="searchPanelOpen()" class="catalog-search-panel">
+                <ng-container *ngTemplateOutlet="catalogSearchContent"></ng-container>
+              </div>
             </div>
           </div>
         </div>
@@ -308,23 +323,60 @@
         <!-- Auth Buttons con carrito integrado -->
         <div class="flex items-center space-x-2">
           <ng-container *ngIf="authServicePublic.isLoggedIn(); else loginButtons">
+            <button
+              type="button"
+              class="navbar-utility-button"
+              (click)="toggleDashboardTheme()"
+              [title]="preferences.isDarkTheme() ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'"
+              [attr.aria-label]="preferences.isDarkTheme() ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'">
+              <span class="material-symbols-outlined">{{ preferences.isDarkTheme() ? 'light_mode' : 'dark_mode' }}</span>
+            </button>
+
+            <div class="notification-shell relative">
+              <button type="button" class="navbar-utility-button" (click)="toggleNotifications()" aria-label="Abrir notificaciones">
+                <span class="material-symbols-outlined">notifications</span>
+                <span *ngIf="unreadNotificationCount() > 0" class="notification-count sc-count-badge">{{ unreadNotificationCount() }}</span>
+              </button>
+              <div *ngIf="notificationOpen()" class="notification-menu">
+                <div class="notification-menu__header">
+                  <div><strong>Notificaciones</strong><span>{{ unreadNotificationCount() }} sin leer</span></div>
+                  <button type="button" (click)="markAllNotificationsRead()" [disabled]="unreadNotificationCount() === 0">Marcar leídas</button>
+                </div>
+                <div class="notification-list">
+                  <button
+                    *ngFor="let notification of notifications()"
+                    type="button"
+                    class="notification-item"
+                    [class.notification-item--read]="isNotificationRead(notification.id)"
+                    (click)="openNotification(notification)">
+                    <span class="notification-item__icon material-symbols-outlined" [ngClass]="'tone-' + notification.tone">{{ notification.icon }}</span>
+                    <span class="notification-item__copy"><strong>{{ notification.title }}</strong><small>{{ notification.description }}</small><em>{{ notification.time }}</em></span>
+                    <i *ngIf="!isNotificationRead(notification.id)"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+
             <!-- Menú desplegable para usuario normal -->
             <div class="relative" 
                  (mouseenter)="onMouseEnter('user')" 
                  (mouseleave)="onMouseLeave('user')">
               <button (click)="toggleUserMenu()" 
                       class="session-icon-button"
-                      [class.session-icon-button--with-role]="isEmployee()"
+                      [class.session-icon-button--with-role]="true"
                       aria-label="Abrir menú de usuario">
                 <div class="session-icon" [ngClass]="getSessionIconClass()">
                   <span class="material-symbols-outlined text-white text-xl">person</span>
                 </div>
-                <span *ngIf="getSessionRoleLabel()" class="session-role-label">{{ getSessionRoleLabel() }}</span>
+                <span class="session-user-copy">
+                  <strong>{{ getSessionDisplayName() }}</strong>
+                  <small>{{ getRoleText() }}</small>
+                </span>
               </button>
 
               <!-- Dropdown menu -->
               <div *ngIf="shouldShowUserMenu()" 
-                   class="acrylic-user-menu absolute right-0 mt-2 w-60 rounded-xl shadow-2xl border z-50 overflow-hidden">
+                   class="acrylic-user-menu absolute right-0 mt-2 w-56 rounded-xl shadow-2xl border z-50 overflow-hidden">
                 <div class="acrylic-user-menu__header p-3 border-b">
                   <p class="text-xs text-[#666666] truncate">{{ authServicePublic.currentUser()?.email }}</p>
                 </div>
@@ -366,7 +418,7 @@
                  (mouseenter)="onMouseEnter('guest')" 
                  (mouseleave)="onMouseLeave('guest')">
               <button (click)="toggleGuestMenu()" 
-                      class="flex items-center gap-2 px-3 py-2 bg-gray-100 rounded-xl hover:bg-gray-200 transition-all duration-200">
+                      class="guest-session-button">
                 <span class="material-symbols-outlined text-[#0367A6] text-2xl">account_circle</span>
                 <span class="hidden sm:inline text-sm font-medium text-[#202020]">Acceder</span>
                 <span class="material-symbols-outlined text-[#666666] text-lg transition-transform duration-300"
@@ -407,7 +459,7 @@
             </span>
             <span
               *ngIf="cartItemCount() > 0"
-              class="absolute -top-1 -right-1 bg-gradient-to-r from-[#FF7A00] to-[#FF9F4A] text-white text-xs font-bold rounded-full h-5 min-w-5 px-1.5 flex items-center justify-center shadow-sm"
+              class="sc-count-badge absolute -top-1 -right-1"
             >
               {{ cartItemCount() > 99 ? '99+' : cartItemCount() }}
             </span>
@@ -446,24 +498,28 @@
 
         <!-- Search en mobile -->
         <div *ngIf="shouldShowCatalogNavigation()" class="mb-6">
-          <div class="relative">
+          <div class="catalog-search-shell catalog-search-shell--mobile">
             <input 
               type="text" 
               [(ngModel)]="searchTerm" 
+              (input)="onSearchInput()"
+              (focus)="openSearchPanel()"
               (keypress)="onSearchKeyPress($event)"
               placeholder="Buscar productos..." 
-              class="mobile-search-input w-full pl-10 pr-10 py-3 border-0 rounded-full focus:ring-2 focus:ring-[#0367A6] outline-none text-sm"
+              class="catalog-search-input mobile-search-input"
             />
-            <span class="material-symbols-outlined absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-              search
-            </span>
+            <span class="material-symbols-outlined catalog-search-leading-icon">search</span>
             <button
               *ngIf="searchTerm()"
               (click)="clearSearch()"
-              class="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 rounded-full"
+              class="catalog-search-clear catalog-search-clear--mobile"
             >
-              <span class="material-symbols-outlined text-lg">close</span>
+              <span class="material-symbols-outlined">close</span>
             </button>
+
+            <div *ngIf="searchPanelOpen()" class="catalog-search-panel catalog-search-panel--mobile">
+              <ng-container *ngTemplateOutlet="catalogSearchContent"></ng-container>
+            </div>
           </div>
         </div>
 
@@ -471,7 +527,7 @@
         <div class="space-y-1">
           <!-- Opciones de usuario -->
           <div *ngIf="mobileDashboardItems().length" class="mobile-menu-section border-b pb-2 mb-2">
-            <p class="mobile-menu-section-title text-xs font-semibold px-4 mb-1 uppercase tracking-wider">Mi cuenta</p>
+            <p class="mobile-menu-section-title text-xs font-semibold px-4 mb-1 uppercase tracking-wider">{{ isEmployee() ? 'Panel empleado' : 'Mi cuenta' }}</p>
             <a
               *ngFor="let item of mobileDashboardItems()"
               [routerLink]="item.route"
@@ -483,7 +539,7 @@
           </div>
 
           <!-- Soporte -->
-          <div class="mobile-menu-section border-b pb-2 mb-2">
+          <div *ngIf="!isEmployee()" class="mobile-menu-section border-b pb-2 mb-2">
             <p class="mobile-menu-section-title text-xs font-semibold px-4 mb-1 uppercase tracking-wider">Soporte</p>
             <a routerLink="/support/contact" (click)="toggleMobileMenu()"
                class="mobile-menu-link flex items-center px-4 py-3 rounded-xl transition-all duration-200">
@@ -498,7 +554,7 @@
           </div>
 
           <!-- Información -->
-          <div class="mobile-menu-section border-b pb-2 mb-2">
+          <div *ngIf="!isEmployee()" class="mobile-menu-section border-b pb-2 mb-2">
             <p class="mobile-menu-section-title text-xs font-semibold px-4 mb-1 uppercase tracking-wider">Información</p>
             <a routerLink="/info/nosotros" (click)="toggleMobileMenu()"
                class="mobile-menu-link flex items-center px-4 py-3 rounded-xl transition-all duration-200">
@@ -560,9 +616,75 @@
   </div>
 </ng-container>
 
+<ng-template #catalogSearchContent>
+  <div class="catalog-search-content">
+    <ng-container *ngIf="searchTerm().trim().length >= 2; else discoverySearch">
+      <div class="catalog-search-heading">
+        <span>Sugerencias</span>
+        <small>{{ searchSuggestions().length }} resultados</small>
+      </div>
+
+      <button
+        *ngFor="let product of searchSuggestions()"
+        type="button"
+        class="catalog-suggestion"
+        (click)="selectSearchSuggestion(product)">
+        <img [src]="getSearchProductImage(product)" [alt]="product.nombre" />
+        <span class="catalog-suggestion-copy">
+          <strong>{{ product.nombre }}</strong>
+          <small>{{ product.marca || product.categoria }} · {{ product.categoria }}</small>
+        </span>
+        <span class="catalog-suggestion-price">${{ product.precio | number:'1.0-2' }}</span>
+      </button>
+
+      <button
+        *ngIf="searchSuggestions().length === 0"
+        type="button"
+        class="catalog-search-empty-action"
+        (click)="onSearch()">
+        <span class="material-symbols-outlined">search</span>
+        <span>Buscar “{{ searchTerm().trim() }}” en el catálogo</span>
+      </button>
+
+      <button
+        *ngIf="searchSuggestions().length > 0"
+        type="button"
+        class="catalog-search-all"
+        (click)="onSearch()">
+        Ver todos los resultados
+        <span class="material-symbols-outlined">arrow_forward</span>
+      </button>
+    </ng-container>
+
+    <ng-template #discoverySearch>
+      <div *ngIf="recentSearches().length > 0" class="catalog-search-section">
+        <div class="catalog-search-heading">
+          <span>Búsquedas recientes</span>
+          <button type="button" (click)="clearRecentSearches($event)">Limpiar</button>
+        </div>
+        <div class="catalog-search-chips">
+          <button *ngFor="let term of recentSearches()" type="button" (click)="selectRecentSearch(term)">
+            <span class="material-symbols-outlined">history</span>
+            {{ term }}
+          </button>
+        </div>
+      </div>
+
+      <div *ngIf="popularSearches().length > 0" class="catalog-search-section">
+        <div class="catalog-search-heading"><span>Explora el catálogo</span></div>
+        <div class="catalog-search-chips catalog-search-chips--popular">
+          <button *ngFor="let term of popularSearches()" type="button" (click)="selectRecentSearch(term)">
+            {{ term }}
+          </button>
+        </div>
+      </div>
+    </ng-template>
+  </div>
+</ng-template>
+
 <!-- Navbar especial para Administrador -->
 <ng-container *ngIf="isAdmin()">
-  <nav class="bg-gradient-to-r from-[#0367A6] to-[#035A91] fixed top-0 left-0 right-0 z-50 transition-transform duration-300"
+  <nav class="admin-navbar fixed top-0 left-0 right-0 z-50 transition-transform duration-300"
        [class.-translate-y-full]="!showNavbar()"
        [class.translate-y-0]="showNavbar()">
     <div class="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
@@ -582,6 +704,40 @@
 
         <!-- Admin User Menu -->
         <div class="flex items-center gap-3">
+          <button
+            type="button"
+            class="navbar-utility-button navbar-utility-button--on-blue"
+            (click)="toggleDashboardTheme()"
+            [title]="preferences.isDarkTheme() ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'"
+            [attr.aria-label]="preferences.isDarkTheme() ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'">
+            <span class="material-symbols-outlined">{{ preferences.isDarkTheme() ? 'light_mode' : 'dark_mode' }}</span>
+          </button>
+
+          <div class="notification-shell relative">
+            <button type="button" class="navbar-utility-button navbar-utility-button--on-blue" (click)="toggleNotifications()" aria-label="Abrir notificaciones">
+              <span class="material-symbols-outlined">notifications</span>
+              <span *ngIf="unreadNotificationCount() > 0" class="notification-count sc-count-badge">{{ unreadNotificationCount() }}</span>
+            </button>
+            <div *ngIf="notificationOpen()" class="notification-menu">
+              <div class="notification-menu__header">
+                <div><strong>Notificaciones</strong><span>{{ unreadNotificationCount() }} sin leer</span></div>
+                <button type="button" (click)="markAllNotificationsRead()" [disabled]="unreadNotificationCount() === 0">Marcar leídas</button>
+              </div>
+              <div class="notification-list">
+                <button
+                  *ngFor="let notification of notifications()"
+                  type="button"
+                  class="notification-item"
+                  [class.notification-item--read]="isNotificationRead(notification.id)"
+                  (click)="openNotification(notification)">
+                  <span class="notification-item__icon material-symbols-outlined" [ngClass]="'tone-' + notification.tone">{{ notification.icon }}</span>
+                  <span class="notification-item__copy"><strong>{{ notification.title }}</strong><small>{{ notification.description }}</small><em>{{ notification.time }}</em></span>
+                  <i *ngIf="!isNotificationRead(notification.id)"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
           <!-- Admin Dropdown Menu -->
           <div class="relative" 
                (mouseenter)="onMouseEnter('admin')" 
@@ -592,12 +748,15 @@
               <div class="session-icon session-icon--admin">
                 <span class="material-symbols-outlined text-white text-xl">shield</span>
               </div>
-              <span class="session-role-label session-role-label--admin">Admin</span>
+              <span class="session-user-copy session-user-copy--admin">
+                <strong>{{ getSessionDisplayName() }}</strong>
+                <small>Admin</small>
+              </span>
             </button>
 
             <!-- Dropdown menu -->
             <div *ngIf="shouldShowAdminMenu()" 
-                 class="acrylic-user-menu absolute right-0 mt-2 w-60 rounded-xl shadow-2xl border z-50 overflow-hidden">
+                 class="acrylic-user-menu absolute right-0 mt-2 w-56 rounded-xl shadow-2xl border z-50 overflow-hidden">
               <div class="acrylic-user-menu__header p-3 border-b">
                 <p class="text-xs text-[#666666] truncate">{{ authServicePublic.currentUser()?.email }}</p>
               </div>
@@ -673,33 +832,6 @@
             </a>
           </div>
 
-          <div class="mobile-menu-section border-b pb-2 mb-2">
-            <p class="mobile-menu-section-title text-xs font-semibold px-4 mb-1 uppercase tracking-wider">Soporte</p>
-            <a routerLink="/support/contact" (click)="toggleMobileMenu()"
-               class="mobile-menu-link flex items-center px-4 py-3 rounded-xl transition-all duration-200">
-              <span class="material-symbols-outlined mr-3 text-xl">mail</span>
-              <span class="text-sm font-medium">Contacto</span>
-            </a>
-            <a routerLink="/support/preguntas-frecuentes" (click)="toggleMobileMenu()"
-               class="mobile-menu-link flex items-center px-4 py-3 rounded-xl transition-all duration-200">
-              <span class="material-symbols-outlined mr-3 text-xl">help</span>
-              <span class="text-sm font-medium">Preguntas Frecuentes</span>
-            </a>
-          </div>
-
-          <div class="mobile-menu-section border-b pb-2 mb-2">
-            <p class="mobile-menu-section-title text-xs font-semibold px-4 mb-1 uppercase tracking-wider">Información</p>
-            <a routerLink="/info/nosotros" (click)="toggleMobileMenu()"
-               class="mobile-menu-link flex items-center px-4 py-3 rounded-xl transition-all duration-200">
-              <span class="material-symbols-outlined mr-3 text-xl">business</span>
-              <span class="text-sm font-medium">Información de Empresa</span>
-            </a>
-            <a routerLink="/info/ubicacion" (click)="toggleMobileMenu()"
-               class="mobile-menu-link flex items-center px-4 py-3 rounded-xl transition-all duration-200">
-              <span class="material-symbols-outlined mr-3 text-xl">location_on</span>
-              <span class="text-sm font-medium">Ubicación</span>
-            </a>
-          </div>
         </div>
 
         <div class="mt-6 pt-6 border-t border-gray-200">

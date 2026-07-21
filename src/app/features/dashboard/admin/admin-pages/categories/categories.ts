@@ -83,7 +83,6 @@ export class Categories implements OnInit {
         this.isLoading.set(false);
       },
       error: (error) => {
-        console.error('Error loading categorias:', error);
         this.toastr.error('Error al cargar categorías', 'Error');
         this.isLoading.set(false);
       }
@@ -253,7 +252,6 @@ export class Categories implements OnInit {
         }, 1500);
       },
       error: (err) => {
-        console.error('Error al crear categoría:', err);
         this.creatingCategoria = false;
         this.toastr.error(err.error?.message || 'Error al crear la categoría', 'Error');
       }
@@ -341,7 +339,6 @@ export class Categories implements OnInit {
         }, 1500);
       },
       error: (err) => {
-        //console.error('Error al actualizar categoría:', err);
         this.editingCategoria = false;
         this.toastr.error(err.error?.message || 'Error al actualizar la categoría', 'Error');
       }
@@ -351,11 +348,10 @@ export class Categories implements OnInit {
   // Acciones existentes
   refreshData() {
     this.loadCategorias();
-    //this.toastr.success('Datos actualizados', 'Éxito');
+    this.toastr.success('Datos actualizados correctamente', 'Actualización');
   }
 
   viewDetails(categoria: Categorie) {
-    //console.log('Ver detalles:', categoria);
   }
 
   editCategoria(categoria: Categorie) {

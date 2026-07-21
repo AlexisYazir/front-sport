@@ -1,5 +1,5 @@
-<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-  <div class="mb-6 p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-100 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+<div class="dashboard-page-shell bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+  <div class="dashboard-page-toolbar mb-6 p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-100 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
     <div class="flex items-center gap-3">
       <div class="bg-[#0367A6]/10 p-3 rounded-xl">
         <span class="material-symbols-outlined text-[#0367A6] text-2xl">shopping_bag</span>
@@ -12,7 +12,7 @@
     <button
       *ngIf="!selectedOrderId()"
       type="button"
-      (click)="loadOrders()"
+      (click)="refreshOrders()"
       class="w-10 h-10 rounded-full border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all flex items-center justify-center">
       <i class="pi pi-refresh text-lg"></i>
     </button>
@@ -308,25 +308,6 @@
               </div>
             </div>
 
-            <div class="rounded-xl border border-gray-100 p-4">
-              <h4 class="font-bold text-[#202020] mb-3">Devolución</h4>
-              <div class="space-y-2 mb-3">
-                <span
-                  *ngFor="let returnItem of getReturnsForOrder(order)"
-                  [class]="getReturnStatusClass(returnItem.estado) + ' inline-flex px-3 py-1 rounded-full text-xs font-semibold border'">
-                  {{ getReturnStatusLabel(returnItem.estado) }}
-                </span>
-                <p *ngIf="getReturnsForOrder(order).length === 0" class="text-sm text-[#666666]">Sin devoluciones registradas.</p>
-              </div>
-              <button
-                type="button"
-                (click)="openReturn(order)"
-                [disabled]="normalizeStatus(order.estado) !== 'entregado' || hasActiveReturn(order)"
-                class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-[#0367A6]/20 text-[#0367A6] font-semibold hover:bg-[#0367A6]/10 disabled:opacity-50 disabled:cursor-not-allowed">
-                <span class="material-symbols-outlined text-lg">assignment_return</span>
-                Solicitar devolución
-              </button>
-            </div>
           </aside>
         </div>
       </section>
@@ -340,51 +321,4 @@
     </ng-template>
   </ng-container>
 
-  <div *ngIf="returnOrder()" class="fixed inset-0 z-50 bg-black/55 flex items-center justify-center p-4">
-    <div class="bg-white rounded-xl shadow-xl border border-gray-100 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-      <div class="p-5 border-b border-gray-100 flex items-center justify-between gap-4">
-        <div>
-          <h3 class="text-xl font-bold text-[#202020]">Solicitar devolución</h3>
-          <p class="text-sm text-[#666666]">Pedido #{{ returnOrder()?.id_orden }}</p>
-        </div>
-        <button type="button" (click)="closeReturn()" class="w-10 h-10 rounded-full border border-gray-200 text-[#666666] hover:text-[#0367A6] hover:bg-gray-50 transition-all">
-          <span class="material-symbols-outlined">close</span>
-        </button>
-      </div>
-
-      <div class="p-5 space-y-4">
-        <div>
-          <label class="block text-sm font-semibold text-gray-700 mb-1">Motivo general</label>
-          <input [ngModel]="returnReason()" (ngModelChange)="returnReason.set($event)" placeholder="Ej. talla incorrecta, defecto, producto equivocado" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0367A6]/20 focus:border-[#0367A6] outline-none">
-        </div>
-        <div>
-          <label class="block text-sm font-semibold text-gray-700 mb-1">Comentario</label>
-          <textarea [ngModel]="returnComment()" (ngModelChange)="returnComment.set($event)" rows="3" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0367A6]/20 focus:border-[#0367A6] outline-none"></textarea>
-        </div>
-        <div class="space-y-3">
-          <p class="font-semibold text-[#202020]">Productos a devolver</p>
-          <div *ngFor="let item of returnOrder()?.items" class="border border-gray-200 rounded-xl p-3">
-            <label class="flex items-start gap-3">
-              <input type="checkbox" class="mt-1 rounded border-gray-300 text-[#0367A6] focus:ring-[#0367A6]" [ngModel]="returnSelection()[item.id_variante]?.selected" (ngModelChange)="toggleReturnItem(item.id_variante, $event)">
-              <div class="flex-1">
-                <p class="font-semibold text-[#202020]">{{ item.producto || item.sku }}</p>
-                <p class="text-xs text-[#666666]">Compraste {{ item.cantidad }} unidad(es)</p>
-                <div class="grid grid-cols-1 sm:grid-cols-[120px_1fr] gap-3 mt-3" *ngIf="returnSelection()[item.id_variante]?.selected">
-                  <input type="number" min="1" [max]="item.cantidad" [ngModel]="returnSelection()[item.id_variante]?.cantidad" (ngModelChange)="updateReturnQuantity(item.id_variante, $event)" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0367A6]/20 focus:border-[#0367A6] outline-none">
-                  <input placeholder="Motivo específico" [ngModel]="returnSelection()[item.id_variante]?.motivo" (ngModelChange)="updateReturnReason(item.id_variante, $event)" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0367A6]/20 focus:border-[#0367A6] outline-none">
-                </div>
-              </div>
-            </label>
-          </div>
-        </div>
-      </div>
-
-      <div class="p-5 border-t border-gray-100 flex flex-col sm:flex-row sm:justify-end gap-3">
-        <button type="button" (click)="closeReturn()" class="px-4 py-2.5 rounded-lg border border-gray-300 text-[#666666] font-semibold hover:bg-gray-50 transition-all">Cancelar</button>
-        <button type="button" (click)="submitReturn()" [disabled]="isSubmittingReturn()" class="px-4 py-2.5 rounded-lg bg-[#0367A6] text-white font-semibold hover:bg-[#035A91] disabled:opacity-60 transition-all">
-          {{ isSubmittingReturn() ? 'Enviando...' : 'Solicitar devolución' }}
-        </button>
-      </div>
-    </div>
-  </div>
 </div>

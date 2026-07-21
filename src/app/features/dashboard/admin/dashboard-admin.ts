@@ -8,11 +8,13 @@ import { RecentUserCreated, getRoleName } from '../../../core/models/user.model'
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { formatMexicoDate } from '../../../core/utils/date-time.util';
 import { DashboardPreferencesService } from '../../../core/services/dashboard-preferences.service';
+import { DashboardNavigationLoadingService } from '../../../core/services/dashboard-navigation-loading.service';
+import { DashboardRouteSkeleton } from '../shared/dashboard-route-skeleton/dashboard-route-skeleton';
 
 @Component({
   selector: 'app-dashboard-admin',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, MatTooltipModule],
+  imports: [CommonModule, RouterModule, FormsModule, MatTooltipModule, DashboardRouteSkeleton],
   templateUrl: './dashboard-admin.html',
   styleUrl: './dashboard-admin.css'
 })
@@ -20,6 +22,7 @@ export class DashboardAdmin implements OnInit {
   public authService = inject(AuthService);
   private productService = inject(ProductService);
   public preferences = inject(DashboardPreferencesService);
+  public navigationLoading = inject(DashboardNavigationLoadingService);
   
   // Estado del menú lateral (inicialmente abierto)
   sidebarOpen = this.preferences.sidebarDefaultOpen;
@@ -62,8 +65,8 @@ export class DashboardAdmin implements OnInit {
     { icon: 'reviews', label: 'Reseñas', route: '/dashboard/admin/reviews' },
     { icon: 'local_offer', label: 'Promos & Envíos', route: '/dashboard/admin/promotions' },
     { icon: 'wallpaper', label: 'Banner inicio', route: '/dashboard/admin/banner' },
-    { icon: 'assignment_return', label: 'Devoluciones', route: '/dashboard/admin/returns' },
     { icon: 'domain', label: 'Perfil Empresa', route: '/dashboard/admin/empresa' },
+    { icon: 'analytics', label: 'Reportes', route: '/dashboard/admin/reports' },
     { icon: 'monitoring', label: 'Predicción ventas', route: '/dashboard/admin/predictions' },
     // { icon: 'person', label: 'Perfil', route: '/dashboard/admin/profile' },
     { icon: 'settings', label: 'Configuración', route: '/dashboard/admin/settings' },
@@ -90,7 +93,6 @@ export class DashboardAdmin implements OnInit {
   ngOnInit(): void {
      const user = this.authService.currentUser(); // Obtener el valor del signal
     this.currentUser = user ? { nombre: user.nombre || 'Administrador' } : { nombre: 'Administrador' };
-    console.log('Usuario actual:', this.currentUser); // Para verificar
     this.loadAllStats();
   }
 
@@ -106,10 +108,8 @@ export class DashboardAdmin implements OnInit {
     this.authService.getRecentUsers().subscribe({
       next: (users: RecentUserCreated[]) => {
         this.recentUsers = users;
-        // console.log('Usuarios recientes:', users);
       },
       error: (error) => {
-        console.error('Error loading recent users:', error);
       }
     });
   }
@@ -127,10 +127,8 @@ export class DashboardAdmin implements OnInit {
         this.stats.empleados = users.filter(u => u.rol === 2).length;
         this.stats.administradores = users.filter(u => u.rol === 3).length;
         
-        console.log('Estadísticas de usuarios:', this.stats);
       },
       error: (error) => {
-        console.error('Error loading user stats:', error);
       }
     });
   }
@@ -151,18 +149,15 @@ export class DashboardAdmin implements OnInit {
         }).length;
       },
       error: (error) => {
-        console.error('Error loading product stats:', error);
       }
     });
 
     // Productos incompletos (sin atributos)
     this.productService.getProductsWithoutVariantsAttributes().subscribe({
       next: (products: any[]) => {
-        // console.log(products);
         this.stats.productosIncompletos = products.length;
       },
       error: (error) => {
-        console.error('Error loading incomplete products:', error);
       }
     });
   }
@@ -173,7 +168,6 @@ export class DashboardAdmin implements OnInit {
         this.stats.categorias = categories.length;
       },
       error: (error) => {
-        console.error('Error loading category stats:', error);
       }
     });
   }
@@ -184,7 +178,6 @@ export class DashboardAdmin implements OnInit {
         this.stats.marcas = brands.length;
       },
       error: (error) => {
-        console.error('Error loading brand stats:', error);
       }
     });
   }

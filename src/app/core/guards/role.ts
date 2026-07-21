@@ -30,7 +30,6 @@ export const roleGuard = (allowedRoles: UserRole[]): CanActivateFn => {
       const hasRole = allowedRoles.includes(currentUser.rol);
 
       if (!hasRole) {
-        console.warn(`Usuario ${currentUser.email} sin permisos para acceder a ${state.url}`);
         router.navigate(['/home']);
         return false;
       }

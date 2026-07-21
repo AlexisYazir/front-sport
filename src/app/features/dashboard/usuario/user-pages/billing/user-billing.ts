@@ -1,9 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { ToastrService } from 'ngx-toastr';
 import { ProductService } from '../../../../../core/services/product.service';
 import { UserOrder } from '../../../../../core/models/product.model';
-import { UserPaymentMethod } from '../../../../../core/models/cart.model';
 import { formatMexicoDate } from '../../../../../core/utils/date-time.util';
 
 @Component({
@@ -15,12 +13,9 @@ import { formatMexicoDate } from '../../../../../core/utils/date-time.util';
 })
 export class UserBilling implements OnInit {
   private productService = inject(ProductService);
-  private toastr = inject(ToastrService);
 
   orders = signal<UserOrder[]>([]);
-  savedCards = signal<UserPaymentMethod[]>([]);
   isLoading = signal(false);
-  isLoadingCards = signal(false);
 
   totalSpent = computed(() =>
     this.orders().reduce((total, order) => total + Number(order.total || 0), 0),
@@ -41,7 +36,6 @@ export class UserBilling implements OnInit {
 
   ngOnInit(): void {
     this.loadOrders();
-    this.loadPaymentMethods();
   }
 
   loadOrders(): void {
@@ -54,37 +48,6 @@ export class UserBilling implements OnInit {
       error: () => {
         this.orders.set([]);
         this.isLoading.set(false);
-      },
-    });
-  }
-
-  loadPaymentMethods(): void {
-    this.isLoadingCards.set(true);
-    this.productService.getPaymentMethods().subscribe({
-      next: (cards) => {
-        this.savedCards.set(cards || []);
-        this.isLoadingCards.set(false);
-      },
-      error: () => {
-        this.savedCards.set([]);
-        this.isLoadingCards.set(false);
-      },
-    });
-  }
-
-  deletePaymentMethod(idMetodoPago: number): void {
-    if (!confirm('¿Eliminar esta tarjeta guardada?')) {
-      return;
-    }
-
-    this.productService.deletePaymentMethod(idMetodoPago).subscribe({
-      next: (response) => {
-        this.toastr.success(response.message, 'Tarjetas');
-        this.loadPaymentMethods();
-      },
-      error: (error) => {
-        const message = error?.error?.message || 'No fue posible eliminar la tarjeta';
-        this.toastr.error(message, 'Tarjetas');
       },
     });
   }

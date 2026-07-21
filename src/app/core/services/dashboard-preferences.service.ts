@@ -13,14 +13,38 @@ export class DashboardPreferencesService {
   readonly theme = signal<DashboardTheme>(this.readTheme());
   readonly sidebarDefaultOpen = signal<boolean>(this.readBoolean(this.sidebarKey, true));
   readonly reducedMotion = signal<boolean>(this.readBoolean(this.reducedMotionKey, false));
+  private themeSwapTimer?: ReturnType<typeof setTimeout>;
+  private themeFinishTimer?: ReturnType<typeof setTimeout>;
 
   isDarkTheme(): boolean {
     return this.theme() === 'dark';
   }
 
   setTheme(theme: DashboardTheme): void {
-    this.theme.set(theme);
-    this.write(this.themeKey, theme);
+    if (theme === this.theme()) return;
+
+    this.clearThemeTimers();
+
+    const applyTheme = () => {
+      this.theme.set(theme);
+      this.write(this.themeKey, theme);
+    };
+
+    if (this.reducedMotion() || typeof document === 'undefined') {
+      this.clearThemeTransitionClasses();
+      applyTheme();
+      return;
+    }
+
+    const root = document.documentElement;
+    this.clearThemeTransitionClasses();
+    root.classList.add(
+      'sc-theme-transitioning',
+      theme === 'dark' ? 'sc-theme-transitioning--dark' : 'sc-theme-transitioning--light',
+    );
+
+    this.themeSwapTimer = setTimeout(applyTheme, 150);
+    this.themeFinishTimer = setTimeout(() => this.clearThemeTransitionClasses(), 460);
   }
 
   setSidebarDefaultOpen(open: boolean): void {
@@ -59,5 +83,21 @@ export class DashboardPreferencesService {
   private write(key: string, value: string): void {
     if (typeof localStorage === 'undefined') return;
     localStorage.setItem(key, value);
+  }
+
+  private clearThemeTimers(): void {
+    if (this.themeSwapTimer) clearTimeout(this.themeSwapTimer);
+    if (this.themeFinishTimer) clearTimeout(this.themeFinishTimer);
+    this.themeSwapTimer = undefined;
+    this.themeFinishTimer = undefined;
+  }
+
+  private clearThemeTransitionClasses(): void {
+    if (typeof document === 'undefined') return;
+    document.documentElement.classList.remove(
+      'sc-theme-transitioning',
+      'sc-theme-transitioning--dark',
+      'sc-theme-transitioning--light',
+    );
   }
 }

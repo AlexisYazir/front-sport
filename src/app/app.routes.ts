@@ -182,11 +182,6 @@ export const routes: Routes = [
           import('./features/dashboard/empleado/employee-pages/orders/employee-orders').then((m) => m.EmployeeOrders),
       },
       {
-        path: 'returns',
-        loadComponent: () =>
-          import('./features/dashboard/empleado/employee-pages/returns/employee-returns').then((m) => m.EmployeeReturns),
-      },
-      {
         path: 'profile',
         loadComponent: () => import('./features/dashboard/pofile/profile').then((m) => m.Profile),
       },
@@ -248,10 +243,15 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/dashboard/admin/admin-pages/settings/settings').then((m) => m.Settings),
       },
-       {
+      {
         path: 'predictions',
         loadComponent: () =>
           import('./features/dashboard/admin/admin-pages/prediction/prediction').then((m) => m.Prediction),
+      },
+      {
+        path: 'reports',
+        loadComponent: () =>
+          import('./features/dashboard/admin/admin-pages/reports/reports').then((m) => m.Reports),
       },
       {
         path: 'db',
@@ -277,11 +277,6 @@ export const routes: Routes = [
         path: 'banner',
         loadComponent: () =>
           import('./features/dashboard/admin/admin-pages/banner/banner').then((m) => m.BannerAdmin),
-      },
-      {
-        path: 'returns',
-        loadComponent: () =>
-          import('./features/dashboard/empleado/employee-pages/returns/employee-returns').then((m) => m.EmployeeReturns),
       },
       {
         path: 'empresa',
