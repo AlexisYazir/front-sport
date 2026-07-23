@@ -18,7 +18,7 @@ export class DashboardRouteSkeleton {
       return 'form';
     }
 
-    if (/products|inventory|orders|compras|returns|users|reviews|logs|reports|prediction/i.test(this.route)) {
+    if (/products|inventory|orders|compras|returns|users|reviews|logs|reports|prediction|customer-segments/i.test(this.route)) {
       return 'table';
     }
 

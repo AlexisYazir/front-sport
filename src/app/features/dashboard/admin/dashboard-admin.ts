@@ -67,7 +67,8 @@ export class DashboardAdmin implements OnInit {
     { icon: 'wallpaper', label: 'Banner inicio', route: '/dashboard/admin/banner' },
     { icon: 'domain', label: 'Perfil Empresa', route: '/dashboard/admin/empresa' },
     { icon: 'analytics', label: 'Reportes', route: '/dashboard/admin/reports' },
-    { icon: 'monitoring', label: 'Predicción ventas', route: '/dashboard/admin/predictions' },
+    { icon: 'monitoring', label: 'Demanda mensual', route: '/dashboard/admin/predictions' },
+    { icon: 'groups', label: 'Segmentación', route: '/dashboard/admin/customer-segments' },
     // { icon: 'person', label: 'Perfil', route: '/dashboard/admin/profile' },
     { icon: 'settings', label: 'Configuración', route: '/dashboard/admin/settings' },
   ];

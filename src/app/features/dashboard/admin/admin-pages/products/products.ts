@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ToastrService } from 'ngx-toastr';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+import { forkJoin } from 'rxjs';
 import { ProductService } from '../../../../../core/services/product.service';
 import { Product, CreateProductDto, Categorie, Marca, Attibute, RecientProduct, Sport } from '../../../../../core/models/product.model';
 
@@ -95,6 +96,8 @@ export class Products implements OnInit {
   marcas: Marca[] = [];
   sports: Sport[] = [];
   selectedSports: number[] = [];
+  editSelectedSports: number[] = [];
+  originalEditSelectedSports: number[] = [];
   
   showEditModal: boolean = false;
   selectedProduct: Product | null = null;
@@ -667,6 +670,8 @@ export class Products implements OnInit {
   // ===== FUNCIÓN PARA EDITAR PRODUCTO COMPLETO (BASE + VARIANTES) =====
   editProduct(product: Product) {
     this.selectedProduct = JSON.parse(JSON.stringify(product));
+    this.editSelectedSports = this.getSportIdsByNames(product.deportes || []);
+    this.originalEditSelectedSports = [...this.editSelectedSports];
     
     // Inicializar datos de edición del producto base
     this.editProductData = {
@@ -722,6 +727,8 @@ export class Products implements OnInit {
     this.selectedVariant = null;
     this.variantAttributes = [];
     this.attributeErrors = [];
+    this.editSelectedSports = [];
+    this.originalEditSelectedSports = [];
     
     // Recargar productos para actualizar la tabla
     this.loadProducts();
@@ -732,7 +739,42 @@ export class Products implements OnInit {
     return this.editProductData.nombre !== this.originalProductData.nombre ||
            this.editProductData.descripcion !== this.originalProductData.descripcion ||
            this.editProductData.id_marca !== this.originalProductData.id_marca ||
-           this.editProductData.id_categoria !== this.originalProductData.id_categoria;
+           this.editProductData.id_categoria !== this.originalProductData.id_categoria ||
+           this.haveSelectedSportsChanged();
+  }
+
+  toggleEditSportSelection(sportId: number): void {
+    this.editSelectedSports = this.editSelectedSports.includes(sportId)
+      ? this.editSelectedSports.filter((id) => id !== sportId)
+      : [...this.editSelectedSports, sportId];
+  }
+
+  isEditSportSelected(sportId: number): boolean {
+    return this.editSelectedSports.includes(sportId);
+  }
+
+  private getSportIdsByNames(names: string[]): number[] {
+    const normalizedNames = new Set(
+      names.map((name) => this.normalizeFilter(name)),
+    );
+
+    return this.sports
+      .filter((sport) => normalizedNames.has(this.normalizeFilter(sport.nombre)))
+      .map((sport) => sport.id_deporte)
+      .sort((a, b) => a - b);
+  }
+
+  private haveSelectedSportsChanged(): boolean {
+    const current = [...this.editSelectedSports].sort((a, b) => a - b);
+    const original = [...this.originalEditSelectedSports].sort((a, b) => a - b);
+    return JSON.stringify(current) !== JSON.stringify(original);
+  }
+
+  private hasBaseProductChanges(): boolean {
+    return this.editProductData.nombre !== this.originalProductData.nombre ||
+      this.editProductData.descripcion !== this.originalProductData.descripcion ||
+      this.editProductData.id_marca !== this.originalProductData.id_marca ||
+      this.editProductData.id_categoria !== this.originalProductData.id_categoria;
   }
 
   validateProductData(): boolean {
@@ -763,12 +805,25 @@ export class Products implements OnInit {
       return;
     }
 
+    const requests = [];
+    if (this.hasBaseProductChanges()) {
+      requests.push(this.productService.updateProductFull(this.editProductData));
+    }
+    if (this.haveSelectedSportsChanged()) {
+      requests.push(
+        this.productService.assignProductSports({
+          id_producto: this.editProductData.id_producto,
+          ids_deportes: this.editSelectedSports,
+        }),
+      );
+    }
+
     this.savingProduct = true;
-    
-    this.productService.updateProductFull(this.editProductData).subscribe({
+
+    forkJoin(requests).subscribe({
       next: () => {
         this.savingProduct = false;
-        this.toastr.success('Producto base actualizado exitosamente', 'Éxito');
+        this.toastr.success('Producto y deportes actualizados correctamente', 'Éxito');
         
         // Actualizar datos originales
         this.originalProductData = {
@@ -777,6 +832,14 @@ export class Products implements OnInit {
           nombre: this.editProductData.nombre,
           descripcion: this.editProductData.descripcion
         };
+        this.originalEditSelectedSports = [...this.editSelectedSports];
+
+        if (this.selectedProduct) {
+          this.selectedProduct.deportes = this.sports
+            .filter((sport) => this.editSelectedSports.includes(sport.id_deporte))
+            .map((sport) => sport.nombre);
+        }
+        this.loadProducts();
       },
       error: (err) => {
         this.savingProduct = false;

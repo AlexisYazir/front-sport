@@ -14,8 +14,13 @@ import { ToastrService } from 'ngx-toastr';
 import { ProductService } from '../../../core/services/product.service';
 import { CartService } from '../../../core/services/cart.service';
 import { CompanyService, HomeBannerImage } from '../../../core/services/company.service';
-import { Product, Marca } from '../../../core/models/product.model';
+import { Product, Marca, Sport } from '../../../core/models/product.model';
 import { environment } from '../../../../environments/environment';
+
+interface HomeSport extends Sport {
+  slug: string;
+  imageUrl: string;
+}
 
 @Component({
   selector: 'app-home',
@@ -35,17 +40,19 @@ export class Home implements OnInit, OnDestroy {
   
   products: Product[] = [];
   marcas: Marca[] = [];
+  sports = signal<HomeSport[]>([]);
   readonly productScroller = viewChild<ElementRef<HTMLDivElement>>('productScroller');
   
   // Signals para el estado reactivo
   featuredProducts = signal<Product[]>([]);
   loading = signal<boolean>(true);
   loadingMarcas = signal<boolean>(true);
+  loadingSports = signal<boolean>(true);
   bannerImages = signal<HomeBannerImage[]>([]);
   currentBannerIndex = signal(0);
   freeShippingThreshold = signal<number | null>(null);
   brandCarouselItems = computed(() => [...this.marcas, ...this.marcas]);
-  categoryCarouselItems = computed(() => [...this.staticCategories, ...this.staticCategories]);
+  sportCarouselItems = computed(() => [...this.sports(), ...this.sports()]);
   freeShippingLabel = computed(() => {
     const threshold = this.freeShippingThreshold();
     return threshold && threshold > 0
@@ -71,14 +78,17 @@ export class Home implements OnInit, OnDestroy {
     },
   ];
 
-  // Categorías estáticas decorativas para la sección de navegación
-  staticCategories = [
-    { icon: 'directions_run', label: 'Running', route: '/deporte/running' },
-    { icon: 'sports_soccer', label: 'Fútbol', route: '/deporte/futbol' },
-    { icon: 'fitness_center', label: 'Gym', route: '/deporte/gym' },
-    { icon: 'sports_basketball', label: 'Basketball', route: '/deporte/basketball' },
-    { icon: 'pool', label: 'Natación', route: '/deporte/natacion' },
-  ];
+  private readonly sportImages: Record<string, string> = {
+    futbol: 'https://res.cloudinary.com/dcktzxrmw/image/upload/v1784798726/futbol_mbm6ls.jpg',
+    football: 'https://res.cloudinary.com/dcktzxrmw/image/upload/v1784798726/futbol_mbm6ls.jpg',
+    basketbol: 'https://res.cloudinary.com/dcktzxrmw/image/upload/v1784798722/basketbol_uankb2.png',
+    basketball: 'https://res.cloudinary.com/dcktzxrmw/image/upload/v1784798722/basketbol_uankb2.png',
+    basquetbol: 'https://res.cloudinary.com/dcktzxrmw/image/upload/v1784798722/basketbol_uankb2.png',
+    gym: 'https://res.cloudinary.com/dcktzxrmw/image/upload/v1784798725/gym_uo2qv6.jpg',
+    gimnasio: 'https://res.cloudinary.com/dcktzxrmw/image/upload/v1784798725/gym_uo2qv6.jpg',
+    ciclismo: 'https://res.cloudinary.com/dcktzxrmw/image/upload/v1784798722/ciclismo_s3huyx.jpg',
+    running: 'https://res.cloudinary.com/dcktzxrmw/image/upload/v1784798722/running_za35oe.jpg',
+  };
 
   // Computed para el contador del carrito
   cartCount = computed(() => this.cartService.cartItems().length);
@@ -88,6 +98,7 @@ export class Home implements OnInit, OnDestroy {
     this.loadShippingPromo();
     this.loadProducts();
     this.loadMarcas();
+    this.loadSports();
   }
 
   ngOnDestroy(): void {
@@ -151,6 +162,30 @@ export class Home implements OnInit, OnDestroy {
         this.toastr.error('Error al cargar las marcas', 'Error');
         this.loadingMarcas.set(false);
       }
+    });
+  }
+
+  loadSports() {
+    this.loadingSports.set(true);
+    this.productService.getSports().subscribe({
+      next: (sports: Sport[]) => {
+        this.sports.set(
+          (sports || []).map((sport) => {
+            const slug = this.productService.generateSlug(sport.nombre);
+            return {
+              ...sport,
+              slug,
+              imageUrl: this.sportImages[slug] || this.sportImages['running'],
+            };
+          }),
+        );
+        this.loadingSports.set(false);
+      },
+      error: () => {
+        this.sports.set([]);
+        this.loadingSports.set(false);
+        this.toastr.error('Error al cargar los deportes', 'Error');
+      },
     });
   }
 

@@ -379,12 +379,48 @@
             </div>
           </div>
 
+          <div class="mb-5">
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+              <div>
+                <label class="block text-sm font-semibold text-[#202020]">Deportes</label>
+                <p class="text-xs text-gray-500 mt-1">
+                  Actualiza los deportes en los que debe aparecer este producto.
+                </p>
+              </div>
+              <span class="text-xs font-medium text-[#0367A6] bg-[#0367A6]/10 px-3 py-1 rounded-full">
+                {{ editSelectedSports.length }} seleccionados
+              </span>
+            </div>
+
+            <div *ngIf="sports.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              <button
+                *ngFor="let sport of sports"
+                type="button"
+                (click)="toggleEditSportSelection(sport.id_deporte)"
+                class="text-left px-4 py-3 rounded-xl border transition-all flex items-center justify-between gap-3"
+                [ngClass]="isEditSportSelected(sport.id_deporte)
+                  ? 'border-[#0367A6] bg-[#0367A6]/10 text-[#035A91] shadow-sm'
+                  : 'border-gray-200 bg-white hover:border-[#0367A6]/40 hover:bg-[#0367A6]/5 text-gray-700'">
+                <span class="font-medium">{{ sport.nombre }}</span>
+                <span
+                  class="material-symbols-outlined text-[20px]"
+                  [ngClass]="isEditSportSelected(sport.id_deporte) ? 'text-[#0367A6]' : 'text-gray-400'">
+                  {{ isEditSportSelected(sport.id_deporte) ? 'check_circle' : 'radio_button_unchecked' }}
+                </span>
+              </button>
+            </div>
+
+            <p *ngIf="sports.length === 0" class="text-sm text-gray-500">
+              No hay deportes disponibles para seleccionar.
+            </p>
+          </div>
+
           <!-- Botón Guardar Producto Base -->
           <div class="flex justify-end">
             <button (click)="saveProductData()" [disabled]="savingProduct"
                     class="px-4 py-2 bg-[#0367A6] hover:bg-[#035A91] text-white rounded-lg transition-all disabled:opacity-50 flex items-center gap-2">
               <i *ngIf="savingProduct" class="pi pi-spin pi-spinner"></i>
-              <span>Guardar Datos del Producto</span>
+              <span>{{ savingProduct ? 'Guardando...' : 'Guardar producto y deportes' }}</span>
             </button>
           </div>
         </div>

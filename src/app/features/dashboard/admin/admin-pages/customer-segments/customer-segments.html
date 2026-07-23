@@ -1,0 +1,87 @@
+<div class="segments-page">
+  <header class="page-header">
+    <div class="heading-copy">
+      <div class="heading-icon"><span class="material-symbols-outlined">groups</span></div>
+      <div><h1>Segmentación de clientes</h1><p>Perfiles RFM para orientar campañas, fidelización y recuperación</p></div>
+    </div>
+    <button class="refresh-button" type="button" (click)="loadReport(true)" [disabled]="isLoading" title="Actualizar segmentación">
+      <span class="material-symbols-outlined" [class.spinning]="isLoading">refresh</span>
+    </button>
+  </header>
+
+  @if (isLoading) {
+    <section class="segments-skeleton" aria-label="Cargando segmentación">
+      <div class="skeleton-cards">@for (item of [1,2,3,4]; track item) { <div class="skeleton skeleton-card"></div> }</div>
+      <div class="skeleton-grid"><div class="skeleton skeleton-chart"></div><div class="skeleton skeleton-profiles"></div></div>
+      <div class="skeleton skeleton-table"></div>
+    </section>
+  } @else if (hasError || !report) {
+    <section class="empty-state">
+      <span class="material-symbols-outlined">group_off</span><h2>No se pudo cargar la segmentación</h2>
+      <p>Comprueba que el resultado del análisis esté disponible en el servidor.</p>
+      <button type="button" (click)="loadReport()">Reintentar</button>
+    </section>
+  } @else {
+    <section class="kpi-grid">
+      <article class="kpi-card kpi-card--blue"><div><span>Clientes analizados</span><strong>{{ report.summary.customers }}</strong><small>con actividad transaccional</small></div><span class="material-symbols-outlined">group</span></article>
+      <article class="kpi-card kpi-card--purple"><div><span>Segmentos detectados</span><strong>{{ report.summary.segments }}</strong><small>perfiles comerciales</small></div><span class="material-symbols-outlined">category</span></article>
+      <article class="kpi-card kpi-card--green"><div><span>Frecuencia promedio</span><strong>{{ report.summary.averageFrequency | number:'1.1-1' }}</strong><small>compras en 12 meses</small></div><span class="material-symbols-outlined">repeat</span></article>
+      <article class="kpi-card kpi-card--orange"><div><span>Gasto promedio</span><strong>{{ report.summary.averageSpend | currency:'MXN':'symbol-narrow':'1.0-0' }}</strong><small>por cliente analizado</small></div><span class="material-symbols-outlined">payments</span></article>
+    </section>
+
+    <section class="overview-grid">
+      <article class="panel distribution-panel">
+        <div class="panel-heading"><div><h2>Distribución de clientes</h2><p>Participación de cada segmento en la base analizada</p></div></div>
+        <div class="distribution-content">
+          <div class="chart-container"><canvas baseChart [data]="chartData" [options]="chartOptions" type="doughnut"></canvas><div class="chart-center"><strong>{{ report.summary.customers }}</strong><span>clientes</span></div></div>
+          <div class="chart-legend">
+            @for (segment of report.segments; track segment.cluster) {
+              <button type="button" (click)="selectSegment(segment.name)" [class.active]="selectedSegment === segment.name">
+                <i [class]="segmentClass(segment.name)"></i><span><strong>{{ segment.name }}</strong><small>{{ segment.customers }} clientes · {{ segment.percentage | number:'1.0-1' }}%</small></span>
+              </button>
+            }
+          </div>
+        </div>
+      </article>
+
+      <article class="panel profiles-panel">
+        <div class="panel-heading"><div><h2>Perfiles encontrados</h2><p>Comportamiento promedio y acción recomendada</p></div></div>
+        <div class="profile-list">
+          @for (segment of report.segments; track segment.cluster) {
+            <button class="profile-card" type="button" (click)="selectSegment(segment.name)" [class.active]="selectedSegment === segment.name">
+              <span class="profile-marker" [class]="'profile-marker ' + segmentClass(segment.name)"><span class="material-symbols-outlined">person</span></span>
+              <div class="profile-copy"><div><strong>{{ segment.name }}</strong><span>{{ segment.customers }} clientes</span></div><p>{{ segment.action }}</p></div>
+              <div class="profile-metrics"><span><small>R</small>{{ segment.averageRecency | number:'1.0-0' }} días</span><span><small>F</small>{{ segment.averageFrequency | number:'1.1-1' }}</span><span><small>M</small>{{ segment.averageSpend | currency:'MXN':'symbol-narrow':'1.0-0' }}</span></div>
+            </button>
+          }
+        </div>
+      </article>
+    </section>
+
+    <section class="panel customers-panel">
+      <div class="customers-heading">
+        <div><h2>Clientes por segmento</h2><p>Consulta los indicadores individuales de recencia, frecuencia y gasto</p></div>
+        <span class="result-count"><strong>{{ filteredCustomers.length }}</strong> clientes</span>
+      </div>
+      <div class="filters-row">
+        <label class="search-control"><span class="material-symbols-outlined">search</span><input type="search" [(ngModel)]="searchTerm" (ngModelChange)="applyFilters()" placeholder="Buscar cliente, correo o ID..."></label>
+        <label class="select-control"><span>Segmento</span><select [(ngModel)]="selectedSegment" (ngModelChange)="applyFilters()"><option value="all">Todos</option>@for (segment of report.segments; track segment.cluster) { <option [value]="segment.name">{{ segment.name }}</option> }</select></label>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Cliente</th><th>Segmento</th><th>Recencia</th><th>Frecuencia</th><th>Gasto 12 meses</th><th>Acción sugerida</th></tr></thead>
+          <tbody>
+            @for (customer of paginatedCustomers; track customer.id_usuario) {
+              <tr><td><div class="customer-cell"><span class="avatar">{{ initials(customer.name) }}</span><div><strong>{{ customer.name }}</strong><small>{{ customer.email || ('Cliente #' + customer.id_usuario) }}</small></div></div></td><td><span class="segment-pill" [class]="'segment-pill ' + segmentClass(customer.segmento)">{{ customer.segmento }}</span></td><td><strong>{{ customer.recencia_dias }}</strong> días</td><td><strong>{{ customer.frecuencia_12_meses }}</strong> compras</td><td><strong class="spend-value">{{ customer.gasto_12_meses | currency:'MXN':'symbol-narrow':'1.0-0' }}</strong></td><td><span class="action-text">{{ customer.accion_sugerida }}</span></td></tr>
+            } @empty { <tr><td colspan="6"><div class="table-empty">No hay clientes que coincidan con los filtros.</div></td></tr> }
+          </tbody>
+        </table>
+      </div>
+      @if (filteredCustomers.length > pageSize) {
+        <footer class="pagination"><span>Mostrando {{ (currentPage - 1) * pageSize + 1 }} a {{ currentPage * pageSize > filteredCustomers.length ? filteredCustomers.length : currentPage * pageSize }} de {{ filteredCustomers.length }}</span><nav aria-label="Paginación de clientes"><button type="button" (click)="setPage(currentPage - 1)" [disabled]="currentPage === 1"><span class="material-symbols-outlined">chevron_left</span></button>@for (page of visiblePages; track page) { <button type="button" (click)="setPage(page)" [class.active]="page === currentPage">{{ page }}</button> }<button type="button" (click)="setPage(currentPage + 1)" [disabled]="currentPage === totalPages"><span class="material-symbols-outlined">chevron_right</span></button></nav></footer>
+      }
+    </section>
+
+    <section class="methodology-band"><span class="material-symbols-outlined">model_training</span><div><strong>Análisis RFM</strong><p>{{ report.methodology.objective }}</p></div><div class="variable-list">@for (variable of report.methodology.variables; track variable) { <span>{{ variable }}</span> }</div></section>
+  }
+</div>

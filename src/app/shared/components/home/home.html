@@ -128,29 +128,51 @@
     </div>
   </section>
 
-  <!-- ═══════════════════════════════ CATEGORÍAS -->
+  <!-- ═══════════════════════════════ DEPORTES -->
   <section class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-14">
     <div class="flex flex-wrap items-end justify-between gap-4 mb-7">
       <div>
         <p class="text-[10px] font-bold uppercase tracking-[0.13em] text-[#0367A6] mb-1">Navega por deporte</p>
-        <h2 class="text-2xl sm:text-3xl font-bold text-[#202020]">Categorías</h2>
+        <h2 class="text-2xl sm:text-3xl font-bold text-[#202020]">Deportes</h2>
       </div>
     </div>
-    <div class="category-marquee">
+
+    <div *ngIf="loadingSports()" class="sport-loading-row" aria-label="Cargando deportes">
+      <div *ngFor="let item of [1,2,3,4,5]" class="sport-card sport-card--skeleton">
+        <div class="skeleton-block h-full w-full"></div>
+      </div>
+    </div>
+
+    <div *ngIf="!loadingSports() && sports().length > 0" class="category-marquee">
       <div class="category-fade category-fade--l"></div>
       <div class="category-fade category-fade--r"></div>
       <div class="category-track">
-        <a *ngFor="let cat of categoryCarouselItems(); let index = index"
-           [routerLink]="cat.route"
-           [attr.aria-hidden]="index >= staticCategories.length ? 'true' : null"
-           class="category-chip group">
-          <div class="home-category-icon flex h-11 w-11 items-center justify-center rounded-full bg-[#0367A6]/10 text-[#0367A6]
-                      transition-all duration-200">
-            <span class="material-symbols-outlined text-xl">{{ cat.icon }}</span>
+        <a *ngFor="let sport of sportCarouselItems(); let index = index"
+           [routerLink]="['/deporte', sport.slug]"
+           [attr.aria-hidden]="index >= sports().length ? 'true' : null"
+           class="sport-card group"
+           [attr.aria-label]="'Ver productos de ' + sport.nombre">
+          <img
+            [src]="sport.imageUrl"
+            [alt]="sport.nombre"
+            loading="lazy"
+            class="sport-card__image">
+          <div class="sport-card__overlay">
+            <span class="sport-card__eyebrow">Explorar deporte</span>
+            <h3>{{ sport.nombre }}</h3>
+            <span class="sport-card__action">
+              Ver productos
+              <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+            </span>
           </div>
-          <span class="text-xs font-bold text-[#202020]">{{ cat.label }}</span>
         </a>
       </div>
+    </div>
+
+    <div *ngIf="!loadingSports() && sports().length === 0"
+         class="flex flex-col items-center gap-2 py-10 text-[#7B8FA1]">
+      <span class="material-symbols-outlined text-5xl opacity-30">sports</span>
+      <p class="text-sm">No hay deportes disponibles</p>
     </div>
   </section>
 

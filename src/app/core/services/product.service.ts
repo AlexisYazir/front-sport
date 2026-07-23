@@ -3,7 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, BehaviorSubject, of } from 'rxjs';
 import { map, catchError, finalize } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
-import { Product, Category, ProductFilters, ProductSearchResult, Categorie, Marca, Attibute, Orders, EmployeeOrder, EmployeeOrderStatus, UserOrder, InventoryProduct, RecientProduct, ProductVariant, ProductReviewsResponse, ProductReview, ProductReviewAdmin, ProductReviewEligibility, CreateProductReviewRequest, UpdateShipmentRequest, Promotion, CreatePromotionRequest, ShippingMethodAdmin, UpdateShippingMethodRequest } from '../models/product.model';
+import { Product, Category, ProductFilters, ProductSearchResult, Categorie, Marca, Attibute, Orders, EmployeeOrder, EmployeeOrderStatus, UserOrder, InventoryProduct, RecientProduct, ProductVariant, ProductReviewsResponse, ProductReview, ProductReviewAdmin, ProductReviewEligibility, CreateProductReviewRequest, UpdateShipmentRequest, Promotion, CreatePromotionRequest, ShippingMethodAdmin, UpdateShippingMethodRequest, Sport } from '../models/product.model';
 import {
   CheckoutCardInput,
   CheckoutPostalCodeResponse,
@@ -403,6 +403,15 @@ normalizeGenderSlug(value: string): string {
   };
 
   return genderMap[slug] || slug;
+}
+
+matchesGenderFilter(productGender: string, requestedGender: string): boolean {
+  const productGenderSlug = this.normalizeGenderSlug(productGender);
+  const requestedGenderSlug = this.normalizeGenderSlug(requestedGender);
+
+  return productGenderSlug === requestedGenderSlug ||
+    (productGenderSlug === 'unisex' &&
+      (requestedGenderSlug === 'hombre' || requestedGenderSlug === 'mujer'));
 }
 
 buildProductRouteId(id: number): string {
@@ -813,7 +822,7 @@ createVariantAttributeValue(data: { id_variante: number, id_atributo: number, va
                   atributos['género'] ||
                   atributos['sexo'];
 
-                return this.normalizeGenderSlug(String(genero || '')) === genderSlug;
+                return this.matchesGenderFilter(String(genero || ''), genderSlug);
               })
             );
           }
@@ -935,10 +944,10 @@ createVariantAttributeValue(data: { id_variante: number, id_atributo: number, va
 }
 
 // Obtener deportes
-getSports(): Observable<any[]> {
+getSports(): Observable<Sport[]> {
   return this.cache.getOrSet(
     'products:menu:sports',
-    () => this.http.get<any[]>(`${this.API_URL}/products/menu/sports`),
+    () => this.http.get<Sport[]>(`${this.API_URL}/products/menu/sports`),
     this.CACHE_TTL,
   );
 }

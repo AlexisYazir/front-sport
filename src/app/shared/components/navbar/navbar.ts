@@ -210,7 +210,8 @@ export class Navbar {
         { icon: 'image', label: 'Banner inicio', route: '/dashboard/admin/banner' },
         { icon: 'domain', label: 'Perfil empresa', route: '/dashboard/admin/empresa' },
         { icon: 'analytics', label: 'Reportes', route: '/dashboard/admin/reports' },
-        { icon: 'monitoring', label: 'Predicción de ventas', route: '/dashboard/admin/predictions' },
+        { icon: 'monitoring', label: 'Demanda mensual', route: '/dashboard/admin/predictions' },
+        { icon: 'groups', label: 'Segmentación clientes', route: '/dashboard/admin/customer-segments' },
         { icon: 'settings', label: 'Configuración', route: '/dashboard/admin/settings' },
       ];
     }

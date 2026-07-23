@@ -1,4 +1,14 @@
-import { Component, inject, OnInit, signal, computed, effect, DestroyRef } from '@angular/core';
+import {
+  Component,
+  inject,
+  OnInit,
+  signal,
+  computed,
+  effect,
+  DestroyRef,
+  ElementRef,
+  viewChild,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
@@ -13,6 +23,10 @@ import { Location } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CartItem } from '../../../core/models/cart.model';
 import { frontendLogger } from '../../../core/services/frontend-logger.service';
+import {
+  DataMiningService,
+  ProductRecommendation,
+} from '../../../core/services/data-mining.service';
 
 interface Variant {
   id_variante: number;
@@ -52,6 +66,7 @@ export class ProductDetail implements OnInit {
   private toastr = inject(ToastrService);
   private location = inject(Location);
   private destroyRef = inject(DestroyRef);
+  private dataMiningService = inject(DataMiningService);
 
   // Estado del producto
   product = signal<Product | null>(null);
@@ -82,6 +97,12 @@ export class ProductDetail implements OnInit {
   lastAddedPreview = signal<LastAddedCartPreview | null>(null);
   previewCartItems = this.cartService.cartItems;
   previewCartSummary = this.cartService.summary;
+
+  // Recomendaciones por similitud de contenido
+  recommendations = signal<ProductRecommendation[]>([]);
+  isRecommendationsLoading = signal<boolean>(false);
+  readonly recommendationScroller =
+    viewChild<ElementRef<HTMLDivElement>>('recommendationScroller');
 
   // Reseñas
   reviews = signal<ProductReview[]>([]);
@@ -237,10 +258,85 @@ export class ProductDetail implements OnInit {
         this.router.navigate(['/error/400']);
         return;
       }
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+      });
       this.resetReviewForm();
       this.loadProduct(extractedProductId);
       this.loadReviews(extractedProductId);
       this.loadReviewEligibility(extractedProductId);
+      this.loadRecommendations(extractedProductId);
+    });
+  }
+
+  getRecommendationRoute(recommendation: ProductRecommendation): string[] {
+    return this.productService.buildProductDetailRoute({
+      id: recommendation.idProduct,
+      id_producto: recommendation.idProduct,
+      nombre: recommendation.name,
+      producto: recommendation.name,
+    });
+  }
+
+  scrollRecommendations(direction: 'left' | 'right'): void {
+    const scroller = this.recommendationScroller()?.nativeElement;
+    if (!scroller) return;
+
+    scroller.scrollBy({
+      left:
+        direction === 'right'
+          ? Math.max(scroller.clientWidth * 0.75, 280)
+          : -Math.max(scroller.clientWidth * 0.75, 280),
+      behavior: 'smooth',
+    });
+  }
+
+  async shareRecommendation(
+    recommendation: ProductRecommendation,
+    event: Event,
+  ): Promise<void> {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const route = this.getRecommendationRoute(recommendation);
+    const relativeUrl = this.router.serializeUrl(
+      this.router.createUrlTree(route),
+    );
+    const url = `${window.location.origin}${relativeUrl}`;
+    const text = `Mira este producto en Sport Center: ${recommendation.name}`;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: recommendation.name,
+          text,
+          url,
+        });
+        return;
+      }
+
+      await navigator.clipboard.writeText(url);
+      this.toastr.success('Link copiado al portapapeles', 'Compartir');
+    } catch (error) {
+      if ((error as DOMException)?.name !== 'AbortError') {
+        this.toastr.error('No se pudo compartir el producto', 'Compartir');
+      }
+    }
+  }
+
+  private loadRecommendations(productId: number): void {
+    this.isRecommendationsLoading.set(true);
+    this.recommendations.set([]);
+    this.dataMiningService.getProductRecommendations(productId, 10).subscribe({
+      next: (response) => {
+        this.recommendations.set((response.recommendations || []).slice(0, 10));
+        this.isRecommendationsLoading.set(false);
+      },
+      error: (error) => {
+        frontendLogger.warn('No fue posible cargar las recomendaciones del producto', error);
+        this.recommendations.set([]);
+        this.isRecommendationsLoading.set(false);
+      },
     });
   }
 

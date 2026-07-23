@@ -249,6 +249,11 @@ export const routes: Routes = [
           import('./features/dashboard/admin/admin-pages/prediction/prediction').then((m) => m.Prediction),
       },
       {
+        path: 'customer-segments',
+        loadComponent: () =>
+          import('./features/dashboard/admin/admin-pages/customer-segments/customer-segments').then((m) => m.CustomerSegments),
+      },
+      {
         path: 'reports',
         loadComponent: () =>
           import('./features/dashboard/admin/admin-pages/reports/reports').then((m) => m.Reports),

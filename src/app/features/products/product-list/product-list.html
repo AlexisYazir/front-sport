@@ -77,7 +77,7 @@
             <div class="space-y-3">
               
               <!-- CATEGORÍA - Desplegable -->
-              <div class="border border-gray-200 rounded-lg overflow-hidden">
+              <div *ngIf="!isCategoryLocked()" class="border border-gray-200 rounded-lg overflow-hidden">
                 <button (click)="toggleCategory()" class="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 transition-colors">
                   <div class="flex items-center gap-2">
                     <span class="material-symbols-outlined  text-lg">category</span>
@@ -113,7 +113,7 @@
                     <input type="radio" name="brand" value="" [(ngModel)]="selectedBrand" (change)="onBrandChange()" class="h-4 w-4  focus:ring-blue-500 border-gray-300">
                     <span class="ml-3 text-sm text-gray-700">Todas las marcas</span>
                   </label>
-                  <label *ngFor="let brand of brands()" class="flex items-center cursor-pointer p-2 hover:bg-blue-50 rounded-lg">
+                  <label *ngFor="let brand of filteredBrands()" class="flex items-center cursor-pointer p-2 hover:bg-blue-50 rounded-lg">
                     <input type="radio" name="brand" [value]="brand" [(ngModel)]="selectedBrand" (change)="onBrandChange()" class="h-4 w-4  focus:ring-blue-500 border-gray-300">
                     <span class="ml-3 text-sm text-gray-700">{{ brand }}</span>
                   </label>
@@ -139,24 +139,6 @@
                   <p *ngIf="minPrice() !== null && maxPrice() !== null && minPrice()! > maxPrice()!" class="text-xs text-red-500 mt-2">
                     El mínimo no puede ser mayor que el máximo
                   </p>
-                </div>
-              </div>
-
-              <!-- DISPONIBILIDAD - Desplegable -->
-              <div class="border border-gray-200 rounded-lg overflow-hidden">
-                <button (click)="toggleAvailability()" class="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 transition-colors">
-                  <div class="flex items-center gap-2">
-                    <span class="material-symbols-outlined  text-lg">inventory</span>
-                    <span class="text-sm font-medium text-gray-900">Disponibilidad</span>
-                  </div>
-                  <span class="material-symbols-outlined text-gray-600 transition-transform duration-300" [class.rotate-180]="availabilityExpanded()">expand_more</span>
-                </button>
-                
-                <div *ngIf="availabilityExpanded()" class="p-3 bg-white">
-                  <label class="flex items-center cursor-pointer p-2 hover:bg-blue-50 rounded-lg">
-                    <input type="checkbox" [(ngModel)]="showOnlyAvailable" (change)="onFilterChange()" class="h-4 w-4  focus:ring-blue-500 border-gray-300 rounded">
-                    <span class="ml-3 text-sm text-gray-700">Solo productos disponibles</span>
-                  </label>
                 </div>
               </div>
 
@@ -187,9 +169,9 @@
 
       <!-- Menú MÓVIL (overlay con fondo semitransparente) -->
       <div *ngIf="isMobile() && mobileFiltersOpen()" 
-           class="fixed inset-0 z-50 bg-black/30 transition-opacity"
+           class="mobile-filter-overlay fixed inset-0 z-50"
            (click)="mobileFiltersOpen.set(false)">
-        <div class="absolute left-0 top-0 h-full w-[85%] max-w-sm bg-white shadow-xl overflow-y-auto"
+        <div class="mobile-filter-panel absolute right-0 top-0 h-full w-[85%] max-w-sm bg-white shadow-xl overflow-y-auto"
              (click)="$event.stopPropagation()">
           <div class="p-6">
             <!-- Header móvil -->
@@ -208,7 +190,7 @@
             <div class="space-y-3">
               
               <!-- Categoría -->
-              <div class="border border-gray-200 rounded-lg overflow-hidden">
+              <div *ngIf="!isCategoryLocked()" class="border border-gray-200 rounded-lg overflow-hidden">
                 <button (click)="toggleCategory()" class="w-full flex items-center justify-between p-3 bg-gray-50">
                   <span class="text-sm font-medium text-gray-900">Categoría</span>
                   <span class="material-symbols-outlined text-gray-600 transition-transform" [class.rotate-180]="categoryExpanded()">expand_more</span>
@@ -236,7 +218,7 @@
                     <input type="radio" name="brand-mobile" value="" [(ngModel)]="selectedBrand" (change)="onBrandChange()" class="h-4 w-4 ">
                     <span class="ml-3 text-sm">Todas</span>
                   </label>
-                  <label *ngFor="let brand of brands()" class="flex items-center py-2">
+                  <label *ngFor="let brand of filteredBrands()" class="flex items-center py-2">
                     <input type="radio" name="brand-mobile" [value]="brand" [(ngModel)]="selectedBrand" (change)="onBrandChange()" class="h-4 w-4 ">
                     <span class="ml-3 text-sm">{{ brand }}</span>
                   </label>
@@ -254,20 +236,6 @@
                     <input type="number" [(ngModel)]="minPrice" (change)="onPriceChange()" placeholder="Mín" class="w-1/2 px-3 py-2 text-sm border rounded-lg">
                     <input type="number" [(ngModel)]="maxPrice" (change)="onPriceChange()" placeholder="Máx" class="w-1/2 px-3 py-2 text-sm border rounded-lg">
                   </div>
-                </div>
-              </div>
-
-              <!-- Disponibilidad -->
-              <div class="border border-gray-200 rounded-lg overflow-hidden">
-                <button (click)="toggleAvailability()" class="w-full flex items-center justify-between p-3 bg-gray-50">
-                  <span class="text-sm font-medium text-gray-900">Disponibilidad</span>
-                  <span class="material-symbols-outlined text-gray-600 transition-transform" [class.rotate-180]="availabilityExpanded()">expand_more</span>
-                </button>
-                <div *ngIf="availabilityExpanded()" class="p-3">
-                  <label class="flex items-center">
-                    <input type="checkbox" [(ngModel)]="showOnlyAvailable" (change)="onFilterChange()" class="h-4 w-4  rounded">
-                    <span class="ml-3 text-sm">Solo disponibles</span>
-                  </label>
                 </div>
               </div>
 

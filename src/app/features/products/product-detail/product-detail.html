@@ -362,6 +362,88 @@
       </div>
     </div>
 
+    <!-- RECOMENDACIONES POR CONTENIDO -->
+    <section class="product-recommendations" aria-labelledby="recommendations-title">
+      <div class="recommendations-shell">
+        <div class="recommendations-heading">
+          <div>
+            <span class="recommendations-eyebrow">SELECCIÓN PARA TI</span>
+            <h2 id="recommendations-title">Productos recomendados</h2>
+            <p>Opciones relacionadas que pueden complementar tu compra.</p>
+          </div>
+          <div class="recommendation-controls" *ngIf="recommendations().length > 1">
+            <button
+              type="button"
+              class="recommendation-scroll-button"
+              aria-label="Ver recomendaciones anteriores"
+              (click)="scrollRecommendations('left')">
+              <span class="material-symbols-outlined">chevron_left</span>
+            </button>
+            <button
+              type="button"
+              class="recommendation-scroll-button"
+              aria-label="Ver más recomendaciones"
+              (click)="scrollRecommendations('right')">
+              <span class="material-symbols-outlined">chevron_right</span>
+            </button>
+          </div>
+        </div>
+
+        <div
+          *ngIf="isRecommendationsLoading()"
+          class="recommendation-loading-track"
+          aria-label="Cargando recomendaciones">
+          <div *ngFor="let item of [1, 2, 3, 4, 5]" class="recommendation-skeleton">
+            <div class="recommendation-skeleton__image"></div>
+            <div class="recommendation-skeleton__line recommendation-skeleton__line--short"></div>
+            <div class="recommendation-skeleton__line"></div>
+            <div class="recommendation-skeleton__line recommendation-skeleton__line--price"></div>
+          </div>
+        </div>
+
+        <div
+          #recommendationScroller
+          *ngIf="!isRecommendationsLoading() && recommendations().length"
+          class="recommendation-scroller">
+          <div class="recommendation-track">
+            <div
+              *ngFor="let recommendation of recommendations()"
+              class="recommendation-product-card group"
+              [routerLink]="getRecommendationRoute(recommendation)"
+              [title]="recommendation.name">
+              <button
+                type="button"
+                (click)="shareRecommendation(recommendation, $event)"
+                class="recommendation-share-button"
+                title="Compartir producto"
+                aria-label="Compartir producto">
+                <span class="material-symbols-outlined">share</span>
+              </button>
+
+              <div class="recommendation-product-image">
+                <img
+                  [src]="recommendation.image || 'assets/images/no_imagen.webp'"
+                  [alt]="recommendation.name"
+                  loading="lazy"
+                  onerror="this.src='assets/images/no_imagen.webp'">
+              </div>
+
+              <div class="recommendation-product-info">
+                <span class="recommendation-product-brand">
+                  {{ recommendation.brand || recommendation.category }}
+                </span>
+                <h3 [title]="recommendation.name">{{ recommendation.name }}</h3>
+                <div class="recommendation-product-footer">
+                  <strong>{{ recommendation.price | currency:'MXN':'symbol-narrow':'1.0-0' }}</strong>
+                  <span><i></i>Disp</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- REVIEWS -->
     <section id="reviews" class="mt-12 border-t border-gray-200 pt-8">
       <div class="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-8">

@@ -13,7 +13,7 @@ export const environment = {
     token: 'auth_token',
     user: 'current_user'
   },
-  // Configuración de timeouts
+  // Configuración de timeouts 
   httpTimeout: 30000, // 30 segundos
   
   // Configuración de tokens

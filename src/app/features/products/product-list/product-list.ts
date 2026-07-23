@@ -29,7 +29,6 @@ export class ProductList implements OnInit {
   minPrice = signal<number | null>(null);
   maxPrice = signal<number | null>(null);
   sortBy = signal<string>('');
-  showOnlyAvailable = signal<boolean>(false);
   routeGenero = signal<string>('');
   routeCategoriaPadre = signal<string>('');
   routeSubcategoria = signal<string>('');
@@ -44,7 +43,6 @@ export class ProductList implements OnInit {
   categoryExpanded = signal<boolean>(true);
   brandExpanded = signal<boolean>(false);
   priceExpanded = signal<boolean>(false);
-  availabilityExpanded = signal<boolean>(false);
   sortExpanded = signal<boolean>(false);
   
   // Paginación
@@ -78,6 +76,22 @@ export class ProductList implements OnInit {
       products.some(product => this.productMatchesCurrentContext(product, category.nombre))
     );
   });
+
+  isCategoryLocked = computed(() => this.routeSubcategoria() !== '');
+
+  filteredBrands = computed(() => {
+    const selectedCategory = this.selectedCategory();
+    const categoryName = selectedCategory
+      ? this.categories().find(category => category.id === selectedCategory)?.nombre
+      : undefined;
+
+    return Array.from(new Set(
+      this.allProducts()
+        .filter(product => this.productMatchesCurrentContext(product, categoryName))
+        .map(product => product.marca)
+        .filter((brand): brand is string => Boolean(brand?.trim()))
+    )).sort((a, b) => a.localeCompare(b, 'es'));
+  });
   
   // Verificar si hay filtros activos
   hasActiveFilters = computed(() => {
@@ -85,7 +99,6 @@ export class ProductList implements OnInit {
            this.selectedBrand() !== '' ||
            this.minPrice() !== null ||
            this.maxPrice() !== null ||
-           this.showOnlyAvailable() ||
            this.sortBy() !== '';
   });
   
@@ -206,9 +219,6 @@ export class ProductList implements OnInit {
       }
       if (third) {
         this.routeSubcategoria.set(third);
-        this.selectedCategory.set(this.formatSlugLabel(third));
-      } else {
-        this.selectedCategory.set('');
       }
       return true;
     }
@@ -217,9 +227,6 @@ export class ProductList implements OnInit {
       this.routeCategoriaPadre.set('accesorios');
       if (second) {
         this.routeSubcategoria.set(second);
-        this.selectedCategory.set(this.formatSlugLabel(second));
-      } else {
-        this.selectedCategory.set('');
       }
       return true;
     }
@@ -234,12 +241,11 @@ export class ProductList implements OnInit {
 
   private parseQueryParams(params: Record<string, any>): boolean {
     this.searchTerm.set('');
-    this.selectedCategory.set(this.routeSubcategoria() ? this.formatSlugLabel(this.routeSubcategoria()) : '');
+    this.selectedCategory.set('');
     this.selectedBrand.set('');
     this.minPrice.set(null);
     this.maxPrice.set(null);
     this.sortBy.set('');
-    this.showOnlyAvailable.set(false);
     this.currentPage.set(1);
 
     if (params['search']) this.searchTerm.set(String(params['search']));
@@ -279,18 +285,6 @@ export class ProductList implements OnInit {
       if (maxParsed !== null) this.maxPrice.set(maxParsed);
     }
 
-    if (params['available'] !== undefined) {
-      const available = params['available'];
-      if (available === 'true' || available === true) {
-        this.showOnlyAvailable.set(true);
-      } else if (available === 'false' || available === false) {
-        this.showOnlyAvailable.set(false);
-      } else {
-        this.toastr.error('available debe ser true o false', 'Parámetro inválido');
-        return false;
-      }
-    }
-
     if (params['sort']) {
       const allowed = ['precio-asc', 'precio-desc', 'nombre', 'fecha'];
       if (!allowed.includes(params['sort'])) {
@@ -324,7 +318,6 @@ export class ProductList implements OnInit {
       genero: this.routeGenero() || undefined,
       precioMin: this.minPrice() || undefined,
       precioMax: this.maxPrice() || undefined,
-      disponible: this.showOnlyAvailable() ? true : undefined,
       ordenarPor: this.sortBy() as any
     };
 
@@ -378,7 +371,6 @@ export class ProductList implements OnInit {
     this.minPrice.set(null);
     this.maxPrice.set(null);
     this.sortBy.set('');
-    this.showOnlyAvailable.set(false);
     this.currentPage.set(1);
     
     this.updateQueryParams(1);
@@ -409,10 +401,6 @@ export class ProductList implements OnInit {
     this.priceExpanded.set(!this.priceExpanded());
   }
 
-  toggleAvailability() {
-    this.availabilityExpanded.set(!this.availabilityExpanded());
-  }
-
   toggleSort() {
     this.sortExpanded.set(!this.sortExpanded());
   }
@@ -432,7 +420,6 @@ export class ProductList implements OnInit {
         brand: this.selectedBrand() || null,
         minPrice: this.minPrice() ?? null,
         maxPrice: this.maxPrice() ?? null,
-        available: this.showOnlyAvailable() ? true : null,
         sort: this.sortBy() || null,
         page: page > 1 ? page : null,
       },
@@ -536,6 +523,10 @@ private productMatchesCurrentContext(product: Product, categoryName?: string): b
     return false;
   }
 
+  if (this.routeSubcategoria() && this.productService.generateSlug(product.categoria || '') !== this.routeSubcategoria()) {
+    return false;
+  }
+
   if (this.routeDeporte()) {
     const sportSlug = this.routeDeporte();
     const hasSport = (product.deportes || []).some(deporte => this.productService.generateSlug(deporte) === sportSlug);
@@ -558,7 +549,7 @@ private productMatchesCurrentContext(product: Product, categoryName?: string): b
       atributos['género'] ||
       atributos['sexo'];
 
-    return this.productService.normalizeGenderSlug(String(genero || '')) === targetGender;
+    return this.productService.matchesGenderFilter(String(genero || ''), targetGender);
   });
 }
 }
