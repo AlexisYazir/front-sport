@@ -5,6 +5,8 @@ import * as maplibregl from 'maplibre-gl';
 import { ToastrService } from 'ngx-toastr';
 import { CompanyFaq, CompanyInfo, CompanyService } from '../../../../../core/services/company.service';
 import { environment } from '../../../../../../environments/environment';
+import { IconModule } from '../../../../../shared/icons/icon.module';
+
 
 type CompanyModal = 'general' | 'contacto' | 'historia' | 'ubicacion' | 'faq' | null;
 
@@ -20,7 +22,7 @@ interface CompanyLocationData {
 @Component({
   selector: 'app-empresa',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [IconModule, CommonModule, FormsModule],
   templateUrl: './empresa.html',
   styleUrl: './empresa.css',
 })

@@ -35,13 +35,13 @@
                 placeholder="Buscar en SportCenter..."
                 class="catalog-search-input"
               />
-              <span class="material-symbols-outlined catalog-search-leading-icon">search</span>
+              <svg lucideIcon="search" class="lucide-icon catalog-search-leading-icon"></svg>
               <button
                 (click)="onSearch()"
                 class="catalog-search-submit"
                 aria-label="Buscar"
               >
-                <span class="material-symbols-outlined">arrow_forward</span>
+                <svg lucideIcon="arrow_forward" class="lucide-icon"></svg>
               </button>
               <button
                 *ngIf="searchTerm()"
@@ -49,7 +49,7 @@
                 class="catalog-search-clear"
                 aria-label="Limpiar"
               >
-                <span class="material-symbols-outlined">close</span>
+                <svg lucideIcon="close" class="lucide-icon"></svg>
               </button>
 
               <div *ngIf="searchPanelOpen()" class="catalog-search-panel">
@@ -329,12 +329,12 @@
               (click)="toggleDashboardTheme()"
               [title]="preferences.isDarkTheme() ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'"
               [attr.aria-label]="preferences.isDarkTheme() ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'">
-              <span class="material-symbols-outlined">{{ preferences.isDarkTheme() ? 'light_mode' : 'dark_mode' }}</span>
+              <svg [lucideIcon]="preferences.isDarkTheme() ? 'light_mode' : 'dark_mode'" class="lucide-icon"></svg>
             </button>
 
             <div class="notification-shell relative">
               <button type="button" class="navbar-utility-button" (click)="toggleNotifications()" aria-label="Abrir notificaciones">
-                <span class="material-symbols-outlined">notifications</span>
+                <svg lucideIcon="notifications" class="lucide-icon"></svg>
                 <span *ngIf="unreadNotificationCount() > 0" class="notification-count sc-count-badge">{{ unreadNotificationCount() }}</span>
               </button>
               <div *ngIf="notificationOpen()" class="notification-menu">
@@ -349,9 +349,9 @@
                     class="notification-item"
                     [class.notification-item--read]="isNotificationRead(notification.id)"
                     (click)="openNotification(notification)">
-                    <span class="notification-item__icon material-symbols-outlined" [ngClass]="'tone-' + notification.tone">{{ notification.icon }}</span>
+                    <svg [lucideIcon]="notification.icon" class="lucide-icon notification-item__icon" [ngClass]="'tone-' + notification.tone"></svg>
                     <span class="notification-item__copy"><strong>{{ notification.title }}</strong><small>{{ notification.description }}</small><em>{{ notification.time }}</em></span>
-                    <i *ngIf="!isNotificationRead(notification.id)"></i>
+                    <span *ngIf="!isNotificationRead(notification.id)" class="notification-unread-dot" aria-hidden="true"></span>
                   </button>
                 </div>
               </div>
@@ -366,7 +366,7 @@
                       [class.session-icon-button--with-role]="true"
                       aria-label="Abrir menú de usuario">
                 <div class="session-icon" [ngClass]="getSessionIconClass()">
-                  <span class="material-symbols-outlined text-white text-xl">person</span>
+                  <svg lucideIcon="person" class="lucide-icon text-white text-xl"></svg>
                 </div>
                 <span class="session-user-copy">
                   <strong>{{ getSessionDisplayName() }}</strong>
@@ -384,19 +384,19 @@
                 <div class="p-2">
                   <a (click)="goToProfile(); closeAllMenus()" 
                      class="flex items-center gap-3 px-4 py-3 text-sm text-[#666666] hover:text-[#0367A6] hover:bg-blue-50 rounded-lg cursor-pointer transition-colors">
-                    <span class="material-symbols-outlined text-lg">account_circle</span>
+                    <svg lucideIcon="account_circle" class="lucide-icon text-lg"></svg>
                     <span>Mi Perfil</span>
                   </a>
                   
                   <a [routerLink]="getDashboardLink()" (click)="closeAllMenus()"
                      class="flex items-center gap-3 px-4 py-3 text-sm text-[#666666] hover:text-[#0367A6] hover:bg-blue-50 rounded-lg cursor-pointer transition-colors">
-                    <span class="material-symbols-outlined text-lg">dashboard</span>
+                    <svg lucideIcon="dashboard" class="lucide-icon text-lg"></svg>
                     <span>Mi Dashboard</span>
                   </a>
                   
                   <a (click)="goToSettings(); closeAllMenus()"
                      class="flex items-center gap-3 px-4 py-3 text-sm text-[#666666] hover:text-[#0367A6] hover:bg-blue-50 rounded-lg cursor-pointer transition-colors">
-                    <span class="material-symbols-outlined text-lg">settings</span>
+                    <svg lucideIcon="settings" class="lucide-icon text-lg"></svg>
                     <span>Configuración</span>
                   </a>
                   
@@ -404,7 +404,7 @@
                   
                   <button (click)="logout()"
                           class="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 rounded-lg cursor-pointer transition-colors">
-                    <span class="material-symbols-outlined text-lg">logout</span>
+                    <svg lucideIcon="logout" class="lucide-icon text-lg"></svg>
                     <span>Cerrar Sesión</span>
                   </button>
                 </div>
@@ -419,12 +419,10 @@
                  (mouseleave)="onMouseLeave('guest')">
               <button (click)="toggleGuestMenu()" 
                       class="guest-session-button">
-                <span class="material-symbols-outlined text-[#0367A6] text-2xl">account_circle</span>
+                <svg lucideIcon="account_circle" class="lucide-icon text-[#0367A6] text-2xl"></svg>
                 <span class="hidden sm:inline text-sm font-medium text-[#202020]">Acceder</span>
-                <span class="material-symbols-outlined text-[#666666] text-lg transition-transform duration-300"
-                      [class.rotate-180]="shouldShowGuestMenu()">
-                  expand_more
-                </span>
+                <svg lucideIcon="expand_more" class="lucide-icon text-[#666666] text-lg transition-transform duration-300"
+                      [class.rotate-180]="shouldShowGuestMenu()"></svg>
               </button>
 
               <!-- Dropdown menu -->
@@ -433,13 +431,13 @@
                 <div class="p-2">
                   <a routerLink="/auth/login" (click)="closeAllMenus()"
                      class="flex items-center gap-3 px-4 py-3 text-sm text-[#666666] hover:text-[#0367A6] hover:bg-blue-50 rounded-lg cursor-pointer transition-colors">
-                    <span class="material-symbols-outlined text-lg">login</span>
+                    <svg lucideIcon="login" class="lucide-icon text-lg"></svg>
                     <span>Iniciar Sesión</span>
                   </a>
                   
                   <a routerLink="/auth/register" (click)="closeAllMenus()"
                      class="flex items-center gap-3 px-4 py-3 text-sm text-[#666666] hover:text-[#0367A6] hover:bg-blue-50 rounded-lg cursor-pointer transition-colors">
-                    <span class="material-symbols-outlined text-lg">how_to_reg</span>
+                    <svg lucideIcon="how_to_reg" class="lucide-icon text-lg"></svg>
                     <span>Registrarse</span>
                   </a>
                 </div>
@@ -454,9 +452,7 @@
             routerLinkActive="text-[#0367A6]"
             class="cart-link relative p-2 text-[#666666] hover:text-[#0367A6] rounded-xl hover:bg-blue-50/80 transition-all duration-200 group flex items-center"
           >
-            <span class="material-symbols-outlined text-2xl group-hover:scale-110 transition-transform duration-200">
-              shopping_cart
-            </span>
+            <svg lucideIcon="shopping_cart" class="lucide-icon text-2xl group-hover:scale-110 transition-transform duration-200"></svg>
             <span
               *ngIf="cartItemCount() > 0"
               class="sc-count-badge absolute -top-1 -right-1"
@@ -471,9 +467,7 @@
               (click)="toggleMobileMenu()" 
               class="p-2 text-[#666666] hover:text-[#0367A6] rounded-xl hover:bg-blue-50/80 transition-all duration-200"
             >
-              <span class="material-symbols-outlined text-2xl">
-                {{ mobileMenuOpen() ? 'close' : 'menu' }}
-              </span>
+              <svg [lucideIcon]="mobileMenuOpen() ? 'close' : 'menu'" class="lucide-icon text-2xl"></svg>
             </button>
           </div>
         </div>
@@ -492,7 +486,7 @@
         <div class="flex justify-between items-center mb-6">
           <span class="mobile-menu-title text-lg font-semibold">Menú</span>
           <button (click)="toggleMobileMenu()" class="mobile-menu-close p-2 rounded-xl transition-colors">
-            <span class="material-symbols-outlined">close</span>
+            <svg lucideIcon="close" class="lucide-icon"></svg>
           </button>
         </div>
 
@@ -508,13 +502,13 @@
               placeholder="Buscar productos..." 
               class="catalog-search-input mobile-search-input"
             />
-            <span class="material-symbols-outlined catalog-search-leading-icon">search</span>
+            <svg lucideIcon="search" class="lucide-icon catalog-search-leading-icon"></svg>
             <button
               *ngIf="searchTerm()"
               (click)="clearSearch()"
               class="catalog-search-clear catalog-search-clear--mobile"
             >
-              <span class="material-symbols-outlined">close</span>
+              <svg lucideIcon="close" class="lucide-icon"></svg>
             </button>
 
             <div *ngIf="searchPanelOpen()" class="catalog-search-panel catalog-search-panel--mobile">
@@ -533,7 +527,7 @@
               [routerLink]="item.route"
               (click)="toggleMobileMenu()"
               class="mobile-menu-link flex items-center px-4 py-3 rounded-xl transition-all duration-200">
-              <span class="material-symbols-outlined mr-3 text-xl">{{ item.icon }}</span>
+              <svg [lucideIcon]="item.icon" class="lucide-icon mr-3 text-xl"></svg>
               <span class="text-sm font-medium">{{ item.label }}</span>
             </a>
           </div>
@@ -543,12 +537,12 @@
             <p class="mobile-menu-section-title text-xs font-semibold px-4 mb-1 uppercase tracking-wider">Soporte</p>
             <a routerLink="/support/contact" (click)="toggleMobileMenu()"
                class="mobile-menu-link flex items-center px-4 py-3 rounded-xl transition-all duration-200">
-              <span class="material-symbols-outlined mr-3 text-xl">mail</span>
+              <svg lucideIcon="mail" class="lucide-icon mr-3 text-xl"></svg>
               <span class="text-sm font-medium">Contacto</span>
             </a>
             <a routerLink="/support/preguntas-frecuentes" (click)="toggleMobileMenu()"
                class="mobile-menu-link flex items-center px-4 py-3 rounded-xl transition-all duration-200">
-              <span class="material-symbols-outlined mr-3 text-xl">help</span>
+              <svg lucideIcon="help" class="lucide-icon mr-3 text-xl"></svg>
               <span class="text-sm font-medium">Preguntas Frecuentes</span>
             </a>
           </div>
@@ -558,12 +552,12 @@
             <p class="mobile-menu-section-title text-xs font-semibold px-4 mb-1 uppercase tracking-wider">Información</p>
             <a routerLink="/info/nosotros" (click)="toggleMobileMenu()"
                class="mobile-menu-link flex items-center px-4 py-3 rounded-xl transition-all duration-200">
-              <span class="material-symbols-outlined mr-3 text-xl">business</span>
+              <svg lucideIcon="business" class="lucide-icon mr-3 text-xl"></svg>
               <span class="text-sm font-medium">Información de Empresa</span>
             </a>
             <a routerLink="/info/ubicacion" (click)="toggleMobileMenu()"
                class="mobile-menu-link flex items-center px-4 py-3 rounded-xl transition-all duration-200">
-              <span class="material-symbols-outlined mr-3 text-xl">location_on</span>
+              <svg lucideIcon="location_on" class="lucide-icon mr-3 text-xl"></svg>
               <span class="text-sm font-medium">Ubicación</span>
             </a>
           </div>
@@ -578,7 +572,7 @@
               (click)="toggleMobileMenu()"
               class="mobile-menu-link flex items-center px-4 py-3 rounded-xl transition-all duration-200"
             >
-              <span class="material-symbols-outlined mr-3 text-xl">account_circle</span>
+              <svg lucideIcon="account_circle" class="lucide-icon mr-3 text-xl"></svg>
               <span class="text-sm font-medium">Mi Cuenta</span>
             </a>
             
@@ -586,7 +580,7 @@
               (click)="logout(); toggleMobileMenu()"
               class="w-full flex items-center px-4 py-3 text-red-600 hover:bg-red-50 rounded-xl transition-all duration-200 mt-2"
             >
-              <span class="material-symbols-outlined mr-3 text-xl">logout</span>
+              <svg lucideIcon="logout" class="lucide-icon mr-3 text-xl"></svg>
               <span class="text-sm font-medium">Cerrar Sesión</span>
             </button>
           </ng-container>
@@ -597,7 +591,7 @@
               (click)="toggleMobileMenu()"
               class="flex items-center px-4 py-3 text-[#666666] hover:text-[#0367A6] hover:bg-blue-50/80 rounded-xl transition-all duration-200"
             >
-              <span class="material-symbols-outlined mr-3 text-xl">login</span>
+              <svg lucideIcon="login" class="lucide-icon mr-3 text-xl"></svg>
               <span class="text-sm font-medium">Iniciar Sesión</span>
             </a>
             
@@ -606,7 +600,7 @@
               (click)="toggleMobileMenu()"
               class="flex items-center px-4 py-3 bg-[#0367A6] text-white rounded-xl hover:bg-[#035A91] transition-all duration-200 mt-2"
             >
-              <span class="material-symbols-outlined mr-3 text-xl">how_to_reg</span>
+              <svg lucideIcon="how_to_reg" class="lucide-icon mr-3 text-xl"></svg>
               <span class="text-sm font-medium">Registrarse</span>
             </a>
           </ng-template>
@@ -642,7 +636,7 @@
         type="button"
         class="catalog-search-empty-action"
         (click)="onSearch()">
-        <span class="material-symbols-outlined">search</span>
+        <svg lucideIcon="search" class="lucide-icon"></svg>
         <span>Buscar “{{ searchTerm().trim() }}” en el catálogo</span>
       </button>
 
@@ -652,7 +646,7 @@
         class="catalog-search-all"
         (click)="onSearch()">
         Ver todos los resultados
-        <span class="material-symbols-outlined">arrow_forward</span>
+        <svg lucideIcon="arrow_forward" class="lucide-icon"></svg>
       </button>
     </ng-container>
 
@@ -664,7 +658,7 @@
         </div>
         <div class="catalog-search-chips">
           <button *ngFor="let term of recentSearches()" type="button" (click)="selectRecentSearch(term)">
-            <span class="material-symbols-outlined">history</span>
+            <svg lucideIcon="history" class="lucide-icon"></svg>
             {{ term }}
           </button>
         </div>
@@ -710,12 +704,12 @@
             (click)="toggleDashboardTheme()"
             [title]="preferences.isDarkTheme() ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'"
             [attr.aria-label]="preferences.isDarkTheme() ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'">
-            <span class="material-symbols-outlined">{{ preferences.isDarkTheme() ? 'light_mode' : 'dark_mode' }}</span>
+            <svg [lucideIcon]="preferences.isDarkTheme() ? 'light_mode' : 'dark_mode'" class="lucide-icon"></svg>
           </button>
 
           <div class="notification-shell relative">
             <button type="button" class="navbar-utility-button navbar-utility-button--on-blue" (click)="toggleNotifications()" aria-label="Abrir notificaciones">
-              <span class="material-symbols-outlined">notifications</span>
+              <svg lucideIcon="notifications" class="lucide-icon"></svg>
               <span *ngIf="unreadNotificationCount() > 0" class="notification-count sc-count-badge">{{ unreadNotificationCount() }}</span>
             </button>
             <div *ngIf="notificationOpen()" class="notification-menu">
@@ -730,9 +724,9 @@
                   class="notification-item"
                   [class.notification-item--read]="isNotificationRead(notification.id)"
                   (click)="openNotification(notification)">
-                  <span class="notification-item__icon material-symbols-outlined" [ngClass]="'tone-' + notification.tone">{{ notification.icon }}</span>
+                  <svg [lucideIcon]="notification.icon" class="lucide-icon notification-item__icon" [ngClass]="'tone-' + notification.tone"></svg>
                   <span class="notification-item__copy"><strong>{{ notification.title }}</strong><small>{{ notification.description }}</small><em>{{ notification.time }}</em></span>
-                  <i *ngIf="!isNotificationRead(notification.id)"></i>
+                  <span *ngIf="!isNotificationRead(notification.id)" class="notification-unread-dot" aria-hidden="true"></span>
                 </button>
               </div>
             </div>
@@ -746,7 +740,7 @@
                     class="admin-session-icon-button"
                     aria-label="Abrir menú de administrador">
               <div class="session-icon session-icon--admin">
-                <span class="material-symbols-outlined text-white text-xl">shield</span>
+                <svg lucideIcon="shield" class="lucide-icon text-white text-xl"></svg>
               </div>
               <span class="session-user-copy session-user-copy--admin">
                 <strong>{{ getSessionDisplayName() }}</strong>
@@ -764,18 +758,18 @@
               <div class="p-2">
                 <a (click)="goToProfileAdmin(); closeAllMenus()" 
                    class="flex items-center gap-3 px-4 py-3 text-sm text-[#666666] hover:text-[#0367A6] hover:bg-blue-50 rounded-lg cursor-pointer transition-colors">
-                  <span class="material-symbols-outlined text-lg">account_circle</span>
+                  <svg lucideIcon="account_circle" class="lucide-icon text-lg"></svg>
                   <span>Mi Perfil</span>
                 </a>
                  <a [routerLink]="getDashboardLink()" (click)="closeAllMenus()"
                      class="flex items-center gap-3 px-4 py-3 text-sm text-[#666666] hover:text-[#0367A6] hover:bg-blue-50 rounded-lg cursor-pointer transition-colors">
-                    <span class="material-symbols-outlined text-lg">dashboard</span>
+                    <svg lucideIcon="dashboard" class="lucide-icon text-lg"></svg>
                     <span>Mi Dashboard</span>
                   </a>
                 
                 <a (click)="goToSettings(); closeAllMenus()"
                    class="flex items-center gap-3 px-4 py-3 text-sm text-[#666666] hover:text-[#0367A6] hover:bg-blue-50 rounded-lg cursor-pointer transition-colors">
-                  <span class="material-symbols-outlined text-lg">settings</span>
+                  <svg lucideIcon="settings" class="lucide-icon text-lg"></svg>
                   <span>Configuración</span>
                 </a>
                 
@@ -783,7 +777,7 @@
                 
                 <button (click)="adminLogout()"
                         class="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 rounded-lg cursor-pointer transition-colors">
-                  <span class="material-symbols-outlined text-lg">logout</span>
+                  <svg lucideIcon="logout" class="lucide-icon text-lg"></svg>
                   <span>Cerrar Sesión</span>
                 </button>
               </div>
@@ -796,9 +790,7 @@
               class="p-2 text-white/90 hover:text-white rounded-xl hover:bg-white/15 transition-all duration-200"
               aria-label="Abrir menú"
             >
-              <span class="material-symbols-outlined text-2xl">
-                {{ mobileMenuOpen() ? 'close' : 'menu' }}
-              </span>
+              <svg [lucideIcon]="mobileMenuOpen() ? 'close' : 'menu'" class="lucide-icon text-2xl"></svg>
             </button>
           </div>
         </div>
@@ -815,7 +807,7 @@
         <div class="flex justify-between items-center mb-6">
           <span class="mobile-menu-title text-lg font-semibold">Menú</span>
           <button (click)="toggleMobileMenu()" class="mobile-menu-close p-2 rounded-xl transition-colors">
-            <span class="material-symbols-outlined">close</span>
+            <svg lucideIcon="close" class="lucide-icon"></svg>
           </button>
         </div>
 
@@ -827,7 +819,7 @@
               [routerLink]="item.route"
               (click)="toggleMobileMenu()"
               class="mobile-menu-link flex items-center px-4 py-3 rounded-xl transition-all duration-200">
-              <span class="material-symbols-outlined mr-3 text-xl">{{ item.icon }}</span>
+              <svg [lucideIcon]="item.icon" class="lucide-icon mr-3 text-xl"></svg>
               <span class="text-sm font-medium">{{ item.label }}</span>
             </a>
           </div>
@@ -839,7 +831,7 @@
             (click)="adminLogout(); toggleMobileMenu()"
             class="w-full flex items-center px-4 py-3 text-red-600 hover:bg-red-50 rounded-xl transition-all duration-200 mt-2"
           >
-            <span class="material-symbols-outlined mr-3 text-xl">logout</span>
+            <svg lucideIcon="logout" class="lucide-icon mr-3 text-xl"></svg>
             <span class="text-sm font-medium">Cerrar Sesión</span>
           </button>
         </div>

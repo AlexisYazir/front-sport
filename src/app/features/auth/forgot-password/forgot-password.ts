@@ -6,6 +6,8 @@ import { AuthService } from '../../../core/services/auth.service';
 import { ToastrService } from 'ngx-toastr';
 import { validateEmail, evaluatePasswordStrength, validatePasswordComplexity, isSecureInput, PasswordStrength } from '../../../core/validators/custom-validators';
 import { PasswordStrengthComponent } from '../../../shared/components/password-strength/password-strength.component';
+import { IconModule } from '../../../shared/icons/icon.module';
+
 
 type ForgotPasswordStep = 'email' | 'verify' | 'reset';
 
@@ -30,7 +32,7 @@ const RATE_LIMIT_CONFIG = {
 @Component({
   selector: "app-forgot-password",
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, PasswordStrengthComponent],
+  imports: [IconModule, CommonModule, FormsModule, RouterModule, PasswordStrengthComponent],
   templateUrl: "./forgot-password.html",
   styleUrl: "./forgot-password.css"
 })

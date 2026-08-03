@@ -2,7 +2,7 @@
   <div class="dashboard-page-toolbar mb-6 p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-100 shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
     <div class="flex items-center gap-3">
       <div class="bg-[#0367A6]/10 p-3 rounded-xl">
-        <span class="material-symbols-outlined text-[#0367A6] text-2xl">wallpaper</span>
+        <svg lucideIcon="wallpaper" class="lucide-icon text-[#0367A6] text-2xl"></svg>
       </div>
       <div>
         <h2 class="text-2xl font-bold text-[#202020]">Banner principal</h2>
@@ -28,7 +28,7 @@
           <p class="text-sm text-[#666666]">Sube a Cloudinary o pega una URL ya existente para guardarla en esta lista.</p>
         </div>
         <label class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-[#0367A6]/30 bg-[#0367A6]/5 text-[#0367A6] font-semibold cursor-pointer hover:bg-[#0367A6]/10">
-          <span *ngIf="!uploading()" class="material-symbols-outlined text-lg">cloud_upload</span>
+          <svg lucideIcon="cloud_upload" *ngIf="!uploading()" class="lucide-icon text-lg"></svg>
           <span *ngIf="uploading()" class="w-4 h-4 rounded-full border-2 border-[#0367A6] border-t-transparent animate-spin"></span>
           {{ uploading() ? 'Subiendo...' : 'Subir imagen' }}
           <input type="file" accept="image/*" class="hidden" [disabled]="uploading()" (change)="uploadImage($event)">
@@ -40,7 +40,7 @@
           <img *ngIf="form.url_imagen; else emptyPreview" [src]="form.url_imagen" alt="Vista previa banner" class="w-full h-full object-cover">
           <ng-template #emptyPreview>
             <div class="h-full min-h-[230px] flex flex-col items-center justify-center text-[#7B8FA1]">
-              <span class="material-symbols-outlined text-5xl opacity-50">image</span>
+              <svg lucideIcon="image" class="lucide-icon text-5xl opacity-50"></svg>
               <p class="text-sm mt-2">Vista previa del banner</p>
             </div>
           </ng-template>
@@ -61,7 +61,7 @@
             (click)="createBanner()"
             [disabled]="isSaving() || uploading()"
             class="inline-flex items-center justify-center gap-2 px-5 py-3 bg-[#0367A6] text-white rounded-lg font-semibold hover:bg-[#035A91] disabled:opacity-70 disabled:cursor-wait">
-            <span *ngIf="!isSaving()" class="material-symbols-outlined">add_photo_alternate</span>
+            <svg lucideIcon="add_photo_alternate" *ngIf="!isSaving()" class="lucide-icon"></svg>
             <span *ngIf="isSaving()" class="w-5 h-5 rounded-full border-2 border-white border-t-transparent animate-spin"></span>
             {{ isSaving() ? 'Guardando...' : 'Guardar imagen' }}
           </button>
@@ -73,7 +73,7 @@
       <div class="bg-gray-50 px-4 py-3 border-b border-gray-200 flex items-center justify-between gap-3">
         <h3 class="font-bold text-[#202020]">Imágenes guardadas</h3>
         <button type="button" (click)="refreshBanners()" class="inline-flex items-center justify-center w-10 h-10 rounded-full border border-gray-200 text-[#0367A6] hover:bg-white">
-          <span class="material-symbols-outlined">refresh</span>
+          <svg lucideIcon="refresh" class="lucide-icon"></svg>
         </button>
       </div>
 
@@ -117,7 +117,7 @@
                   (click)="saveOrder(banner)"
                   [disabled]="savingBannerId() === banner.id_banner"
                   class="inline-flex items-center justify-center gap-1 px-3 py-2 rounded-lg bg-[#0367A6] text-white text-xs font-bold hover:bg-[#035A91] disabled:opacity-60 disabled:cursor-wait">
-                  <span *ngIf="savingBannerId() !== banner.id_banner" class="material-symbols-outlined text-base">save</span>
+                  <svg lucideIcon="save" *ngIf="savingBannerId() !== banner.id_banner" class="lucide-icon text-base"></svg>
                   <span *ngIf="savingBannerId() === banner.id_banner" class="w-3.5 h-3.5 rounded-full border-2 border-white border-t-transparent animate-spin"></span>
                   Guardar
                 </button>
@@ -141,7 +141,7 @@
                   (click)="deleteBanner(banner)"
                   [disabled]="savingBannerId() === banner.id_banner"
                   class="inline-flex items-center justify-center w-10 h-10 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-60">
-                  <span class="material-symbols-outlined">delete</span>
+                  <svg lucideIcon="delete" class="lucide-icon"></svg>
                 </button>
               </div>
             </div>
@@ -157,7 +157,7 @@
     <div class="w-full max-w-xl rounded-2xl bg-white p-6 shadow-2xl">
       <div class="flex items-start gap-4">
         <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-600">
-          <span class="material-symbols-outlined text-3xl">warning</span>
+          <svg lucideIcon="warning" class="lucide-icon text-3xl"></svg>
         </div>
         <div class="min-w-0">
           <h3 class="text-xl font-bold text-[#202020]">Eliminar imagen del banner</h3>
@@ -184,7 +184,7 @@
           (click)="confirmDeleteBanner()"
           [disabled]="savingBannerId() === banner.id_banner"
           class="inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-3 font-bold text-white hover:bg-red-700 disabled:opacity-60">
-          <span *ngIf="savingBannerId() !== banner.id_banner" class="material-symbols-outlined">delete</span>
+          <svg lucideIcon="delete" *ngIf="savingBannerId() !== banner.id_banner" class="lucide-icon"></svg>
           <span *ngIf="savingBannerId() === banner.id_banner" class="w-5 h-5 rounded-full border-2 border-white border-t-transparent animate-spin"></span>
           {{ savingBannerId() === banner.id_banner ? 'Eliminando...' : 'Eliminar imagen' }}
         </button>

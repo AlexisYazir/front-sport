@@ -8,11 +8,13 @@ import { Product, Category, ProductFilters } from '../../../core/models/product.
 import { Breadcrumbs, BreadcrumbItem } from '../../../shared/components/breadcrumbs/breadcrumbs';
 import { ToastrService } from 'ngx-toastr';
 import { combineLatest } from 'rxjs';
+import { IconModule } from '../../../shared/icons/icon.module';
+
 
 @Component({
   selector: 'app-product-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, Breadcrumbs, NgxPaginationModule],
+  imports: [IconModule, CommonModule, FormsModule, RouterModule, Breadcrumbs, NgxPaginationModule],
   templateUrl: './product-list.html',
   styleUrl: './product-list.css',
 })

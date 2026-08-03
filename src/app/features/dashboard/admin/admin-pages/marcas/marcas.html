@@ -4,9 +4,7 @@
     <div class="dashboard-page-toolbar flex items-center justify-between">
       <div class="flex items-center gap-3">
         <div class="bg-[#0367A6]/10 p-3 rounded-xl">
-          <span class="material-symbols-outlined text-[#0367A6] text-2xl">
-            {{ activeTab === 'marcas' ? 'brand_awareness' : 'category' }}
-          </span>
+          <svg [lucideIcon]="activeTab === 'marcas' ? 'brand_awareness' : 'category'" class="lucide-icon text-[#0367A6] text-2xl"></svg>
         </div>
         <div>
           <h2 class="text-2xl font-bold text-[#202020]">
@@ -23,13 +21,13 @@
         <button *ngIf="activeTab === 'marcas'" 
                 class="px-4 py-2 bg-[#0367A6] hover:bg-[#035A91] text-white rounded-lg flex items-center gap-2"
                 (click)="openCreateMarcaModal()">
-          <span class="material-symbols-outlined text-base">add</span>
+          <svg lucideIcon="add" class="lucide-icon text-base"></svg>
           Nueva Marca
         </button>
         <button *ngIf="activeTab === 'categorias'" 
                 class="px-4 py-2 bg-[#0367A6] hover:bg-[#035A91] text-white rounded-lg flex items-center gap-2"
                 (click)="openCreateCategoriaModal()">
-          <span class="material-symbols-outlined text-base">add</span>
+          <svg lucideIcon="add" class="lucide-icon text-base"></svg>
           Nueva Categoría
         </button>
       </div>
@@ -41,13 +39,13 @@
     <button class="px-6 py-3 text-sm font-medium transition-all relative"
             [ngClass]="activeTab === 'marcas' ? 'text-[#0367A6] border-b-2 border-[#0367A6]' : 'text-[#666666] hover:text-[#202020]'"
             (click)="changeTab('marcas')">
-      <span class="material-symbols-outlined text-base align-middle mr-2">brand_awareness</span>
+      <svg lucideIcon="brand_awareness" class="lucide-icon text-base align-middle mr-2"></svg>
       Marcas
     </button>
     <button class="px-6 py-3 text-sm font-medium transition-all relative"
             [ngClass]="activeTab === 'categorias' ? 'text-[#0367A6] border-b-2 border-[#0367A6]' : 'text-[#666666] hover:text-[#202020]'"
             (click)="changeTab('categorias')">
-      <span class="material-symbols-outlined text-base align-middle mr-2">category</span>
+      <svg lucideIcon="category" class="lucide-icon text-base align-middle mr-2"></svg>
       Categorías
     </button>
   </div>
@@ -57,9 +55,7 @@
     <div class="relative">
       <div class="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-[#0367A6]"></div>
       <div class="absolute inset-0 flex items-center justify-center">
-        <span class="material-symbols-outlined text-[#0367A6] text-xl">
-          {{ activeTab === 'marcas' ? 'brand_awareness' : 'category' }}
-        </span>
+        <svg [lucideIcon]="activeTab === 'marcas' ? 'brand_awareness' : 'category'" class="lucide-icon text-[#0367A6] text-xl"></svg>
       </div>
     </div>
     <p class="text-[#666666] mt-4">Cargando {{ activeTab === 'marcas' ? 'marcas' : 'categorías' }}...</p>
@@ -72,7 +68,7 @@
       <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div class="relative w-full sm:w-96">
           <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#666666]">
-            <span class="material-symbols-outlined text-lg">search</span>
+            <svg lucideIcon="search" class="lucide-icon text-lg"></svg>
           </span>
           <input type="text" 
                  (input)="onMarcasSearch($event)" 
@@ -82,7 +78,7 @@
           <button *ngIf="searchMarcasValue" 
                   (click)="clearMarcasSearch()"
                   class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#0367A6] transition-colors">
-            <span class="material-symbols-outlined text-lg">close</span>
+            <svg lucideIcon="close" class="lucide-icon text-lg"></svg>
           </button>
         </div>
         
@@ -93,7 +89,7 @@
           </div>
           <button class="w-10 h-10 rounded-full border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all"
                   (click)="refreshData()" title="Actualizar datos">
-            <span class="material-symbols-outlined text-lg">refresh</span>
+            <svg lucideIcon="refresh" class="lucide-icon text-lg"></svg>
           </button>
         </div>
       </div>
@@ -124,7 +120,7 @@
               <div class="flex gap-2 justify-center">
                  <button class="w-9 h-9 rounded-full border-2 border-green-500 text-green-500 hover:bg-green-500 hover:text-white transition-all"
                         (click)="editMarca(marca)" title="Editar">
-                   <i class="pi pi-pencil"></i>
+                   <svg lucideIcon="edit" class="lucide-icon"></svg>
                 </button>
               </div>
             </td>
@@ -134,12 +130,12 @@
           <tr *ngIf="filteredMarcas.length === 0">
             <td colspan="4" class="text-center py-12">
               <div class="flex flex-col items-center gap-3">
-                <span class="material-symbols-outlined text-5xl text-gray-300">brand_awareness</span>
+                <svg lucideIcon="brand_awareness" class="lucide-icon text-5xl text-gray-300"></svg>
                 <span class="text-[#666666] text-lg font-medium">No se encontraron marcas</span>
                 <span class="text-sm text-gray-400">Intenta con otros términos de búsqueda</span>
                 <button class="px-4 py-2 border border-gray-300 rounded-lg text-[#666666] hover:bg-gray-50 transition-all text-sm font-medium mt-2"
                         (click)="clearMarcasSearch()">
-                  <span class="material-symbols-outlined text-sm mr-2">close</span>
+                  <svg lucideIcon="close" class="lucide-icon text-sm mr-2"></svg>
                   Limpiar búsqueda
                 </button>
               </div>
@@ -162,11 +158,11 @@
       <div class="flex gap-2">
         <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50"
                 (click)="changeMarcasPage('first')" [disabled]="marcasFirst === 0">
-          <span class="material-symbols-outlined text-lg">first_page</span>
+          <svg lucideIcon="first_page" class="lucide-icon text-lg"></svg>
         </button>
         <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50"
                 (click)="changeMarcasPage('prev')" [disabled]="marcasFirst === 0">
-          <span class="material-symbols-outlined text-lg">chevron_left</span>
+          <svg lucideIcon="chevron_left" class="lucide-icon text-lg"></svg>
         </button>
         
         <div class="flex gap-1">
@@ -180,11 +176,11 @@
 
         <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50"
                 (click)="changeMarcasPage('next')" [disabled]="marcasLast >= marcasTotalRecords">
-          <span class="material-symbols-outlined text-lg">chevron_right</span>
+          <svg lucideIcon="chevron_right" class="lucide-icon text-lg"></svg>
         </button>
         <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50"
                 (click)="changeMarcasPage('last')" [disabled]="marcasLast >= marcasTotalRecords">
-          <span class="material-symbols-outlined text-lg">last_page</span>
+          <svg lucideIcon="last_page" class="lucide-icon text-lg"></svg>
         </button>
       </div>
     </div>
@@ -197,7 +193,7 @@
       <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div class="relative w-full sm:w-96">
           <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#666666]">
-            <span class="material-symbols-outlined text-lg">search</span>
+            <svg lucideIcon="search" class="lucide-icon text-lg"></svg>
           </span>
           <input type="text" 
                  (input)="onCategoriasSearch($event)" 
@@ -207,7 +203,7 @@
           <button *ngIf="searchCategoriasValue" 
                   (click)="clearCategoriasSearch()"
                   class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#0367A6] transition-colors">
-            <span class="material-symbols-outlined text-lg">close</span>
+            <svg lucideIcon="close" class="lucide-icon text-lg"></svg>
           </button>
         </div>
         
@@ -218,7 +214,7 @@
           </div>
           <button class="w-10 h-10 rounded-full border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all"
                   (click)="refreshData()" title="Actualizar datos">
-            <span class="material-symbols-outlined text-lg">refresh</span>
+            <svg lucideIcon="refresh" class="lucide-icon text-lg"></svg>
           </button>
         </div>
       </div>
@@ -239,7 +235,7 @@
         <button *ngIf="filterTipo !== 'todas' || searchCategoriasValue"
                 (click)="clearCategoriasSearch()"
                 class="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm flex items-center gap-1">
-          <span class="material-symbols-outlined text-sm">filter_alt_off</span>
+          <svg lucideIcon="filter_alt_off" class="lucide-icon text-sm"></svg>
           Limpiar filtros
         </button>
       </div>
@@ -274,7 +270,7 @@
               <div class="flex gap-2 justify-center">
                 <button class="w-9 h-9 rounded-full border-2 border-green-500 text-green-500 hover:bg-green-500 hover:text-white transition-all"
                         (click)="editCategoria(cat)" title="Editar">
-                   <i class="pi pi-pencil"></i>
+                   <svg lucideIcon="edit" class="lucide-icon"></svg>
                 </button>
               </div>
             </td>
@@ -284,12 +280,12 @@
           <tr *ngIf="filteredCategorias.length === 0">
             <td colspan="5" class="text-center py-12">
               <div class="flex flex-col items-center gap-3">
-                <span class="material-symbols-outlined text-5xl text-gray-300">category</span>
+                <svg lucideIcon="category" class="lucide-icon text-5xl text-gray-300"></svg>
                 <span class="text-[#666666] text-lg font-medium">No se encontraron categorías</span>
                 <span class="text-sm text-gray-400">Intenta con otros términos de búsqueda</span>
                 <button class="px-4 py-2 border border-gray-300 rounded-lg text-[#666666] hover:bg-gray-50 transition-all text-sm font-medium mt-2"
                         (click)="clearCategoriasSearch()">
-                  <span class="material-symbols-outlined text-sm mr-2">close</span>
+                  <svg lucideIcon="close" class="lucide-icon text-sm mr-2"></svg>
                   Limpiar búsqueda
                 </button>
               </div>
@@ -312,11 +308,11 @@
       <div class="flex gap-2">
         <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50"
                 (click)="changeCategoriasPage('first')" [disabled]="categoriasFirst === 0">
-          <span class="material-symbols-outlined text-lg">first_page</span>
+          <svg lucideIcon="first_page" class="lucide-icon text-lg"></svg>
         </button>
         <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50"
                 (click)="changeCategoriasPage('prev')" [disabled]="categoriasFirst === 0">
-          <span class="material-symbols-outlined text-lg">chevron_left</span>
+          <svg lucideIcon="chevron_left" class="lucide-icon text-lg"></svg>
         </button>
         
         <div class="flex gap-1">
@@ -330,11 +326,11 @@
 
         <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50"
                 (click)="changeCategoriasPage('next')" [disabled]="categoriasLast >= categoriasTotalRecords">
-          <span class="material-symbols-outlined text-lg">chevron_right</span>
+          <svg lucideIcon="chevron_right" class="lucide-icon text-lg"></svg>
         </button>
         <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50"
                 (click)="changeCategoriasPage('last')" [disabled]="categoriasLast >= categoriasTotalRecords">
-          <span class="material-symbols-outlined text-lg">last_page</span>
+          <svg lucideIcon="last_page" class="lucide-icon text-lg"></svg>
         </button>
       </div>
     </div>
@@ -345,13 +341,13 @@
   <!-- Modal de Creación de Marca -->
   <div *ngIf="showCreateMarcaModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" (click)="closeCreateMarcaModal()">
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl" (click)="$event.stopPropagation()">
-      <div class="bg-gradient-to-r from-[#0367A6] to-[#035A91] text-white px-6 py-4 rounded-t-xl flex justify-between items-center">
+      <div class="sc-modal-header bg-gradient-to-r from-[#0367A6] to-[#035A91] text-white px-6 py-4 rounded-t-xl flex justify-between items-center">
         <div class="flex items-center gap-2">
-          <span class="material-symbols-outlined">add_circle</span>
+          <svg lucideIcon="add_circle" class="sc-modal-header-icon lucide-icon"></svg>
           <h3 class="text-xl font-bold">Crear Nueva Marca</h3>
         </div>
-        <button (click)="closeCreateMarcaModal()" class="hover:bg-white/20 p-2 rounded-lg transition-colors">
-          <span class="material-symbols-outlined">close</span>
+        <button (click)="closeCreateMarcaModal()" class="sc-modal-close hover:bg-white/20 p-2 rounded-lg transition-colors">
+          <svg lucideIcon="close" class="sc-modal-close-icon lucide-icon"></svg>
         </button>
       </div>
 
@@ -394,7 +390,7 @@
         </button>
         <button (click)="guardarMarca()" [disabled]="creatingMarca"
                 class="px-6 py-2.5 bg-[#0367A6] text-white rounded-lg hover:bg-[#035A91] transition-all disabled:opacity-50 font-medium flex items-center gap-2">
-          <i *ngIf="creatingMarca" class="pi pi-spin pi-spinner text-sm"></i>
+          <svg lucideIcon="progress_activity" *ngIf="creatingMarca" class="lucide-icon text-sm lucide-spin"></svg>
           {{ creatingMarca ? 'Guardando...' : 'Crear Marca' }}
         </button>
       </div>
@@ -404,13 +400,13 @@
   <!-- Modal de Edición de Marca -->
   <div *ngIf="showEditMarcaModal && marcaEditando" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" (click)="closeEditMarcaModal()">
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl" (click)="$event.stopPropagation()">
-      <div class="bg-gradient-to-r from-[#0367A6] to-[#035A91] text-white px-6 py-4 rounded-t-xl flex justify-between items-center">
+      <div class="sc-modal-header bg-gradient-to-r from-[#0367A6] to-[#035A91] text-white px-6 py-4 rounded-t-xl flex justify-between items-center">
         <div class="flex items-center gap-2">
-          <span class="material-symbols-outlined">edit</span>
+          <svg lucideIcon="edit" class="sc-modal-header-icon lucide-icon"></svg>
           <h3 class="text-xl font-bold">Editar Marca</h3>
         </div>
-        <button (click)="closeEditMarcaModal()" class="hover:bg-white/20 p-2 rounded-lg transition-colors">
-          <span class="material-symbols-outlined">close</span>
+        <button (click)="closeEditMarcaModal()" class="sc-modal-close hover:bg-white/20 p-2 rounded-lg transition-colors">
+          <svg lucideIcon="close" class="sc-modal-close-icon lucide-icon"></svg>
         </button>
       </div>
 
@@ -459,7 +455,7 @@
         </button>
         <button (click)="actualizarMarca()" [disabled]="editingMarca"
                 class="px-6 py-2.5 bg-[#0367A6] text-white rounded-lg hover:bg-[#035A91] transition-all disabled:opacity-50 font-medium flex items-center gap-2">
-          <i *ngIf="editingMarca" class="pi pi-spin pi-spinner text-sm"></i>
+          <svg lucideIcon="progress_activity" *ngIf="editingMarca" class="lucide-icon text-sm lucide-spin"></svg>
           {{ editingMarca ? 'Guardando...' : 'Guardar Cambios' }}
         </button>
       </div>
@@ -471,13 +467,13 @@
   <!-- Modal de Creación de Categoría -->
   <div *ngIf="showCreateCategoriaModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" (click)="closeCreateCategoriaModal()">
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl" (click)="$event.stopPropagation()">
-      <div class="bg-gradient-to-r from-[#0367A6] to-[#035A91] text-white px-6 py-4 rounded-t-xl flex justify-between items-center">
+      <div class="sc-modal-header bg-gradient-to-r from-[#0367A6] to-[#035A91] text-white px-6 py-4 rounded-t-xl flex justify-between items-center">
         <div class="flex items-center gap-2">
-          <span class="material-symbols-outlined">add_circle</span>
+          <svg lucideIcon="add_circle" class="sc-modal-header-icon lucide-icon"></svg>
           <h3 class="text-xl font-bold">Crear Nueva Categoría</h3>
         </div>
-        <button (click)="closeCreateCategoriaModal()" class="hover:bg-white/20 p-2 rounded-lg transition-colors">
-          <span class="material-symbols-outlined">close</span>
+        <button (click)="closeCreateCategoriaModal()" class="sc-modal-close hover:bg-white/20 p-2 rounded-lg transition-colors">
+          <svg lucideIcon="close" class="sc-modal-close-icon lucide-icon"></svg>
         </button>
       </div>
 
@@ -538,7 +534,7 @@
         </button>
         <button (click)="guardarCategoria()" [disabled]="creatingCategoria"
                 class="px-6 py-2.5 bg-[#0367A6] text-white rounded-lg hover:bg-[#035A91] transition-all disabled:opacity-50 font-medium flex items-center gap-2">
-          <i *ngIf="creatingCategoria" class="pi pi-spin pi-spinner text-sm"></i>
+          <svg lucideIcon="progress_activity" *ngIf="creatingCategoria" class="lucide-icon text-sm lucide-spin"></svg>
           {{ creatingCategoria ? 'Guardando...' : 'Crear Categoría' }}
         </button>
       </div>
@@ -548,13 +544,13 @@
   <!-- Modal de Edición de Categoría -->
   <div *ngIf="showEditCategoriaModal && categoriaEditando" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" (click)="closeEditCategoriaModal()">
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl" (click)="$event.stopPropagation()">
-      <div class="bg-gradient-to-r from-[#0367A6] to-[#035A91] text-white px-6 py-4 rounded-t-xl flex justify-between items-center">
+      <div class="sc-modal-header bg-gradient-to-r from-[#0367A6] to-[#035A91] text-white px-6 py-4 rounded-t-xl flex justify-between items-center">
         <div class="flex items-center gap-2">
-          <span class="material-symbols-outlined">edit</span>
+          <svg lucideIcon="edit" class="sc-modal-header-icon lucide-icon"></svg>
           <h3 class="text-xl font-bold">Editar Categoría</h3>
         </div>
-        <button (click)="closeEditCategoriaModal()" class="hover:bg-white/20 p-2 rounded-lg transition-colors">
-          <span class="material-symbols-outlined">close</span>
+        <button (click)="closeEditCategoriaModal()" class="sc-modal-close hover:bg-white/20 p-2 rounded-lg transition-colors">
+          <svg lucideIcon="close" class="sc-modal-close-icon lucide-icon"></svg>
         </button>
       </div>
 
@@ -599,7 +595,7 @@
           </div>
 
           <div *ngIf="categoriaEditando.id_padre === null" class="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg flex items-center gap-2">
-            <span class="material-symbols-outlined text-blue-600">info</span>
+            <svg lucideIcon="info" class="lucide-icon text-blue-600"></svg>
             Las categorías padre solo pueden modificar su nombre.
           </div>
         </div>
@@ -612,7 +608,7 @@
         </button>
         <button (click)="actualizarCategoria()" [disabled]="editingCategoria"
                 class="px-6 py-2.5 bg-[#0367A6] text-white rounded-lg hover:bg-[#035A91] transition-all disabled:opacity-50 font-medium flex items-center gap-2">
-          <i *ngIf="editingCategoria" class="pi pi-spin pi-spinner text-sm"></i>
+          <svg lucideIcon="progress_activity" *ngIf="editingCategoria" class="lucide-icon text-sm lucide-spin"></svg>
           {{ editingCategoria ? 'Guardando...' : 'Guardar Cambios' }}
         </button>
       </div>

@@ -23,6 +23,8 @@ import { Location } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CartItem } from '../../../core/models/cart.model';
 import { frontendLogger } from '../../../core/services/frontend-logger.service';
+import { IconModule } from '../../../shared/icons/icon.module';
+
 import {
   DataMiningService,
   ProductRecommendation,
@@ -53,7 +55,7 @@ interface LastAddedCartPreview {
 @Component({
   selector: 'app-product-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, Breadcrumbs],
+  imports: [IconModule, CommonModule, FormsModule, RouterModule, Breadcrumbs],
   templateUrl: './product-detail.html',
   styleUrl: './product-detail.css',
 })

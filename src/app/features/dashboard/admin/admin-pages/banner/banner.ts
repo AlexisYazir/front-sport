@@ -3,11 +3,13 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
 import { CompanyService, HomeBannerImage } from '../../../../../core/services/company.service';
+import { IconModule } from '../../../../../shared/icons/icon.module';
+
 
 @Component({
   selector: 'app-banner-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [IconModule, CommonModule, FormsModule],
   templateUrl: './banner.html',
   styleUrl: './banner.css',
 })

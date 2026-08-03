@@ -102,7 +102,7 @@
   box-shadow: none;
 }
 
-.db-icon-button .material-symbols-outlined,
+.db-icon-button .lucide-icon,
 .db-icon-button i {
   font-size: 1rem;
   line-height: 1;
@@ -145,15 +145,15 @@
   font-weight: 600;
 }
 
-.db-primary-button .material-symbols-outlined,
-.db-danger-button .material-symbols-outlined,
-.db-secondary-button .material-symbols-outlined {
+.db-primary-button .lucide-icon,
+.db-danger-button .lucide-icon,
+.db-secondary-button .lucide-icon {
   transition: transform 180ms ease;
 }
 
-.db-primary-button:hover .material-symbols-outlined,
-.db-danger-button:hover .material-symbols-outlined,
-.db-secondary-button:hover .material-symbols-outlined {
+.db-primary-button:hover .lucide-icon,
+.db-danger-button:hover .lucide-icon,
+.db-secondary-button:hover .lucide-icon {
   transform: translateX(2px);
 }
 

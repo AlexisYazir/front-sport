@@ -5,11 +5,13 @@ import { RouterModule, Router } from '@angular/router';
 import { CompanyService } from '../../../core/services/company.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastrService } from 'ngx-toastr';
+import { IconModule } from '../../../shared/icons/icon.module';
+
 
 @Component({
   selector: 'app-contact',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [IconModule, CommonModule, FormsModule, RouterModule],
   templateUrl: './contact.html',
   styleUrl: './contact.css',
 })

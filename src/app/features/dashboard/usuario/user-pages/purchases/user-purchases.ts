@@ -6,13 +6,15 @@ import { ToastrService } from 'ngx-toastr';
 import { ProductService } from '../../../../../core/services/product.service';
 import { UserOrder } from '../../../../../core/models/product.model';
 import { formatMexicoDateTime } from '../../../../../core/utils/date-time.util';
+import { IconModule } from '../../../../../shared/icons/icon.module';
+
 
 type OrderFilter = 'all' | 'pendiente_pago' | 'pendiente' | 'en proceso' | 'entregado';
 
 @Component({
   selector: 'app-user-purchases',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [IconModule, CommonModule, FormsModule],
   templateUrl: './user-purchases.html',
   styleUrl: './user-purchases.css',
 })

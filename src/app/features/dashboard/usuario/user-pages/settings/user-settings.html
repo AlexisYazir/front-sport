@@ -1,7 +1,7 @@
 <div class="dashboard-card rounded-xl shadow-sm border p-5">
   <div class="dashboard-card mb-6 p-4 rounded-xl border flex items-center gap-3">
     <div class="bg-[#0367A6]/10 p-3 rounded-xl">
-      <span class="material-symbols-outlined text-[#0367A6] text-2xl">settings</span>
+      <svg lucideIcon="settings" class="lucide-icon text-[#0367A6] text-2xl"></svg>
     </div>
     <div>
       <h2 class="text-2xl font-bold dashboard-title">Configuración</h2>
@@ -12,7 +12,7 @@
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
     <section class="dashboard-card border rounded-xl p-5">
       <h3 class="font-bold dashboard-title mb-4 flex items-center gap-2">
-        <span class="material-symbols-outlined text-[#0367A6]">badge</span>
+        <svg lucideIcon="badge" class="lucide-icon text-[#0367A6]"></svg>
         Cuenta
       </h3>
       <div class="space-y-3 text-sm">
@@ -30,37 +30,37 @@
         </div>
       </div>
       <a routerLink="/dashboard/usuario/profile" class="inline-flex items-center gap-2 mt-5 px-4 py-2 bg-[#0367A6] text-white rounded-lg text-sm font-medium hover:bg-[#035A91] transition-colors">
-        <span class="material-symbols-outlined text-base">edit</span>
+        <svg lucideIcon="edit" class="lucide-icon text-base"></svg>
         Editar perfil
       </a>
     </section>
 
     <section class="dashboard-card border rounded-xl p-5">
       <h3 class="font-bold dashboard-title mb-4 flex items-center gap-2">
-        <span class="material-symbols-outlined text-[#0367A6]">lock</span>
+        <svg lucideIcon="lock" class="lucide-icon text-[#0367A6]"></svg>
         Seguridad y preferencias
       </h3>
       <div class="space-y-3">
         <a routerLink="/auth/forgot-password" class="dashboard-link-row flex items-center justify-between p-3 rounded-lg transition-colors group">
           <span class="flex items-center gap-3 text-sm font-medium dashboard-title">
-            <span class="material-symbols-outlined text-[#0367A6]">password</span>
+            <svg lucideIcon="password" class="lucide-icon text-[#0367A6]"></svg>
             Cambiar contraseña
           </span>
-          <span class="material-symbols-outlined text-[#666666] group-hover:text-[#0367A6]">arrow_forward</span>
+          <svg lucideIcon="arrow_forward" class="lucide-icon text-[#666666] group-hover:text-[#0367A6]"></svg>
         </a>
         <a routerLink="/support/contact" class="dashboard-link-row flex items-center justify-between p-3 rounded-lg transition-colors group">
           <span class="flex items-center gap-3 text-sm font-medium dashboard-title">
-            <span class="material-symbols-outlined text-green-600">support_agent</span>
+            <svg lucideIcon="support_agent" class="lucide-icon text-green-600"></svg>
             Contactar soporte
           </span>
-          <span class="material-symbols-outlined text-[#666666] group-hover:text-green-600">arrow_forward</span>
+          <svg lucideIcon="arrow_forward" class="lucide-icon text-[#666666] group-hover:text-green-600"></svg>
         </a>
         <a routerLink="/legal/privacy" class="dashboard-link-row flex items-center justify-between p-3 rounded-lg transition-colors group">
           <span class="flex items-center gap-3 text-sm font-medium dashboard-title">
-            <span class="material-symbols-outlined text-purple-600">policy</span>
+            <svg lucideIcon="policy" class="lucide-icon text-purple-600"></svg>
             Privacidad
           </span>
-          <span class="material-symbols-outlined text-[#666666] group-hover:text-purple-600">arrow_forward</span>
+          <svg lucideIcon="arrow_forward" class="lucide-icon text-[#666666] group-hover:text-purple-600"></svg>
         </a>
       </div>
     </section>

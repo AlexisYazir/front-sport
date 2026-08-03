@@ -1,11 +1,13 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { DashboardPreferencesService, DashboardTheme } from '../../../../core/services/dashboard-preferences.service';
+import { IconModule } from '../../../../shared/icons/icon.module';
+
 
 @Component({
   selector: 'app-dashboard-preferences-panel',
   standalone: true,
-  imports: [CommonModule],
+  imports: [IconModule, CommonModule],
   templateUrl: './dashboard-preferences-panel.html',
   styleUrl: './dashboard-preferences-panel.css',
 })

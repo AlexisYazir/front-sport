@@ -6,6 +6,8 @@ import { FormsModule } from '@angular/forms';
 import { UsersAdmin, Roles } from '../../../../../core/models/user.model';
 import { RouterModule } from '@angular/router';
 import { formatMexicoDate } from '../../../../../core/utils/date-time.util';
+import { IconModule } from '../../../../../shared/icons/icon.module';
+
 
 interface UserWithEditState extends UsersAdmin {
   editing: boolean;
@@ -18,7 +20,7 @@ interface UserWithEditState extends UsersAdmin {
 @Component({
   selector: 'app-users',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [IconModule, CommonModule, FormsModule, RouterModule],
   templateUrl: './users.html',
   styleUrl: './users.css'
 })

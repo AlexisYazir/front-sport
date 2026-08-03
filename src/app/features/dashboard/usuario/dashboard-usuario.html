@@ -26,9 +26,7 @@
           [matTooltip]="sidebarOpen() ? 'Contraer menú' : 'Expandir menú'"
           matTooltipClass="admin-tooltip"
           matTooltipPosition="right">
-          <span class="material-symbols-outlined text-xl">
-            {{ sidebarOpen() ? 'chevron_left' : 'chevron_right' }}
-          </span>
+          <svg [lucideIcon]="sidebarOpen() ? 'chevron_left' : 'chevron_right'" class="lucide-icon text-xl"></svg>
         </button>
       </div>
 
@@ -39,7 +37,7 @@
             <li *ngFor="let item of menuItems">
               <a
                 [routerLink]="item.route"
-                class="group flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200 text-sm"
+                class="dashboard-sidebar-link group flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200 text-sm"
                 [class.sidebar-link-active]="isActive(item.route)"
                 [class.text-[#0367A6]]="isActive(item.route)"
                 [class.text-[#666666]]="!isActive(item.route)"
@@ -50,12 +48,11 @@
                 [matTooltipDisabled]="sidebarOpen()"
                 matTooltipPosition="right">
 
-                <span
-                  class="material-symbols-outlined text-xl transition-colors duration-200"
+                <svg [lucideIcon]="item.icon"
+                  class="dashboard-sidebar-icon lucide-icon transition-colors duration-200"
+                  [class.dashboard-sidebar-icon--settings]="item.icon === 'settings'"
                   [class.text-[#0367A6]]="isActive(item.route)"
-                  [class.group-hover:text-[#0367A6]]="!isActive(item.route)">
-                  {{ item.icon }}
-                </span>
+                  [class.group-hover:text-[#0367A6]]="!isActive(item.route)"></svg>
 
                 <span *ngIf="sidebarOpen()" class="font-medium whitespace-nowrap">
                   {{ item.label }}
@@ -84,7 +81,7 @@
           <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div class="flex items-center gap-3">
               <div class="bg-[#0367A6]/10 p-3 rounded-xl">
-                <span class="material-symbols-outlined text-[#0367A6] text-2xl">person</span>
+                <svg lucideIcon="person" class="lucide-icon text-[#0367A6] text-2xl"></svg>
               </div>
               <div>
                 <h1 class="text-2xl font-bold text-[#202020]">
@@ -101,7 +98,7 @@
               (click)="refreshDashboard()"
               class="w-10 h-10 rounded-full border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all flex items-center justify-center"
               title="Actualizar datos">
-              <i class="pi pi-refresh text-lg"></i>
+              <svg lucideIcon="refresh" class="lucide-icon text-lg"></svg>
             </button>
           </div>
         </div>
@@ -121,7 +118,7 @@
                   <p class="text-xs text-green-600 mt-1">{{ deliveredOrders() }} entregadas</p>
                 </div>
                 <div class="bg-[#0367A6]/10 p-3 rounded-lg">
-                  <span class="material-symbols-outlined text-[#0367A6] text-3xl">shopping_bag</span>
+                  <svg lucideIcon="shopping_bag" class="lucide-icon text-[#0367A6] text-3xl"></svg>
                 </div>
               </div>
             </div>
@@ -134,7 +131,7 @@
                   <p class="text-xs text-blue-600 mt-1">Pendientes o en proceso</p>
                 </div>
                 <div class="bg-blue-100 p-3 rounded-lg">
-                  <span class="material-symbols-outlined text-blue-700 text-3xl">local_shipping</span>
+                  <svg lucideIcon="local_shipping" class="lucide-icon text-blue-700 text-3xl"></svg>
                 </div>
               </div>
             </div>
@@ -147,7 +144,7 @@
                   <p class="text-xs text-[#0367A6] mt-1">{{ formatCurrency(cartSummary().subtotal) }}</p>
                 </div>
                 <div class="bg-green-100 p-3 rounded-lg">
-                  <span class="material-symbols-outlined text-green-600 text-3xl">shopping_cart</span>
+                  <svg lucideIcon="shopping_cart" class="lucide-icon text-green-600 text-3xl"></svg>
                 </div>
               </div>
             </div>
@@ -158,17 +155,17 @@
             <div class="xl:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-5">
               <div class="flex items-center justify-between mb-5">
                 <h2 class="text-xl font-bold text-[#202020] flex items-center gap-2">
-                  <span class="material-symbols-outlined text-[#0367A6]">receipt_long</span>
+                  <svg lucideIcon="receipt_long" class="lucide-icon text-[#0367A6]"></svg>
                   Compras recientes
                 </h2>
                 <a routerLink="/dashboard/usuario/compras" class="text-[#0367A6] hover:text-[#035A91] text-sm font-semibold flex items-center gap-1">
                   Ver todos
-                  <span class="material-symbols-outlined text-base">arrow_forward</span>
+                  <svg lucideIcon="arrow_forward" class="lucide-icon text-base"></svg>
                 </a>
               </div>
 
               <div *ngIf="recentOrders().length === 0" class="py-10 text-center border border-dashed border-gray-200 rounded-xl">
-                <span class="material-symbols-outlined text-4xl text-gray-300">shopping_bag</span>
+                <svg lucideIcon="shopping_bag" class="lucide-icon text-4xl text-gray-300"></svg>
                 <p class="text-[#666666] mt-2">Aún no tienes compras registradas</p>
                 <a routerLink="/products" class="inline-flex mt-4 px-4 py-2 bg-[#0367A6] text-white rounded-lg text-sm font-medium">
                   Ver productos
@@ -207,7 +204,7 @@
             <div class="space-y-6">
               <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
                 <h3 class="text-lg font-bold text-[#202020] mb-4 flex items-center gap-2">
-                  <span class="material-symbols-outlined text-[#0367A6]">monitoring</span>
+                  <svg lucideIcon="monitoring" class="lucide-icon text-[#0367A6]"></svg>
                   Tu actividad
                 </h3>
                 <div class="space-y-3 text-sm">
@@ -236,30 +233,30 @@
 
               <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
                 <h3 class="text-lg font-bold text-[#202020] mb-4 flex items-center gap-2">
-                  <span class="material-symbols-outlined text-[#0367A6]">bolt</span>
+                  <svg lucideIcon="bolt" class="lucide-icon text-[#0367A6]"></svg>
                   Acciones rápidas
                 </h3>
                 <div class="space-y-3">
                   <a routerLink="/products" class="flex items-center justify-between p-3 bg-[#F8F9FA] hover:bg-[#0367A6]/10 rounded-lg transition-colors duration-200 group">
                     <span class="flex items-center gap-3 text-sm font-medium text-[#202020]">
-                      <span class="material-symbols-outlined text-[#0367A6]">storefront</span>
+                      <svg lucideIcon="storefront" class="lucide-icon text-[#0367A6]"></svg>
                       Ver productos
                     </span>
-                    <span class="material-symbols-outlined text-[#666666] group-hover:text-[#0367A6]">arrow_forward</span>
+                    <svg lucideIcon="arrow_forward" class="lucide-icon text-[#666666] group-hover:text-[#0367A6]"></svg>
                   </a>
                   <a routerLink="/cart" class="flex items-center justify-between p-3 bg-[#F8F9FA] hover:bg-green-50 rounded-lg transition-colors duration-200 group">
                     <span class="flex items-center gap-3 text-sm font-medium text-[#202020]">
-                      <span class="material-symbols-outlined text-green-600">shopping_cart</span>
+                      <svg lucideIcon="shopping_cart" class="lucide-icon text-green-600"></svg>
                       Ver carrito
                     </span>
-                    <span class="material-symbols-outlined text-[#666666] group-hover:text-green-600">arrow_forward</span>
+                    <svg lucideIcon="arrow_forward" class="lucide-icon text-[#666666] group-hover:text-green-600"></svg>
                   </a>
                   <a routerLink="/dashboard/usuario/profile" class="flex items-center justify-between p-3 bg-[#F8F9FA] hover:bg-blue-50 rounded-lg transition-colors duration-200 group">
                     <span class="flex items-center gap-3 text-sm font-medium text-[#202020]">
-                      <span class="material-symbols-outlined text-blue-600">account_circle</span>
+                      <svg lucideIcon="account_circle" class="lucide-icon text-blue-600"></svg>
                       Mi perfil
                     </span>
-                    <span class="material-symbols-outlined text-[#666666] group-hover:text-blue-600">arrow_forward</span>
+                    <svg lucideIcon="arrow_forward" class="lucide-icon text-[#666666] group-hover:text-blue-600"></svg>
                   </a>
                 </div>
               </div>

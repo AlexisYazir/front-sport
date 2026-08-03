@@ -6,11 +6,13 @@ import { AuthService } from '../../../core/services/auth.service';
 import { DashboardPreferencesService } from '../../../core/services/dashboard-preferences.service';
 import { DashboardNavigationLoadingService } from '../../../core/services/dashboard-navigation-loading.service';
 import { DashboardRouteSkeleton } from '../shared/dashboard-route-skeleton/dashboard-route-skeleton';
+import { IconModule } from '../../../shared/icons/icon.module';
+
 
 @Component({
   selector: 'app-dashboard-empleado',
   standalone: true,
-  imports: [CommonModule, RouterModule, MatTooltipModule, DashboardRouteSkeleton],
+  imports: [IconModule, CommonModule, RouterModule, MatTooltipModule, DashboardRouteSkeleton],
   templateUrl: './dashboard-empleado.html',
   styleUrl: './dashboard-empleado.css',
 })

@@ -30,6 +30,8 @@ import {
   SalesReport,
 } from '../../../../../core/services/reports.service';
 import { formatMexicoDateTime } from '../../../../../core/utils/date-time.util';
+import { IconModule } from '../../../../../shared/icons/icon.module';
+
 
 Chart.register(
   LineController,
@@ -60,7 +62,7 @@ interface KpiCard {
 @Component({
   selector: 'app-reports',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, BaseChartDirective],
+  imports: [IconModule, CommonModule, FormsModule, RouterModule, BaseChartDirective],
   templateUrl: './reports.html',
   styleUrl: './reports.css',
 })

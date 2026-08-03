@@ -34,12 +34,12 @@
         <div class="flex flex-wrap gap-3">
           <button routerLink="/products"
             class="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-lg bg-white px-5 sm:px-7 py-3 sm:py-3.5 text-sm font-bold text-[#0367A6] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#EEF6FD]">
-            <span class="material-symbols-outlined text-[1.1rem]">shopping_bag</span>
+            <svg lucideIcon="shopping_bag" class="lucide-icon text-[1.1rem]"></svg>
             Explorar Catálogo
           </button>
           <button routerLink="/ofertas"
             class="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-lg border border-white/25 px-5 sm:px-7 py-3 sm:py-3.5 text-sm font-bold text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/10">
-            <span class="material-symbols-outlined text-[1.1rem]">local_offer</span>
+            <svg lucideIcon="local_offer" class="lucide-icon text-[1.1rem]"></svg>
             Ver Ofertas
           </button>
         </div>
@@ -64,17 +64,17 @@
                 grid items-center justify-center gap-3 sm:flex sm:flex-wrap sm:gap-10
                 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.1em] text-white/85">
       <span class="flex items-center justify-center gap-2">
-        <span class="material-symbols-outlined text-[#FF7A00] text-sm">local_shipping</span>
+        <svg lucideIcon="local_shipping" class="lucide-icon text-[#FF7A00] text-sm"></svg>
         {{ freeShippingLabel() }}
       </span>
       <span class="hidden sm:block h-3 w-px bg-white/20"></span>
       <span class="flex items-center justify-center gap-2">
-        <span class="material-symbols-outlined text-[#FF7A00] text-sm">workspace_premium</span>
+        <svg lucideIcon="workspace_premium" class="lucide-icon text-[#FF7A00] text-sm"></svg>
         Productos 100% originales
       </span>
       <span class="hidden sm:block h-3 w-px bg-white/20"></span>
       <a routerLink="/support/preguntas-frecuentes" class="flex items-center justify-center gap-2 text-white/85 transition-colors hover:text-white">
-        <span class="material-symbols-outlined text-[#FF7A00] text-sm">replay</span>
+        <svg lucideIcon="replay" class="lucide-icon text-[#FF7A00] text-sm"></svg>
         Preguntas frecuentes
       </a>
     </div>
@@ -122,7 +122,7 @@
       <!-- Empty -->
       <div *ngIf="!loadingMarcas() && marcas.length === 0"
            class="flex flex-col items-center gap-2 py-10 text-[#7B8FA1]">
-        <span class="material-symbols-outlined text-5xl opacity-30">branding_watermark</span>
+        <svg lucideIcon="branding_watermark" class="lucide-icon text-5xl opacity-30"></svg>
         <p class="text-sm">No hay marcas disponibles</p>
       </div>
     </div>
@@ -162,7 +162,7 @@
             <h3>{{ sport.nombre }}</h3>
             <span class="sport-card__action">
               Ver productos
-              <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+              <svg lucideIcon="arrow_forward" class="lucide-icon" aria-hidden="true"></svg>
             </span>
           </div>
         </a>
@@ -171,7 +171,7 @@
 
     <div *ngIf="!loadingSports() && sports().length === 0"
          class="flex flex-col items-center gap-2 py-10 text-[#7B8FA1]">
-      <span class="material-symbols-outlined text-5xl opacity-30">sports</span>
+      <svg lucideIcon="sports" class="lucide-icon text-5xl opacity-30"></svg>
       <p class="text-sm">No hay deportes disponibles</p>
     </div>
   </section>
@@ -188,10 +188,10 @@
         </div>
         <div class="flex items-center gap-2">
           <button type="button" class="home-scroll-button" aria-label="Izquierda" (click)="scrollProducts('left')">
-            <span class="material-symbols-outlined">chevron_left</span>
+            <svg lucideIcon="chevron_left" class="lucide-icon"></svg>
           </button>
           <button type="button" class="home-scroll-button" aria-label="Derecha" (click)="scrollProducts('right')">
-            <span class="material-symbols-outlined">chevron_right</span>
+            <svg lucideIcon="chevron_right" class="lucide-icon"></svg>
           </button>
         </div>
       </div>
@@ -231,7 +231,7 @@
               class="absolute right-2 top-2 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-[#0367A6] shadow-sm transition-all duration-200 hover:bg-[#0367A6] hover:text-white"
               title="Compartir producto"
               aria-label="Compartir producto">
-              <span class="material-symbols-outlined text-[1.1rem]">share</span>
+              <svg lucideIcon="share" class="lucide-icon text-[1.1rem]"></svg>
             </button>
             <!-- Imagen -->
             <div class="w-full pt-[75%] relative overflow-hidden bg-white">
@@ -270,7 +270,7 @@
                     transition-all duration-200 hover:bg-[#EEF6FD] hover:border-[#0367A6]">
             <div class="flex h-11 w-11 items-center justify-center rounded-full bg-[#0367A6]/10 text-[#0367A6]
                         group-hover:bg-[#0367A6] group-hover:text-white transition-all duration-200">
-              <span class="material-symbols-outlined">grid_view</span>
+              <svg lucideIcon="grid_view" class="lucide-icon"></svg>
             </div>
             <span class="text-sm font-bold text-[#0367A6]">Ver catálogo</span>
           </a>
@@ -281,7 +281,7 @@
       <!-- Empty -->
       <div *ngIf="!loading() && products.length === 0"
            class="flex flex-col items-center gap-2 py-10 text-[#7B8FA1]">
-        <span class="material-symbols-outlined text-5xl opacity-30">inventory_2</span>
+        <svg lucideIcon="inventory_2" class="lucide-icon text-5xl opacity-30"></svg>
         <p class="text-sm">No hay productos disponibles</p>
       </div>
     </div>
@@ -299,7 +299,7 @@
       </div>
       <a routerLink="/ofertas"
          class="relative inline-flex items-center gap-2 rounded-lg bg-[#FF7A00] px-8 py-4 text-sm font-black text-white whitespace-nowrap transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#E56E00]">
-        <span class="material-symbols-outlined text-[1.1rem]">local_offer</span>
+        <svg lucideIcon="local_offer" class="lucide-icon text-[1.1rem]"></svg>
         Ver ofertas
       </a>
     </div>
@@ -316,7 +316,7 @@
       <a routerLink="/products"
          class="inline-flex items-center gap-2 rounded-lg bg-[#0367A6] px-5 py-2.5 text-sm font-bold text-white
                 transition-all duration-200 hover:bg-[#025486] hover:-translate-y-0.5">
-        <span class="material-symbols-outlined text-[1rem]">north_east</span>
+        <svg lucideIcon="north_east" class="lucide-icon text-[1rem]"></svg>
         Ver catálogo completo
       </a>
     </div>
@@ -328,7 +328,7 @@
                     bg-gradient-to-br from-[#EEF6FD] to-[#D9E6F2] text-[#0367A6]
                     group-hover:bg-[#0367A6] group-hover:from-[#0367A6] group-hover:to-[#025486] group-hover:text-white
                     transition-all duration-200">
-          <span class="material-symbols-outlined text-2xl">{{ pillar.icon }}</span>
+          <svg [lucideIcon]="pillar.icon" class="lucide-icon text-2xl"></svg>
         </div>
         <h3 class="text-base font-bold text-[#202020] mb-2">{{ pillar.title }}</h3>
         <p class="text-sm text-[#4F6479] leading-relaxed">{{ pillar.description }}</p>

@@ -1,6 +1,8 @@
 import { Component, input, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { IconModule } from '../../icons/icon.module';
+
 
 export interface BreadcrumbItem {
   label: string;
@@ -11,7 +13,7 @@ export interface BreadcrumbItem {
 @Component({
   selector: 'app-breadcrumbs',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [IconModule, CommonModule, RouterModule],
   template: `
     <nav class="breadcrumb-nav" aria-label="Breadcrumb" *ngIf="items().length > 0">
       <div class="breadcrumb-shell">
@@ -20,7 +22,7 @@ export interface BreadcrumbItem {
           <li class="flex items-center">
             <a routerLink="/" 
                class="breadcrumb-link">
-              <span class="material-symbols-outlined">home</span>
+              <svg lucideIcon="home" class="lucide-icon"></svg>
               <span class="hidden sm:inline">Inicio</span>
             </a>
           </li>
@@ -32,17 +34,15 @@ export interface BreadcrumbItem {
             
             <!-- Separator with fade -->
             <span class="breadcrumb-separator">
-              <span class="material-symbols-outlined">chevron_right</span>
+              <svg lucideIcon="chevron_right" class="lucide-icon"></svg>
             </span>
 
             <!-- Item Content -->
             <ng-container *ngIf="item.url && !isLast; else staticItem">
               <a [routerLink]="item.url" 
                  class="breadcrumb-link">
-                <span *ngIf="item.icon" 
-                      class="material-symbols-outlined">
-                  {{ item.icon }}
-                </span>
+                <svg [lucideIcon]="item.icon" *ngIf="item.icon" 
+                      class="lucide-icon"></svg>
                 <span class="breadcrumb-text">{{ item.label }}</span>
               </a>
             </ng-container>
@@ -50,10 +50,8 @@ export interface BreadcrumbItem {
             <ng-template #staticItem>
               <span class="breadcrumb-static flex items-center text-[11px] sm:text-xs font-medium px-1.5 py-0.5 rounded-full"
                     [ngClass]="isLast ? 'breadcrumb-current font-semibold' : ''">
-                <span *ngIf="item.icon" 
-                      class="material-symbols-outlined">
-                  {{ item.icon }}
-                </span>
+                <svg [lucideIcon]="item.icon" *ngIf="item.icon" 
+                      class="lucide-icon"></svg>
                 <span class="breadcrumb-text">{{ item.label }}</span>
               </span>
             </ng-template>
@@ -143,13 +141,13 @@ export interface BreadcrumbItem {
     }
 
     /* Icon animation */
-    .breadcrumb-link .material-symbols-outlined {
+    .breadcrumb-link .lucide-icon {
       transition: transform 0.2s ease;
       font-size: 0.88rem;
       line-height: 1;
     }
 
-    .breadcrumb-link:hover .material-symbols-outlined {
+    .breadcrumb-link:hover .lucide-icon {
       transform: scale(1.05);
     }
 
@@ -163,7 +161,7 @@ export interface BreadcrumbItem {
       margin: 0 0.05rem;
     }
 
-    .breadcrumb-separator .material-symbols-outlined {
+    .breadcrumb-separator .lucide-icon {
       font-size: 0.8rem;
       line-height: 1;
     }
@@ -210,7 +208,7 @@ export interface BreadcrumbItem {
         font-size: 0.68rem;
       }
       
-      .material-symbols-outlined {
+      .lucide-icon {
         font-size: 0.78rem;
       }
 

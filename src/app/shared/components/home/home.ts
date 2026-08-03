@@ -16,6 +16,8 @@ import { CartService } from '../../../core/services/cart.service';
 import { CompanyService, HomeBannerImage } from '../../../core/services/company.service';
 import { Product, Marca, Sport } from '../../../core/models/product.model';
 import { environment } from '../../../../environments/environment';
+import { IconModule } from '../../icons/icon.module';
+
 
 interface HomeSport extends Sport {
   slug: string;
@@ -25,7 +27,7 @@ interface HomeSport extends Sport {
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [IconModule, CommonModule, RouterModule],
   templateUrl: './home.html',
   styleUrl: './home.css',
 })

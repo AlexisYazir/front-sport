@@ -15,11 +15,13 @@ import {
   isSecureInput
 } from '../../../core/validators/custom-validators';
 import { PasswordStrengthComponent } from '../../../shared/components/password-strength/password-strength.component';
+import { IconModule } from '../../../shared/icons/icon.module';
+
 
 @Component({
   selector: "app-register",
   standalone: true,
-  imports: [
+  imports: [IconModule, 
     CommonModule, 
     FormsModule, 
     ReactiveFormsModule,

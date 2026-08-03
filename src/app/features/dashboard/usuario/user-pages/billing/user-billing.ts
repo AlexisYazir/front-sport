@@ -3,11 +3,13 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ProductService } from '../../../../../core/services/product.service';
 import { UserOrder } from '../../../../../core/models/product.model';
 import { formatMexicoDate } from '../../../../../core/utils/date-time.util';
+import { IconModule } from '../../../../../shared/icons/icon.module';
+
 
 @Component({
   selector: 'app-user-billing',
   standalone: true,
-  imports: [CommonModule],
+  imports: [IconModule, CommonModule],
   templateUrl: './user-billing.html',
   styleUrl: './user-billing.css',
 })

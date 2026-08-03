@@ -3,11 +3,13 @@ import { Component, computed, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../../../../core/services/auth.service';
 import { DashboardPreferencesPanel } from '../../../shared/dashboard-preferences-panel/dashboard-preferences-panel';
+import { IconModule } from '../../../../../shared/icons/icon.module';
+
 
 @Component({
   selector: 'app-user-settings',
   standalone: true,
-  imports: [CommonModule, RouterModule, DashboardPreferencesPanel],
+  imports: [IconModule, CommonModule, RouterModule, DashboardPreferencesPanel],
   templateUrl: './user-settings.html',
   styleUrl: './user-settings.css',
 })

@@ -29,6 +29,8 @@ import {
   VacuumSchedule,
 } from '../../../../../core/services/backup.service';
 import { formatMexicoDateTime, formatMexicoNow } from '../../../../../core/utils/date-time.util';
+import { IconModule } from '../../../../../shared/icons/icon.module';
+
 
 Chart.register(
   BarController,
@@ -54,7 +56,7 @@ type SectionKey =
 @Component({
   selector: 'app-db',
   standalone: true,
-  imports: [
+  imports: [IconModule, 
     CommonModule,
     FormsModule,
     BaseChartDirective,

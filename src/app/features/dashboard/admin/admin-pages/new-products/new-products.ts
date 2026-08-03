@@ -7,6 +7,8 @@ import { RouterModule } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { firstValueFrom } from 'rxjs';
 import { formatMexicoDateTime } from '../../../../../core/utils/date-time.util';
+import { IconModule } from '../../../../../shared/icons/icon.module';
+
 
 // Interfaz para variantes - AHORA INCLUYE ATRIBUTOS
 interface ProductVariant {
@@ -30,7 +32,7 @@ interface AttributeField {
 @Component({
   selector: 'app-new-products',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [IconModule, CommonModule, FormsModule, RouterModule],
   templateUrl: './new-products.html',
   styleUrls: ['./new-products.css'],
 })
@@ -228,10 +230,6 @@ export class NewProducts implements OnInit {
   // Utilidades para la tabla
   getStatusClass(activo: boolean): string {
     return activo ? 'bg-green-100 text-green-700 border-green-200' : 'bg-red-100 text-red-700 border-red-200';
-  }
-
-  getStatusIcon(activo: boolean): string {
-    return activo ? 'pi pi-check' : 'pi pi-times';
   }
 
   getStatusText(activo: boolean): string {

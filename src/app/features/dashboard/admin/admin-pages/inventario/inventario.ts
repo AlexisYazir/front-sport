@@ -6,6 +6,8 @@ import { ProductService } from '../../../../../core/services/product.service';
 import { InventoryProduct, ProductVariant } from '../../../../../core/models/product.model';
 import * as XLSX from 'xlsx';
 import { formatMexicoDateTime, parseApiDate } from '../../../../../core/utils/date-time.util';
+import { IconModule } from '../../../../../shared/icons/icon.module';
+
 
 // Interfaz para variantes existentes (SOLO VISUALIZACIÓN)
 interface ExistingVariant {
@@ -22,13 +24,15 @@ interface InventoryMovement {
   id_movimiento: number;
   id_variante: number;
   sku: string;
+  producto?: string;
+  marca?: string;
   imagen_variante?: string;
   imagenes_variante?: string[];
   tipo: 'entrada' | 'salida' | 'ajuste';
   cantidad: number;
   costo_unitario: number;
   referencia_tipo: string;
-  referencia_id: number;
+  referencia_id: number | null;
   fecha: string;
 }
 
@@ -91,7 +95,7 @@ interface ExcelImportResult {
 @Component({
   selector: 'app-inventario',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [IconModule, CommonModule, FormsModule],
   templateUrl: './inventario.html',
   styleUrls: ['./inventario.css']
 })
@@ -333,22 +337,18 @@ export class Inventario implements OnInit {
   }
 
   getStockIcon(stock: number): string {
-    if (stock <= 0) return 'pi pi-exclamation-circle';
-    if (stock <= 5) return 'pi pi-exclamation-triangle';
-    return 'pi pi-check-circle';
+    if (stock <= 0) return 'error';
+    if (stock <= 5) return 'warning';
+    return 'check_circle';
   }
 
   getStockIconClass(stock: number): string {
     const color = stock <= 0 ? 'text-red-600' : stock <= 5 ? 'text-amber-500' : 'text-green-600';
-    return `${this.getStockIcon(stock)} ${color} text-base`;
+    return `${color} text-base`;
   }
 
   getStatusClass(activo: boolean): string {
     return activo ? 'bg-green-100 text-green-700 border-green-200' : 'bg-red-100 text-red-700 border-red-200';
-  }
-
-  getStatusIcon(activo: boolean): string {
-    return activo ? 'pi pi-check' : 'pi pi-times';
   }
 
   getStatusText(activo: boolean): string {
@@ -442,11 +442,14 @@ export class Inventario implements OnInit {
   }
 
   getWarningIcon(variant: ExistingVariant): string {
-    if (variant.stock <= 0) return 'pi pi-exclamation-circle text-red-500';
-    if (variant.stock <= 5) return 'pi pi-exclamation-triangle text-yellow-500';
-    if (variant.precio < 10) return 'pi pi-exclamation-triangle text-yellow-500';
-    if (!variant.imagenes || variant.imagenes.length === 0) return 'pi pi-image text-yellow-500';
+    if (variant.stock <= 0) return 'error';
+    if (variant.stock <= 5 || variant.precio < 10) return 'warning';
+    if (!variant.imagenes || variant.imagenes.length === 0) return 'image';
     return '';
+  }
+
+  getWarningIconClass(variant: ExistingVariant): string {
+    return variant.stock <= 0 ? 'text-red-500' : 'text-yellow-500';
   }
 
   getWarningTooltip(variant: ExistingVariant): string {
@@ -509,17 +512,7 @@ loadMovements() {
   this.loadingMovements = true;
   this.productService.getInventoryMovements().subscribe({
     next: (response: any) => {
-      // Si la respuesta es un array directamente
-      if (Array.isArray(response)) {
-        this.movements = response;
-      } 
-      // Si la respuesta tiene propiedad data
-      else if (response && response.data) {
-        this.movements = response.data;
-      } else {
-        this.movements = [];
-      }
-      
+      this.movements = this.normalizeMovementsResponse(response);
       this.applyMovementsFilters();
       this.loadingMovements = false;
     },
@@ -533,7 +526,7 @@ loadMovements() {
   // Aplicar filtros a movimientos
 // Aplicar filtros a movimientos - CORREGIDO
 applyMovementsFilters() {
-  let filtered = [...this.movements];
+  let filtered = this.movements.filter((movement) => this.isValidMovement(movement));
 
   // Filtro por tipo
   if (this.filterTipo !== 'todos') {
@@ -566,11 +559,13 @@ applyMovementsFilters() {
   }
 
 if (this.searchMovementValue) {
-  const term = this.searchMovementValue.toLowerCase();
+  const term = this.normalizeText(this.searchMovementValue);
   filtered = filtered.filter(m => 
     m.id_movimiento.toString().includes(term) ||
-    m.sku.toLowerCase().includes(term) ||
-    m.referencia_tipo.toLowerCase().includes(term) ||
+    this.normalizeText(m.sku).includes(term) ||
+    this.normalizeText(m.producto).includes(term) ||
+    this.normalizeText(m.marca).includes(term) ||
+    this.normalizeText(m.referencia_tipo).includes(term) ||
     m.referencia_id?.toString().includes(term) ||
     m.id_variante.toString().includes(term)
   );
@@ -614,11 +609,22 @@ onFechaFinChange(value: string) {  // Cambiado de event a value
 
   // Paginación movimientos
   updatePaginatedMovements() {
+    const validRows = this.filteredMovements.filter((movement) => this.isValidMovement(movement));
+    this.filteredMovements = validRows;
+    this.movementsTotalRecords = validRows.length;
+
+    if (this.movementsFirst >= this.movementsTotalRecords) {
+      this.movementsFirst = this.movementsTotalRecords > 0
+        ? Math.floor((this.movementsTotalRecords - 1) / this.movementsRowsPerPage) * this.movementsRowsPerPage
+        : 0;
+    }
+
     const start = this.movementsFirst;
     const end = this.movementsFirst + this.movementsRowsPerPage;
-    this.paginatedMovements = this.filteredMovements.slice(start, end);
-    this.movementsTotalRecords = this.filteredMovements.length;
-    this.movementsCurrentPage = Math.floor(this.movementsFirst / this.movementsRowsPerPage) + 1;
+    this.paginatedMovements = validRows.slice(start, end);
+    this.movementsCurrentPage = validRows.length
+      ? Math.floor(this.movementsFirst / this.movementsRowsPerPage) + 1
+      : 1;
   }
 
   onMovementsRowsPerPageChange() {
@@ -641,6 +647,10 @@ onFechaFinChange(value: string) {  // Cambiado de event a value
     this.updatePaginatedMovements();
   }
 
+  trackMovementById(index: number, movement: InventoryMovement): string {
+    return `${movement.id_movimiento}-${movement.id_variante}-${index}`;
+  }
+
   get movementsLast(): number {
     return Math.min(this.movementsFirst + this.movementsRowsPerPage, this.movementsTotalRecords);
   }
@@ -661,6 +671,150 @@ onFechaFinChange(value: string) {  // Cambiado de event a value
   }
 
   // Utilidades para movimientos
+  private normalizeMovementsResponse(response: any): InventoryMovement[] {
+    const rows = Array.isArray(response)
+      ? response
+      : Array.isArray(response?.data)
+        ? response.data
+        : Array.isArray(response?.movements)
+          ? response.movements
+          : Array.isArray(response?.movimientos)
+            ? response.movimientos
+            : [];
+
+    const seenMovements = new Set<number>();
+
+    return rows
+      .map((movement: any) => {
+        const idMovimiento = this.toNumber(movement?.id_movimiento);
+        const idVariante = this.toNumber(movement?.id_variante);
+        const sku = String(movement?.sku ?? '').trim() || `Variante #${idVariante}`;
+        const imagenesVariante = this.normalizeImageList(
+          movement?.imagenes_variante ?? movement?.imagenes ?? movement?.imagenes_producto,
+        );
+        const imagenVariante = this.normalizeMovementImage(
+          movement?.imagen_variante ?? movement?.image ?? movement?.imagen ?? imagenesVariante[0],
+        );
+        const normalizedImages = imagenVariante
+          ? [imagenVariante, ...imagenesVariante.filter((image) => image !== imagenVariante)]
+          : imagenesVariante;
+        const referenciaId = movement?.referencia_id === null || movement?.referencia_id === undefined
+          ? null
+          : this.toNumber(movement?.referencia_id);
+
+        return {
+          ...movement,
+          id_movimiento: idMovimiento,
+          id_variante: idVariante,
+          sku,
+          producto: String(movement?.producto ?? movement?.nombre_producto ?? '').trim() || sku,
+          marca: String(movement?.marca ?? '').trim(),
+          imagen_variante: imagenVariante,
+          imagenes_variante: normalizedImages,
+          tipo: this.normalizeMovementType(movement?.tipo),
+          cantidad: this.toNumber(movement?.cantidad),
+          costo_unitario: this.toNumber(movement?.costo_unitario),
+          referencia_tipo: String(movement?.referencia_tipo ?? 'N/A').trim(),
+          referencia_id: referenciaId,
+          fecha: String(movement?.fecha ?? ''),
+        } as InventoryMovement;
+      })
+      .filter((movement: InventoryMovement) => this.isValidMovement(movement))
+      .filter((movement: InventoryMovement) => {
+        if (seenMovements.has(movement.id_movimiento)) return false;
+        seenMovements.add(movement.id_movimiento);
+        return true;
+      });
+  }
+
+  private isValidMovement(movement: InventoryMovement): boolean {
+    const fechaMovimiento = parseApiDate(movement?.fecha);
+    const idMovimiento = Number(movement?.id_movimiento);
+    const idVariante = Number(movement?.id_variante);
+    const cantidad = Number(movement?.cantidad);
+
+    return Number.isFinite(idMovimiento)
+      && idMovimiento > 0
+      && Number.isFinite(idVariante)
+      && idVariante > 0
+      && Boolean(String(movement?.producto ?? movement?.sku ?? '').trim())
+      && ['entrada', 'salida', 'ajuste'].includes(String(movement?.tipo ?? '').toLowerCase())
+      && Number.isFinite(cantidad)
+      && Math.abs(cantidad) > 0
+      && Boolean(fechaMovimiento);
+  }
+
+  private normalizeImageList(value: unknown): string[] {
+    if (Array.isArray(value)) {
+      return value
+        .map((image) => this.normalizeMovementImage(image))
+        .filter(Boolean);
+    }
+
+    if (value && typeof value === 'object') {
+      return Object.values(value as Record<string, unknown>)
+        .map((image) => this.normalizeMovementImage(image))
+        .filter(Boolean);
+    }
+
+    const rawValue = String(value ?? '').trim();
+    if (!rawValue) return [];
+
+    if ((rawValue.startsWith('[') && rawValue.endsWith(']')) || (rawValue.startsWith('{') && rawValue.endsWith('}'))) {
+      try {
+        return this.normalizeImageList(JSON.parse(rawValue));
+      } catch {
+        return [rawValue];
+      }
+    }
+
+    return [rawValue];
+  }
+
+  private normalizeMovementImage(value: unknown): string {
+    if (Array.isArray(value)) return this.normalizeMovementImage(value[0]);
+
+    if (value && typeof value === 'object') {
+      const record = value as Record<string, unknown>;
+      return this.normalizeMovementImage(
+        record['url'] ?? record['secure_url'] ?? record['imagen'] ?? record['src'] ?? record['0'],
+      );
+    }
+
+    const image = String(value ?? '').trim();
+    if (!image) return '';
+
+    if ((image.startsWith('[') && image.endsWith(']')) || (image.startsWith('{') && image.endsWith('}'))) {
+      try {
+        return this.normalizeMovementImage(JSON.parse(image));
+      } catch {
+        return image;
+      }
+    }
+
+    return image;
+  }
+
+  private normalizeMovementType(value: unknown): InventoryMovement['tipo'] {
+    const type = this.normalizeText(value);
+    if (type === 'salida') return 'salida';
+    if (type === 'ajuste') return 'ajuste';
+    return 'entrada';
+  }
+
+  private normalizeText(value: unknown): string {
+    return String(value ?? '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
+  }
+
+  private toNumber(value: unknown): number {
+    const numeric = Number(value);
+    return Number.isFinite(numeric) ? numeric : 0;
+  }
+
   getTipoClass(tipo: string): string {
     switch(tipo) {
       case 'entrada': return 'bg-green-100 text-green-800 border-green-200';
@@ -672,10 +826,10 @@ onFechaFinChange(value: string) {  // Cambiado de event a value
 
   getTipoIcon(tipo: string): string {
     switch(tipo) {
-      case 'entrada': return 'pi pi-arrow-down';
-      case 'salida': return 'pi pi-arrow-up';
-      case 'ajuste': return 'pi pi-pencil';
-      default: return 'pi pi-question';
+      case 'entrada': return 'arrow_downward';
+      case 'salida': return 'arrow_upward';
+      case 'ajuste': return 'edit';
+      default: return 'help';
     }
   }
 

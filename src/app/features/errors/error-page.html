@@ -8,7 +8,7 @@
   <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-14 lg:py-24 grid gap-12 lg:grid-cols-[1.1fr_0.9fr] items-center">
     <div class="space-y-6">
       <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 border border-spurt-primary/20 shadow-sm backdrop-blur">
-        <span class="material-symbols-outlined text-spurt-primary text-xl">warning</span>
+        <svg lucideIcon="warning" class="lucide-icon text-spurt-primary text-xl"></svg>
         <span class="text-sm font-semibold tracking-wide text-spurt-primary">Error {{ config().status }} · {{ config().badge }}</span>
       </div>
 
@@ -70,13 +70,13 @@
            [routerLink]="link.route"
            class="quick-link">
           <div class="flex items-center gap-3">
-            <span class="material-symbols-outlined text-xl text-spurt-primary bg-spurt-primary/10 rounded-lg p-2">{{ link.icon }}</span>
+            <svg [lucideIcon]="link.icon" class="lucide-icon text-xl text-spurt-primary bg-spurt-primary/10 rounded-lg p-2"></svg>
             <div>
               <p class="text-sm font-semibold text-spurt-dark">{{ link.label }}</p>
               <p class="text-xs text-spurt-gray leading-snug">{{ link.description }}</p>
             </div>
           </div>
-          <span class="material-symbols-outlined text-sm text-spurt-secondary icon-shift">arrow_forward</span>
+          <svg lucideIcon="arrow_forward" class="lucide-icon text-sm text-spurt-secondary icon-shift"></svg>
         </a>
       </div>
     </div>
@@ -98,7 +98,7 @@
           </div>
         </div>
         <div class="floating-badge">
-          <span class="material-symbols-outlined text-base">navigation</span>
+          <svg lucideIcon="navigation" class="lucide-icon text-base"></svg>
           <span class="text-xs font-semibold">Sigue explorando</span>
         </div>
       </div>

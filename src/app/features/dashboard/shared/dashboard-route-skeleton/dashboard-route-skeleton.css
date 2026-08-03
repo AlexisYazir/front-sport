@@ -55,7 +55,7 @@
 .skeleton-chart, .skeleton-list, .skeleton-form__panel { min-height: 23rem; padding: 1.25rem; }
 .skeleton-section-title { width: 11rem; height: 1.1rem; }
 .skeleton-bars { display: flex; height: 16rem; align-items: end; gap: 7%; padding: 2rem 1rem 0; }
-.skeleton-bars i { flex: 1; height: calc(12% + (var(--bar) * 10%)); border-radius: 0.4rem 0.4rem 0 0; background: var(--sc-soft, #eef2f6); }
+.skeleton-bars .skeleton-bar { flex: 1; height: calc(12% + (var(--bar) * 10%)); border-radius: 0.4rem 0.4rem 0 0; background: var(--sc-soft, #eef2f6); }
 .skeleton-list__row { display: flex; align-items: center; gap: 0.8rem; padding: 1rem 0; border-bottom: 1px solid var(--sc-border, #e5e7eb); }
 .skeleton-avatar { width: 2.5rem; height: 2.5rem; flex: none; border-radius: 0.6rem; }
 .skeleton-line { width: 75%; height: 0.72rem; }

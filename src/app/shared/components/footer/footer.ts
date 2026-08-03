@@ -4,11 +4,13 @@ import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { CompanyInfo, CompanyService } from '../../../core/services/company.service';
 import { DashboardPreferencesService } from '../../../core/services/dashboard-preferences.service';
+import { IconModule } from '../../icons/icon.module';
+
 
 @Component({
   selector: 'app-footer',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [IconModule, CommonModule, RouterModule],
   templateUrl: './footer.html',
   styleUrl: './footer.css',
 })

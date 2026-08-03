@@ -275,12 +275,12 @@
   color: #fff;
 }
 
-.sport-card__action .material-symbols-outlined {
+.sport-card__action .lucide-icon {
   font-size: 1rem;
   transition: transform 0.2s ease;
 }
 
-.sport-card:hover .sport-card__action .material-symbols-outlined {
+.sport-card:hover .sport-card__action .lucide-icon {
   transform: translateX(4px);
 }
 

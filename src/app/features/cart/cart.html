@@ -4,7 +4,7 @@
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div class="flex items-center gap-3">
           <div class="w-12 h-12 rounded-lg bg-[#0367A6]/10 flex items-center justify-center">
-            <span class="material-symbols-outlined text-[#0367A6] text-2xl">shopping_cart</span>
+            <svg lucideIcon="shopping_cart" class="lucide-icon text-[#0367A6] text-2xl"></svg>
           </div>
           <div>
             <h1 class="text-2xl sm:text-3xl font-bold text-[#202020]">Carrito de Compras</h1>
@@ -16,7 +16,7 @@
           type="button"
           (click)="continueShopping()"
           class="inline-flex items-center justify-center gap-2 px-5 py-3 text-sm font-semibold text-[#0367A6] bg-white border border-[#0367A6] rounded-lg hover:bg-[#0367A6]/10 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0367A6] transition-all">
-          <span class="material-symbols-outlined text-lg">arrow_back</span>
+          <svg lucideIcon="arrow_back" class="lucide-icon text-lg"></svg>
           Seguir comprando
         </button>
       </div>
@@ -58,14 +58,14 @@
     </div>
 
     <div *ngIf="!isLoading() && isEmpty()" class="bg-white rounded-xl border border-gray-100 shadow-sm p-10 text-center">
-      <span class="material-symbols-outlined text-5xl text-gray-300">remove_shopping_cart</span>
+      <svg lucideIcon="remove_shopping_cart" class="lucide-icon text-5xl text-gray-300"></svg>
       <h2 class="text-xl font-bold text-[#202020] mt-3">Tu carrito está vacío</h2>
       <p class="text-[#666666] mt-2">Agrega productos para continuar con tu compra.</p>
       <button
         type="button"
         (click)="continueShopping()"
         class="inline-flex items-center gap-2 px-5 py-3 mt-6 bg-[#0367A6] text-white rounded-lg font-semibold hover:bg-[#035A91] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0367A6] transition-all">
-        <span class="material-symbols-outlined">storefront</span>
+        <svg lucideIcon="storefront" class="lucide-icon"></svg>
         Ver productos
       </button>
     </div>
@@ -120,7 +120,7 @@
                 <p
                   class="inline-flex items-center gap-1.5 text-sm font-medium"
                   [ngClass]="isStockCritical(item) ? 'text-red-600' : 'text-yellow-600'">
-                  <span class="material-symbols-outlined text-lg">warning</span>
+                  <svg lucideIcon="warning" class="lucide-icon text-lg"></svg>
                   {{ getStockWarning(item) }}
                 </p>
               </div>
@@ -136,7 +136,7 @@
                 [disabled]="isItemRemoving(item)"
                 class="inline-flex items-center justify-center gap-2 px-3 py-2 mt-0 sm:mt-4 text-sm font-semibold text-red-600 bg-white border border-red-200 rounded-lg hover:bg-red-50 hover:border-red-300 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-200 transition-all">
                 <span *ngIf="isItemRemoving(item)" class="w-4 h-4 rounded-full border-2 border-red-500 border-t-transparent animate-spin"></span>
-                <span *ngIf="!isItemRemoving(item)" class="material-symbols-outlined text-lg leading-none">delete</span>
+                <svg lucideIcon="delete" *ngIf="!isItemRemoving(item)" class="lucide-icon text-lg leading-none"></svg>
                 <span>{{ isItemRemoving(item) ? 'Eliminando...' : 'Eliminar' }}</span>
               </button>
             </div>
@@ -152,7 +152,7 @@
                   type="button"
                   (click)="updateQuantity(item, item.quantity - 1)"
                   class="quantity-button inline-flex items-center justify-center text-gray-600 hover:text-[#0367A6] focus:outline-none">
-                  <span class="material-symbols-outlined text-xl">remove</span>
+                  <svg lucideIcon="remove" class="lucide-icon text-xl"></svg>
                 </button>
 
                 <input
@@ -168,7 +168,7 @@
                   (click)="updateQuantity(item, item.quantity + 1)"
                   [disabled]="item.quantity >= item.product.stock"
                   class="quantity-button inline-flex items-center justify-center text-gray-600 hover:text-[#0367A6] focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed">
-                  <span class="material-symbols-outlined text-xl">add</span>
+                  <svg lucideIcon="add" class="lucide-icon text-xl"></svg>
                 </button>
               </div>
             </div>
@@ -187,7 +187,7 @@
             [disabled]="clearingCart()"
             class="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-red-600 bg-white border border-red-200 rounded-lg hover:bg-red-50 hover:border-red-300 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-200 transition-all">
             <span *ngIf="clearingCart()" class="w-4 h-4 rounded-full border-2 border-red-500 border-t-transparent animate-spin"></span>
-            <span *ngIf="!clearingCart()" class="material-symbols-outlined text-lg">delete_sweep</span>
+            <svg lucideIcon="delete_sweep" *ngIf="!clearingCart()" class="lucide-icon text-lg"></svg>
             {{ clearingCart() ? 'Vaciando...' : 'Vaciar carrito' }}
           </button>
         </div>
@@ -205,7 +205,7 @@
 
             <div *ngIf="cartSummary().discount > 0" class="flex items-center justify-between text-sm">
               <span class="inline-flex items-center gap-1 text-[#666666]">
-                <span class="material-symbols-outlined text-lg text-green-600">local_offer</span>
+                <svg lucideIcon="local_offer" class="lucide-icon text-lg text-green-600"></svg>
                 Descuentos
               </span>
               <span class="font-semibold text-green-600">-{{ formatCurrency(cartSummary().discount) }}</span>
@@ -213,7 +213,7 @@
 
             <div class="flex items-center justify-between text-sm py-3 border-y border-gray-100">
               <span class="inline-flex items-center gap-2 text-[#666666]">
-                <span class="material-symbols-outlined text-lg">local_shipping</span>
+                <svg lucideIcon="local_shipping" class="lucide-icon text-lg"></svg>
                 Envío
               </span>
               <span class="font-semibold" [ngClass]="cartSummary().shipping === 0 ? 'text-green-600' : 'text-[#202020]'">
@@ -228,7 +228,7 @@
           </div>
 
           <div *ngIf="cartSummary().shipping > 0" class="mt-5 bg-blue-50 rounded-lg px-4 py-3 text-sm text-blue-800 flex gap-2">
-            <span class="material-symbols-outlined text-lg">info</span>
+            <svg lucideIcon="info" class="lucide-icon text-lg"></svg>
             <span>Agrega {{ formatCurrency(freeShippingRemaining()) }} más para obtener envío gratis</span>
           </div>
 
@@ -238,7 +238,7 @@
             [disabled]="!canCheckout() || isProcessing()"
             class="primary-action-button w-full mt-6 bg-[#0367A6] border border-transparent rounded-lg shadow-sm py-3 px-4 text-base font-semibold text-white hover:bg-[#035A91] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0367A6] disabled:opacity-60 disabled:cursor-not-allowed transition-all">
             <span *ngIf="!isProcessing()" class="flex items-center justify-center gap-2">
-              <span class="material-symbols-outlined">shopping_cart_checkout</span>
+              <svg lucideIcon="shopping_cart_checkout" class="lucide-icon"></svg>
               Finalizar compra
             </span>
             <span *ngIf="isProcessing()" class="flex items-center justify-center gap-2">
@@ -262,7 +262,7 @@
     (click)="$event.stopPropagation()">
     <div class="flex flex-col sm:flex-row sm:items-start gap-5">
       <div class="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center shrink-0">
-        <span class="material-symbols-outlined text-red-600 text-3xl">delete_sweep</span>
+        <svg lucideIcon="delete_sweep" class="lucide-icon text-red-600 text-3xl"></svg>
       </div>
 
       <div class="min-w-0 flex-1">
@@ -286,7 +286,7 @@
             [disabled]="clearingCart()"
             class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-red-600 text-white font-bold hover:bg-red-700 disabled:opacity-70 disabled:cursor-wait shadow-lg shadow-red-600/20">
             <span *ngIf="clearingCart()" class="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin"></span>
-            <span *ngIf="!clearingCart()" class="material-symbols-outlined text-lg">delete</span>
+            <svg lucideIcon="delete" *ngIf="!clearingCart()" class="lucide-icon text-lg"></svg>
             {{ clearingCart() ? 'Vaciando...' : 'Vaciar carrito' }}
           </button>
         </div>

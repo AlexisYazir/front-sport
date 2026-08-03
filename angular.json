@@ -27,7 +27,6 @@
   ],
   "styles": [
     "src/custom-theme.scss",
-    "node_modules/primeicons/primeicons.css",
     "node_modules/maplibre-gl/dist/maplibre-gl.css",
     "src/styles.css"
   ]
@@ -37,8 +36,8 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "500kB",
-                  "maximumError": "1MB"
+                  "maximumWarning": "1.3MB",
+                  "maximumError": "1.5MB"
                 },
                 {
                   "type": "anyComponentStyle",

@@ -2,7 +2,7 @@
   <!-- Header -->
   <header class="space-y-2 text-center">
     <p class="inline-flex items-center gap-2 text-sm font-semibold text-[#0367A6] bg-[#0367A6]/10 px-3 py-1 rounded-full">
-      <span class="material-symbols-outlined text-base">help</span>
+      <svg lucideIcon="help" class="lucide-icon text-base"></svg>
       Preguntas Frecuentes
     </p>
     <h1 class="text-3xl sm:text-4xl font-bold text-[#202020]">¿Cómo podemos ayudarte?</h1>
@@ -15,7 +15,7 @@
   <div class="max-w-2xl mx-auto">
     <div class="relative">
       <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#666666]">
-        <span class="material-symbols-outlined text-xl">search</span>
+        <svg lucideIcon="search" class="lucide-icon text-xl"></svg>
       </span>
       <input type="text"
              (input)="onSearch($event)"
@@ -26,7 +26,7 @@
       <button *ngIf="searchTerm"
               (click)="clearSearch()"
               class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#0367A6] transition-colors">
-        <span class="material-symbols-outlined text-xl">close</span>
+        <svg lucideIcon="close" class="lucide-icon text-xl"></svg>
       </button>
     </div>
 
@@ -55,7 +55,7 @@
     <div class="relative">
       <div class="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-[#0367A6]"></div>
       <div class="absolute inset-0 flex items-center justify-center">
-        <span class="material-symbols-outlined text-[#0367A6] text-xl">help</span>
+        <svg lucideIcon="help" class="lucide-icon text-[#0367A6] text-xl"></svg>
       </div>
     </div>
     <p class="text-[#666666] mt-4">Cargando preguntas frecuentes...</p>
@@ -69,16 +69,14 @@
         <details class="group">
           <summary class="flex items-center justify-between gap-4 p-6 cursor-pointer list-none">
             <div class="flex items-start gap-3">
-              <span class="material-symbols-outlined text-[#0367A6] text-sm mt-1">help</span>
+              <svg lucideIcon="help" class="lucide-icon text-[#0367A6] text-sm mt-1"></svg>
               <h3 class="text-lg font-semibold text-[#202020]">{{ faq.pregunta }}</h3>
             </div>
-            <span class="material-symbols-outlined text-[#666666] group-open:rotate-180 transition-transform">
-              expand_more
-            </span>
+            <svg lucideIcon="expand_more" class="lucide-icon text-[#666666] group-open:rotate-180 transition-transform"></svg>
           </summary>
           <div class="px-6 pb-6 pt-2 border-t border-gray-100">
             <div class="flex items-start gap-3">
-              <span class="material-symbols-outlined text-[#0367A6] text-sm mt-1">description</span>
+              <svg lucideIcon="description" class="lucide-icon text-[#0367A6] text-sm mt-1"></svg>
               <div class="text-[#666666] text-sm leading-relaxed whitespace-pre-line">
                 {{ faq.respuesta }}
               </div>
@@ -87,7 +85,7 @@
               <span class="text-xs text-gray-400">¿Te fue útil?</span>
               <button (click)="marcarComoUtil(faq.id_faq)" 
                       class="px-3 py-1 bg-gray-100 text-gray-600 rounded-lg hover:bg-[#0367A6] hover:text-white transition-all text-xs flex items-center gap-1">
-                <span class="material-symbols-outlined text-sm">thumb_up</span>
+                <svg lucideIcon="thumb_up" class="lucide-icon text-sm"></svg>
                 {{ faq.contador_util || 0 }}
               </button>
             </div>
@@ -110,16 +108,14 @@
             <details class="group">
               <summary class="flex items-center justify-between gap-4 p-6 cursor-pointer list-none">
                 <div class="flex items-start gap-3">
-                  <span class="material-symbols-outlined text-[#0367A6] text-sm mt-1">help</span>
+                  <svg lucideIcon="help" class="lucide-icon text-[#0367A6] text-sm mt-1"></svg>
                   <h3 class="text-lg font-semibold text-[#202020]">{{ faq.pregunta }}</h3>
                 </div>
-                <span class="material-symbols-outlined text-[#666666] group-open:rotate-180 transition-transform">
-                  expand_more
-                </span>
+                <svg lucideIcon="expand_more" class="lucide-icon text-[#666666] group-open:rotate-180 transition-transform"></svg>
               </summary>
               <div class="px-6 pb-6 pt-2 border-t border-gray-100">
                 <div class="flex items-start gap-3">
-                  <span class="material-symbols-outlined text-[#0367A6] text-sm mt-1">description</span>
+                  <svg lucideIcon="description" class="lucide-icon text-[#0367A6] text-sm mt-1"></svg>
                   <div class="text-[#666666] text-sm leading-relaxed whitespace-pre-line">
                     {{ faq.respuesta }}
                   </div>
@@ -128,7 +124,7 @@
                   <span class="text-xs text-gray-400">¿Te fue útil?</span>
                   <button (click)="marcarComoUtil(faq.id_faq)" 
                           class="px-3 py-1 bg-gray-100 text-gray-600 rounded-lg hover:bg-[#0367A6] hover:text-white transition-all text-xs flex items-center gap-1">
-                    <span class="material-symbols-outlined text-sm">thumb_up</span>
+                    <svg lucideIcon="thumb_up" class="lucide-icon text-sm"></svg>
                     {{ faq.contador_util || 0 }}
                   </button>
                 </div>
@@ -142,7 +138,7 @@
     <!-- Mensaje cuando no hay resultados -->
     <div *ngIf="filteredFaqs.length === 0 && (searchTerm || selectedSeccion !== 'todas')" 
          class="text-center py-16 bg-white rounded-xl shadow-sm border border-gray-100">
-      <span class="material-symbols-outlined text-5xl text-gray-300">help_center</span>
+      <svg lucideIcon="help_center" class="lucide-icon text-5xl text-gray-300"></svg>
       <h3 class="text-xl font-semibold text-[#202020] mt-4">No encontramos resultados</h3>
       <p class="text-[#666666] mt-2 max-w-md mx-auto">
         Intenta con otros términos de búsqueda o explora nuestras categorías.

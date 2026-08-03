@@ -6,6 +6,8 @@ import { RouterModule } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { ProductService } from '../../../../../core/services/product.service';
 import { Product, CreateProductDto, Categorie, Marca, Attibute, RecientProduct, Sport } from '../../../../../core/models/product.model';
+import { IconModule } from '../../../../../shared/icons/icon.module';
+
 
 // Interfaz para variantes existentes - SIN STOCK
 interface ExistingVariant {
@@ -42,7 +44,7 @@ interface EditVariantData {
 @Component({
   selector: 'app-products',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [IconModule, CommonModule, FormsModule, RouterModule],
   templateUrl: './products.html',
   styleUrls: ['./products.css']
 })
@@ -1194,12 +1196,6 @@ export class Products implements OnInit {
     if (variant.precio < 10) return true;
     if (!variant.imagenes || variant.imagenes.length === 0) return true;
     return false;
-  }
-
-  getWarningIcon(variant: ExistingVariant): string {
-    if (variant.precio < 10) return 'pi pi-exclamation-triangle text-yellow-500';
-    if (!variant.imagenes || variant.imagenes.length === 0) return 'pi pi-image text-yellow-500';
-    return '';
   }
 
   getWarningTooltip(variant: ExistingVariant): string {

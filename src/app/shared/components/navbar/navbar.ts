@@ -9,6 +9,8 @@ import { Product } from '../../../core/models/product.model';
 import { UserRole } from '../../../core/models/user.model';
 import { DashboardPreferencesService } from '../../../core/services/dashboard-preferences.service';
 import { frontendLogger } from '../../../core/services/frontend-logger.service';
+import { IconModule } from '../../icons/icon.module';
+
 
 interface NavbarNotification {
   id: string;
@@ -23,7 +25,7 @@ interface NavbarNotification {
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
+  imports: [IconModule, CommonModule, RouterModule, FormsModule],
   templateUrl: './navbar.html',
   styleUrl: './navbar.css',
 })
@@ -211,7 +213,6 @@ export class Navbar {
         { icon: 'domain', label: 'Perfil empresa', route: '/dashboard/admin/empresa' },
         { icon: 'analytics', label: 'Reportes', route: '/dashboard/admin/reports' },
         { icon: 'monitoring', label: 'Demanda mensual', route: '/dashboard/admin/predictions' },
-        { icon: 'groups', label: 'Segmentación clientes', route: '/dashboard/admin/customer-segments' },
         { icon: 'settings', label: 'Configuración', route: '/dashboard/admin/settings' },
       ];
     }

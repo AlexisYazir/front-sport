@@ -86,7 +86,7 @@
               class="absolute right-4 top-4 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-white/95 text-[#0367A6] shadow-md transition-all duration-200 hover:bg-[#0367A6] hover:text-white"
               title="Compartir producto"
               aria-label="Compartir producto">
-              <span class="material-symbols-outlined text-[1.35rem]">share</span>
+              <svg lucideIcon="share" class="lucide-icon text-[1.35rem]"></svg>
             </button>
             <div class="aspect-square relative">
               <img 
@@ -100,12 +100,12 @@
                 <button 
                   (click)="prevImage()" 
                   class="w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full shadow-lg flex items-center justify-center hover:bg-white transition-all duration-200 border border-gray-200">
-                  <span class="material-symbols-outlined text-gray-800">chevron_left</span>
+                  <svg lucideIcon="chevron_left" class="lucide-icon text-gray-800"></svg>
                 </button>
                 <button 
                   (click)="nextImage()" 
                   class="w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full shadow-lg flex items-center justify-center hover:bg-white transition-all duration-200 border border-gray-200">
-                  <span class="material-symbols-outlined text-gray-800">chevron_right</span>
+                  <svg lucideIcon="chevron_right" class="lucide-icon text-gray-800"></svg>
                 </button>
               </div>
             </div>
@@ -128,7 +128,7 @@
               class="absolute right-3 top-3 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/95 text-[#0367A6] shadow-md transition-all duration-200 hover:bg-[#0367A6] hover:text-white"
               title="Compartir producto"
               aria-label="Compartir producto">
-              <span class="material-symbols-outlined text-[1.25rem]">share</span>
+              <svg lucideIcon="share" class="lucide-icon text-[1.25rem]"></svg>
             </button>
             <div class="aspect-square relative">
               <img 
@@ -168,12 +168,10 @@
         <!-- Rating -->
         <div class="flex items-center gap-2 mb-4">
           <div class="flex items-center">
-            <span
+            <svg lucideIcon="star"
               *ngFor="let star of reviewStars"
-              class="material-symbols-outlined text-sm"
-              [ngClass]="isStarFilled(star) ? 'text-yellow-400' : 'text-gray-300'">
-              star
-            </span>
+              class="lucide-icon text-sm"
+              [ngClass]="isStarFilled(star) ? 'text-yellow-400' : 'text-gray-300'"></svg>
           </div>
           <a href="#reviews" class="text-sm text-gray-500 hover:text-[#0367A6] transition-colors">
             <ng-container *ngIf="reviewSummary().total > 0; else noReviews">
@@ -238,11 +236,9 @@
               [class]="getColorClass(color)"
               [style]="getColorStyle(color)"
               [class.border-[#0367A6]]="selectedColor() === color"
-              [class.opacity-30]="!existsColorForSize(color)"> <span *ngIf="selectedColor() === color" 
-                    class="material-symbols-outlined text-sm"
-                    [ngClass]="color === 'Blanco' ? 'text-gray-900' : 'text-white'">
-                check
-              </span>
+              [class.opacity-30]="!existsColorForSize(color)"> <svg lucideIcon="check" *ngIf="selectedColor() === color" 
+                    class="lucide-icon text-sm"
+                    [ngClass]="color === 'Blanco' ? 'text-gray-900' : 'text-white'"></svg>
             </div>
           </button>
           </div>
@@ -284,7 +280,7 @@
               (click)="decreaseQuantity()"
               [disabled]="selectedQuantity() <= 1 || !isProductAvailable()"
               class="w-10 h-10 rounded-full border border-gray-200 bg-white text-gray-600 hover:border-[#0367A6] hover:text-[#0367A6] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center">
-              <span class="material-symbols-outlined text-xl">remove</span>
+              <svg lucideIcon="remove" class="lucide-icon text-xl"></svg>
             </button>
             
             <span class="w-12 text-center text-lg font-medium text-gray-900">
@@ -295,7 +291,7 @@
               (click)="increaseQuantity()"
               [disabled]="!isProductAvailable() || selectedQuantity() >= currentStock()"
               class="w-10 h-10 rounded-full border border-gray-200 bg-white text-gray-600 hover:border-[#0367A6] hover:text-[#0367A6] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center">
-              <span class="material-symbols-outlined text-xl">add</span>
+              <svg lucideIcon="add" class="lucide-icon text-xl"></svg>
             </button>
             
             <span *ngIf="isProductAvailable() && currentStock() > 0" class="text-xs text-gray-500">
@@ -328,7 +324,7 @@
             [ngClass]="{ 'add-cart-loading': isAddingToCart(), 'add-cart-success': showCartPreview() }">
             <span class="flex items-center justify-center gap-2">
               <span *ngIf="isAddingToCart()" class="w-5 h-5 rounded-full border-2 border-white border-t-transparent animate-spin"></span>
-              <span *ngIf="!isAddingToCart()" class="material-symbols-outlined">shopping_bag</span>
+              <svg lucideIcon="shopping_bag" *ngIf="!isAddingToCart()" class="lucide-icon"></svg>
               <span>
                 {{
                   !isProductAvailable()
@@ -377,14 +373,14 @@
               class="recommendation-scroll-button"
               aria-label="Ver recomendaciones anteriores"
               (click)="scrollRecommendations('left')">
-              <span class="material-symbols-outlined">chevron_left</span>
+              <svg lucideIcon="chevron_left" class="lucide-icon"></svg>
             </button>
             <button
               type="button"
               class="recommendation-scroll-button"
               aria-label="Ver más recomendaciones"
               (click)="scrollRecommendations('right')">
-              <span class="material-symbols-outlined">chevron_right</span>
+              <svg lucideIcon="chevron_right" class="lucide-icon"></svg>
             </button>
           </div>
         </div>
@@ -417,7 +413,7 @@
                 class="recommendation-share-button"
                 title="Compartir producto"
                 aria-label="Compartir producto">
-                <span class="material-symbols-outlined">share</span>
+                <svg lucideIcon="share" class="lucide-icon"></svg>
               </button>
 
               <div class="recommendation-product-image">
@@ -435,7 +431,7 @@
                 <h3 [title]="recommendation.name">{{ recommendation.name }}</h3>
                 <div class="recommendation-product-footer">
                   <strong>{{ recommendation.price | currency:'MXN':'symbol-narrow':'1.0-0' }}</strong>
-                  <span><i></i>Disp</span>
+                  <span><span class="availability-dot" aria-hidden="true"></span>Disp</span>
                 </div>
               </div>
             </div>
@@ -456,12 +452,10 @@
             <span class="text-sm text-gray-500 mb-2">/ 5</span>
           </div>
           <div class="flex items-center gap-1 mb-2">
-            <span
+            <svg lucideIcon="star"
               *ngFor="let star of reviewStars"
-              class="material-symbols-outlined"
-              [ngClass]="isStarFilled(star) ? 'text-yellow-400' : 'text-gray-300'">
-              star
-            </span>
+              class="lucide-icon"
+              [ngClass]="isStarFilled(star) ? 'text-yellow-400' : 'text-gray-300'"></svg>
           </div>
           <p class="text-sm text-gray-500">{{ getReviewCountLabel() }}</p>
         </aside>
@@ -477,9 +471,7 @@
                 type="button"
                 (click)="toggleReviewForm()"
                 class="inline-flex items-center justify-center gap-2 rounded-xl bg-[#0367A6] px-5 py-3 text-sm font-semibold text-white hover:bg-[#035A91]">
-                <span class="material-symbols-outlined text-base">
-                  {{ reviewFormOpen() ? 'close' : 'rate_review' }}
-                </span>
+                <svg [lucideIcon]="reviewFormOpen() ? 'close' : 'rate_review'" class="lucide-icon text-base"></svg>
                 <span>{{ reviewFormOpen() ? 'Cerrar' : 'Escribir una reseña' }}</span>
               </button>
             </div>
@@ -503,7 +495,7 @@
                           (mouseleave)="clearHoveredRating()"
                           class="w-12 h-11 border-r border-gray-300 flex items-center justify-center transition-colors last:border-r-0"
                           [ngClass]="star <= getActiveReviewRating() ? 'bg-[#72A900] text-white border-[#4E7B00]' : 'bg-gray-300 text-white hover:bg-[#8BC500]'">
-                          <span class="material-symbols-outlined text-3xl">star</span>
+                          <svg lucideIcon="star" class="lucide-icon text-3xl"></svg>
                         </button>
                       </div>
                       <span
@@ -538,9 +530,7 @@
                       (click)="submitReview()"
                       [disabled]="isSubmittingReview() || !canSubmitReview()"
                       class="inline-flex items-center gap-2 rounded-xl bg-[#0367A6] px-5 py-3 text-sm font-semibold text-white hover:bg-[#035A91] disabled:opacity-50 disabled:cursor-not-allowed">
-                      <span class="material-symbols-outlined text-base">
-                        {{ isSubmittingReview() ? 'progress_activity' : 'rate_review' }}
-                      </span>
+                      <svg [lucideIcon]="isSubmittingReview() ? 'progress_activity' : 'rate_review'" class="lucide-icon text-base"></svg>
                       <span>{{ isSubmittingReview() ? 'Publicando...' : 'Publicar reseña' }}</span>
                     </button>
                   </div>
@@ -562,7 +552,7 @@
           </div>
 
           <div *ngIf="!isReviewsLoading() && reviews().length === 0" class="rounded-2xl border border-dashed border-gray-300 p-8 text-center">
-            <span class="material-symbols-outlined text-4xl text-gray-300 mb-2">reviews</span>
+            <svg lucideIcon="reviews" class="lucide-icon text-4xl text-gray-300 mb-2"></svg>
             <p class="text-sm text-gray-500">Aún no hay reseñas para este producto.</p>
           </div>
 
@@ -571,12 +561,10 @@
             class="rounded-2xl border border-gray-200 bg-white p-5">
             <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-3">
               <div class="flex items-center gap-1">
-                <span
+                <svg lucideIcon="star"
                   *ngFor="let star of reviewStars"
-                  class="material-symbols-outlined text-sm"
-                  [ngClass]="isStarFilled(star, review.calificacion) ? 'text-yellow-400' : 'text-gray-300'">
-                  star
-                </span>
+                  class="lucide-icon text-sm"
+                  [ngClass]="isStarFilled(star, review.calificacion) ? 'text-yellow-400' : 'text-gray-300'"></svg>
               </div>
               <p class="text-xs text-gray-500">{{ getRelativeReviewDate(review.fecha) }}</p>
             </div>
@@ -598,7 +586,7 @@
     <div class="px-5 py-4 bg-[#0367A6] text-white flex items-center justify-between gap-4">
       <div class="flex items-center gap-3 min-w-0">
         <div class="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center">
-          <span class="material-symbols-outlined">check_circle</span>
+          <svg lucideIcon="check_circle" class="lucide-icon"></svg>
         </div>
         <div class="min-w-0">
           <h3 class="text-lg font-bold truncate">Producto agregado al carrito</h3>
@@ -609,7 +597,7 @@
         type="button"
         (click)="closeCartPreview()"
         class="w-10 h-10 rounded-xl hover:bg-white/15 flex items-center justify-center">
-        <span class="material-symbols-outlined">close</span>
+        <svg lucideIcon="close" class="lucide-icon"></svg>
       </button>
     </div>
 
@@ -685,7 +673,7 @@
             type="button"
             (click)="goToCart()"
             class="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[#0367A6] px-4 py-3 text-sm font-bold text-white hover:bg-[#035A91] whitespace-nowrap">
-            <span class="material-symbols-outlined text-lg">shopping_cart</span>
+            <svg lucideIcon="shopping_cart" class="lucide-icon text-lg"></svg>
             Ir al carrito
           </button>
           <button

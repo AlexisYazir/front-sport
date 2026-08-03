@@ -2,13 +2,15 @@ import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
+import { IconModule } from '../../../shared/icons/icon.module';
+
 
 type VerificationStatus = 'loading' | 'success' | 'error' | 'invalid-token';
 
 @Component({
   selector: 'app-email-verification',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [IconModule, CommonModule, RouterModule],
   templateUrl: './email-verification.html',
   styleUrl: './email-verification.css'
 })

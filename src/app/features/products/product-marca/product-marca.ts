@@ -7,11 +7,13 @@ import { ProductService } from '../../../core/services/product.service';
 import { Product, ProductFilters } from '../../../core/models/product.model';
 import { ToastrService } from 'ngx-toastr';
 import { Breadcrumbs, BreadcrumbItem } from '../../../shared/components/breadcrumbs/breadcrumbs';
+import { IconModule } from '../../../shared/icons/icon.module';
+
 
 @Component({
   selector: 'app-product-marca',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, NgxPaginationModule, Breadcrumbs],
+  imports: [IconModule, CommonModule, RouterModule, FormsModule, NgxPaginationModule, Breadcrumbs],
   templateUrl: './product-marca.html',
   styleUrl: './product-marca.css',
 })

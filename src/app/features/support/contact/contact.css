@@ -94,7 +94,7 @@ section {
   align-items: center;
 }
 
-.list .material-symbols-outlined {
+.list .lucide-icon {
   color: var(--spurt-primary);
   background: rgba(3, 103, 166, 0.08);
   border-radius: 0.6rem;

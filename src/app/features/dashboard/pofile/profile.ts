@@ -5,6 +5,8 @@ import { AuthService } from '../../../core/services/auth.service';
 import { User, UserRole, getRoleName } from '../../../core/models/user.model';
 import { ToastrService } from 'ngx-toastr';
 import { UpdateProfileData } from '../../../core/models/user.model';
+import { IconModule } from '../../../shared/icons/icon.module';
+
 import { 
   validateEmail,
   validateName,
@@ -14,7 +16,7 @@ import {
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule], // Quitamos PasswordStrengthComponent
+  imports: [IconModule, CommonModule, FormsModule], // Quitamos PasswordStrengthComponent
   templateUrl: './profile.html',
   styleUrls: ['./profile.css']
 })

@@ -4,11 +4,13 @@ import { ToastrService } from 'ngx-toastr';
 import { AlexaVerificationCodeResponse } from '../../../../../core/models/user.model';
 import { AuthService } from '../../../../../core/services/auth.service';
 import { formatMexicoDateTime } from '../../../../../core/utils/date-time.util';
+import { IconModule } from '../../../../../shared/icons/icon.module';
+
 
 @Component({
   selector: 'app-alexa-codes',
   standalone: true,
-  imports: [CommonModule],
+  imports: [IconModule, CommonModule],
   templateUrl: './alexa-codes.html',
   styleUrl: './alexa-codes.css',
 })

@@ -29,9 +29,7 @@
     matTooltipClass="admin-tooltip"
     matTooltipPosition="right">
 
-    <span class="material-symbols-outlined text-xl">
-      {{ sidebarOpen() ? 'chevron_left' : 'chevron_right' }}
-    </span>
+    <svg [lucideIcon]="sidebarOpen() ? 'chevron_left' : 'chevron_right'" class="lucide-icon text-xl"></svg>
 
   </button>
 
@@ -47,7 +45,7 @@
     routerLinkActive="sidebar-link-active"
     [routerLinkActiveOptions]="{exact: item.route === '/dashboard/admin'}"
 
-    class="group flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer
+    class="dashboard-sidebar-link group flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer
            transition-all duration-200 text-sm"
 
     [class.text-[#0367A6]]="isActive(item.route)"
@@ -58,15 +56,15 @@
     [matTooltip]="item.label"
     matTooltipClass="admin-tooltip"
     [matTooltipDisabled]="sidebarOpen()"
-    matTooltipPosition="right">
+    matTooltipPosition="right"
+    [attr.aria-label]="item.label">
 
     <!-- ICONO -->
-    <span
-      class="material-symbols-outlined text-xl transition-colors duration-200"
+    <svg [lucideIcon]="item.icon"
+      class="dashboard-sidebar-icon lucide-icon transition-colors duration-200"
+      [class.dashboard-sidebar-icon--settings]="item.icon === 'settings'"
       [class.text-[#0367A6]]="isActive(item.route)"
-      [class.group-hover:text-[#0367A6]]="!isActive(item.route)">
-      {{ item.icon }}
-    </span>
+      [class.group-hover:text-[#0367A6]]="!isActive(item.route)"></svg>
 
     <!-- TEXTO -->
     <span *ngIf="sidebarOpen()" class="font-medium whitespace-nowrap">
@@ -94,13 +92,14 @@
       
       <!-- Ruta principal del dashboard -->
       <ng-container *ngIf="router.url === '/dashboard/admin' || router.url === '/dashboard/admin/'">
+        <section class="admin-dashboard-surface">
         
         <!-- Header simple -->
         <div class="mb-6">
           <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
             <div class="flex items-center gap-3">
               <div class="bg-[#0367A6]/10 p-2 rounded-lg">
-                <span class="material-symbols-outlined text-[#0367A6] text-2xl">dashboard</span>
+                <svg lucideIcon="dashboard" class="lucide-icon text-[#0367A6] text-2xl"></svg>
               </div>
               <div>
                 <h1 class="text-xl font-bold text-[#202020]">Dashboard admin</h1>
@@ -126,7 +125,7 @@
                 </div>
               </div>
               <div class="bg-[#0367A6]/10 p-2 rounded-lg">
-                <span class="material-symbols-outlined text-[#0367A6] text-2xl">group</span>
+                <svg lucideIcon="group" class="lucide-icon text-[#0367A6] text-2xl"></svg>
               </div>
             </div>
           </div>
@@ -144,7 +143,7 @@
                 </div>
               </div>
               <div class="bg-green-100 p-2 rounded-lg">
-                <span class="material-symbols-outlined text-green-600 text-2xl">inventory_2</span>
+                <svg lucideIcon="inventory_2" class="lucide-icon text-green-600 text-2xl"></svg>
               </div>
             </div>
           </div>
@@ -162,7 +161,7 @@
                 </div>
               </div>
               <div class="bg-yellow-100 p-2 rounded-lg">
-                <span class="material-symbols-outlined text-yellow-600 text-2xl">warning</span>
+                <svg lucideIcon="warning" class="lucide-icon text-yellow-600 text-2xl"></svg>
               </div>
             </div>
           </div>
@@ -180,7 +179,7 @@
                 </div>
               </div>
               <div class="bg-purple-100 p-2 rounded-lg">
-                <span class="material-symbols-outlined text-purple-600 text-2xl">category</span>
+                <svg lucideIcon="category" class="lucide-icon text-purple-600 text-2xl"></svg>
               </div>
             </div>
           </div>
@@ -189,7 +188,7 @@
         <!-- ACCESOS RÁPIDOS - BOTONES MÁS BONITOS -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
           <div class="flex items-center gap-2 mb-3">
-            <span class="material-symbols-outlined text-[#0367A6]">bolt</span>
+            <svg lucideIcon="bolt" class="lucide-icon text-[#0367A6]"></svg>
             <h2 class="text-lg font-semibold text-[#202020]">Accesos Rápidos</h2>
           </div>
           
@@ -197,42 +196,42 @@
             <a routerLink="/dashboard/admin/products" 
                class="quick-access-card quick-access-card--blue">
               <div class="quick-access-icon">
-                <span class="material-symbols-outlined text-white text-xl">add_box</span>
+                <svg lucideIcon="add_box" class="lucide-icon text-white text-xl"></svg>
               </div>
               <span class="text-xs font-medium text-[#202020]">Nuevo Producto</span>
             </a>
 
             <a routerLink="/dashboard/admin/inventory" class="quick-access-card quick-access-card--green">
               <div class="quick-access-icon">
-                <span class="material-symbols-outlined text-white text-xl">inventory</span>
+                <svg lucideIcon="inventory" class="lucide-icon text-white text-xl"></svg>
               </div>
               <span class="text-xs font-medium text-[#202020]">Inventario</span>
             </a>
 
             <a routerLink="/dashboard/admin/db" class="quick-access-card quick-access-card--purple">
               <div class="quick-access-icon">
-                <span class="material-symbols-outlined text-white text-xl">storage</span>
+                <svg lucideIcon="storage" class="lucide-icon text-white text-xl"></svg>
               </div>
               <span class="text-xs font-medium text-[#202020]">DB Admin</span>
             </a>
 
             <a routerLink="/dashboard/admin/promotions" class="quick-access-card quick-access-card--orange">
               <div class="quick-access-icon">
-                <span class="material-symbols-outlined text-white text-xl">local_offer</span>
+                <svg lucideIcon="local_offer" class="lucide-icon text-white text-xl"></svg>
               </div>
               <span class="text-xs font-medium text-[#202020]">Promos y envíos</span>
             </a>
 
             <a routerLink="/dashboard/admin/reports" class="quick-access-card quick-access-card--cyan">
               <div class="quick-access-icon">
-                <span class="material-symbols-outlined text-white text-xl">query_stats</span>
+                <svg lucideIcon="query_stats" class="lucide-icon text-white text-xl"></svg>
               </div>
               <span class="text-xs font-medium text-[#202020]">Reportes</span>
             </a>
 
             <a routerLink="/dashboard/admin/banner" class="quick-access-card quick-access-card--rose">
               <div class="quick-access-icon">
-                <span class="material-symbols-outlined text-white text-xl">wallpaper</span>
+                <svg lucideIcon="wallpaper" class="lucide-icon text-white text-xl"></svg>
               </div>
               <span class="text-xs font-medium text-[#202020]">Banner inicio</span>
             </a>
@@ -243,14 +242,14 @@
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
           <div class="flex items-center justify-between mb-3">
             <div class="flex items-center gap-2">
-              <span class="material-symbols-outlined text-[#0367A6]">group_add</span>
+              <svg lucideIcon="group_add" class="lucide-icon text-[#0367A6]"></svg>
               <h2 class="text-lg font-semibold text-[#202020]">Últimos Usuarios Registrados</h2>
             </div>
             <!-- DESPUÉS (versión con diseño de botón) -->
 <a routerLink="/dashboard/admin/users" 
    class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#0367A6]/10 text-[#0367A6] rounded-lg hover:bg-[#0367A6] hover:text-white transition-all duration-200 text-sm font-medium group">
   <span>Ver todos</span>
-  <span class="material-symbols-outlined text-base group-hover:translate-x-0.5 transition-transform">arrow_forward</span>
+  <svg lucideIcon="arrow_forward" class="lucide-icon text-base group-hover:translate-x-0.5 transition-transform"></svg>
 </a>
           </div>
           
@@ -271,7 +270,7 @@
                   <td class="py-2 px-3">
                     <div class="flex items-center gap-2">
                       <div class="bg-[#0367A6]/10 p-1 rounded-lg">
-                        <span class="material-symbols-outlined text-[#0367A6] text-sm">person</span>
+                        <svg lucideIcon="person" class="lucide-icon text-[#0367A6] text-sm"></svg>
                       </div>
                       <span class="text-sm font-medium text-[#202020]">{{ user.nombre }}</span>
                     </div>
@@ -289,7 +288,7 @@
                   </td>
                   <td class="py-2 px-3">
                     <div class="flex items-center gap-1 text-sm text-[#666666]">
-                      <span class="material-symbols-outlined text-xs">calendar_today</span>
+                      <svg lucideIcon="calendar_today" class="lucide-icon text-xs"></svg>
                       {{ formatDate(user.fecha_creacion) }}
                     </div>
                   </td>
@@ -299,7 +298,7 @@
                 <tr *ngIf="recentUsers.length === 0">
                   <td colspan="5" class="text-center py-8">
                     <div class="flex flex-col items-center gap-2">
-                      <span class="material-symbols-outlined text-3xl text-gray-300">group_off</span>
+                      <svg lucideIcon="group_off" class="lucide-icon text-3xl text-gray-300"></svg>
                       <p class="text-[#666666] text-sm">No hay usuarios registrados recientemente</p>
                     </div>
                   </td>
@@ -308,6 +307,8 @@
             </table>
           </div>
         </div>
+
+        </section>
 
       </ng-container>
 

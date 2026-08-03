@@ -229,7 +229,7 @@ button:active:not(:disabled) {
   color: #fff;
 }
 
-.recommendation-scroll-button .material-symbols-outlined {
+.recommendation-scroll-button .lucide-icon {
   font-size: 22px;
 }
 
@@ -299,7 +299,7 @@ button:active:not(:disabled) {
   color: #fff;
 }
 
-.recommendation-share-button .material-symbols-outlined {
+.recommendation-share-button .lucide-icon {
   font-size: 18px;
 }
 
@@ -380,7 +380,7 @@ button:active:not(:disabled) {
   font-weight: 700;
 }
 
-.recommendation-product-footer i {
+.recommendation-product-footer .availability-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;

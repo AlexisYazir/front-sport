@@ -26,9 +26,7 @@
           [matTooltip]="sidebarOpen() ? 'Contraer menú' : 'Expandir menú'"
           matTooltipClass="admin-tooltip"
           matTooltipPosition="right">
-          <span class="material-symbols-outlined text-xl">
-            {{ sidebarOpen() ? 'chevron_left' : 'chevron_right' }}
-          </span>
+          <svg [lucideIcon]="sidebarOpen() ? 'chevron_left' : 'chevron_right'" class="lucide-icon text-xl"></svg>
         </button>
       </div>
 
@@ -39,7 +37,7 @@
               <a
                 [routerLink]="item.route"
                 routerLinkActive="sidebar-link-active"
-                class="group flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200 text-sm"
+                class="dashboard-sidebar-link group flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200 text-sm"
                 [class.text-[#0367A6]]="isActive(item.route)"
                 [class.text-[#666666]]="!isActive(item.route)"
                 [class.hover:bg-[#0367A6]/10]="!isActive(item.route)"
@@ -49,12 +47,11 @@
                 [matTooltipDisabled]="sidebarOpen()"
                 matTooltipPosition="right">
 
-                <span
-                  class="material-symbols-outlined text-xl transition-colors duration-200"
+                <svg [lucideIcon]="item.icon"
+                  class="dashboard-sidebar-icon lucide-icon transition-colors duration-200"
+                  [class.dashboard-sidebar-icon--settings]="item.icon === 'settings'"
                   [class.text-[#0367A6]]="isActive(item.route)"
-                  [class.group-hover:text-[#0367A6]]="!isActive(item.route)">
-                  {{ item.icon }}
-                </span>
+                  [class.group-hover:text-[#0367A6]]="!isActive(item.route)"></svg>
 
                 <span *ngIf="sidebarOpen()" class="font-medium whitespace-nowrap">
                   {{ item.label }}

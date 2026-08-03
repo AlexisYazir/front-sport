@@ -10,11 +10,13 @@ import { formatMexicoDate } from '../../../core/utils/date-time.util';
 import { DashboardPreferencesService } from '../../../core/services/dashboard-preferences.service';
 import { DashboardNavigationLoadingService } from '../../../core/services/dashboard-navigation-loading.service';
 import { DashboardRouteSkeleton } from '../shared/dashboard-route-skeleton/dashboard-route-skeleton';
+import { IconModule } from '../../../shared/icons/icon.module';
+
 
 @Component({
   selector: 'app-dashboard-admin',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, MatTooltipModule, DashboardRouteSkeleton],
+  imports: [IconModule, CommonModule, RouterModule, FormsModule, MatTooltipModule, DashboardRouteSkeleton],
   templateUrl: './dashboard-admin.html',
   styleUrl: './dashboard-admin.css'
 })
@@ -66,9 +68,7 @@ export class DashboardAdmin implements OnInit {
     { icon: 'local_offer', label: 'Promos & Envíos', route: '/dashboard/admin/promotions' },
     { icon: 'wallpaper', label: 'Banner inicio', route: '/dashboard/admin/banner' },
     { icon: 'domain', label: 'Perfil Empresa', route: '/dashboard/admin/empresa' },
-    { icon: 'analytics', label: 'Reportes', route: '/dashboard/admin/reports' },
     { icon: 'monitoring', label: 'Demanda mensual', route: '/dashboard/admin/predictions' },
-    { icon: 'groups', label: 'Segmentación', route: '/dashboard/admin/customer-segments' },
     // { icon: 'person', label: 'Perfil', route: '/dashboard/admin/profile' },
     { icon: 'settings', label: 'Configuración', route: '/dashboard/admin/settings' },
   ];

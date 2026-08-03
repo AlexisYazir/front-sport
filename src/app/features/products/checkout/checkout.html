@@ -4,7 +4,7 @@
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div class="flex items-center gap-3">
           <div class="w-12 h-12 rounded-lg bg-[#0367A6]/10 flex items-center justify-center">
-            <span class="material-symbols-outlined text-[#0367A6] text-2xl">shopping_cart_checkout</span>
+            <svg lucideIcon="shopping_cart_checkout" class="lucide-icon text-[#0367A6] text-2xl"></svg>
           </div>
           <div>
             <h1 class="text-2xl sm:text-3xl font-bold text-[#202020]">Finalizar compra</h1>
@@ -15,7 +15,7 @@
         <a
           routerLink="/cart"
           class="inline-flex items-center justify-center gap-2 px-5 py-3 text-sm font-semibold text-[#0367A6] bg-white border border-[#0367A6] rounded-lg hover:bg-[#0367A6]/10 transition-all">
-          <span class="material-symbols-outlined text-lg">arrow_back</span>
+          <svg lucideIcon="arrow_back" class="lucide-icon text-lg"></svg>
           Volver al carrito
         </a>
       </div>
@@ -61,11 +61,11 @@
     </div>
 
     <div *ngIf="!isLoading() && isEmpty()" class="bg-white rounded-xl border border-gray-100 shadow-sm p-10 text-center">
-      <span class="material-symbols-outlined text-5xl text-gray-300">remove_shopping_cart</span>
+      <svg lucideIcon="remove_shopping_cart" class="lucide-icon text-5xl text-gray-300"></svg>
       <h2 class="text-xl font-bold text-[#202020] mt-3">Tu carrito está vacío</h2>
       <p class="text-[#666666] mt-2">Agrega productos para continuar con tu compra.</p>
       <a routerLink="/products" class="inline-flex items-center gap-2 px-5 py-3 mt-6 bg-[#0367A6] text-white rounded-lg font-semibold hover:bg-[#035A91]">
-        <span class="material-symbols-outlined">storefront</span>
+        <svg lucideIcon="storefront" class="lucide-icon"></svg>
         Ver productos
       </a>
     </div>
@@ -75,7 +75,7 @@
         <section class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
           <div class="flex items-center justify-between gap-4 mb-5">
             <h2 class="text-xl font-bold text-[#202020] flex items-center gap-2">
-              <span class="material-symbols-outlined text-[#0367A6]">location_on</span>
+              <svg lucideIcon="location_on" class="lucide-icon text-[#0367A6]"></svg>
               Dirección de envío
             </h2>
             <div class="flex flex-wrap items-center justify-end gap-2">
@@ -84,7 +84,7 @@
                 (click)="useCurrentLocation()"
                 [disabled]="isLocating()"
                 class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-[#0367A6] bg-[#0367A6]/5 border border-[#0367A6]/20 rounded-lg hover:bg-[#0367A6]/10 disabled:opacity-60 disabled:cursor-not-allowed transition-all">
-                <span *ngIf="!isLocating()" class="material-symbols-outlined text-lg">my_location</span>
+                <svg lucideIcon="my_location" *ngIf="!isLocating()" class="lucide-icon text-lg"></svg>
                 <span *ngIf="isLocating()" class="block w-4 h-4 rounded-full border-2 border-[#0367A6] border-t-transparent animate-spin"></span>
                 Usar ubicación
               </button>
@@ -113,11 +113,9 @@
                   <p class="text-sm text-[#666666] mt-1">{{ getAddressLabel(address) }}</p>
                   <p class="text-xs text-gray-500 mt-1">{{ address.estado }}, {{ address.codigo_postal }}</p>
                 </div>
-                <span
-                  class="material-symbols-outlined text-xl"
-                  [ngClass]="addressMode() === 'existing' && selectedAddressId() === address.id_direccion ? 'text-[#0367A6]' : 'text-gray-300'">
-                  check_circle
-                </span>
+                <svg lucideIcon="check_circle"
+                  class="lucide-icon text-xl"
+                  [ngClass]="addressMode() === 'existing' && selectedAddressId() === address.id_direccion ? 'text-[#0367A6]' : 'text-gray-300'"></svg>
               </div>
             </button>
           </div>
@@ -141,7 +139,7 @@
                   (click)="lookupPostalCode()"
                   [disabled]="isLookingUpPostalCode()"
                   class="px-3 py-2.5 rounded-lg border border-[#0367A6] text-[#0367A6] hover:bg-[#0367A6]/10 disabled:opacity-60">
-                  <span *ngIf="!isLookingUpPostalCode()" class="material-symbols-outlined text-xl">search</span>
+                  <svg lucideIcon="search" *ngIf="!isLookingUpPostalCode()" class="lucide-icon text-xl"></svg>
                   <span *ngIf="isLookingUpPostalCode()" class="block w-5 h-5 rounded-full border-2 border-[#0367A6] border-t-transparent animate-spin"></span>
                 </button>
               </div>
@@ -186,7 +184,7 @@
 
         <section class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
           <h2 class="text-xl font-bold text-[#202020] flex items-center gap-2 mb-5">
-            <span class="material-symbols-outlined text-[#0367A6]">local_shipping</span>
+            <svg lucideIcon="local_shipping" class="lucide-icon text-[#0367A6]"></svg>
             Envío
           </h2>
 
@@ -218,7 +216,7 @@
 
         <section class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
           <h2 class="text-xl font-bold text-[#202020] flex items-center gap-2 mb-5">
-            <span class="material-symbols-outlined text-[#0367A6]">payments</span>
+            <svg lucideIcon="payments" class="lucide-icon text-[#0367A6]"></svg>
             Pago
           </h2>
 
@@ -226,7 +224,7 @@
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div class="flex items-start gap-3">
                 <div class="w-11 h-11 rounded-lg bg-[#0367A6] text-white flex items-center justify-center shrink-0">
-                  <span class="material-symbols-outlined">verified_user</span>
+                  <svg lucideIcon="verified_user" class="lucide-icon"></svg>
                 </div>
                 <div>
                   <p class="font-bold text-[#202020]">Mercado Pago</p>
@@ -239,7 +237,7 @@
                 </div>
               </div>
               <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-semibold">
-                <span class="material-symbols-outlined text-base">lock</span>
+                <svg lucideIcon="lock" class="lucide-icon text-base"></svg>
                 Pago seguro
               </span>
             </div>
@@ -322,7 +320,7 @@
           </div>
 
           <div *ngIf="(totals()?.freeShippingRemaining || 0) > 0" class="mt-5 bg-blue-50 rounded-lg px-4 py-3 text-sm text-blue-800 flex gap-2">
-            <span class="material-symbols-outlined text-lg">info</span>
+            <svg lucideIcon="info" class="lucide-icon text-lg"></svg>
             <span>Agrega {{ formatCurrency(totals()?.freeShippingRemaining) }} más para obtener envío gratis</span>
           </div>
 
@@ -332,7 +330,7 @@
             [disabled]="isSubmitting() || isApplyingCoupon()"
             class="w-full mt-6 bg-[#0367A6] border border-transparent rounded-lg shadow-sm py-3 px-4 text-base font-semibold text-white hover:bg-[#035A91] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0367A6] disabled:opacity-60 disabled:cursor-not-allowed">
             <span *ngIf="!isSubmitting()" class="flex items-center justify-center gap-2">
-              <span class="material-symbols-outlined">check_circle</span>
+              <svg lucideIcon="check_circle" class="lucide-icon"></svg>
               Pagar con Mercado Pago
             </span>
             <span *ngIf="isSubmitting()" class="flex items-center justify-center gap-2">

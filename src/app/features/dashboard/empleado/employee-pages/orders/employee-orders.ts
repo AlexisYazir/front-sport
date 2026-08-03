@@ -10,13 +10,15 @@ import {
 } from '../../../../../core/models/product.model';
 import { ProductService } from '../../../../../core/services/product.service';
 import { formatMexicoDateTime } from '../../../../../core/utils/date-time.util';
+import { IconModule } from '../../../../../shared/icons/icon.module';
+
 
 type StatusFilter = EmployeeOrderStatus | 'all';
 
 @Component({
   selector: 'app-employee-orders',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [IconModule, CommonModule, FormsModule],
   templateUrl: './employee-orders.html',
   styleUrl: './employee-orders.css',
 })

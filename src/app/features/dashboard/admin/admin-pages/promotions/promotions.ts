@@ -9,11 +9,13 @@ import {
 } from '../../../../../core/models/product.model';
 import { ProductService } from '../../../../../core/services/product.service';
 import { formatMexicoDateTime } from '../../../../../core/utils/date-time.util';
+import { IconModule } from '../../../../../shared/icons/icon.module';
+
 
 @Component({
   selector: 'app-promotions',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [IconModule, CommonModule, FormsModule],
   templateUrl: './promotions.html',
   styleUrl: './promotions.css',
 })

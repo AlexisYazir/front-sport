@@ -32,7 +32,7 @@
   box-shadow: none;
 }
 
-.db-icon-button .material-symbols-outlined,
+.db-icon-button .lucide-icon,
 .db-icon-button i {
   font-size: 1rem;
   line-height: 1;
@@ -165,7 +165,7 @@
   background: #f3f4f6;
 }
 
-.location-state .material-symbols-outlined {
+.location-state .lucide-icon {
   color: #0367a6;
 }
 
@@ -442,7 +442,7 @@
   padding: 1rem;
 }
 
-.logo-upload-box__empty .material-symbols-outlined {
+.logo-upload-box__empty .lucide-icon {
   font-size: 2rem;
   color: #9ca3af;
 }

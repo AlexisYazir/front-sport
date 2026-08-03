@@ -2,11 +2,13 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { CompanyInfo, CompanyService } from '../../../core/services/company.service';
+import { IconModule } from '../../../shared/icons/icon.module';
+
 
 @Component({
   selector: 'app-nosotros',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [IconModule, CommonModule, RouterModule],
   templateUrl: './nosotros.html',
   styleUrl: './nosotros.css'
 })

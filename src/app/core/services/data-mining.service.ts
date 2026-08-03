@@ -33,7 +33,9 @@ export interface DemandTrendPoint {
 export interface DemandProduct {
   id_producto: number;
   id_variante: number;
+  sku: string;
   nombre_producto: string;
+  imagen: string | null;
   mes_objetivo: string;
   mes_proyectado: string;
   cantidad_hace_3_meses: number;
@@ -54,58 +56,6 @@ export interface DemandReport {
     objective: string;
     features: string[];
     note: string;
-  };
-}
-
-export interface SegmentMeta {
-  source: string;
-  resultSource: string;
-  model: string;
-  generatedAt: string;
-  cutoffDate: string | null;
-}
-
-export interface SegmentSummary {
-  customers: number;
-  segments: number;
-  averageRecency: number;
-  averageFrequency: number;
-  averageSpend: number;
-  totalSpend: number;
-}
-
-export interface SegmentProfile {
-  name: string;
-  cluster: number;
-  customers: number;
-  percentage: number;
-  averageRecency: number;
-  averageFrequency: number;
-  averageSpend: number;
-  action: string;
-}
-
-export interface SegmentCustomer {
-  id_usuario: number;
-  fecha_corte: string;
-  recencia_dias: number;
-  frecuencia_12_meses: number;
-  gasto_12_meses: number;
-  cluster: number;
-  segmento: string;
-  accion_sugerida: string;
-  name: string;
-  email: string;
-}
-
-export interface CustomerSegmentsReport {
-  meta: SegmentMeta;
-  summary: SegmentSummary;
-  segments: SegmentProfile[];
-  customers: SegmentCustomer[];
-  methodology: {
-    objective: string;
-    variables: string[];
   };
 }
 
@@ -136,10 +86,6 @@ export class DataMiningService {
 
   getDemandReport(): Observable<DemandReport> {
     return this.http.get<DemandReport>(`${this.reportsUrl}/demand`);
-  }
-
-  getCustomerSegments(): Observable<CustomerSegmentsReport> {
-    return this.http.get<CustomerSegmentsReport>(`${this.reportsUrl}/customer-segments`);
   }
 
   getProductRecommendations(productId: number, limit = 4): Observable<ProductRecommendationsResponse> {

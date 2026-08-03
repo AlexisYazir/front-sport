@@ -2,7 +2,7 @@
   <!-- Header -->
   <header class="space-y-2 text-center">
     <p class="inline-flex items-center gap-2 text-sm font-semibold text-[#0367A6] bg-[#0367A6]/10 px-3 py-1 rounded-full mx-auto w-fit">
-      <span class="material-symbols-outlined text-base">mail</span>
+      <svg lucideIcon="mail" class="lucide-icon text-base"></svg>
       Contáctanos
     </p>
     <h1 class="text-3xl sm:text-4xl font-bold text-[#202020]">Estamos aquí para ayudarte</h1>
@@ -13,7 +13,7 @@
 
   <!-- Verificación de autenticación -->
   <div *ngIf="!isAuthenticated() && !submitted" class="bg-amber-50 border border-amber-200 rounded-xl p-6 text-center">
-    <span class="material-symbols-outlined text-amber-600 text-4xl mb-2">lock</span>
+    <svg lucideIcon="lock" class="lucide-icon text-amber-600 text-4xl mb-2"></svg>
     <h2 class="text-xl font-semibold text-[#202020] mb-2">Inicia sesión para contactarnos</h2>
     <p class="text-[#666666] mb-4">Necesitas tener una cuenta para enviar mensajes a soporte.</p>
     <button (click)="goToLogin()" 
@@ -73,7 +73,7 @@
               type="submit" [disabled]="isLoading()">
         <span *ngIf="!isLoading()">Enviar mensaje</span>
         <span *ngIf="isLoading()" class="flex items-center gap-2">
-          <span class="material-symbols-outlined animate-spin text-sm">progress_activity</span>
+          <svg lucideIcon="progress_activity" class="lucide-icon animate-spin text-sm"></svg>
           Enviando...
         </span>
       </button>
@@ -82,7 +82,7 @@
     <!-- Mensaje de éxito -->
     <div *ngIf="submitted" class="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center">
       <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-        <span class="material-symbols-outlined text-3xl text-green-600">check_circle</span>
+        <svg lucideIcon="check_circle" class="lucide-icon text-3xl text-green-600"></svg>
       </div>
       <h2 class="text-xl font-bold text-[#202020] mb-2">¡Mensaje enviado!</h2>
       <p class="text-[#666666] mb-4">
@@ -99,7 +99,7 @@
     <!-- Información de contacto -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 h-fit">
       <h3 class="flex items-center gap-2 text-lg font-semibold text-[#202020] mb-3">
-        <span class="material-symbols-outlined text-[#0367A6]">schedule</span>
+        <svg lucideIcon="schedule" class="lucide-icon text-[#0367A6]"></svg>
         Horarios de atención
       </h3>
       <p class="text-[#666666] text-sm mb-4">Lunes a domingo, 8:00 - 22:00 (hora local).</p>
@@ -107,14 +107,14 @@
       <div class="h-px bg-gray-200 my-4"></div>
 
       <h3 class="flex items-center gap-2 text-lg font-semibold text-[#202020] mb-3">
-        <span class="material-symbols-outlined text-[#0367A6]">support_agent</span>
+        <svg lucideIcon="support_agent" class="lucide-icon text-[#0367A6]"></svg>
         Canales rápidos
       </h3>
       
       <ul class="space-y-4">
         <li class="flex gap-3">
           <div class="w-8 h-8 bg-[#0367A6]/10 rounded-lg flex items-center justify-center shrink-0">
-            <span class="material-symbols-outlined text-[#0367A6] text-sm">chat</span>
+            <svg lucideIcon="chat" class="lucide-icon text-[#0367A6] text-sm"></svg>
           </div>
           <div>
             <p class="font-semibold text-[#202020]">Chat en vivo</p>
@@ -123,7 +123,7 @@
         </li>
         <li class="flex gap-3">
           <div class="w-8 h-8 bg-[#0367A6]/10 rounded-lg flex items-center justify-center shrink-0">
-            <span class="material-symbols-outlined text-[#0367A6] text-sm">call</span>
+            <svg lucideIcon="call" class="lucide-icon text-[#0367A6] text-sm"></svg>
           </div>
           <div>
             <p class="font-semibold text-[#202020]">Línea directa</p>
@@ -132,7 +132,7 @@
         </li>
         <li class="flex gap-3">
           <div class="w-8 h-8 bg-[#0367A6]/10 rounded-lg flex items-center justify-center shrink-0">
-            <span class="material-symbols-outlined text-[#0367A6] text-sm">mail</span>
+            <svg lucideIcon="mail" class="lucide-icon text-[#0367A6] text-sm"></svg>
           </div>
           <div>
             <p class="font-semibold text-[#202020]">Correo</p>

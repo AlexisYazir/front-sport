@@ -26,7 +26,7 @@
 .offers-breadcrumb { display: flex; align-items: center; gap: 0.25rem; font-size: 0.72rem; }
 .offers-breadcrumb a { color: rgba(255, 255, 255, 0.78); }
 .offers-breadcrumb strong { color: #fff; }
-.offers-breadcrumb .material-symbols-outlined { font-size: 0.9rem; opacity: 0.62; }
+.offers-breadcrumb .lucide-icon { font-size: 0.9rem; opacity: 0.62; }
 .offers-title-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; margin-top: 1rem; }
 .offers-eyebrow { margin: 0 0 0.25rem; color: #ffbd73; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; }
 .offers-title-row h1 { margin: 0; font-size: clamp(1.9rem, 4vw, 2.7rem); line-height: 1; }
@@ -50,13 +50,13 @@
 }
 
 .offers-empty__icon { display: grid; width: 4rem; height: 4rem; place-items: center; border-radius: 50%; background: #e7f3fa; color: #0367a6; }
-.offers-empty__icon .material-symbols-outlined { font-size: 2rem; }
+.offers-empty__icon .lucide-icon { font-size: 2rem; }
 .offers-empty__label { margin: 1.1rem 0 0.3rem; color: #ea7a00; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
 .offers-empty h2 { margin: 0; font-size: clamp(1.45rem, 3vw, 2rem); }
 .offers-empty__description { max-width: 31rem; margin: 0.7rem 0 1.5rem; color: #66717f; font-size: 0.9rem; line-height: 1.6; }
 .offers-empty__actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.7rem; }
 .offers-empty__actions a { display: inline-flex; min-height: 2.75rem; align-items: center; gap: 0.45rem; padding: 0 1rem; border-radius: 7px; font-size: 0.82rem; font-weight: 750; transition: 160ms ease; }
-.offers-empty__actions .material-symbols-outlined { font-size: 1.08rem; }
+.offers-empty__actions .lucide-icon { font-size: 1.08rem; }
 .offers-primary-action { background: #0367a6; color: #fff; box-shadow: 0 8px 20px -12px rgba(3, 103, 166, 0.75); }
 .offers-primary-action:hover { background: #035a91; transform: translateY(-1px); }
 .offers-secondary-action { border: 1px solid #d6dee6; background: #fff; color: #46515e; }

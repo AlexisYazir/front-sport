@@ -1,6 +1,8 @@
 import { CommonModule, Location } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { IconModule } from '../../shared/icons/icon.module';
+
 
 type ErrorAction =
   | { label: string; route: string }
@@ -71,7 +73,7 @@ const defaultConfig: ErrorConfig = {
 @Component({
   selector: 'app-error-page',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [IconModule, CommonModule, RouterModule],
   templateUrl: './error-page.html',
   styleUrl: './error-page.css',
 })

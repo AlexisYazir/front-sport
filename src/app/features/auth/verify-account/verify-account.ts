@@ -4,6 +4,8 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { Subscription } from 'rxjs';
+import { IconModule } from '../../../shared/icons/icon.module';
+
 
 // ============================================================================
 // RATE LIMITING CONFIGURATION
@@ -24,7 +26,7 @@ const RATE_LIMIT_CONFIG = {
 @Component({
   selector: 'app-verify-account',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [IconModule, CommonModule, ReactiveFormsModule],
   templateUrl: './verify-account.html',
 })
 export class VerifyAccountComponent implements OnInit, OnDestroy {

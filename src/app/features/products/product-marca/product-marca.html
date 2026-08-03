@@ -32,7 +32,7 @@
           <!-- Botón de filtro para móvil -->
           <button *ngIf="isMobile()" (click)="toggleMobileFilters()" 
                   class="flex sm:hidden items-center gap-2 px-3 py-2 sm:px-4 sm:py-2.5 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl hover:bg-white/20 transition-all duration-200 text-white h-[42px] sm:h-[46px]">
-            <span class="material-symbols-outlined text-sm sm:text-base">filter_alt</span>
+            <svg lucideIcon="filter_alt" class="lucide-icon text-sm sm:text-base"></svg>
             <span class="text-sm sm:text-base">Filtros</span>
             <span *ngIf="hasActiveFilters()" class="w-2 h-2 bg-white rounded-full ml-1"></span>
           </button>
@@ -40,7 +40,7 @@
           <!-- Botón de filtro para desktop -->
           <button *ngIf="!isMobile()" (click)="toggleFilters()" 
                   class="hidden sm:flex items-center gap-2 px-4 py-2.5 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl hover:bg-white/20 transition-all duration-200 text-white h-[46px]">
-            <span class="material-symbols-outlined">filter_alt</span>
+            <svg lucideIcon="filter_alt" class="lucide-icon"></svg>
             <span class="text-sm font-medium">{{ showFilters() ? 'Ocultar filtros' : 'Mostrar filtros' }}</span>
             <span *ngIf="hasActiveFilters()" class="ml-1 px-1.5 py-0.5 text-xs bg-white text-[#0367A6] rounded-full">
               {{ filteredBySelection().length }}
@@ -63,7 +63,7 @@
             <!-- Header -->
             <div class="flex items-center justify-between mb-4">
               <div class="flex items-center gap-2">
-                <span class="material-symbols-outlined ">tune</span>
+                <svg lucideIcon="tune" class="lucide-icon"></svg>
                 <h2 class="text-base font-semibold text-gray-900">Filtros</h2>
                 <span *ngIf="hasActiveFilters()" class="ml-1 px-2 py-0.5 text-xs bg-blue-100 text-blue-700 rounded-full">
                   Activos
@@ -82,11 +82,11 @@
               <div class="border border-gray-200 rounded-lg overflow-hidden">
                 <button (click)="toggleCategory()" class="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 transition-colors">
                   <div class="flex items-center gap-2">
-                    <span class="material-symbols-outlined  text-lg">category</span>
+                    <svg lucideIcon="category" class="lucide-icon text-lg"></svg>
                     <span class="text-sm font-medium text-gray-900">Categoría</span>
                   </div>
-                  <span class="material-symbols-outlined  transition-transform duration-300" 
-                        [class.rotate-180]="categoryExpanded()">expand_more</span>
+                  <svg lucideIcon="expand_more" class="lucide-icon transition-transform duration-300" 
+                        [class.rotate-180]="categoryExpanded()"></svg>
                 </button>
                 
                 <div *ngIf="categoryExpanded()" class="p-3 bg-white max-h-48 overflow-y-auto">
@@ -108,11 +108,11 @@
               <div class="border border-gray-200 rounded-lg overflow-hidden">
                 <button (click)="togglePrice()" class="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 transition-colors">
                   <div class="flex items-center gap-2">
-                    <span class="material-symbols-outlined  text-lg">attach_money</span>
+                    <svg lucideIcon="attach_money" class="lucide-icon text-lg"></svg>
                     <span class="text-sm font-medium text-gray-900">Precio</span>
                   </div>
-                  <span class="material-symbols-outlined  transition-transform duration-300" 
-                        [class.rotate-180]="priceExpanded()">expand_more</span>
+                  <svg lucideIcon="expand_more" class="lucide-icon transition-transform duration-300" 
+                        [class.rotate-180]="priceExpanded()"></svg>
                 </button>
                 
                 <div *ngIf="priceExpanded()" class="p-3 bg-white">
@@ -134,11 +134,11 @@
               <div class="border border-gray-200 rounded-lg overflow-hidden">
                 <button (click)="toggleSort()" class="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 transition-colors">
                   <div class="flex items-center gap-2">
-                    <span class="material-symbols-outlined  text-lg">sort</span>
+                    <svg lucideIcon="sort" class="lucide-icon text-lg"></svg>
                     <span class="text-sm font-medium text-gray-900">Ordenar por</span>
                   </div>
-                  <span class="material-symbols-outlined  transition-transform duration-300" 
-                        [class.rotate-180]="sortExpanded()">expand_more</span>
+                  <svg lucideIcon="expand_more" class="lucide-icon transition-transform duration-300" 
+                        [class.rotate-180]="sortExpanded()"></svg>
                 </button>
                 
                 <div *ngIf="sortExpanded()" class="p-3 bg-white">
@@ -166,14 +166,14 @@
             <!-- Header móvil -->
             <div class="flex items-center justify-between mb-4">
               <div class="flex items-center gap-2">
-                <span class="material-symbols-outlined ">tune</span>
+                <svg lucideIcon="tune" class="lucide-icon"></svg>
                 <h2 class="text-base font-semibold text-gray-900">Filtros</h2>
                 <span *ngIf="hasActiveFilters()" class="px-2 py-0.5 text-xs bg-blue-100 text-blue-700 rounded-full">
                   Activos
                 </span>
               </div>
               <button (click)="mobileFiltersOpen.set(false)" class="p-2 hover:bg-gray-100 rounded-lg">
-                <span class="material-symbols-outlined">close</span>
+                <svg lucideIcon="close" class="lucide-icon"></svg>
               </button>
             </div>
 
@@ -184,8 +184,8 @@
               <div class="border border-gray-200 rounded-lg overflow-hidden">
                 <button (click)="toggleCategory()" class="w-full flex items-center justify-between p-3 bg-gray-50">
                   <span class="text-sm font-medium">Categoría</span>
-                  <span class="material-symbols-outlined  transition-transform" 
-                        [class.rotate-180]="categoryExpanded()">expand_more</span>
+                  <svg lucideIcon="expand_more" class="lucide-icon transition-transform" 
+                        [class.rotate-180]="categoryExpanded()"></svg>
                 </button>
                 <div *ngIf="categoryExpanded()" class="p-3">
                   <label class="flex items-center py-2">
@@ -205,8 +205,8 @@
               <div class="border border-gray-200 rounded-lg overflow-hidden">
                 <button (click)="togglePrice()" class="w-full flex items-center justify-between p-3 bg-gray-50">
                   <span class="text-sm font-medium">Precio</span>
-                  <span class="material-symbols-outlined  transition-transform" 
-                        [class.rotate-180]="priceExpanded()">expand_more</span>
+                  <svg lucideIcon="expand_more" class="lucide-icon transition-transform" 
+                        [class.rotate-180]="priceExpanded()"></svg>
                 </button>
                 <div *ngIf="priceExpanded()" class="p-3">
                   <div class="flex gap-2">
@@ -222,8 +222,8 @@
               <div class="border border-gray-200 rounded-lg overflow-hidden">
                 <button (click)="toggleSort()" class="w-full flex items-center justify-between p-3 bg-gray-50">
                   <span class="text-sm font-medium">Ordenar</span>
-                  <span class="material-symbols-outlined  transition-transform" 
-                        [class.rotate-180]="sortExpanded()">expand_more</span>
+                  <svg lucideIcon="expand_more" class="lucide-icon transition-transform" 
+                        [class.rotate-180]="sortExpanded()"></svg>
                 </button>
                 <div *ngIf="sortExpanded()" class="p-3">
                   <select [(ngModel)]="sortBy" (change)="onSortChange()" class="w-full px-3 py-2 text-sm border rounded-lg">
@@ -266,7 +266,7 @@
 
         <!-- Error State -->
         <div *ngIf="error() && !loading()" class="text-center py-12 sm:py-16 bg-red-50 rounded-xl border border-red-100">
-          <span class="material-symbols-outlined text-4xl sm:text-5xl text-red-300 mb-4">error</span>
+          <svg lucideIcon="error" class="lucide-icon text-4xl sm:text-5xl text-red-300 mb-4"></svg>
           <h3 class="text-lg sm:text-xl font-semibold text-red-800 mb-2">Error</h3>
           <p class="text-sm sm:text-base text-red-600 mb-6">{{ error() }}</p>
           <button (click)="goBack()" class="px-5 py-2 sm:px-6 sm:py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
@@ -290,7 +290,7 @@
                 class="absolute right-2 top-2 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-[#0367A6] shadow-sm transition-all duration-200 hover:bg-[#0367A6] hover:text-white"
                 title="Compartir producto"
                 aria-label="Compartir producto">
-                <span class="material-symbols-outlined text-[1.1rem]">share</span>
+                <svg lucideIcon="share" class="lucide-icon text-[1.1rem]"></svg>
               </button>
               
               <!-- Imagen -->
@@ -349,7 +349,7 @@
           <!-- Empty State -->
           <div *ngIf="filteredBySelection().length === 0" 
                class="text-center py-12 sm:py-20 bg-white rounded-xl border border-gray-100">
-            <span class="material-symbols-outlined text-5xl sm:text-6xl text-gray-300 mb-4">brand_family</span>
+            <svg lucideIcon="brand_family" class="lucide-icon text-5xl sm:text-6xl text-gray-300 mb-4"></svg>
             <h3 class="text-xl sm:text-2xl font-semibold text-gray-900 mb-2">No hay productos</h3>
             <p class="text-sm sm:text-base  mb-6 sm:mb-8">
               No encontramos productos con los filtros seleccionados

@@ -3,7 +3,7 @@
     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
       <div class="flex items-center gap-3">
         <div class="bg-[#0367A6]/10 p-3 rounded-xl">
-          <span class="material-symbols-outlined text-[#0367A6] text-2xl">storage</span>
+          <svg lucideIcon="storage" class="lucide-icon text-[#0367A6] text-2xl"></svg>
         </div>
         <div>
           <h2 class="text-2xl font-bold text-[#202020]">Administración de Base de Datos</h2>
@@ -11,7 +11,7 @@
         </div>
       </div>
       <button class="w-10 h-10 rounded-full border border-[#0367A6]/20 bg-white text-[#0367A6] hover:bg-[#0367A6] hover:text-white transition-all flex items-center justify-center" (click)="refreshCurrentTab()" title="Actualizar vista" aria-label="Actualizar vista">
-        <span class="material-symbols-outlined text-lg">refresh</span>
+        <svg lucideIcon="refresh" class="lucide-icon text-lg"></svg>
       </button>
     </div>
   </div>
@@ -22,7 +22,7 @@
       class="px-5 py-3 text-sm font-medium transition-all whitespace-nowrap flex items-center gap-2"
       [ngClass]="activeTab() === tab.key ? 'text-[#0367A6] border-b-2 border-[#0367A6]' : 'text-[#666666] hover:text-[#202020]'"
       (click)="changeTab(tab.key)">
-      <span class="material-symbols-outlined text-base">{{ tab.icon }}</span>
+      <svg [lucideIcon]="tab.icon" class="lucide-icon text-base"></svg>
       {{ tab.label }}
     </button>
   </div>
@@ -63,7 +63,7 @@
       <div *ngIf="isCreatingBackup()" class="absolute inset-0 db-overlay z-10 flex items-center justify-center">
         <div class="db-loader-card">
           <div class="db-loader-badge">
-            <span class="material-symbols-outlined spin text-4xl text-[#0367A6]">sync</span>
+            <svg lucideIcon="sync" class="lucide-icon spin text-4xl text-[#0367A6]"></svg>
           </div>
           <div class="text-center">
             <p class="text-base font-semibold text-[#202020]">Creando backup</p>
@@ -75,11 +75,11 @@
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div class="flex flex-wrap gap-3">
             <button class="db-action-button bg-[#0367A6] text-white hover:bg-[#035A91]" (click)="openBackupConfirmModal('full')" [disabled]="isCreatingBackup()">
-              <span class="material-symbols-outlined">database</span>
+              <svg lucideIcon="database" class="lucide-icon"></svg>
               Backup completo
             </button>
             <button class="db-action-button bg-green-600 text-white hover:bg-green-700" (click)="openBackupConfirmModal('critical')" [disabled]="isCreatingBackup()">
-              <span class="material-symbols-outlined">security</span>
+              <svg lucideIcon="security" class="lucide-icon"></svg>
               Backup prioritario
             </button>
           </div>
@@ -87,11 +87,11 @@
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div class="relative w-full sm:w-96">
             <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#666666]">
-              <i class="pi pi-search text-lg"></i>
+              <svg lucideIcon="search" class="lucide-icon text-lg"></svg>
             </span>
             <input [(ngModel)]="searchBackups" (ngModelChange)="onSectionSearch('backups')" placeholder="Buscar backup por tipo, archivo o carpeta..." class="w-full pl-10 pr-10 py-3 border-2 border-gray-200 rounded-xl focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 transition-all outline-none text-sm"/>
             <button *ngIf="searchBackups" (click)="clearSectionSearch('backups')" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#0367A6] transition-colors">
-              <i class="pi pi-times-circle text-lg"></i>
+              <svg lucideIcon="close" class="lucide-icon text-lg"></svg>
             </button>
           </div>
           <div class="flex items-center gap-4">
@@ -121,7 +121,7 @@
             <tr *ngFor="let backup of paginatedBackups" class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
               <td class="px-4 py-3">
                 <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold" [ngClass]="backup.type === 'full' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'">
-                  <span class="material-symbols-outlined text-base">{{ backupTypeIcon(backup.type) }}</span>
+                  <svg [lucideIcon]="backupTypeIcon(backup.type)" class="lucide-icon text-base"></svg>
                   {{ backup.type === 'full' ? 'Completo' : 'Prioritario' }}
                 </span>
               </td>
@@ -131,17 +131,13 @@
               <td class="px-4 py-3">
                 <div class="flex items-center justify-center gap-2 flex-wrap">
                   <button class="db-icon-button db-icon-download" (click)="downloadBackup(backup)" [disabled]="isDownloadingBackup()[backup.key]" title="Descargar backup" aria-label="Descargar backup">
-                    <span class="material-symbols-outlined" [class.spin]="isDownloadingBackup()[backup.key]">
-                      {{ isDownloadingBackup()[backup.key] ? 'sync' : 'download' }}
-                    </span>
+                    <svg [lucideIcon]="isDownloadingBackup()[backup.key] ? 'sync' : 'download'" class="lucide-icon" [class.spin]="isDownloadingBackup()[backup.key]"></svg>
                   </button>
                   <button class="db-icon-button db-icon-log" (click)="openBackupLog(backup)" title="Ver log" aria-label="Ver log">
-                    <span class="material-symbols-outlined">description</span>
+                    <svg lucideIcon="description" class="lucide-icon"></svg>
                   </button>
                   <button class="db-icon-button db-icon-delete" (click)="openDeleteBackupModal(backup)" [disabled]="isDeletingBackup()[backup.key]" title="Eliminar backup" aria-label="Eliminar backup">
-                    <span class="material-symbols-outlined" [class.spin]="isDeletingBackup()[backup.key]">
-                      {{ isDeletingBackup()[backup.key] ? 'sync' : 'delete' }}
-                    </span>
+                    <svg [lucideIcon]="isDeletingBackup()[backup.key] ? 'sync' : 'delete'" class="lucide-icon" [class.spin]="isDeletingBackup()[backup.key]"></svg>
                   </button>
                 </div>
               </td>
@@ -154,13 +150,13 @@
         <div class="flex items-center gap-3"><span class="text-sm text-[#666666]">Mostrando 10 resultados por página</span></div>
         <div class="text-sm text-[#666666] order-first sm:order-none">{{ sectionRangeLabel('backups') }} backups</div>
         <div class="flex gap-2">
-          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('backups', 'first')" [disabled]="currentPages.backups === 1"><i class="pi pi-angle-double-left"></i></button>
-          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('backups', 'prev')" [disabled]="currentPages.backups === 1"><i class="pi pi-angle-left"></i></button>
+          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('backups', 'first')" [disabled]="currentPages.backups === 1"><svg lucideIcon="first_page" class="lucide-icon"></svg></button>
+          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('backups', 'prev')" [disabled]="currentPages.backups === 1"><svg lucideIcon="chevron_left" class="lucide-icon"></svg></button>
           <div class="flex gap-1">
             <button *ngFor="let page of sectionPageNumbers('backups')" class="min-w-[2.5rem] h-10 rounded-lg transition-all font-medium" [ngClass]="page === currentPages.backups ? 'bg-[#0367A6] text-white hover:bg-[#035A91]' : 'border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6]'" (click)="goToSectionPage('backups', page)">{{ page }}</button>
           </div>
-          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('backups', 'next')" [disabled]="currentPages.backups === sectionPageNumbers('backups').length"><i class="pi pi-angle-right"></i></button>
-          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('backups', 'last')" [disabled]="currentPages.backups === sectionPageNumbers('backups').length"><i class="pi pi-angle-double-right"></i></button>
+          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('backups', 'next')" [disabled]="currentPages.backups === sectionPageNumbers('backups').length"><svg lucideIcon="chevron_right" class="lucide-icon"></svg></button>
+          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('backups', 'last')" [disabled]="currentPages.backups === sectionPageNumbers('backups').length"><svg lucideIcon="last_page" class="lucide-icon"></svg></button>
         </div>
       </div>
     </div>
@@ -173,18 +169,18 @@
             <p class="text-sm text-[#666666]">Administra los backups automáticos diarios, semanales o por fecha exacta.</p>
           </div>
           <button class="db-action-button bg-[#0367A6] text-white hover:bg-[#035A91]" (click)="openBackupScheduleModal()">
-            <span class="material-symbols-outlined">schedule</span>
+            <svg lucideIcon="schedule" class="lucide-icon"></svg>
             Programar backups
           </button>
         </div>
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div class="relative w-full sm:w-96">
             <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#666666]">
-              <i class="pi pi-search text-lg"></i>
+              <svg lucideIcon="search" class="lucide-icon text-lg"></svg>
             </span>
             <input [(ngModel)]="searchBackupSchedules" (ngModelChange)="onSectionSearch('backupSchedules')" placeholder="Buscar programación por nombre, tipo o frecuencia..." class="w-full pl-10 pr-10 py-3 border-2 border-gray-200 rounded-xl focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 transition-all outline-none text-sm"/>
             <button *ngIf="searchBackupSchedules" (click)="clearSectionSearch('backupSchedules')" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#0367A6] transition-colors">
-              <i class="pi pi-times-circle text-lg"></i>
+              <svg lucideIcon="close" class="lucide-icon text-lg"></svg>
             </button>
           </div>
           <div class="bg-blue-50 px-4 py-2 rounded-xl border border-blue-100">
@@ -210,7 +206,7 @@
               <td class="px-4 py-3">{{ schedule.name }}</td>
               <td class="px-4 py-3">
                 <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold" [ngClass]="schedule.type === 'full' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'">
-                  <span class="material-symbols-outlined text-base">{{ schedule.type === 'full' ? 'database' : 'security' }}</span>
+                  <svg [lucideIcon]="schedule.type === 'full' ? 'database' : 'security'" class="lucide-icon text-base"></svg>
                   {{ schedule.type === 'full' ? 'Completo' : 'Prioritario' }}
                 </span>
               </td>
@@ -222,7 +218,7 @@
               <td class="px-4 py-3">{{ formatDate(schedule.createdAt) }}</td>
               <td class="px-4 py-3 text-center">
                 <button class="db-icon-button db-icon-delete" (click)="deleteBackupSchedule(schedule.name)" title="Eliminar programación" aria-label="Eliminar programación">
-                  <span class="material-symbols-outlined">delete</span>
+                  <svg lucideIcon="delete" class="lucide-icon"></svg>
                 </button>
               </td>
             </tr>
@@ -234,13 +230,13 @@
         <div class="flex items-center gap-3"><span class="text-sm text-[#666666]">Mostrando 10 resultados por página</span></div>
         <div class="text-sm text-[#666666] order-first sm:order-none">{{ sectionRangeLabel('backupSchedules') }} programaciones</div>
         <div class="flex gap-2">
-          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('backupSchedules', 'first')" [disabled]="currentPages.backupSchedules === 1"><i class="pi pi-angle-double-left"></i></button>
-          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('backupSchedules', 'prev')" [disabled]="currentPages.backupSchedules === 1"><i class="pi pi-angle-left"></i></button>
+          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('backupSchedules', 'first')" [disabled]="currentPages.backupSchedules === 1"><svg lucideIcon="first_page" class="lucide-icon"></svg></button>
+          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('backupSchedules', 'prev')" [disabled]="currentPages.backupSchedules === 1"><svg lucideIcon="chevron_left" class="lucide-icon"></svg></button>
           <div class="flex gap-1">
             <button *ngFor="let page of sectionPageNumbers('backupSchedules')" class="min-w-[2.5rem] h-10 rounded-lg transition-all font-medium" [ngClass]="page === currentPages.backupSchedules ? 'bg-[#0367A6] text-white hover:bg-[#035A91]' : 'border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6]'" (click)="goToSectionPage('backupSchedules', page)">{{ page }}</button>
           </div>
-          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('backupSchedules', 'next')" [disabled]="currentPages.backupSchedules === sectionPageNumbers('backupSchedules').length"><i class="pi pi-angle-right"></i></button>
-          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('backupSchedules', 'last')" [disabled]="currentPages.backupSchedules === sectionPageNumbers('backupSchedules').length"><i class="pi pi-angle-double-right"></i></button>
+          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('backupSchedules', 'next')" [disabled]="currentPages.backupSchedules === sectionPageNumbers('backupSchedules').length"><svg lucideIcon="chevron_right" class="lucide-icon"></svg></button>
+          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('backupSchedules', 'last')" [disabled]="currentPages.backupSchedules === sectionPageNumbers('backupSchedules').length"><svg lucideIcon="last_page" class="lucide-icon"></svg></button>
         </div>
       </div>
     </div>
@@ -253,16 +249,16 @@
             <p class="text-sm text-[#666666]">Programa el borrado automático de backups y logs después del periodo de retención.</p>
           </div>
           <button class="db-action-button bg-[#0367A6] text-white hover:bg-[#035A91]" (click)="openRetentionPolicyModal()">
-            <span class="material-symbols-outlined">auto_delete</span>
+            <svg lucideIcon="auto_delete" class="lucide-icon"></svg>
             Crear tarea de limpieza
           </button>
         </div>
 
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div class="relative w-full sm:w-96">
-            <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#666666]"><i class="pi pi-search text-lg"></i></span>
+            <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#666666]"><svg lucideIcon="search" class="lucide-icon text-lg"></svg></span>
             <input [(ngModel)]="searchRetentionPolicies" (ngModelChange)="onSectionSearch('retentionPolicies')" class="w-full pl-10 pr-10 py-3 border-2 border-gray-200 rounded-xl focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 transition-all outline-none text-sm" placeholder="Buscar política de retención..." />
-            <button *ngIf="searchRetentionPolicies" (click)="clearSectionSearch('retentionPolicies')" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#0367A6] transition-colors"><i class="pi pi-times-circle text-lg"></i></button>
+            <button *ngIf="searchRetentionPolicies" (click)="clearSectionSearch('retentionPolicies')" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#0367A6] transition-colors"><svg lucideIcon="close" class="lucide-icon text-lg"></svg></button>
           </div>
           <div class="bg-blue-50 px-4 py-2 rounded-xl border border-blue-100">
             <span class="text-[#0367A6] font-semibold text-lg">{{ retentionPolicyCount() }}</span>
@@ -290,7 +286,7 @@
               <td class="px-4 py-3">{{ policy.retentionDays }} días</td>
               <td class="px-4 py-3">{{ policy.description }}</td>
               <td class="px-4 py-3">{{ formatDate(policy.nextRunAt) }}</td>
-              <td class="px-4 py-3 text-center"><button class="db-icon-button db-icon-delete" (click)="deleteRetentionPolicy(policy.name)" title="Eliminar política" aria-label="Eliminar política"><span class="material-symbols-outlined">delete</span></button></td>
+              <td class="px-4 py-3 text-center"><button class="db-icon-button db-icon-delete" (click)="deleteRetentionPolicy(policy.name)" title="Eliminar política" aria-label="Eliminar política"><svg lucideIcon="delete" class="lucide-icon"></svg></button></td>
             </tr>
             <tr *ngIf="!filteredRetentionPolicies.length"><td colspan="6" class="px-4 py-6 text-center text-gray-500">No hay políticas de retención configuradas.</td></tr>
           </tbody>
@@ -300,13 +296,13 @@
         <div class="flex items-center gap-3"><span class="text-sm text-[#666666]">Mostrando 10 resultados por página</span></div>
         <div class="text-sm text-[#666666] order-first sm:order-none">{{ sectionRangeLabel('retentionPolicies') }} políticas</div>
         <div class="flex gap-2">
-          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('retentionPolicies', 'first')" [disabled]="currentPages.retentionPolicies === 1"><i class="pi pi-angle-double-left"></i></button>
-          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('retentionPolicies', 'prev')" [disabled]="currentPages.retentionPolicies === 1"><i class="pi pi-angle-left"></i></button>
+          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('retentionPolicies', 'first')" [disabled]="currentPages.retentionPolicies === 1"><svg lucideIcon="first_page" class="lucide-icon"></svg></button>
+          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('retentionPolicies', 'prev')" [disabled]="currentPages.retentionPolicies === 1"><svg lucideIcon="chevron_left" class="lucide-icon"></svg></button>
           <div class="flex gap-1">
             <button *ngFor="let page of sectionPageNumbers('retentionPolicies')" class="min-w-[2.5rem] h-10 rounded-lg transition-all font-medium" [ngClass]="page === currentPages.retentionPolicies ? 'bg-[#0367A6] text-white hover:bg-[#035A91]' : 'border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6]'" (click)="goToSectionPage('retentionPolicies', page)">{{ page }}</button>
           </div>
-          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('retentionPolicies', 'next')" [disabled]="currentPages.retentionPolicies === sectionPageNumbers('retentionPolicies').length"><i class="pi pi-angle-right"></i></button>
-          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('retentionPolicies', 'last')" [disabled]="currentPages.retentionPolicies === sectionPageNumbers('retentionPolicies').length"><i class="pi pi-angle-double-right"></i></button>
+          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('retentionPolicies', 'next')" [disabled]="currentPages.retentionPolicies === sectionPageNumbers('retentionPolicies').length"><svg lucideIcon="chevron_right" class="lucide-icon"></svg></button>
+          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('retentionPolicies', 'last')" [disabled]="currentPages.retentionPolicies === sectionPageNumbers('retentionPolicies').length"><svg lucideIcon="last_page" class="lucide-icon"></svg></button>
         </div>
       </div>
     </div>
@@ -344,7 +340,7 @@
 
       <div class="border rounded-xl p-4 overflow-hidden">
         <div class="flex items-center gap-3 mb-4">
-          <span class="material-symbols-outlined text-[#0367A6]">table_chart</span>
+          <svg lucideIcon="table_chart" class="lucide-icon text-[#0367A6]"></svg>
           <h3 class="font-semibold text-[#202020]">Detalle de Tablas</h3>
         </div>
 
@@ -395,10 +391,10 @@
           <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div class="relative w-full sm:w-96">
               <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#666666]">
-                <i class="pi pi-search text-lg"></i>
+                <svg lucideIcon="search" class="lucide-icon text-lg"></svg>
               </span>
               <input [(ngModel)]="searchConnections" (ngModelChange)="onSectionSearch('connections')" placeholder="Buscar por PID, usuario, app, estado o IP..." class="w-full pl-10 pr-10 py-3 border-2 border-gray-200 rounded-xl focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 transition-all outline-none text-sm"/>
-              <button *ngIf="searchConnections" (click)="clearSectionSearch('connections')" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#0367A6] transition-colors"><i class="pi pi-times-circle text-lg"></i></button>
+              <button *ngIf="searchConnections" (click)="clearSectionSearch('connections')" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#0367A6] transition-colors"><svg lucideIcon="close" class="lucide-icon text-lg"></svg></button>
             </div>
             <div class="flex items-center gap-4">
               <div class="bg-blue-50 px-4 py-2 rounded-xl border border-blue-100">
@@ -441,13 +437,13 @@
           <div class="flex items-center gap-3"><span class="text-sm text-[#666666]">Mostrando 10 resultados por página</span></div>
           <div class="text-sm text-[#666666] order-first sm:order-none">{{ sectionRangeLabel('connections') }} conexiones</div>
           <div class="flex gap-2">
-            <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('connections', 'first')" [disabled]="currentPages.connections === 1"><i class="pi pi-angle-double-left"></i></button>
-            <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('connections', 'prev')" [disabled]="currentPages.connections === 1"><i class="pi pi-angle-left"></i></button>
+            <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('connections', 'first')" [disabled]="currentPages.connections === 1"><svg lucideIcon="first_page" class="lucide-icon"></svg></button>
+            <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('connections', 'prev')" [disabled]="currentPages.connections === 1"><svg lucideIcon="chevron_left" class="lucide-icon"></svg></button>
             <div class="flex gap-1">
               <button *ngFor="let page of sectionPageNumbers('connections')" class="min-w-[2.5rem] h-10 rounded-lg transition-all font-medium" [ngClass]="page === currentPages.connections ? 'bg-[#0367A6] text-white hover:bg-[#035A91]' : 'border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6]'" (click)="goToSectionPage('connections', page)">{{ page }}</button>
             </div>
-            <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('connections', 'next')" [disabled]="currentPages.connections === sectionPageNumbers('connections').length"><i class="pi pi-angle-right"></i></button>
-            <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('connections', 'last')" [disabled]="currentPages.connections === sectionPageNumbers('connections').length"><i class="pi pi-angle-double-right"></i></button>
+            <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('connections', 'next')" [disabled]="currentPages.connections === sectionPageNumbers('connections').length"><svg lucideIcon="chevron_right" class="lucide-icon"></svg></button>
+            <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('connections', 'last')" [disabled]="currentPages.connections === sectionPageNumbers('connections').length"><svg lucideIcon="last_page" class="lucide-icon"></svg></button>
           </div>
         </div>
       </div>
@@ -483,10 +479,10 @@
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div class="relative w-full sm:w-96">
             <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#666666]">
-              <i class="pi pi-search text-lg"></i>
+              <svg lucideIcon="search" class="lucide-icon text-lg"></svg>
             </span>
             <input [(ngModel)]="searchLocks" (ngModelChange)="onSectionSearch('locks')" placeholder="Buscar lock por PID, usuario, tabla o tipo..." class="w-full pl-10 pr-10 py-3 border-2 border-gray-200 rounded-xl focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 transition-all outline-none text-sm"/>
-            <button *ngIf="searchLocks" (click)="clearSectionSearch('locks')" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#0367A6] transition-colors"><i class="pi pi-times-circle text-lg"></i></button>
+            <button *ngIf="searchLocks" (click)="clearSectionSearch('locks')" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#0367A6] transition-colors"><svg lucideIcon="close" class="lucide-icon text-lg"></svg></button>
           </div>
           <div class="bg-blue-50 px-4 py-2 rounded-xl border border-blue-100">
             <span class="text-[#0367A6] font-semibold text-lg">{{ lockCount() }}</span>
@@ -522,13 +518,13 @@
         <div class="flex items-center gap-3"><span class="text-sm text-[#666666]">Mostrando 10 resultados por página</span></div>
         <div class="text-sm text-[#666666] order-first sm:order-none">{{ sectionRangeLabel('locks') }} locks</div>
         <div class="flex gap-2">
-          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('locks', 'first')" [disabled]="currentPages.locks === 1"><i class="pi pi-angle-double-left"></i></button>
-          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('locks', 'prev')" [disabled]="currentPages.locks === 1"><i class="pi pi-angle-left"></i></button>
+          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('locks', 'first')" [disabled]="currentPages.locks === 1"><svg lucideIcon="first_page" class="lucide-icon"></svg></button>
+          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('locks', 'prev')" [disabled]="currentPages.locks === 1"><svg lucideIcon="chevron_left" class="lucide-icon"></svg></button>
           <div class="flex gap-1">
             <button *ngFor="let page of sectionPageNumbers('locks')" class="min-w-[2.5rem] h-10 rounded-lg transition-all font-medium" [ngClass]="page === currentPages.locks ? 'bg-[#0367A6] text-white hover:bg-[#035A91]' : 'border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6]'" (click)="goToSectionPage('locks', page)">{{ page }}</button>
           </div>
-          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('locks', 'next')" [disabled]="currentPages.locks === sectionPageNumbers('locks').length"><i class="pi pi-angle-right"></i></button>
-          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('locks', 'last')" [disabled]="currentPages.locks === sectionPageNumbers('locks').length"><i class="pi pi-angle-double-right"></i></button>
+          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('locks', 'next')" [disabled]="currentPages.locks === sectionPageNumbers('locks').length"><svg lucideIcon="chevron_right" class="lucide-icon"></svg></button>
+          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('locks', 'last')" [disabled]="currentPages.locks === sectionPageNumbers('locks').length"><svg lucideIcon="last_page" class="lucide-icon"></svg></button>
         </div>
       </div>
     </div>
@@ -539,7 +535,7 @@
       <div class="xl:col-span-2 border rounded-xl p-5 relative overflow-hidden">
         <div *ngIf="isRunningVacuum()" class="absolute inset-0 db-overlay z-10 flex items-center justify-center">
           <div class="db-loader-card">
-            <span class="material-symbols-outlined spin text-4xl text-[#0367A6]">sync</span>
+            <svg lucideIcon="sync" class="lucide-icon spin text-4xl text-[#0367A6]"></svg>
             <p class="text-sm font-medium text-[#202020]">Ejecutando vacuum analyze y generando log...</p>
           </div>
         </div>
@@ -551,9 +547,7 @@
           <span class="text-xs text-gray-500">Actualizado: {{ lastUpdateVacuum() }}</span>
         </div>
         <button class="db-action-button bg-[#0367A6] text-white hover:bg-[#035A91]" (click)="openVacuumConfirmModal()" [disabled]="isRunningVacuum()">
-          <span class="material-symbols-outlined" [class.spin]="isRunningVacuum()">
-            {{ isRunningVacuum() ? 'sync' : 'cleaning_services' }}
-          </span>
+          <svg [lucideIcon]="isRunningVacuum() ? 'sync' : 'cleaning_services'" class="lucide-icon" [class.spin]="isRunningVacuum()"></svg>
           {{ isRunningVacuum() ? 'Ejecutando...' : 'Ejecutar vacuum analyze manual' }}
         </button>
       </div>
@@ -586,7 +580,7 @@
       <div *ngIf="isRunningVacuum()" class="absolute inset-0 db-overlay z-10 flex items-center justify-center">
         <div class="db-loader-card">
           <div class="db-loader-badge">
-            <span class="material-symbols-outlined spin text-4xl text-[#0367A6]">sync</span>
+            <svg lucideIcon="sync" class="lucide-icon spin text-4xl text-[#0367A6]"></svg>
           </div>
           <div class="text-center">
             <p class="text-base font-semibold text-[#202020]">Ejecutando vacuum analyze</p>
@@ -601,17 +595,15 @@
             <p class="text-sm text-[#666666]">Consulta ejecuciones anteriores y lanza un vacuum manual cuando lo necesites.</p>
           </div>
           <button class="db-action-button bg-[#0367A6] text-white hover:bg-[#035A91]" (click)="openVacuumConfirmModal()" [disabled]="isRunningVacuum()">
-            <span class="material-symbols-outlined" [class.spin]="isRunningVacuum()">
-              {{ isRunningVacuum() ? 'sync' : 'cleaning_services' }}
-            </span>
+            <svg [lucideIcon]="isRunningVacuum() ? 'sync' : 'cleaning_services'" class="lucide-icon" [class.spin]="isRunningVacuum()"></svg>
             {{ isRunningVacuum() ? 'Ejecutando...' : 'Ejecutar vacuum manual' }}
           </button>
         </div>
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div class="relative w-full sm:w-96">
-            <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#666666]"><i class="pi pi-search text-lg"></i></span>
+            <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#666666]"><svg lucideIcon="search" class="lucide-icon text-lg"></svg></span>
             <input [(ngModel)]="searchVacuums" (ngModelChange)="onSectionSearch('vacuumLogs')" class="w-full pl-10 pr-10 py-3 border-2 border-gray-200 rounded-xl focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 transition-all outline-none text-sm" placeholder="Buscar logs de vacuum..." />
-            <button *ngIf="searchVacuums" (click)="clearSectionSearch('vacuumLogs')" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#0367A6] transition-colors"><i class="pi pi-times-circle text-lg"></i></button>
+            <button *ngIf="searchVacuums" (click)="clearSectionSearch('vacuumLogs')" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#0367A6] transition-colors"><svg lucideIcon="close" class="lucide-icon text-lg"></svg></button>
           </div>
           <div class="flex items-center gap-4">
             <div class="bg-blue-50 px-4 py-2 rounded-xl border border-blue-100">
@@ -639,7 +631,7 @@
               <td class="px-4 py-3">{{ formatBytes(item.size) }}</td>
               <td class="px-4 py-3 text-center">
                 <button class="db-icon-button db-icon-log" (click)="openVacuumLog(item)" title="Ver log" aria-label="Ver log">
-                  <span class="material-symbols-outlined">description</span>
+                  <svg lucideIcon="description" class="lucide-icon"></svg>
                 </button>
               </td>
             </tr>
@@ -651,13 +643,13 @@
         <div class="flex items-center gap-3"><span class="text-sm text-[#666666]">Mostrando 10 resultados por página</span></div>
         <div class="text-sm text-[#666666] order-first sm:order-none">{{ sectionRangeLabel('vacuumLogs') }} logs</div>
         <div class="flex gap-2">
-          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('vacuumLogs', 'first')" [disabled]="currentPages.vacuumLogs === 1"><i class="pi pi-angle-double-left"></i></button>
-          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('vacuumLogs', 'prev')" [disabled]="currentPages.vacuumLogs === 1"><i class="pi pi-angle-left"></i></button>
+          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('vacuumLogs', 'first')" [disabled]="currentPages.vacuumLogs === 1"><svg lucideIcon="first_page" class="lucide-icon"></svg></button>
+          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('vacuumLogs', 'prev')" [disabled]="currentPages.vacuumLogs === 1"><svg lucideIcon="chevron_left" class="lucide-icon"></svg></button>
           <div class="flex gap-1">
             <button *ngFor="let page of sectionPageNumbers('vacuumLogs')" class="min-w-[2.5rem] h-10 rounded-lg transition-all font-medium" [ngClass]="page === currentPages.vacuumLogs ? 'bg-[#0367A6] text-white hover:bg-[#035A91]' : 'border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6]'" (click)="goToSectionPage('vacuumLogs', page)">{{ page }}</button>
           </div>
-          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('vacuumLogs', 'next')" [disabled]="currentPages.vacuumLogs === sectionPageNumbers('vacuumLogs').length"><i class="pi pi-angle-right"></i></button>
-          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('vacuumLogs', 'last')" [disabled]="currentPages.vacuumLogs === sectionPageNumbers('vacuumLogs').length"><i class="pi pi-angle-double-right"></i></button>
+          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('vacuumLogs', 'next')" [disabled]="currentPages.vacuumLogs === sectionPageNumbers('vacuumLogs').length"><svg lucideIcon="chevron_right" class="lucide-icon"></svg></button>
+          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('vacuumLogs', 'last')" [disabled]="currentPages.vacuumLogs === sectionPageNumbers('vacuumLogs').length"><svg lucideIcon="last_page" class="lucide-icon"></svg></button>
         </div>
       </div>
     </div>
@@ -670,15 +662,15 @@
             <p class="text-sm text-[#666666]">Crea tareas automáticas de mantenimiento diario, semanal o por fecha exacta.</p>
           </div>
           <button class="db-action-button bg-[#0367A6] text-white hover:bg-[#035A91]" (click)="openVacuumScheduleModal()">
-            <span class="material-symbols-outlined">schedule</span>
+            <svg lucideIcon="schedule" class="lucide-icon"></svg>
             Crear tarea de vacuum
           </button>
         </div>
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div class="relative w-full sm:w-96">
-            <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#666666]"><i class="pi pi-search text-lg"></i></span>
+            <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#666666]"><svg lucideIcon="search" class="lucide-icon text-lg"></svg></span>
             <input [(ngModel)]="searchVacuumSchedules" (ngModelChange)="onSectionSearch('vacuumSchedules')" placeholder="Buscar programación de vacuum..." class="w-full pl-10 pr-10 py-3 border-2 border-gray-200 rounded-xl focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 transition-all outline-none text-sm"/>
-            <button *ngIf="searchVacuumSchedules" (click)="clearSectionSearch('vacuumSchedules')" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#0367A6] transition-colors"><i class="pi pi-times-circle text-lg"></i></button>
+            <button *ngIf="searchVacuumSchedules" (click)="clearSectionSearch('vacuumSchedules')" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#0367A6] transition-colors"><svg lucideIcon="close" class="lucide-icon text-lg"></svg></button>
           </div>
           <div class="bg-blue-50 px-4 py-2 rounded-xl border border-blue-100">
             <span class="text-[#0367A6] font-semibold text-lg">{{ vacuumScheduleCount() }}</span>
@@ -706,7 +698,7 @@
               </td>
               <td class="px-4 py-3">{{ formatDate(schedule.nextRunAt) }}</td>
               <td class="px-4 py-3">{{ formatDate(schedule.createdAt) }}</td>
-              <td class="px-4 py-3 text-center"><button class="db-icon-button db-icon-delete" (click)="deleteVacuumSchedule(schedule.name)" title="Eliminar programación" aria-label="Eliminar programación"><span class="material-symbols-outlined">delete</span></button></td>
+              <td class="px-4 py-3 text-center"><button class="db-icon-button db-icon-delete" (click)="deleteVacuumSchedule(schedule.name)" title="Eliminar programación" aria-label="Eliminar programación"><svg lucideIcon="delete" class="lucide-icon"></svg></button></td>
             </tr>
             <tr *ngIf="!filteredVacuumSchedules.length"><td colspan="5" class="px-4 py-6 text-center text-gray-500">No hay vacuums programados todavía.</td></tr>
           </tbody>
@@ -716,13 +708,13 @@
         <div class="flex items-center gap-3"><span class="text-sm text-[#666666]">Mostrando 10 resultados por página</span></div>
         <div class="text-sm text-[#666666] order-first sm:order-none">{{ sectionRangeLabel('vacuumSchedules') }} programaciones</div>
         <div class="flex gap-2">
-          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('vacuumSchedules', 'first')" [disabled]="currentPages.vacuumSchedules === 1"><i class="pi pi-angle-double-left"></i></button>
-          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('vacuumSchedules', 'prev')" [disabled]="currentPages.vacuumSchedules === 1"><i class="pi pi-angle-left"></i></button>
+          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('vacuumSchedules', 'first')" [disabled]="currentPages.vacuumSchedules === 1"><svg lucideIcon="first_page" class="lucide-icon"></svg></button>
+          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('vacuumSchedules', 'prev')" [disabled]="currentPages.vacuumSchedules === 1"><svg lucideIcon="chevron_left" class="lucide-icon"></svg></button>
           <div class="flex gap-1">
             <button *ngFor="let page of sectionPageNumbers('vacuumSchedules')" class="min-w-[2.5rem] h-10 rounded-lg transition-all font-medium" [ngClass]="page === currentPages.vacuumSchedules ? 'bg-[#0367A6] text-white hover:bg-[#035A91]' : 'border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6]'" (click)="goToSectionPage('vacuumSchedules', page)">{{ page }}</button>
           </div>
-          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('vacuumSchedules', 'next')" [disabled]="currentPages.vacuumSchedules === sectionPageNumbers('vacuumSchedules').length"><i class="pi pi-angle-right"></i></button>
-          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('vacuumSchedules', 'last')" [disabled]="currentPages.vacuumSchedules === sectionPageNumbers('vacuumSchedules').length"><i class="pi pi-angle-double-right"></i></button>
+          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('vacuumSchedules', 'next')" [disabled]="currentPages.vacuumSchedules === sectionPageNumbers('vacuumSchedules').length"><svg lucideIcon="chevron_right" class="lucide-icon"></svg></button>
+          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('vacuumSchedules', 'last')" [disabled]="currentPages.vacuumSchedules === sectionPageNumbers('vacuumSchedules').length"><svg lucideIcon="last_page" class="lucide-icon"></svg></button>
         </div>
       </div>
     </div>
@@ -731,9 +723,9 @@
       <div class="flex flex-col gap-4 mb-4">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div class="relative w-full sm:w-96">
-            <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#666666]"><i class="pi pi-search text-lg"></i></span>
+            <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#666666]"><svg lucideIcon="search" class="lucide-icon text-lg"></svg></span>
             <input [(ngModel)]="searchVacuums" (ngModelChange)="onSectionSearch('vacuumLogs')" class="w-full pl-10 pr-10 py-3 border-2 border-gray-200 rounded-xl focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 transition-all outline-none text-sm" placeholder="Buscar logs de vacuum..." />
-            <button *ngIf="searchVacuums" (click)="clearSectionSearch('vacuumLogs')" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#0367A6] transition-colors"><i class="pi pi-times-circle text-lg"></i></button>
+            <button *ngIf="searchVacuums" (click)="clearSectionSearch('vacuumLogs')" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#0367A6] transition-colors"><svg lucideIcon="close" class="lucide-icon text-lg"></svg></button>
           </div>
           <div class="bg-blue-50 px-4 py-2 rounded-xl border border-blue-100">
             <span class="text-[#0367A6] font-semibold text-lg">{{ vacuumLogCount() }}</span>
@@ -762,7 +754,7 @@
               <td class="px-4 py-3">{{ formatBytes(item.size) }}</td>
               <td class="px-4 py-3 text-center">
                 <button class="db-icon-button db-icon-log" (click)="openVacuumLog(item)" title="Ver log" aria-label="Ver log">
-                  <span class="material-symbols-outlined">description</span>
+                  <svg lucideIcon="description" class="lucide-icon"></svg>
                 </button>
               </td>
             </tr>
@@ -774,13 +766,13 @@
         <div class="flex items-center gap-3"><span class="text-sm text-[#666666]">Mostrando 10 resultados por página</span></div>
         <div class="text-sm text-[#666666] order-first sm:order-none">{{ sectionRangeLabel('vacuumLogs') }} logs</div>
         <div class="flex gap-2">
-          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('vacuumLogs', 'first')" [disabled]="currentPages.vacuumLogs === 1"><i class="pi pi-angle-double-left"></i></button>
-          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('vacuumLogs', 'prev')" [disabled]="currentPages.vacuumLogs === 1"><i class="pi pi-angle-left"></i></button>
+          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('vacuumLogs', 'first')" [disabled]="currentPages.vacuumLogs === 1"><svg lucideIcon="first_page" class="lucide-icon"></svg></button>
+          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('vacuumLogs', 'prev')" [disabled]="currentPages.vacuumLogs === 1"><svg lucideIcon="chevron_left" class="lucide-icon"></svg></button>
           <div class="flex gap-1">
             <button *ngFor="let page of sectionPageNumbers('vacuumLogs')" class="min-w-[2.5rem] h-10 rounded-lg transition-all font-medium" [ngClass]="page === currentPages.vacuumLogs ? 'bg-[#0367A6] text-white hover:bg-[#035A91]' : 'border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6]'" (click)="goToSectionPage('vacuumLogs', page)">{{ page }}</button>
           </div>
-          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('vacuumLogs', 'next')" [disabled]="currentPages.vacuumLogs === sectionPageNumbers('vacuumLogs').length"><i class="pi pi-angle-right"></i></button>
-          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('vacuumLogs', 'last')" [disabled]="currentPages.vacuumLogs === sectionPageNumbers('vacuumLogs').length"><i class="pi pi-angle-double-right"></i></button>
+          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('vacuumLogs', 'next')" [disabled]="currentPages.vacuumLogs === sectionPageNumbers('vacuumLogs').length"><svg lucideIcon="chevron_right" class="lucide-icon"></svg></button>
+          <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50" (click)="changeSectionPage('vacuumLogs', 'last')" [disabled]="currentPages.vacuumLogs === sectionPageNumbers('vacuumLogs').length"><svg lucideIcon="last_page" class="lucide-icon"></svg></button>
         </div>
       </div>
     </div>
@@ -791,7 +783,7 @@
   <div class="db-modal-card db-modal-card--large" (click)="$event.stopPropagation()">
     <div class="flex items-start gap-4 mb-6">
       <div class="db-modal-icon bg-blue-100 text-blue-700">
-        <span class="material-symbols-outlined">schedule</span>
+        <svg lucideIcon="schedule" class="lucide-icon"></svg>
       </div>
       <div class="flex-1">
         <h3 class="text-lg font-semibold text-[#202020]">Programar backup</h3>
@@ -850,7 +842,7 @@
     <div class="mt-6 flex justify-end gap-3">
       <button class="db-secondary-button" (click)="closeBackupScheduleModal()">Cancelar</button>
       <button class="db-primary-button" (click)="createBackupSchedule()" [disabled]="isSavingBackupSchedule()">
-        <span class="material-symbols-outlined" [class.spin]="isSavingBackupSchedule()">{{ isSavingBackupSchedule() ? 'sync' : 'save' }}</span>
+        <svg [lucideIcon]="isSavingBackupSchedule() ? 'sync' : 'save'" class="lucide-icon" [class.spin]="isSavingBackupSchedule()"></svg>
         {{ isSavingBackupSchedule() ? 'Guardando...' : 'Guardar programación' }}
       </button>
     </div>
@@ -861,7 +853,7 @@
   <div class="db-modal-card db-modal-card--large" (click)="$event.stopPropagation()">
     <div class="flex items-start gap-4 mb-6">
       <div class="db-modal-icon bg-amber-100 text-amber-700">
-        <span class="material-symbols-outlined">auto_delete</span>
+        <svg lucideIcon="auto_delete" class="lucide-icon"></svg>
       </div>
       <div class="flex-1">
         <h3 class="text-lg font-semibold text-[#202020]">Crear tarea de limpieza</h3>
@@ -921,7 +913,7 @@
     <div class="mt-6 flex justify-end gap-3">
       <button class="db-secondary-button" (click)="closeRetentionPolicyModal()">Cancelar</button>
       <button class="db-primary-button" (click)="createRetentionPolicy()" [disabled]="isSavingRetentionPolicy()">
-        <span class="material-symbols-outlined" [class.spin]="isSavingRetentionPolicy()">{{ isSavingRetentionPolicy() ? 'sync' : 'save' }}</span>
+        <svg [lucideIcon]="isSavingRetentionPolicy() ? 'sync' : 'save'" class="lucide-icon" [class.spin]="isSavingRetentionPolicy()"></svg>
         {{ isSavingRetentionPolicy() ? 'Guardando...' : 'Guardar política' }}
       </button>
     </div>
@@ -932,7 +924,7 @@
   <div class="db-modal-card db-modal-card--large" (click)="$event.stopPropagation()">
     <div class="flex items-start gap-4 mb-6">
       <div class="db-modal-icon bg-cyan-100 text-cyan-700">
-        <span class="material-symbols-outlined">cleaning_services</span>
+        <svg lucideIcon="cleaning_services" class="lucide-icon"></svg>
       </div>
       <div class="flex-1">
         <h3 class="text-lg font-semibold text-[#202020]">Crear tarea de vacuum</h3>
@@ -980,7 +972,7 @@
     <div class="mt-6 flex justify-end gap-3">
       <button class="db-secondary-button" (click)="closeVacuumScheduleModal()">Cancelar</button>
       <button class="db-primary-button" (click)="createVacuumSchedule()" [disabled]="isSavingVacuumSchedule()">
-        <span class="material-symbols-outlined" [class.spin]="isSavingVacuumSchedule()">{{ isSavingVacuumSchedule() ? 'sync' : 'save' }}</span>
+        <svg [lucideIcon]="isSavingVacuumSchedule() ? 'sync' : 'save'" class="lucide-icon" [class.spin]="isSavingVacuumSchedule()"></svg>
         {{ isSavingVacuumSchedule() ? 'Guardando...' : 'Guardar programación' }}
       </button>
     </div>
@@ -991,7 +983,7 @@
   <div class="db-modal-card" (click)="$event.stopPropagation()">
     <div class="flex items-start gap-4">
       <div class="db-modal-icon bg-red-100 text-red-700">
-        <span class="material-symbols-outlined">warning</span>
+        <svg lucideIcon="warning" class="lucide-icon"></svg>
       </div>
       <div class="flex-1">
         <h3 class="text-lg font-semibold text-[#202020]">Confirmar eliminación</h3>
@@ -1009,7 +1001,7 @@
     <div class="mt-6 flex justify-end gap-3">
       <button class="db-secondary-button" (click)="closeDeleteConfigModal()">Cancelar</button>
       <button class="db-danger-button" (click)="confirmDeleteConfig()" [disabled]="isDeletingConfig()">
-        <span class="material-symbols-outlined" [class.spin]="isDeletingConfig()">{{ isDeletingConfig() ? 'sync' : 'delete' }}</span>
+        <svg [lucideIcon]="isDeletingConfig() ? 'sync' : 'delete'" class="lucide-icon" [class.spin]="isDeletingConfig()"></svg>
         {{ isDeletingConfig() ? 'Eliminando...' : 'Eliminar' }}
       </button>
     </div>
@@ -1020,7 +1012,7 @@
   <div class="db-modal-card" (click)="$event.stopPropagation()">
     <div class="flex items-start gap-4">
       <div class="db-modal-icon bg-blue-100 text-blue-700">
-        <span class="material-symbols-outlined">database</span>
+        <svg lucideIcon="database" class="lucide-icon"></svg>
       </div>
       <div class="flex-1">
         <h3 class="text-lg font-semibold text-[#202020]">Confirmar backup</h3>
@@ -1036,7 +1028,7 @@
     <div class="mt-6 flex justify-end gap-3">
       <button class="db-secondary-button" (click)="closeBackupConfirmModal()">Cancelar</button>
       <button class="db-primary-button" (click)="createBackup()" [disabled]="isCreatingBackup()">
-        <span class="material-symbols-outlined" [class.spin]="isCreatingBackup()">{{ isCreatingBackup() ? 'sync' : 'play_arrow' }}</span>
+        <svg [lucideIcon]="isCreatingBackup() ? 'sync' : 'play_arrow'" class="lucide-icon" [class.spin]="isCreatingBackup()"></svg>
         {{ isCreatingBackup() ? 'Creando...' : 'Continuar' }}
       </button>
     </div>
@@ -1047,7 +1039,7 @@
   <div class="db-modal-card" (click)="$event.stopPropagation()">
     <div class="flex items-start gap-4">
       <div class="db-modal-icon bg-red-100 text-red-700">
-        <span class="material-symbols-outlined">warning</span>
+        <svg lucideIcon="warning" class="lucide-icon"></svg>
       </div>
       <div class="flex-1">
         <h3 class="text-lg font-semibold text-[#202020]">Eliminar backup</h3>
@@ -1059,9 +1051,7 @@
     <div class="mt-6 flex justify-end gap-3">
       <button class="db-secondary-button" (click)="closeDeleteBackupModal()">Cancelar</button>
       <button class="db-danger-button" (click)="deleteBackup()" [disabled]="!!(backupToDelete() && isDeletingBackup()[backupToDelete()!.key])">
-        <span class="material-symbols-outlined" [class.spin]="!!(backupToDelete() && isDeletingBackup()[backupToDelete()!.key])">
-          {{ backupToDelete() && isDeletingBackup()[backupToDelete()!.key] ? 'sync' : 'delete' }}
-        </span>
+        <svg [lucideIcon]="backupToDelete() && isDeletingBackup()[backupToDelete()!.key] ? 'sync' : 'delete'" class="lucide-icon" [class.spin]="!!(backupToDelete() && isDeletingBackup()[backupToDelete()!.key])"></svg>
         {{ backupToDelete() && isDeletingBackup()[backupToDelete()!.key] ? 'Eliminando...' : 'Eliminar backup' }}
       </button>
     </div>
@@ -1072,7 +1062,7 @@
   <div class="db-modal-card" (click)="$event.stopPropagation()">
     <div class="flex items-start gap-4">
       <div class="db-modal-icon bg-amber-100 text-amber-700">
-        <span class="material-symbols-outlined">cleaning_services</span>
+        <svg lucideIcon="cleaning_services" class="lucide-icon"></svg>
       </div>
       <div class="flex-1">
         <h3 class="text-lg font-semibold text-[#202020]">Confirmar vacuum analyze</h3>
@@ -1084,7 +1074,7 @@
     <div class="mt-6 flex justify-end gap-3">
       <button class="db-secondary-button" (click)="closeVacuumConfirmModal()">Cancelar</button>
       <button class="db-primary-button" (click)="runVacuum()" [disabled]="isRunningVacuum()">
-        <span class="material-symbols-outlined" [class.spin]="isRunningVacuum()">{{ isRunningVacuum() ? 'sync' : 'play_arrow' }}</span>
+        <svg [lucideIcon]="isRunningVacuum() ? 'sync' : 'play_arrow'" class="lucide-icon" [class.spin]="isRunningVacuum()"></svg>
         {{ isRunningVacuum() ? 'Ejecutando...' : 'Ejecutar' }}
       </button>
     </div>
@@ -1095,7 +1085,7 @@
   <div class="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[85vh] overflow-hidden" (click)="$event.stopPropagation()">
     <div class="px-6 py-4 border-b flex items-center justify-between">
       <h3 class="text-lg font-semibold text-[#202020]">{{ selectedLogTitle() }}</h3>
-      <button class="text-gray-500 hover:text-gray-700" (click)="closeLogModal()"><span class="material-symbols-outlined">close</span></button>
+      <button class="text-gray-500 hover:text-gray-700" (click)="closeLogModal()"><svg lucideIcon="close" class="lucide-icon"></svg></button>
     </div>
     <div class="p-6 overflow-auto max-h-[70vh] bg-slate-950 text-slate-100 text-sm">
       <pre class="whitespace-pre-wrap font-mono">{{ selectedLogContent() }}</pre>

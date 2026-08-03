@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import * as maplibregl from 'maplibre-gl';
 import { CompanyInfo, CompanyService } from '../../../core/services/company.service';
 import { environment } from '../../../../environments/environment';
+import { IconModule } from '../../../shared/icons/icon.module';
+
 
 interface CompanyLocationData {
   lat: number;
@@ -16,7 +18,7 @@ interface CompanyLocationData {
 @Component({
   selector: 'app-ubicacion',
   standalone: true,
-  imports: [CommonModule],
+  imports: [IconModule, CommonModule],
   templateUrl: './ubicacion.html',
   styleUrls: ['./ubicacion.css']
 })

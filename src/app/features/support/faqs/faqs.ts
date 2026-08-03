@@ -4,11 +4,13 @@ import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CompanyService } from '../../../core/services/company.service';
 import { ToastrService } from 'ngx-toastr';
+import { IconModule } from '../../../shared/icons/icon.module';
+
 
 @Component({
   selector: 'app-faqs',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
+  imports: [IconModule, CommonModule, RouterModule, FormsModule],
   templateUrl: './faqs.html',
   styleUrl: './faqs.css'
 })

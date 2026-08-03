@@ -12,6 +12,8 @@ import {
 import { CartService } from '../../../core/services/cart.service';
 import { ProductService } from '../../../core/services/product.service';
 import { environment } from '../../../../environments/environment';
+import { IconModule } from '../../../shared/icons/icon.module';
+
 
 type AddressMode = 'existing' | 'new';
 type PaymentMode = 'saved' | 'new';
@@ -19,7 +21,7 @@ type PaymentMode = 'saved' | 'new';
 @Component({
   selector: 'app-checkout',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [IconModule, CommonModule, FormsModule, RouterModule],
   templateUrl: './checkout.html',
   styleUrl: './checkout.css',
 })

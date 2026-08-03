@@ -47,7 +47,7 @@
             type="submit"
             [disabled]="loading || form.invalid"
             class="flex-1 bg-gradient-to-r from-[#0367A6] to-[#035A91] text-white py-3 rounded-xl font-semibold disabled:opacity-60 disabled:cursor-not-allowed">
-            <span *ngIf="loading" class="animate-spin material-symbols-outlined text-lg">progress_activity</span>
+            <svg lucideIcon="progress_activity" *ngIf="loading" class="lucide-icon animate-spin text-lg"></svg>
             <span *ngIf="!loading">{{ loading ? 'Verificando...' : 'Verificar' }}</span>
           </button>
 

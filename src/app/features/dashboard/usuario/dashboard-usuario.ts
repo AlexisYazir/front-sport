@@ -11,11 +11,13 @@ import { DashboardPreferencesService } from '../../../core/services/dashboard-pr
 import { DashboardNavigationLoadingService } from '../../../core/services/dashboard-navigation-loading.service';
 import { DashboardRouteSkeleton } from '../shared/dashboard-route-skeleton/dashboard-route-skeleton';
 import { ToastrService } from 'ngx-toastr';
+import { IconModule } from '../../../shared/icons/icon.module';
+
 
 @Component({
   selector: 'app-dashboard-usuario',
   standalone: true,
-  imports: [CommonModule, RouterModule, MatTooltipModule, DashboardRouteSkeleton],
+  imports: [IconModule, CommonModule, RouterModule, MatTooltipModule, DashboardRouteSkeleton],
   templateUrl: './dashboard-usuario.html',
   styleUrl: './dashboard-usuario.css',
 })

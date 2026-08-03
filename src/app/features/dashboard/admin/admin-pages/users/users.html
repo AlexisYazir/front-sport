@@ -3,7 +3,7 @@
   <div class="dashboard-page-toolbar mb-6 p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
     <div class="flex items-center gap-3">
       <div class="bg-[#0367A6]/10 p-3 rounded-xl">
-        <span class="material-symbols-outlined text-[#0367A6] text-2xl">group</span>
+        <svg lucideIcon="group" class="lucide-icon text-[#0367A6] text-2xl"></svg>
       </div>
       <div>
         <h2 class="text-2xl font-bold text-[#202020]">Gestión de Usuarios</h2>
@@ -17,7 +17,7 @@
     <div class="relative">
       <div class="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-[#0367A6]"></div>
       <div class="absolute inset-0 flex items-center justify-center">
-        <span class="material-symbols-outlined text-[#0367A6] text-xl">group</span>
+        <svg lucideIcon="group" class="lucide-icon text-[#0367A6] text-xl"></svg>
       </div>
     </div>
     <p class="text-[#666666] mt-4">Cargando usuarios...</p>
@@ -32,7 +32,7 @@
       <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-4 hover:shadow-xl transition-all">
         <div class="flex items-center gap-3">
           <div class="bg-blue-100 p-3 rounded-xl">
-            <span class="material-symbols-outlined text-2xl text-blue-600">group</span>
+            <svg lucideIcon="group" class="lucide-icon text-2xl text-blue-600"></svg>
           </div>
           <div>
             <p class="text-xs text-gray-500">Total usuarios</p>
@@ -45,7 +45,7 @@
       <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-4 hover:shadow-xl transition-all">
         <div class="flex items-center gap-3">
           <div class="bg-green-100 p-3 rounded-xl">
-            <span class="material-symbols-outlined text-2xl text-green-600">check_circle</span>
+            <svg lucideIcon="check_circle" class="lucide-icon text-2xl text-green-600"></svg>
           </div>
           <div>
             <p class="text-xs text-gray-500">Activos / Inactivos</p>
@@ -62,7 +62,7 @@
       <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-4 hover:shadow-xl transition-all">
         <div class="flex items-center gap-3">
           <div class="bg-purple-100 p-3 rounded-xl">
-            <span class="material-symbols-outlined text-2xl text-purple-600">badge</span>
+            <svg lucideIcon="badge" class="lucide-icon text-2xl text-purple-600"></svg>
           </div>
           <div>
             <p class="text-xs text-gray-500">Por rol</p>
@@ -84,7 +84,7 @@
           </div>
           <button class="w-10 h-10 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-50 hover:text-[#0367A6] transition-all flex items-center justify-center"
                   (click)="refreshData()" title="Actualizar datos">
-            <span class="material-symbols-outlined text-lg">refresh</span>
+            <svg lucideIcon="refresh" class="lucide-icon text-lg"></svg>
           </button>
         </div>
       </div>
@@ -96,7 +96,7 @@
         <!-- Búsqueda -->
         <div class="relative w-full sm:w-96">
           <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#666666]">
-            <i class="pi pi-search text-lg"></i>
+            <svg lucideIcon="search" class="lucide-icon text-lg"></svg>
           </span>
           <input type="text" 
                  (input)="onSearch($event)" 
@@ -106,7 +106,7 @@
           <button *ngIf="searchValue" 
                   (click)="clearSearch()"
                   class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#0367A6] transition-colors">
-            <i class="pi pi-times-circle text-lg"></i>
+            <svg lucideIcon="close" class="lucide-icon text-lg"></svg>
           </button>
         </div>
       </div>
@@ -142,7 +142,7 @@
         <button *ngIf="filterRol !== 'todos' || filterEstado !== 'todos' || searchValue"
                 (click)="clearSearch()"
                 class="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm flex items-center gap-1">
-          <i class="pi pi-filter-slash"></i>
+          <svg lucideIcon="filter_alt_off" class="lucide-icon"></svg>
           Limpiar filtros
         </button>
       </div>
@@ -204,7 +204,7 @@
                   {{ user.activo === 1 ? 'Activo' : 'Inactivo' }}
                 </span>
                 <span *ngIf="togglingActive[user.id_usuario]" class="text-xs text-gray-400">
-                  <i class="pi pi-spin pi-spinner"></i>
+                  <svg lucideIcon="progress_activity" class="lucide-icon lucide-spin"></svg>
                 </span>
               </div>
             </td>
@@ -212,7 +212,7 @@
             <!-- Fecha Registro -->
             <td class="px-4 py-4">
               <div class="flex items-center gap-1 text-[#666666]">
-                <span class="material-symbols-outlined text-sm">calendar_today</span>
+                <svg lucideIcon="calendar_today" class="lucide-icon text-sm"></svg>
                 {{ formatDate(user.fecha_creacion) }}
               </div>
             </td>
@@ -225,14 +225,14 @@
                         class="w-9 h-9 rounded-full border-2 border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white transition-all"
                         (click)="toggleUserEdit(user, true)"
                         title="Editar usuario">
-                  <i class="pi pi-pencil"></i>
+                  <svg lucideIcon="edit" class="lucide-icon"></svg>
                 </button>
                 
                 <button *ngIf="user.editing" 
                         class="w-9 h-9 rounded-full border-2 border-gray-500 text-gray-500 hover:bg-gray-500 hover:text-white transition-all"
                         (click)="toggleUserEdit(user, false)"
                         title="Cancelar">
-                  <i class="pi pi-times"></i>
+                  <svg lucideIcon="close" class="lucide-icon"></svg>
                 </button>
                 
                 <!-- Botón Guardar (solo cuando hay cambios en el rol) -->
@@ -241,8 +241,8 @@
                         (click)="saveUser(user)"
                         [disabled]="user.saving"
                         title="Guardar cambios">
-                  <i *ngIf="!user.saving" class="pi pi-check"></i>
-                  <i *ngIf="user.saving" class="pi pi-spin pi-spinner"></i>
+                  <svg lucideIcon="check" *ngIf="!user.saving" class="lucide-icon"></svg>
+                  <svg lucideIcon="progress_activity" *ngIf="user.saving" class="lucide-icon lucide-spin"></svg>
                 </button>
               </div>
             </td>
@@ -252,12 +252,12 @@
           <tr *ngIf="filteredUsers.length === 0">
             <td colspan="7" class="text-center py-12">
               <div class="flex flex-col items-center gap-3">
-                <i class="pi pi-search text-5xl text-gray-300"></i>
+                <svg lucideIcon="search" class="lucide-icon text-5xl text-gray-300"></svg>
                 <span class="text-[#666666] text-lg font-medium">No se encontraron usuarios</span>
                 <span class="text-sm text-gray-400">Intenta con otros términos de búsqueda</span>
                 <button class="px-4 py-2 border border-gray-300 rounded-lg text-[#666666] hover:bg-gray-50 transition-all text-sm font-medium mt-2"
                         (click)="clearSearch()">
-                  <i class="pi pi-times mr-2"></i>
+                  <svg lucideIcon="close" class="lucide-icon mr-2"></svg>
                   Limpiar búsqueda
                 </button>
               </div>
@@ -280,11 +280,11 @@
       <div class="flex gap-2">
         <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50"
                 (click)="changePage('first')" [disabled]="first === 0">
-          <i class="pi pi-angle-double-left"></i>
+          <svg lucideIcon="first_page" class="lucide-icon"></svg>
         </button>
         <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50"
                 (click)="changePage('prev')" [disabled]="first === 0">
-          <i class="pi pi-angle-left"></i>
+          <svg lucideIcon="chevron_left" class="lucide-icon"></svg>
         </button>
         
         <div class="flex gap-1">
@@ -300,11 +300,11 @@
 
         <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50"
                 (click)="changePage('next')" [disabled]="last >= totalRecords">
-          <i class="pi pi-angle-right"></i>
+          <svg lucideIcon="chevron_right" class="lucide-icon"></svg>
         </button>
         <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all disabled:opacity-50"
                 (click)="changePage('last')" [disabled]="last >= totalRecords">
-          <i class="pi pi-angle-double-right"></i>
+          <svg lucideIcon="last_page" class="lucide-icon"></svg>
         </button>
       </div>
     </div>

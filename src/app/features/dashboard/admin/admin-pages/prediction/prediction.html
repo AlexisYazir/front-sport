@@ -1,14 +1,14 @@
 <div class="demand-page">
   <header class="page-header">
     <div class="heading-copy">
-      <div class="heading-icon"><span class="material-symbols-outlined">monitoring</span></div>
+      <div class="heading-icon"><svg lucideIcon="monitoring" class="lucide-icon"></svg></div>
       <div>
         <h1>Predicción mensual de demanda</h1>
         <p>Proyección de unidades por variante para apoyar compras e inventario</p>
       </div>
     </div>
     <button class="refresh-button" type="button" (click)="loadReport(true)" [disabled]="isLoading" title="Actualizar análisis">
-      <span class="material-symbols-outlined" [class.spinning]="isLoading">refresh</span>
+      <svg lucideIcon="refresh" class="lucide-icon" [class.spinning]="isLoading"></svg>
     </button>
   </header>
 
@@ -22,7 +22,7 @@
     </section>
   } @else if (hasError || !report) {
     <section class="empty-state">
-      <span class="material-symbols-outlined">query_stats</span>
+      <svg lucideIcon="query_stats" class="lucide-icon"></svg>
       <h2>No se pudo cargar la predicción</h2>
       <p>Comprueba que los archivos de análisis estén disponibles en el servidor.</p>
       <button type="button" (click)="loadReport()">Reintentar</button>
@@ -31,19 +31,19 @@
     <section class="kpi-grid" aria-label="Resumen de demanda">
       <article class="kpi-card kpi-card--blue">
         <div><span>Demanda estimada</span><strong>{{ report.summary.projectedDemand | number:'1.0-0' }}</strong><small>unidades proyectadas</small></div>
-        <span class="material-symbols-outlined">inventory</span>
+        <svg lucideIcon="inventory" class="lucide-icon"></svg>
       </article>
       <article class="kpi-card kpi-card--green">
         <div><span>Variación estimada</span><strong>{{ report.summary.variation > 0 ? '+' : '' }}{{ report.summary.variation | number:'1.0-0' }}</strong><small>{{ report.summary.variationPercent | number:'1.1-1' }}% frente al último mes</small></div>
-        <span class="material-symbols-outlined">moving</span>
+        <svg lucideIcon="moving" class="lucide-icon"></svg>
       </article>
       <article class="kpi-card kpi-card--orange">
         <div><span>Variantes al alza</span><strong>{{ report.summary.growing }}</strong><small>requieren seguimiento</small></div>
-        <span class="material-symbols-outlined">trending_up</span>
+        <svg lucideIcon="trending_up" class="lucide-icon"></svg>
       </article>
       <article class="kpi-card kpi-card--purple">
         <div><span>Variantes analizadas</span><strong>{{ report.summary.variants }}</strong><small>{{ report.meta.historicalRecords | number }} registros históricos</small></div>
-        <span class="material-symbols-outlined">dataset</span>
+        <svg lucideIcon="dataset" class="lucide-icon"></svg>
       </article>
     </section>
 
@@ -61,12 +61,12 @@
       <aside class="panel planning-panel">
         <div class="panel-heading"><div><h2>Lectura operativa</h2><p>Distribución de tendencias</p></div></div>
         <div class="trend-summary">
-          <div class="trend-summary__row growing"><span><i></i>Creciente</span><strong>{{ report.summary.growing }}</strong></div>
-          <div class="trend-summary__row stable"><span><i></i>Estable</span><strong>{{ report.summary.stable }}</strong></div>
-          <div class="trend-summary__row declining"><span><i></i>Decreciente</span><strong>{{ report.summary.declining }}</strong></div>
+          <div class="trend-summary__row growing"><span><span class="trend-dot" aria-hidden="true"></span>Creciente</span><strong>{{ report.summary.growing }}</strong></div>
+          <div class="trend-summary__row stable"><span><span class="trend-dot" aria-hidden="true"></span>Estable</span><strong>{{ report.summary.stable }}</strong></div>
+          <div class="trend-summary__row declining"><span><span class="trend-dot" aria-hidden="true"></span>Decreciente</span><strong>{{ report.summary.declining }}</strong></div>
         </div>
         <div class="planning-note">
-          <span class="material-symbols-outlined">lightbulb</span>
+          <svg lucideIcon="lightbulb" class="lucide-icon"></svg>
           <p>Prioriza la revisión de stock en variantes con tendencia creciente y demanda estimada alta.</p>
         </div>
       </aside>
@@ -74,12 +74,12 @@
 
     <section class="panel forecast-panel">
       <div class="forecast-heading">
-        <div><h2>Proyección por variante</h2><p>Compara el último mes observado con la demanda estimada</p></div>
+        <div><h2>Proyección por variante</h2><p>Compara los últimos tres meses observados con la demanda estimada</p></div>
         <span class="result-count"><strong>{{ filteredProducts.length }}</strong> resultados</span>
       </div>
       <div class="filters-row">
         <label class="search-control">
-          <span class="material-symbols-outlined">search</span>
+          <svg lucideIcon="search" class="lucide-icon"></svg>
           <input type="search" [(ngModel)]="searchTerm" (ngModelChange)="applyFilters()" placeholder="Buscar por producto o ID...">
         </label>
         <label class="select-control"><span>Tendencia</span>
@@ -89,20 +89,44 @@
         </label>
       </div>
 
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Producto</th><th>Último mes</th><th>Demanda estimada</th><th>Variación</th><th>Tendencia</th></tr></thead>
+      <div class="table-wrap overflow-x-auto rounded-xl border border-gray-200">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 border-b-2 border-gray-200">
+            <tr>
+              <th>Producto</th>
+              <th>{{ monthHeader(3) }}</th>
+              <th>{{ monthHeader(2) }}</th>
+              <th>{{ monthHeader(1) }}</th>
+              <th>Demanda estimada</th>
+              <th>Variación</th>
+              <th>Tendencia</th>
+            </tr>
+          </thead>
           <tbody>
-            @for (product of paginatedProducts; track product.id_variante) {
-              <tr>
-                <td><div class="product-cell"><span class="variant-icon material-symbols-outlined">inventory_2</span><div><strong>{{ product.nombre_producto }}</strong><small>Producto #{{ product.id_producto }} · Variante #{{ product.id_variante }}</small></div></div></td>
-                <td>{{ product.cantidad_mes_objetivo | number:'1.0-0' }} uds</td>
+            @for (product of paginatedProducts; track product.id_variante + '-' + $index) {
+              <tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                <td>
+                  <div class="product-cell">
+                    @if (product.imagen) {
+                      <img class="variant-image" [src]="product.imagen" [alt]="product.nombre_producto" loading="lazy" onerror="this.src='assets/images/no-imagen.webp'">
+                    } @else {
+                      <svg lucideIcon="package" class="lucide-icon variant-icon"></svg>
+                    }
+                    <div>
+                      <strong>{{ product.nombre_producto }}</strong>
+                      <small>Producto #{{ product.id_producto }} · Variante #{{ product.id_variante }} · {{ product.sku }}</small>
+                    </div>
+                  </div>
+                </td>
+                <td>{{ product.cantidad_hace_3_meses | number:'1.0-0' }} uds</td>
+                <td>{{ product.cantidad_hace_2_meses | number:'1.0-0' }} uds</td>
+                <td>{{ product.cantidad_mes_anterior | number:'1.0-0' }} uds</td>
                 <td><strong class="projected-value">{{ product.demanda_estimada | number:'1.0-0' }} uds</strong></td>
                 <td><span class="variation-pill" [class]="'variation-pill ' + variationClass(product.variacion_estimada)">{{ product.variacion_estimada > 0 ? '+' : '' }}{{ product.variacion_estimada | number:'1.0-0' }}</span></td>
-                <td><span class="trend-pill" [class]="'trend-pill ' + product.tendencia"><span class="material-symbols-outlined">{{ trendIcon(product.tendencia) }}</span>{{ product.tendencia | titlecase }}</span></td>
+                <td><span class="trend-pill" [class]="'trend-pill ' + product.tendencia"><svg [lucideIcon]="trendIcon(product.tendencia)" class="lucide-icon"></svg>{{ product.tendencia | titlecase }}</span></td>
               </tr>
             } @empty {
-              <tr><td colspan="5"><div class="table-empty">No hay variantes que coincidan con los filtros.</div></td></tr>
+              <tr class="table-empty-row"><td colspan="7"><div class="table-empty">No hay variantes que coincidan con los filtros.</div></td></tr>
             }
           </tbody>
         </table>
@@ -112,16 +136,16 @@
         <footer class="pagination">
           <span>Mostrando {{ (currentPage - 1) * pageSize + 1 }} a {{ currentPage * pageSize > filteredProducts.length ? filteredProducts.length : currentPage * pageSize }} de {{ filteredProducts.length }}</span>
           <nav aria-label="Paginación de variantes">
-            <button type="button" (click)="setPage(currentPage - 1)" [disabled]="currentPage === 1"><span class="material-symbols-outlined">chevron_left</span></button>
+            <button type="button" (click)="setPage(currentPage - 1)" [disabled]="currentPage === 1"><svg lucideIcon="chevron_left" class="lucide-icon"></svg></button>
             @for (page of visiblePages; track page) { <button type="button" (click)="setPage(page)" [class.active]="page === currentPage">{{ page }}</button> }
-            <button type="button" (click)="setPage(currentPage + 1)" [disabled]="currentPage === totalPages"><span class="material-symbols-outlined">chevron_right</span></button>
+            <button type="button" (click)="setPage(currentPage + 1)" [disabled]="currentPage === totalPages"><svg lucideIcon="chevron_right" class="lucide-icon"></svg></button>
           </nav>
         </footer>
       }
     </section>
 
     <section class="methodology-band">
-      <span class="material-symbols-outlined">model_training</span>
+      <svg lucideIcon="model_training" class="lucide-icon"></svg>
       <div><strong>Cómo interpretar este análisis</strong><p>{{ report.methodology.note }}</p></div>
       <div class="feature-list">@for (feature of report.methodology.features; track feature) { <span>{{ feature }}</span> }</div>
     </section>

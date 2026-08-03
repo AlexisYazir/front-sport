@@ -2,7 +2,7 @@
   <div class="dashboard-page-toolbar mb-6 p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-100 shadow-sm flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
     <div class="flex items-center gap-3">
       <div class="bg-[#0367A6]/10 p-3 rounded-xl">
-        <span class="material-symbols-outlined text-[#0367A6] text-2xl">orders</span>
+        <svg lucideIcon="orders" class="lucide-icon text-[#0367A6] text-2xl"></svg>
       </div>
       <div>
         <h2 class="text-2xl font-bold text-[#202020]">{{ selectedOrderId() ? 'Detalle de pedido' : 'Pedidos' }}</h2>
@@ -14,7 +14,7 @@
       type="button"
       (click)="backToOrders()"
       class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-[#0367A6] text-[#0367A6] font-semibold hover:bg-[#0367A6]/10 transition-all">
-      <span class="material-symbols-outlined text-lg">arrow_back</span>
+      <svg lucideIcon="arrow_back" class="lucide-icon text-lg"></svg>
       Volver a pedidos
     </button>
   </div>
@@ -23,7 +23,7 @@
     <div class="relative">
       <div class="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-[#0367A6]"></div>
       <div class="absolute inset-0 flex items-center justify-center">
-        <span class="material-symbols-outlined text-[#0367A6] text-xl">orders</span>
+        <svg lucideIcon="orders" class="lucide-icon text-[#0367A6] text-xl"></svg>
       </div>
     </div>
     <p class="text-[#666666] mt-4">Cargando pedidos...</p>
@@ -34,7 +34,7 @@
       <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div class="relative w-full sm:w-96">
           <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#666666]">
-            <i class="pi pi-search text-lg"></i>
+            <svg lucideIcon="search" class="lucide-icon text-lg"></svg>
           </span>
           <input
             type="text"
@@ -54,7 +54,7 @@
             (click)="refresh()"
             class="w-10 h-10 rounded-full border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6] transition-all flex items-center justify-center"
             title="Actualizar datos">
-            <i class="pi pi-refresh text-lg"></i>
+            <svg lucideIcon="refresh" class="lucide-icon text-lg"></svg>
           </button>
         </div>
       </div>
@@ -73,7 +73,7 @@
           type="button"
           (click)="clearFilters()"
           class="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm flex items-center gap-1">
-          <i class="pi pi-filter-slash"></i>
+          <svg lucideIcon="filter_alt_off" class="lucide-icon"></svg>
           Limpiar filtros
         </button>
       </div>
@@ -88,7 +88,7 @@
             <p class="text-xs text-yellow-700 mt-1">Por preparar</p>
           </div>
           <div class="bg-yellow-100 p-3 rounded-lg">
-            <span class="material-symbols-outlined text-yellow-700 text-3xl">pending_actions</span>
+            <svg lucideIcon="pending_actions" class="lucide-icon text-yellow-700 text-3xl"></svg>
           </div>
         </div>
       </button>
@@ -100,7 +100,7 @@
             <p class="text-xs text-blue-600 mt-1">Preparando o en tránsito</p>
           </div>
           <div class="bg-blue-100 p-3 rounded-lg">
-            <span class="material-symbols-outlined text-blue-700 text-3xl">local_shipping</span>
+            <svg lucideIcon="local_shipping" class="lucide-icon text-blue-700 text-3xl"></svg>
           </div>
         </div>
       </button>
@@ -112,14 +112,14 @@
             <p class="text-xs text-green-600 mt-1">Finalizados</p>
           </div>
           <div class="bg-green-100 p-3 rounded-lg">
-            <span class="material-symbols-outlined text-green-600 text-3xl">task_alt</span>
+            <svg lucideIcon="task_alt" class="lucide-icon text-green-600 text-3xl"></svg>
           </div>
         </div>
       </button>
     </div>
 
     <div *ngIf="filteredOrders().length === 0" class="text-center py-12 border border-dashed border-gray-200 rounded-xl">
-      <i class="pi pi-search text-5xl text-gray-300"></i>
+      <svg lucideIcon="search" class="lucide-icon text-5xl text-gray-300"></svg>
       <p class="text-[#666666] text-lg font-medium mt-3">No se encontraron pedidos</p>
       <button type="button" class="px-4 py-2 border border-gray-300 rounded-lg text-[#666666] hover:bg-gray-50 transition-all text-sm font-medium mt-4" (click)="clearFilters()">
         Limpiar filtros
@@ -147,7 +147,7 @@
           <div class="lg:text-right flex lg:block items-center justify-between gap-3">
             <p class="text-xl font-bold text-[#0367A6]">{{ formatCurrency(order.total) }}</p>
             <button type="button" (click)="viewOrder(order)" class="mt-0 lg:mt-3 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#0367A6] text-white text-sm font-semibold hover:bg-[#035A91] transition-all">
-              <span class="material-symbols-outlined text-lg">visibility</span>
+              <svg lucideIcon="visibility" class="lucide-icon text-lg"></svg>
               Ver pedido
             </button>
           </div>
@@ -159,13 +159,13 @@
       <div class="text-sm text-[#666666]">Mostrando {{ firstItem }} a {{ lastItem }} de {{ filteredOrders().length }} pedidos</div>
       <div class="flex gap-2">
         <button type="button" class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 disabled:opacity-50" (click)="goToPage(currentPage() - 1)" [disabled]="currentPage() === 1">
-          <i class="pi pi-angle-left"></i>
+          <svg lucideIcon="chevron_left" class="lucide-icon"></svg>
         </button>
         <button *ngFor="let page of pageNumbers()" type="button" class="min-w-[2.5rem] h-10 rounded-lg transition-all font-medium" [ngClass]="currentPage() === page ? 'bg-[#0367A6] text-white hover:bg-[#035A91]' : 'border border-gray-300 text-[#666666] hover:bg-gray-50 hover:text-[#0367A6]'" (click)="goToPage(page)">
           {{ page }}
         </button>
         <button type="button" class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] hover:bg-gray-50 disabled:opacity-50" (click)="goToPage(currentPage() + 1)" [disabled]="currentPage() === totalPages()">
-          <i class="pi pi-angle-right"></i>
+          <svg lucideIcon="chevron_right" class="lucide-icon"></svg>
         </button>
       </div>
     </div>
@@ -194,7 +194,7 @@
           <div class="space-y-5">
             <div class="rounded-xl border border-gray-100 overflow-hidden">
               <div class="px-4 py-3 bg-gray-50 border-b border-gray-100 flex items-center gap-2">
-                <span class="material-symbols-outlined text-[#0367A6]">inventory_2</span>
+                <svg lucideIcon="inventory_2" class="lucide-icon text-[#0367A6]"></svg>
                 <h4 class="font-bold text-[#202020]">Productos</h4>
               </div>
               <div class="divide-y divide-gray-100">
@@ -225,7 +225,7 @@
               <h4 class="font-bold text-[#202020] mb-3">Actualizar envío</h4>
               <div class="grid grid-cols-2 gap-2">
                 <button *ngFor="let action of shipmentActions" type="button" (click)="quickShipmentUpdate(order, action.value)" [disabled]="updatingOrderId() === order.id_orden || !isShipmentActionAllowed(order, action.value)" class="inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border text-sm font-bold transition-all disabled:opacity-45 disabled:cursor-not-allowed" [ngClass]="action.value === 'preparando' ? 'border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100' : action.value === 'enviado' ? 'border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100' : action.value === 'en_transito' ? 'border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100' : 'border-green-200 bg-green-50 text-green-700 hover:bg-green-100'">
-                  <span class="material-symbols-outlined text-lg">{{ action.icon }}</span>
+                  <svg [lucideIcon]="action.icon" class="lucide-icon text-lg"></svg>
                   {{ action.label }}
                 </button>
               </div>
@@ -275,7 +275,7 @@
                 [disabled]="generatingCodeOrderId() === order.id_orden || !canGenerateDeliveryCode(order)"
                 class="mt-4 w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#0367A6] text-white font-bold hover:bg-[#035A91] disabled:opacity-50 disabled:cursor-not-allowed transition-all">
                 <span *ngIf="generatingCodeOrderId() === order.id_orden" class="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin"></span>
-                <span *ngIf="generatingCodeOrderId() !== order.id_orden" class="material-symbols-outlined text-lg">print</span>
+                <svg lucideIcon="print" *ngIf="generatingCodeOrderId() !== order.id_orden" class="lucide-icon text-lg"></svg>
                 {{
                   generatingCodeOrderId() === order.id_orden
                     ? 'Generando...'
@@ -292,7 +292,7 @@
     </ng-container>
     <ng-template #orderNotFound>
       <div class="text-center py-14 border border-dashed border-gray-200 rounded-xl">
-        <span class="material-symbols-outlined text-5xl text-gray-300">search_off</span>
+        <svg lucideIcon="search_off" class="lucide-icon text-5xl text-gray-300"></svg>
         <p class="text-[#666666] text-lg font-medium mt-3">No encontramos este pedido</p>
         <button type="button" (click)="backToOrders()" class="mt-4 px-4 py-2 rounded-lg bg-[#0367A6] text-white font-semibold">Volver</button>
       </div>
@@ -303,7 +303,7 @@
     <section class="w-full max-w-2xl rounded-2xl bg-white shadow-2xl border border-gray-100 p-6" (click)="$event.stopPropagation()">
       <div class="flex items-start gap-4">
         <div class="w-16 h-16 rounded-full bg-[#0367A6]/10 flex items-center justify-center shrink-0">
-          <span class="material-symbols-outlined text-[#0367A6] text-3xl">local_shipping</span>
+          <svg lucideIcon="local_shipping" class="lucide-icon text-[#0367A6] text-3xl"></svg>
         </div>
         <div class="flex-1 min-w-0">
           <h3 class="text-2xl font-bold text-[#202020]">{{ getShipmentStatusLabel(modal.status) }}</h3>
@@ -330,7 +330,7 @@
             </button>
             <button type="button" (click)="confirmShipmentUpdate()" [disabled]="updatingOrderId() === modal.order.id_orden" class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#0367A6] text-white font-bold hover:bg-[#035A91] disabled:opacity-70 disabled:cursor-wait shadow-lg shadow-[#0367A6]/20">
               <span *ngIf="updatingOrderId() === modal.order.id_orden" class="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin"></span>
-              <span *ngIf="updatingOrderId() !== modal.order.id_orden" class="material-symbols-outlined text-lg">check_circle</span>
+              <svg lucideIcon="check_circle" *ngIf="updatingOrderId() !== modal.order.id_orden" class="lucide-icon text-lg"></svg>
               {{ updatingOrderId() === modal.order.id_orden ? 'Guardando...' : 'Confirmar cambio' }}
             </button>
           </div>

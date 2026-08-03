@@ -4,10 +4,12 @@ import { provideHttpClient, withInterceptors } from '@angular/common/http';
 
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideToastr } from 'ngx-toastr';
+import { provideLucideIcons } from '@lucide/angular';
 
 import { routes } from './app.routes';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { errorInterceptor } from './core/interceptors/error-interceptor';
+import { SPORT_CENTER_ICONS } from './shared/icons/sport-center-icons';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -16,6 +18,7 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes),
     provideHttpClient(withInterceptors([authInterceptor, errorInterceptor])),
     provideAnimations(),
+    provideLucideIcons(...SPORT_CENTER_ICONS),
     provideToastr({
       timeOut: 3200,
       positionClass: 'toast-top-center',

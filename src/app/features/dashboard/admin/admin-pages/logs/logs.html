@@ -2,7 +2,7 @@
   <div class="dashboard-page-toolbar mb-6 p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
     <div class="flex items-center gap-3">
       <div class="bg-[#0367A6]/10 p-3 rounded-xl">
-        <span class="material-symbols-outlined text-[#0367A6] text-2xl">article</span>
+        <svg lucideIcon="article" class="lucide-icon text-[#0367A6] text-2xl"></svg>
       </div>
       <div>
         <h2 class="text-2xl font-bold text-[#202020]">Logs del Sistema</h2>
@@ -16,7 +16,7 @@
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
       <div class="relative w-full sm:w-96">
         <span class="absolute left-3 top-1/2 -translate-y-1/2 text-[#666666]">
-          <i class="pi pi-search text-lg"></i>
+          <svg lucideIcon="search" class="lucide-icon text-lg"></svg>
         </span>
         <input
           type="text"
@@ -38,7 +38,7 @@
           (click)="refreshData()"
           title="Actualizar datos"
         >
-          <i class="pi pi-refresh text-lg"></i>
+          <svg lucideIcon="refresh" class="lucide-icon text-lg"></svg>
         </button>
       </div>
     </div>
@@ -87,7 +87,7 @@
         class="px-3 py-2 bg-gray-100 text-[#3d4a63] rounded-lg hover:bg-gray-200 transition-all flex items-center gap-1 text-sm font-medium"
         (click)="clearFilters()"
       >
-        <i class="pi pi-filter-slash text-sm"></i>
+        <svg lucideIcon="filter_alt_off" class="lucide-icon text-sm"></svg>
         Limpiar filtros
       </button>
     </div>
@@ -131,7 +131,7 @@
               (click)="openDetail(log)"
               title="Ver detalle"
             >
-              <i class="pi pi-eye"></i>
+              <svg lucideIcon="visibility" class="lucide-icon"></svg>
             </button>
           </td>
         </tr>
@@ -159,10 +159,10 @@
 
     <div class="flex items-center gap-2">
       <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] disabled:opacity-40" (click)="changePage('first')" [disabled]="currentPage === 1">
-        <i class="pi pi-angle-double-left"></i>
+        <svg lucideIcon="first_page" class="lucide-icon"></svg>
       </button>
       <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] disabled:opacity-40" (click)="changePage('prev')" [disabled]="currentPage === 1">
-        <i class="pi pi-angle-left"></i>
+        <svg lucideIcon="chevron_left" class="lucide-icon"></svg>
       </button>
 
       <button
@@ -179,10 +179,10 @@
       </button>
 
       <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] disabled:opacity-40" (click)="changePage('next')" [disabled]="currentPage === totalPages()">
-        <i class="pi pi-angle-right"></i>
+        <svg lucideIcon="chevron_right" class="lucide-icon"></svg>
       </button>
       <button class="w-10 h-10 rounded-lg border border-gray-300 text-[#666666] disabled:opacity-40" (click)="changePage('last')" [disabled]="currentPage === totalPages()">
-        <i class="pi pi-angle-double-right"></i>
+        <svg lucideIcon="last_page" class="lucide-icon"></svg>
       </button>
     </div>
   </div>
@@ -193,7 +193,7 @@
     <div class="bg-[#0367A6] px-6 py-5 text-white flex items-start justify-between">
       <div class="flex items-center gap-4">
         <div class="w-12 h-12 rounded-xl bg-white/15 flex items-center justify-center">
-          <span class="material-symbols-outlined text-2xl">description</span>
+          <svg lucideIcon="description" class="lucide-icon text-2xl"></svg>
         </div>
         <div>
           <h3 class="text-2xl font-bold">Detalle del log</h3>
@@ -202,7 +202,7 @@
       </div>
 
       <button class="text-white hover:text-white/80 transition-colors" (click)="closeDetail()">
-        <i class="pi pi-times text-2xl"></i>
+        <svg lucideIcon="close" class="lucide-icon text-2xl"></svg>
       </button>
     </div>
 

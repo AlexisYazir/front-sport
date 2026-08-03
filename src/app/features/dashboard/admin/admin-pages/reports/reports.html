@@ -2,7 +2,7 @@
   <header class="reports-header report-enter">
     <div class="reports-heading">
       <div class="heading-icon" aria-hidden="true">
-        <span class="material-symbols-outlined">query_stats</span>
+        <svg lucideIcon="query_stats" class="lucide-icon"></svg>
       </div>
       <div>
         <h1>Reportes de ventas</h1>
@@ -18,14 +18,14 @@
         [disabled]="isLoading() || isRefreshing()"
         title="Actualizar reporte"
         aria-label="Actualizar reporte">
-        <span class="material-symbols-outlined" [class.spinning]="isRefreshing()">refresh</span>
+        <svg lucideIcon="refresh" class="lucide-icon" [class.spinning]="isRefreshing()"></svg>
       </button>
       <button
         type="button"
         class="primary-action"
         (click)="exportToExcel()"
         [disabled]="!report() || isExporting()">
-        <span *ngIf="!isExporting()" class="material-symbols-outlined">download</span>
+        <svg lucideIcon="download" *ngIf="!isExporting()" class="lucide-icon"></svg>
         <span *ngIf="isExporting()" class="button-spinner" aria-hidden="true"></span>
         <span>{{ isExporting() ? 'Generando...' : 'Exportar Excel' }}</span>
       </button>
@@ -60,7 +60,7 @@
         </select>
       </label>
       <button type="button" class="apply-button" (click)="applyFilters()" [disabled]="isLoading() || isRefreshing()">
-        <span class="material-symbols-outlined">filter_alt</span>
+        <svg lucideIcon="filter_alt" class="lucide-icon"></svg>
         Aplicar
       </button>
     </div>
@@ -88,12 +88,12 @@
 
   <section *ngIf="!isLoading() && errorMessage() && !report()" class="error-state report-enter">
     <div class="state-icon error">
-      <span class="material-symbols-outlined">cloud_off</span>
+      <svg lucideIcon="cloud_off" class="lucide-icon"></svg>
     </div>
     <h2>No pudimos cargar el reporte</h2>
     <p>{{ errorMessage() }} Revisa tu conexión e inténtalo nuevamente.</p>
     <button type="button" class="primary-action" (click)="retry()">
-      <span class="material-symbols-outlined">refresh</span>
+      <svg lucideIcon="refresh" class="lucide-icon"></svg>
       Reintentar
     </button>
   </section>
@@ -105,17 +105,17 @@
         <strong>{{ formatDate(data.meta.from) }} - {{ formatDate(data.meta.to) }}</strong>
       </div>
       <div class="comparison-context">
-        <span class="material-symbols-outlined">compare_arrows</span>
+        <svg lucideIcon="compare_arrows" class="lucide-icon"></svg>
         <span>Comparado con {{ formatDate(data.meta.previousFrom) }} - {{ formatDate(data.meta.previousTo) }}</span>
       </div>
       <div class="generated-context">
-        <span class="material-symbols-outlined">schedule</span>
+        <svg lucideIcon="schedule" class="lucide-icon"></svg>
         <span>Actualizado {{ data.meta.generatedAt | date:'HH:mm' }}</span>
       </div>
     </section>
 
     <div *ngIf="data.summary.orders === 0" class="no-activity report-enter">
-      <span class="material-symbols-outlined">event_busy</span>
+      <svg lucideIcon="event_busy" class="lucide-icon"></svg>
       <div>
         <strong>Sin movimientos en este periodo</strong>
         <p>Prueba con un rango de fechas más amplio para consultar actividad comercial.</p>
@@ -126,10 +126,10 @@
       <article *ngFor="let card of kpiCards(); let index = index" class="kpi-card report-enter" [style.--delay]="index * 55 + 'ms'">
         <div class="kpi-topline">
           <div class="kpi-icon" [ngClass]="card.tone">
-            <span class="material-symbols-outlined">{{ card.icon }}</span>
+            <svg [lucideIcon]="card.icon" class="lucide-icon"></svg>
           </div>
           <span class="change-pill" [ngClass]="changeClass(card.change)">
-            <span class="material-symbols-outlined">{{ changeIcon(card.change) }}</span>
+            <svg [lucideIcon]="changeIcon(card.change)" class="lucide-icon"></svg>
             {{ changeText(card.change) }}
           </span>
         </div>
@@ -142,15 +142,15 @@
 
     <section class="financial-strip financial-strip--three report-enter" aria-label="Desglose financiero">
       <div>
-        <span class="material-symbols-outlined metric-blue">account_balance_wallet</span>
+        <svg lucideIcon="account_balance_wallet" class="lucide-icon metric-blue"></svg>
         <p><span>Venta cobrada</span><strong>{{ formatCurrency(data.summary.grossSales) }}</strong></p>
       </div>
       <div>
-        <span class="material-symbols-outlined metric-purple">sell</span>
+        <svg lucideIcon="sell" class="lucide-icon metric-purple"></svg>
         <p><span>Descuentos aplicados</span><strong>{{ formatCurrency(data.summary.discounts) }}</strong></p>
       </div>
       <div>
-        <span class="material-symbols-outlined metric-orange">local_shipping</span>
+        <svg lucideIcon="local_shipping" class="lucide-icon metric-orange"></svg>
         <p><span>Ingresos por envío</span><strong>{{ formatCurrency(data.summary.shippingRevenue) }}</strong></p>
       </div>
     </section>
@@ -165,7 +165,7 @@
       </div>
       <div class="insights-grid">
         <article *ngFor="let insight of data.insights" class="insight-item" [ngClass]="insight.type">
-          <span class="material-symbols-outlined">{{ insight.icon }}</span>
+          <svg [lucideIcon]="insight.icon" class="lucide-icon"></svg>
           <div>
             <h3>{{ insight.title }}</h3>
             <p>{{ insight.message }}</p>
@@ -207,7 +207,7 @@
           </div>
         </div>
         <div *ngIf="data.orderStatuses.length === 0" class="mini-empty">
-          <span class="material-symbols-outlined">donut_large</span>
+          <svg lucideIcon="donut_large" class="lucide-icon"></svg>
           <p>Sin pedidos para distribuir</p>
         </div>
       </article>
@@ -226,7 +226,7 @@
           <canvas baseChart [type]="'bar'" [data]="categoryChartData()" [options]="barChartOptions()"></canvas>
         </div>
         <div *ngIf="data.categories.length === 0" class="mini-empty">
-          <span class="material-symbols-outlined">category</span>
+          <svg lucideIcon="category" class="lucide-icon"></svg>
           <p>Sin categorías con ventas</p>
         </div>
       </article>
@@ -263,7 +263,7 @@
                 <div class="product-cell">
                   <div class="product-image">
                     <img *ngIf="product.image" [src]="product.image" [alt]="product.name" (error)="hideBrokenImage($event)">
-                    <span class="material-symbols-outlined">inventory_2</span>
+                    <svg lucideIcon="inventory_2" class="lucide-icon"></svg>
                   </div>
                   <div>
                     <strong>{{ product.name }}</strong>
@@ -286,7 +286,7 @@
         </table>
       </div>
       <div *ngIf="data.topProducts.length === 0" class="mini-empty spacious">
-        <span class="material-symbols-outlined">inventory_2</span>
+        <svg lucideIcon="inventory_2" class="lucide-icon"></svg>
         <p>No hay productos vendidos en el periodo.</p>
       </div>
     </section>
@@ -302,7 +302,7 @@
         </div>
         <div *ngIf="data.promotions.length > 0" class="promotion-list">
           <div *ngFor="let promotion of data.promotions" class="promotion-item">
-            <div class="promotion-icon"><span class="material-symbols-outlined">local_offer</span></div>
+            <div class="promotion-icon"><svg lucideIcon="local_offer" class="lucide-icon"></svg></div>
             <div class="promotion-main">
               <strong>{{ promotion.name }}</strong>
               <span>{{ promotion.code || 'Promoción automática' }} · {{ promotion.uses }} usos</span>
@@ -314,7 +314,7 @@
           </div>
         </div>
         <div *ngIf="data.promotions.length === 0" class="mini-empty spacious">
-          <span class="material-symbols-outlined">sell</span>
+          <svg lucideIcon="sell" class="lucide-icon"></svg>
           <p>No se utilizaron promociones en el periodo.</p>
         </div>
       </article>
@@ -342,14 +342,14 @@
           </div>
         </div>
         <div *ngIf="data.topCustomers.length === 0" class="mini-empty spacious">
-          <span class="material-symbols-outlined">group</span>
+          <svg lucideIcon="group" class="lucide-icon"></svg>
           <p>No hay clientes con compras en el periodo.</p>
         </div>
       </article>
     </section>
 
     <footer class="report-note report-enter">
-      <span class="material-symbols-outlined">info</span>
+      <svg lucideIcon="info" class="lucide-icon"></svg>
       <p>
         El reporte considera pedidos con pago aprobado. La venta neta descuenta los reembolsos resueltos dentro del periodo seleccionado.
       </p>

@@ -4,11 +4,13 @@ import { FormsModule } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
 import { Categorie } from '../../../../../core/models/product.model';
 import { ProductService } from '../../../../../core/services/product.service';
+import { IconModule } from '../../../../../shared/icons/icon.module';
+
 
 @Component({
   selector: 'app-categories',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [IconModule, CommonModule, FormsModule],
   templateUrl: './categories.html',
   styleUrls: ['./categories.css']
 })
