@@ -826,10 +826,10 @@ onFechaFinChange(value: string) {  // Cambiado de event a value
 
   getTipoIcon(tipo: string): string {
     switch(tipo) {
-      case 'entrada': return 'arrow_downward';
-      case 'salida': return 'arrow_upward';
+      case 'entrada': return 'arrow';    // ← CORREGIDO
+      case 'salida': return 'arrow';        // ← CORREGIDO
       case 'ajuste': return 'edit';
-      default: return 'help';
+      default: return 'help-circle';
     }
   }
 

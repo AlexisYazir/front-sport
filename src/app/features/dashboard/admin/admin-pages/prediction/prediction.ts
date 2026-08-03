@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { BaseChartDirective } from 'ng2-charts';
 import { ToastrService } from 'ngx-toastr';
@@ -46,14 +46,26 @@ export class Prediction implements OnInit {
   private readonly dataMiningService = inject(DataMiningService);
   private readonly toastr = inject(ToastrService);
 
+  // Estado del reporte
   report: DemandReport | null = null;
-  isLoading = true;
-  hasError = false;
-  searchTerm = '';
-  trendFilter: 'all' | DemandProduct['tendencia'] = 'all';
-  currentPage = 1;
-  readonly pageSize = 10;
+  isLoading = signal<boolean>(true);
+  hasError = signal<boolean>(false);
+  
+  // Datos filtrados y paginados
+  filteredProducts: DemandProduct[] = [];
+  paginatedProducts: DemandProduct[] = [];
+  
+  // Filtros
+  searchValue: string = '';
+  filterTipo: string = 'all';
+  
+  // Paginación - SIEMPRE 10 POR PÁGINA
+  rowsPerPage: number = 10;
+  first: number = 0;
+  currentPage: number = 1;
+  totalRecords: number = 0;
 
+  // Datos del chart
   chartData: ChartConfiguration<'line'>['data'] = { labels: [], datasets: [] };
   readonly chartOptions: ChartConfiguration<'line'>['options'] = {
     responsive: true,
@@ -82,64 +94,136 @@ export class Prediction implements OnInit {
   }
 
   loadReport(showToast = false): void {
-    this.isLoading = true;
-    this.hasError = false;
+    this.isLoading.set(true);
+    this.hasError.set(false);
     this.dataMiningService.getDemandReport().subscribe({
       next: (report) => {
         const normalizedReport = this.normalizeReport(report);
         this.report = normalizedReport;
         this.buildChart(normalizedReport);
-        this.currentPage = 1;
-        this.isLoading = false;
+        this.applyFilters();
+        this.isLoading.set(false);
         if (showToast) {
           this.toastr.success('Proyección y métricas actualizadas', 'Demanda mensual');
         }
       },
       error: () => {
-        this.hasError = true;
-        this.isLoading = false;
+        this.hasError.set(true);
+        this.isLoading.set(false);
         this.toastr.error('No fue posible cargar el análisis de demanda', 'Reportes');
       },
     });
   }
 
-  get filteredProducts(): DemandProduct[] {
-    const query = this.normalize(this.searchTerm);
-    return (this.report?.products ?? [])
-      .filter((product) => this.isValidProduct(product))
-      .filter((product) => {
-      const matchesTrend = this.trendFilter === 'all' || product.tendencia === this.trendFilter;
-      const matchesSearch = !query || this.normalize(
-        `${product.nombre_producto} ${product.sku} ${product.id_producto} ${product.id_variante}`,
-      ).includes(query);
-      return matchesTrend && matchesSearch;
-    });
-  }
-
-  get paginatedProducts(): DemandProduct[] {
-    const start = (this.currentPage - 1) * this.pageSize;
-    return this.filteredProducts.slice(start, start + this.pageSize);
-  }
-
-  get totalPages(): number {
-    return Math.max(1, Math.ceil(this.filteredProducts.length / this.pageSize));
-  }
-
-  get visiblePages(): number[] {
-    const start = Math.max(1, Math.min(this.currentPage - 2, this.totalPages - 4));
-    const end = Math.min(this.totalPages, start + 4);
-    return Array.from({ length: Math.max(0, end - start + 1) }, (_, index) => start + index);
-  }
-
+  // APLICAR FILTROS
   applyFilters(): void {
+    if (!this.report) {
+      this.filteredProducts = [];
+      this.totalRecords = 0;
+      this.updatePaginatedProducts();
+      return;
+    }
+
+    let filtered = [...this.report.products];
+
+    // Filtro por búsqueda
+    if (this.searchValue) {
+      const term = this.normalize(this.searchValue);
+      filtered = filtered.filter(product => {
+        const searchText = this.normalize(
+          `${product.nombre_producto} ${product.sku} ${product.id_producto} ${product.id_variante}`
+        );
+        return searchText.includes(term);
+      });
+    }
+
+    // Filtro por tendencia
+    if (this.filterTipo !== 'all') {
+      filtered = filtered.filter(product => product.tendencia === this.filterTipo);
+    }
+
+    this.filteredProducts = filtered;
+    this.totalRecords = filtered.length;
+    this.first = 0;
     this.currentPage = 1;
+    this.updatePaginatedProducts();
   }
 
-  setPage(page: number): void {
-    if (page < 1 || page > this.totalPages) return;
-    this.currentPage = page;
+  onSearch(event: any): void {
+    this.searchValue = event.target.value;
+    this.applyFilters();
   }
 
+  onFilterTipoChange(event: any): void {
+    this.filterTipo = event.target.value;
+    this.applyFilters();
+  }
+
+  clearSearch(): void {
+    this.searchValue = '';
+    this.filterTipo = 'all';
+    this.applyFilters();
+  }
+
+  refreshData(): void {
+    this.loadReport(true);
+  }
+
+  // Paginación
+  updatePaginatedProducts(): void {
+    const start = this.first;
+    const end = Math.min(this.first + this.rowsPerPage, this.totalRecords);
+    this.paginatedProducts = this.filteredProducts.slice(start, end);
+    this.currentPage = Math.floor(this.first / this.rowsPerPage) + 1;
+  }
+
+  changePage(action: 'first' | 'prev' | 'next' | 'last'): void {
+    switch (action) {
+      case 'first': 
+        this.first = 0; 
+        break;
+      case 'prev': 
+        if (this.first > 0) this.first -= this.rowsPerPage; 
+        break;
+      case 'next': 
+        if (this.first + this.rowsPerPage < this.totalRecords) this.first += this.rowsPerPage; 
+        break;
+      case 'last': 
+        this.first = Math.floor((this.totalRecords - 1) / this.rowsPerPage) * this.rowsPerPage; 
+        break;
+    }
+    this.updatePaginatedProducts();
+  }
+
+  goToPage(page: number): void {
+    this.first = (page - 1) * this.rowsPerPage;
+    this.updatePaginatedProducts();
+  }
+
+  get last(): number {
+    return Math.min(this.first + this.rowsPerPage, this.totalRecords);
+  }
+
+  get pageNumbers(): number[] {
+    const totalPages = Math.ceil(this.totalRecords / this.rowsPerPage);
+    const current = this.currentPage;
+    const pages: number[] = [];
+    
+    if (totalPages <= 5) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      if (current <= 3) {
+        for (let i = 1; i <= 5; i++) pages.push(i);
+      } else if (current >= totalPages - 2) {
+        for (let i = totalPages - 4; i <= totalPages; i++) pages.push(i);
+      } else {
+        for (let i = current - 2; i <= current + 2; i++) pages.push(i);
+      }
+    }
+    return pages;
+  }
+
+  // Métodos de utilidad
   formatMonth(value: string | null): string {
     if (!value) return 'Sin definir';
     const normalized = /^\d{4}-\d{2}$/.test(value) ? `${value}-01T12:00:00Z` : value;
@@ -182,10 +266,10 @@ export class Prediction implements OnInit {
     return 'neutral';
   }
 
-  trendIcon(trend: DemandProduct['tendencia']): string {
+  getTrendIcon(trend: DemandProduct['tendencia']): string | null {
     if (trend === 'creciente') return 'trending_up';
     if (trend === 'decreciente') return 'trending_down';
-    return 'trending_flat';
+    return null;
   }
 
   private buildChart(report: DemandReport): void {
@@ -281,7 +365,7 @@ export class Prediction implements OnInit {
   private normalizeTrend(value: unknown, variation: number): DemandProduct['tendencia'] {
     const trend = this.normalize(String(value ?? ''));
     if (trend === 'creciente' || trend === 'estable' || trend === 'decreciente') {
-      return trend;
+      return trend as DemandProduct['tendencia'];
     }
     if (Math.abs(variation) <= 2) return 'estable';
     return variation > 0 ? 'creciente' : 'decreciente';
