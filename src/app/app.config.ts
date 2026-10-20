@@ -19,7 +19,8 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
-    provideServiceWorker('ngsw-worker.js', {
+    // Cambiar la URL renueva también la CSP que conservaba el worker instalado.
+    provideServiceWorker('ngsw-worker.js?v=2', {
       enabled: !isDevMode(),
       registrationStrategy: 'registerImmediately',
       updateViaCache: 'none',
