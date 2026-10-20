@@ -47,10 +47,10 @@
     Permissions-Policy = """
       accelerometer=(),
       camera=(),
-      geolocation=(),
+      geolocation=(self),
       gyroscope=(),
       magnetometer=(),
-      microphone=(),
+      microphone=(self),
       payment=(),
       usb=(),
       interest-cohort=()
@@ -98,3 +98,14 @@
   for = "/*.html"
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
+
+# Comprobar siempre las nuevas versiones del service worker y su índice.
+[[headers]]
+  for = "/ngsw-worker.js"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+[[headers]]
+  for = "/ngsw.json"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"

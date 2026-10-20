@@ -1,6 +1,6 @@
-import { Component, inject, signal, computed, HostListener } from '@angular/core';
+import { Component, DestroyRef, inject, signal, computed, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, Router } from '@angular/router';
+import { RouterModule, Router, NavigationStart } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
 import { CartService } from '../../../core/services/cart.service';
@@ -10,6 +10,7 @@ import { UserRole } from '../../../core/models/user.model';
 import { DashboardPreferencesService } from '../../../core/services/dashboard-preferences.service';
 import { frontendLogger } from '../../../core/services/frontend-logger.service';
 import { IconModule } from '../../icons/icon.module';
+import { VoiceSearchService } from '../../../core/services/voice-search.service';
 
 
 interface NavbarNotification {
@@ -26,6 +27,7 @@ interface NavbarNotification {
   selector: 'app-navbar',
   standalone: true,
   imports: [IconModule, CommonModule, RouterModule, FormsModule],
+  providers: [VoiceSearchService],
   templateUrl: './navbar.html',
   styleUrl: './navbar.css',
 })
@@ -37,10 +39,18 @@ export class Navbar {
   private router = inject(Router);
   private productService = inject(ProductService);
   public preferences = inject(DashboardPreferencesService);
+  readonly voiceSearch = inject(VoiceSearchService);
   private closeTimeout: any;
   private infoTimeout: any;
   private supportTimeout: any;
   private isMobile = window.innerWidth < 768;
+
+  constructor() {
+    const navigation = this.router.events.subscribe((event) => {
+      if (event instanceof NavigationStart) this.voiceSearch.cancel();
+    });
+    inject(DestroyRef).onDestroy(() => navigation.unsubscribe());
+  }
   
 
   // Estados de los dropdowns (por click) - para móvil
@@ -496,6 +506,7 @@ export class Navbar {
   }
 
   onSearch(termOverride?: string) {
+    this.voiceSearch.cancel();
     const term = (termOverride ?? this.searchTerm()).trim();
     if (term) {
       this.searchTerm.set(term);
@@ -511,6 +522,7 @@ export class Navbar {
   }
 
   clearSearch() {
+    this.voiceSearch.cancel();
     this.searchTerm.set('');
     this.searchPanelOpen.set(true);
   }
@@ -522,7 +534,17 @@ export class Navbar {
   }
 
   onSearchInput(): void {
+    this.voiceSearch.cancel();
     this.searchPanelOpen.set(true);
+  }
+
+  toggleVoiceSearch(): void {
+    this.searchPanelOpen.set(false);
+    if (this.voiceSearch.active()) {
+      this.voiceSearch.cancel('Búsqueda por voz cancelada. Puedes escribir tu búsqueda.');
+    } else {
+      this.voiceSearch.start((term) => this.onSearch(term));
+    }
   }
 
   openSearchPanel(): void {
@@ -530,6 +552,7 @@ export class Navbar {
   }
 
   selectSearchSuggestion(product: Product): void {
+    this.voiceSearch.cancel();
     this.saveRecentSearch(product.nombre);
     this.searchPanelOpen.set(false);
     this.mobileMenuOpen.set(false);
@@ -597,6 +620,7 @@ export class Navbar {
   }
 
   toggleMobileMenu() {
+    this.voiceSearch.cancel();
     this.mobileMenuOpen.update(val => !val);
     if (this.mobileMenuOpen()) {
       this.closeAllMenus();

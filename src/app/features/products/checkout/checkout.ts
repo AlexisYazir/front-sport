@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
@@ -11,6 +11,7 @@ import {
 } from '../../../core/models/cart.model';
 import { CartService } from '../../../core/services/cart.service';
 import { ProductService } from '../../../core/services/product.service';
+import { GeolocationService, getGeolocationErrorMessage } from '../../../core/services/geolocation.service';
 import { environment } from '../../../../environments/environment';
 import { IconModule } from '../../../shared/icons/icon.module';
 
@@ -30,6 +31,13 @@ export class Checkout implements OnInit {
   private readonly cartService = inject(CartService);
   private readonly toastr = inject(ToastrService);
   private readonly router = inject(Router);
+  private readonly geolocation = inject(GeolocationService);
+  private readonly destroyRef = inject(DestroyRef);
+  private locationLookup: AbortController | null = null;
+
+  constructor() {
+    this.destroyRef.onDestroy(() => this.locationLookup?.abort());
+  }
 
   summary = signal<CheckoutSummaryResponse | null>(null);
   isLoading = signal(true);
@@ -269,75 +277,65 @@ export class Checkout implements OnInit {
     });
   }
 
-  useCurrentLocation(): void {
-    if (!navigator.geolocation) {
-      this.toastr.warning('Tu navegador no permite consultar ubicación', 'Dirección');
+  async useCurrentLocation(): Promise<void> {
+    if (this.isLocating()) return;
+    this.isLocating.set(true);
+    let position: GeolocationPosition;
+    try {
+      position = await this.geolocation.getCurrentPosition();
+    } catch (error) {
+      if (!this.destroyRef.destroyed) {
+        this.toastr.warning(getGeolocationErrorMessage(error), 'Dirección');
+        this.isLocating.set(false);
+      }
       return;
     }
+    if (this.destroyRef.destroyed) return;
 
-    this.isLocating.set(true);
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        try {
-          const { latitude, longitude } = position.coords;
-          const url =
-            `https://api.maptiler.com/geocoding/${longitude},${latitude}.json` +
-            `?key=${environment.maptilerApiKey}&language=es&limit=1`;
-          const response = await fetch(url);
+    const lookup = new AbortController();
+    this.locationLookup = lookup;
+    try {
+      const { latitude, longitude } = position.coords;
+      const url =
+        `https://api.maptiler.com/geocoding/${longitude},${latitude}.json` +
+        `?key=${environment.maptilerApiKey}&language=es&limit=1`;
+      const response = await fetch(url, { signal: lookup.signal });
+      if (!response.ok) throw new Error('No fue posible consultar la dirección');
+      const data = await response.json();
+      if (this.destroyRef.destroyed) return;
+      const feature = data?.features?.[0];
+      if (!feature) throw new Error('No se encontró una dirección para esta ubicación');
+      const context = Array.isArray(feature.context) ? feature.context : [];
+      const contextValue = (prefix: string) =>
+        context.find((item: any) => String(item?.id || '').startsWith(prefix))?.text || '';
+      const postcode = contextValue('postcode');
+      const city = contextValue('place') || contextValue('municipality') || contextValue('locality');
+      const state = contextValue('region');
+      const neighborhood = contextValue('neighborhood') || contextValue('locality') || this.addressForm.colonia;
 
-          if (!response.ok) {
-            throw new Error('No fue posible consultar la ubicación');
-          }
-
-          const data = await response.json();
-          const feature = data?.features?.[0];
-          const context = Array.isArray(feature?.context) ? feature.context : [];
-          const contextValue = (prefix: string) =>
-            context.find((item: any) => String(item?.id || '').startsWith(prefix))?.text || '';
-          const postcode = contextValue('postcode');
-          const city =
-            contextValue('place') ||
-            contextValue('municipality') ||
-            contextValue('locality');
-          const state = contextValue('region');
-          const neighborhood =
-            contextValue('neighborhood') ||
-            contextValue('locality') ||
-            this.addressForm.colonia;
-
-          this.addressForm.alias = 'Ubicación actual';
-          this.addressForm.calle =
-            [feature?.address, feature?.text].filter(Boolean).join(' ') ||
-            feature?.place_name?.split(',')?.[0] ||
-            this.addressForm.calle;
-          this.addressForm.colonia = neighborhood || this.addressForm.colonia;
-          this.addressForm.ciudad = city || this.addressForm.ciudad;
-          this.addressForm.estado = state || this.addressForm.estado;
-          this.addressForm.codigo_postal = postcode || this.addressForm.codigo_postal;
-          this.addressForm.pais = 'México';
-          this.addressMode.set('new');
-
-          if (postcode && /^\d{5}$/.test(postcode)) {
-            this.lookupPostalCode(postcode);
-          }
-
-          this.toastr.success('Ubicación cargada. Revisa calle y número antes de pagar.', 'Dirección');
-        } catch (error) {
-          this.toastr.error('No fue posible obtener la dirección actual', 'Dirección');
-        } finally {
-          this.isLocating.set(false);
-        }
-      },
-      () => {
-        this.isLocating.set(false);
-        this.toastr.warning('Permite el acceso a tu ubicación para usar esta opción', 'Dirección');
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 60000,
-      },
-    );
+      this.addressForm.alias = 'Ubicación actual';
+      this.addressForm.calle =
+        [feature.address, feature.text].filter(Boolean).join(' ') ||
+        feature.place_name?.split(',')?.[0] || this.addressForm.calle;
+      this.addressForm.colonia = neighborhood || this.addressForm.colonia;
+      this.addressForm.ciudad = city || this.addressForm.ciudad;
+      this.addressForm.estado = state || this.addressForm.estado;
+      this.addressForm.codigo_postal = postcode || this.addressForm.codigo_postal;
+      this.addressForm.pais = 'México';
+      this.addressMode.set('new');
+      if (postcode && /^\d{5}$/.test(postcode)) this.lookupPostalCode(postcode);
+      this.toastr.success('Ubicación cargada. Revisa calle y número antes de pagar.', 'Dirección');
+    } catch {
+      if (!this.destroyRef.destroyed) {
+        this.toastr.error(
+          'Tu ubicación se obtuvo, pero no fue posible consultar la dirección. Revisa tu conexión o completa los campos manualmente.',
+          'Dirección',
+        );
+      }
+    } finally {
+      this.locationLookup = null;
+      if (!this.destroyRef.destroyed) this.isLocating.set(false);
+    }
   }
 
   onCardNumberChange(value: string): void {

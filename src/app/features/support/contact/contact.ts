@@ -95,7 +95,7 @@ export class ContactPage implements OnInit {
     if (!this.isAuthenticated()) {
       this.toastr.warning('Debes iniciar sesión para contactar a soporte', 'Acceso requerido');
       this.router.navigate(['/auth/login'], { 
-        queryParams: { returnUrl: '/contact' } 
+        queryParams: { returnUrl: '/support/contact' } 
       });
       return;
     }
@@ -151,7 +151,7 @@ export class ContactPage implements OnInit {
 
   goToLogin() {
     this.router.navigate(['/auth/login'], { 
-      queryParams: { returnUrl: '/contact' } 
+      queryParams: { returnUrl: '/support/contact' } 
     });
   }
 }

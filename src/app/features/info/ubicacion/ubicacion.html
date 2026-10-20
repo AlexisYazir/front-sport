@@ -16,7 +16,29 @@
     </a>
   </div>
 
-  <div id="map" class="map-container"></div>
+  <div class="location-tools" [attr.aria-busy]="locating">
+    <div class="location-actions">
+      <button type="button" (click)="useMyLocation()" [disabled]="locating" class="location-button">
+        {{ locating ? 'Buscando ubicación…' : 'Usar mi ubicación' }}
+      </button>
+      <a *ngIf="directionsUrl as directions" [href]="directions" target="_blank"
+        rel="noopener noreferrer" class="directions-link">Cómo llegar desde mi ubicación</a>
+    </div>
+    <p *ngIf="!locationMessage" class="location-hint">Obtén tu posición aproximada para conocer la distancia al local.</p>
+    <p role="status" aria-live="polite" aria-atomic="true" class="location-status"
+      [class.location-error]="locationError">{{ locationMessage }}</p>
+    <p *ngIf="userLocation && !storeLocationConfigured" class="location-hint">
+      La distancia y las indicaciones estarán disponibles cuando se cargue una ubicación válida del local.
+    </p>
+    <p *ngIf="distanceKm !== null" class="location-distance">
+      Distancia aproximada en línea recta: <strong>{{ distanceKm | number:'1.1-2' }} km</strong>.
+      No representa una ruta por carretera.
+      <span *ngIf="userLocation">Precisión estimada: {{ userLocation.accuracy | number:'1.0-0' }} m.</span>
+    </p>
+  </div>
+
+  <p *ngIf="mapUnavailable" class="location-error">El mapa no pudo cargarse. Puedes consultar las indicaciones en Google Maps.</p>
+  <div #mapContainer id="map" class="map-container" role="region" aria-label="Mapa de Sport Center y tu ubicación aproximada"></div>
 
   <div class="map-footer">
     <div>

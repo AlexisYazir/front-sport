@@ -11,8 +11,19 @@
     </p>
   </header>
 
+  <div *ngIf="!isLoading() && !hasData()" role="status" aria-live="polite"
+       class="bg-white rounded-xl border border-gray-100 shadow-sm p-6 text-center">
+    <h2 class="text-xl font-semibold text-[#202020]">Preguntas pendientes de descargar</h2>
+    <p *ngIf="loadError() === 'offline-empty'" class="text-[#666666] mt-3">
+      Todavía no hay preguntas frecuentes guardadas en este dispositivo. Se descargarán automáticamente cuando recuperes la conexión.
+    </p>
+    <p *ngIf="loadError() !== 'offline-empty'" class="text-[#666666] mt-3">
+      No pudimos cargar las preguntas frecuentes. Intenta consultar esta página de nuevo más tarde.
+    </p>
+  </div>
+
   <!-- Buscador -->
-  <div class="max-w-2xl mx-auto">
+  <div *ngIf="hasData()" class="max-w-2xl mx-auto">
     <div class="relative">
       <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#666666]">
         <svg lucideIcon="search" class="lucide-icon text-xl"></svg>
@@ -62,7 +73,8 @@
   </div>
 
   <!-- FAQs agrupadas por sección -->
-  <div *ngIf="!isLoading()" class="space-y-8">
+  <div *ngIf="!isLoading() && hasData()" class="space-y-8">
+    <p *ngIf="faqs.length === 0" class="text-center text-[#666666]">Aún no hay preguntas frecuentes publicadas.</p>
     <!-- Si hay filtro activo, mostrar resultados planos -->
     <div *ngIf="searchTerm || selectedSeccion !== 'todas'" class="space-y-4">
       <div *ngFor="let faq of filteredFaqs" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">

@@ -8,6 +8,7 @@ import { Product, ProductFilters } from '../../../core/models/product.model';
 import { ToastrService } from 'ngx-toastr';
 import { Breadcrumbs, BreadcrumbItem } from '../../../shared/components/breadcrumbs/breadcrumbs';
 import { IconModule } from '../../../shared/icons/icon.module';
+import { environment } from '../../../../environments/environment';
 
 
 @Component({
@@ -246,19 +247,14 @@ export class ProductMarca implements OnInit {
 
   // Métodos de utilidad
   getProductImage(product: Product): string {
-    if (product.variantes && product.variantes.length > 0) {
-      for (const variante of product.variantes) {
-        if (variante.imagenes && variante.imagenes.length > 0) {
-          return variante.imagenes[0];
-        }
-      }
-    }
-    
-    if (product.imagen && product.imagen !== 'null' && product.imagen !== '') {
-      if (product.imagen.startsWith('http')) {
-        return product.imagen;
-      }
-      return `http://localhost:3000/${product.imagen}`;
+    const variantImage = product.variantes?.find(variant => variant.imagenes?.length)?.imagenes[0];
+    const image = (variantImage || product.imagen || '').trim();
+
+    if (image && image !== 'null') {
+      // Conserva las URL completas y las imágenes que pertenecen al propio frontend.
+      if (/^(?:https?:\/\/|data:image\/|blob:)/i.test(image) || /^\/?assets\//.test(image)) return image;
+      if (image.startsWith('//')) return new URL(image, environment.apiUrl).href;
+      return `${environment.apiUrl.replace(/\/$/, '')}/${image.replace(/^\/+/, '')}`;
     }
     return `https://ui-avatars.com/api/?name=${encodeURIComponent(product.nombre || 'Producto')}&background=0367A6&color=fff&size=128`;
   }

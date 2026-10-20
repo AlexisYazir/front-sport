@@ -1,7 +1,7 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { CompanyInfo, CompanyService } from '../../../core/services/company.service';
+import { PublicInfoOfflineService } from '../../../core/services/public-info-offline.service';
 import { IconModule } from '../../../shared/icons/icon.module';
 
 
@@ -13,22 +13,19 @@ import { IconModule } from '../../../shared/icons/icon.module';
   styleUrl: './nosotros.css'
 })
 export class Nosotros implements OnInit {
-  private companyService = inject(CompanyService);
-  
-  companyInfo: CompanyInfo | null = null;
+  private readonly publicInfo = inject(PublicInfoOfflineService);
+  readonly loadError = this.publicInfo.company.error;
+  readonly isLoading = computed(() => this.publicInfo.company.loading() && this.companyInfo === null);
+
+  get companyInfo() { return this.publicInfo.company.data(); }
 
   ngOnInit() {
+    this.publicInfo.start();
     this.loadCompanyInfo();
   }
 
   loadCompanyInfo() {
-    this.companyService.getCompanyInfo().subscribe({
-      next: (info) => {
-        this.companyInfo = info;
-      },
-      error: (error) => {
-      }
-    });
+    void this.publicInfo.refreshCompany();
   }
 
   get valores(): string[] {
