@@ -1,8 +1,9 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, effect, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CompanyService } from '../../../core/services/company.service';
+import { PublicInfoOfflineService } from '../../../core/services/public-info-offline.service';
 import { ToastrService } from 'ngx-toastr';
 import { IconModule } from '../../../shared/icons/icon.module';
 
@@ -17,13 +18,23 @@ import { IconModule } from '../../../shared/icons/icon.module';
 export class Faqs implements OnInit {
   private companyService = inject(CompanyService);
   private toastr = inject(ToastrService);
+  private readonly publicInfo = inject(PublicInfoOfflineService);
   
   faqs: any[] = [];
   filteredFaqs: any[] = [];
   searchTerm: string = '';
   selectedSeccion: string = 'todas';
   
-  isLoading = signal<boolean>(false);
+  readonly loadError = this.publicInfo.faqs.error;
+  readonly hasData = computed(() => this.publicInfo.faqs.data() !== null);
+  readonly isLoading = computed(() => this.publicInfo.faqs.loading() && !this.hasData());
+
+  private readonly syncPublicFaqs = effect(() => {
+    const data = this.publicInfo.faqs.data();
+    // Los votos modifican solo la copia de la pantalla, sin alterar los datos guardados.
+    this.faqs = data?.map(faq => ({ ...faq })) ?? [];
+    this.applyFilters();
+  });
   
   // Obtener todas las secciones disponibles para el filtro
   get secciones(): string[] {
@@ -32,22 +43,12 @@ export class Faqs implements OnInit {
   }
 
   ngOnInit() {
+    this.publicInfo.start();
     this.loadFaqs();
   }
 
   loadFaqs() {
-    this.isLoading.set(true);
-    this.companyService.getAllFaqs(true).subscribe({
-      next: (data) => {
-        this.faqs = data;
-        this.applyFilters();
-        this.isLoading.set(false);
-      },
-      error: (error) => {
-        this.toastr.error('Error al cargar las preguntas frecuentes', 'Error');
-        this.isLoading.set(false);
-      }
-    });
+    void this.publicInfo.refreshFaqs();
   }
 
   applyFilters() {

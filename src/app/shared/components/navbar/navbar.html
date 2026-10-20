@@ -24,7 +24,7 @@
           </div>
           
           <!-- Search Bar -->
-          <div *ngIf="shouldShowCatalogNavigation()" class="hidden lg:block ml-4">
+          <div *ngIf="shouldShowCatalogNavigation()" class="hidden lg:block ml-4 catalog-search-desktop">
             <div class="catalog-search-shell w-80">
               <input
                 type="text"
@@ -44,6 +44,18 @@
                 <svg lucideIcon="arrow_forward" class="lucide-icon"></svg>
               </button>
               <button
+                type="button"
+                (click)="toggleVoiceSearch()"
+                class="catalog-search-voice"
+                [class.catalog-search-voice--active]="voiceSearch.active()"
+                [attr.aria-label]="voiceSearch.active() ? 'Detener búsqueda por voz' : 'Buscar por voz'"
+                [attr.title]="voiceSearch.active() ? 'Detener búsqueda por voz' : 'Buscar por voz'"
+                [attr.aria-pressed]="voiceSearch.active()"
+                aria-describedby="voice-search-status-desktop"
+              >
+                <svg lucideIcon="settings_voice" class="lucide-icon" aria-hidden="true"></svg>
+              </button>
+              <button
                 *ngIf="searchTerm()"
                 (click)="clearSearch()"
                 class="catalog-search-clear"
@@ -56,6 +68,10 @@
                 <ng-container *ngTemplateOutlet="catalogSearchContent"></ng-container>
               </div>
             </div>
+            <p id="voice-search-status-desktop" role="status" aria-live="polite" aria-atomic="true"
+               class="voice-search-status" [class.voice-search-status--visible]="voiceSearch.message()">
+              {{ voiceSearch.message() }}
+            </p>
           </div>
         </div>
 
@@ -504,6 +520,18 @@
             />
             <svg lucideIcon="search" class="lucide-icon catalog-search-leading-icon"></svg>
             <button
+              type="button"
+              (click)="toggleVoiceSearch()"
+              class="catalog-search-voice catalog-search-voice--mobile"
+              [class.catalog-search-voice--active]="voiceSearch.active()"
+              [attr.aria-label]="voiceSearch.active() ? 'Detener búsqueda por voz' : 'Buscar por voz'"
+              [attr.title]="voiceSearch.active() ? 'Detener búsqueda por voz' : 'Buscar por voz'"
+              [attr.aria-pressed]="voiceSearch.active()"
+              aria-describedby="voice-search-status-mobile"
+            >
+              <svg lucideIcon="settings_voice" class="lucide-icon" aria-hidden="true"></svg>
+            </button>
+            <button
               *ngIf="searchTerm()"
               (click)="clearSearch()"
               class="catalog-search-clear catalog-search-clear--mobile"
@@ -515,6 +543,10 @@
               <ng-container *ngTemplateOutlet="catalogSearchContent"></ng-container>
             </div>
           </div>
+          <p id="voice-search-status-mobile" role="status" aria-live="polite" aria-atomic="true"
+             class="voice-search-status voice-search-status--mobile" [class.voice-search-status--visible]="voiceSearch.message()">
+            {{ voiceSearch.message() }}
+          </p>
         </div>
 
         <!-- Navigation links mobile -->

@@ -7,17 +7,18 @@
     <h1 class="text-3xl sm:text-4xl font-bold text-[#202020]">
       {{ companyInfo?.nombre || 'Sport Center' }}
     </h1>
-    <p class="text-[#666666] max-w-3xl mx-auto">
-      {{ companyInfo?.mision || 'Conoce quiénes somos, cómo trabajamos y por qué queremos que cada compra se sienta clara, confiable y útil para tu práctica deportiva.' }}
+    <p *ngIf="companyInfo as info" class="text-[#666666] max-w-3xl mx-auto">
+      {{ info.mision || 'Conoce quiénes somos, cómo trabajamos y por qué queremos que cada compra se sienta clara, confiable y útil para tu práctica deportiva.' }}
     </p>
   </header>
 
+  <ng-container *ngIf="companyInfo as info; else pendingInfo">
   <div class="grid gap-6 lg:grid-cols-[1.2fr,0.8fr]">
     <article class="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 sm:p-8">
       <p class="text-sm font-semibold uppercase tracking-[0.2em] text-[#0367A6]">Nuestra visión</p>
       <h2 class="text-2xl font-bold text-[#202020] mt-3">Hacia dónde llevamos la experiencia Sport Center</h2>
       <p class="text-[#555555] leading-7 mt-4">
-        {{ companyInfo?.vision || 'Buscamos convertirnos en una referencia confiable para personas que necesitan equipamiento deportivo, atención clara y una experiencia digital bien organizada.' }}
+        {{ info.vision || 'Buscamos convertirnos en una referencia confiable para personas que necesitan equipamiento deportivo, atención clara y una experiencia digital bien organizada.' }}
       </p>
 
       <div class="mt-8">
@@ -35,19 +36,19 @@
       <div class="space-y-5 mt-6">
         <div>
           <p class="text-blue-100 text-sm">Contacto</p>
-          <p class="font-semibold text-lg">{{ companyInfo?.email || 'Sin correo registrado' }}</p>
-          <p class="text-blue-100">{{ companyInfo?.telefono || 'Sin teléfono registrado' }}</p>
+          <p class="font-semibold text-lg">{{ info.email || 'Sin correo registrado' }}</p>
+          <p class="text-blue-100">{{ info.telefono || 'Sin teléfono registrado' }}</p>
         </div>
         <div>
           <p class="text-blue-100 text-sm">Sitio web</p>
           <a
-            *ngIf="companyInfo?.sitio_web; else noWeb"
-            [href]="companyInfo?.sitio_web || '#'"
+            *ngIf="info.sitio_web; else noWeb"
+            [href]="info.sitio_web || '#'"
             target="_blank"
             rel="noopener noreferrer"
             class="font-semibold underline decoration-white/40 underline-offset-4"
           >
-            {{ companyInfo?.sitio_web }}
+            {{ info.sitio_web }}
           </a>
           <ng-template #noWeb>
             <p class="font-semibold">Sin sitio web registrado</p>
@@ -85,15 +86,31 @@
     <article class="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
       <h2 class="text-xl font-bold text-[#202020] mb-4">Redes y presencia digital</h2>
       <div class="grid gap-3">
-        <a *ngIf="companyInfo?.facebook" [href]="companyInfo?.facebook" target="_blank" rel="noopener noreferrer" class="text-[#0367A6] font-medium hover:underline">Facebook</a>
-        <a *ngIf="companyInfo?.instagram" [href]="companyInfo?.instagram" target="_blank" rel="noopener noreferrer" class="text-[#0367A6] font-medium hover:underline">Instagram</a>
-        <a *ngIf="companyInfo?.twitter" [href]="companyInfo?.twitter" target="_blank" rel="noopener noreferrer" class="text-[#0367A6] font-medium hover:underline">X / Twitter</a>
-        <a *ngIf="companyInfo?.tiktok" [href]="companyInfo?.tiktok" target="_blank" rel="noopener noreferrer" class="text-[#0367A6] font-medium hover:underline">TikTok</a>
-        <a *ngIf="companyInfo?.youtube" [href]="companyInfo?.youtube" target="_blank" rel="noopener noreferrer" class="text-[#0367A6] font-medium hover:underline">YouTube</a>
-        <p *ngIf="!companyInfo?.facebook && !companyInfo?.instagram && !companyInfo?.twitter && !companyInfo?.tiktok && !companyInfo?.youtube" class="text-[#666666]">
+        <a *ngIf="info.facebook" [href]="info.facebook" target="_blank" rel="noopener noreferrer" class="text-[#0367A6] font-medium hover:underline">Facebook</a>
+        <a *ngIf="info.instagram" [href]="info.instagram" target="_blank" rel="noopener noreferrer" class="text-[#0367A6] font-medium hover:underline">Instagram</a>
+        <a *ngIf="info.twitter" [href]="info.twitter" target="_blank" rel="noopener noreferrer" class="text-[#0367A6] font-medium hover:underline">X / Twitter</a>
+        <a *ngIf="info.tiktok" [href]="info.tiktok" target="_blank" rel="noopener noreferrer" class="text-[#0367A6] font-medium hover:underline">TikTok</a>
+        <a *ngIf="info.youtube" [href]="info.youtube" target="_blank" rel="noopener noreferrer" class="text-[#0367A6] font-medium hover:underline">YouTube</a>
+        <p *ngIf="!info.facebook && !info.instagram && !info.twitter && !info.tiktok && !info.youtube" class="text-[#666666]">
           Aún no hay redes sociales configuradas públicamente.
         </p>
       </div>
     </article>
   </div>
+  </ng-container>
+
+  <ng-template #pendingInfo>
+    <div role="status" aria-live="polite" class="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 sm:p-8 text-center">
+      <p *ngIf="isLoading()" class="text-[#666666]">Cargando información de Sport Center...</p>
+      <ng-container *ngIf="!isLoading()">
+        <h2 class="text-xl font-semibold text-[#202020]">Información pendiente de descargar</h2>
+        <p *ngIf="loadError() === 'offline-empty'" class="text-[#666666] mt-3">
+          Todavía no hay información de Sport Center guardada en este dispositivo. Se descargará automáticamente cuando recuperes la conexión.
+        </p>
+        <p *ngIf="loadError() !== 'offline-empty'" class="text-[#666666] mt-3">
+          No pudimos cargar la información de Sport Center. Intenta consultar esta página de nuevo más tarde.
+        </p>
+      </ng-container>
+    </div>
+  </ng-template>
 </section>

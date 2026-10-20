@@ -621,6 +621,10 @@ export class Empresa implements OnInit, OnDestroy {
   private initializeLocationMap(): void {
     this.destroyMap();
 
+    maplibregl.setWorkerUrl(new URL(
+      `assets/maplibre/maplibre-gl-worker.mjs?v=${maplibregl.getVersion()}`, document.baseURI,
+    ).href);
+
     const style = environment.maptilerApiKey
       ? `https://api.maptiler.com/maps/streets/style.json?key=${environment.maptilerApiKey}`
       : 'https://demotiles.maplibre.org/style.json';
