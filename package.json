@@ -10,6 +10,7 @@
     "build": "ng build",
     "build:prod": "ng build --configuration production",
     "preview:pwa": "node scripts/serve-pwa.mjs",
+    "verify:pwa": "node scripts/verify-pwa-deploy.mjs",
     "build:dev": "ng build --configuration development",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",

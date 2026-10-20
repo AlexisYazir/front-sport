@@ -201,6 +201,15 @@ export class Home implements OnInit, OnDestroy {
     return `https://ui-avatars.com/api/?name=${encodeURIComponent(marca.nombre)}&background=0367A6&color=fff&size=128`;
   }
 
+  onProductImageError(event: Event): void {
+    const image = event.target;
+    if (!(image instanceof HTMLImageElement)) return;
+
+    const fallback = new URL('assets/images/no_imagen.webp', image.ownerDocument.baseURI).href;
+    // Si también falla la alternativa, no volver a solicitarla en un ciclo.
+    if (image.src !== fallback) image.src = fallback;
+  }
+
   formatPromoCurrency(value: number): string {
     return new Intl.NumberFormat('es-MX', {
       style: 'currency',

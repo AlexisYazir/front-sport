@@ -237,7 +237,7 @@
             <div class="w-full pt-[75%] relative overflow-hidden bg-white">
               <img [src]="product.imagen" [alt]="product.nombre" loading="lazy"
                    class="absolute top-0 left-0 w-full h-full object-contain p-2 sm:p-3 group-hover:scale-110 transition-transform duration-500"
-                   onerror="this.src='https://ui-avatars.com/api/?name='+encodeURIComponent(product.nombre)+'&background=0367A6&color=fff&size=128'">
+                   (error)="onProductImageError($event)">
             </div>
             <!-- Info -->
             <div class="p-2 sm:p-3 bg-gradient-to-br from-[#F6F9FC] via-[#EEF4F8] to-[#E7EEF5]">

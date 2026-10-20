@@ -13,6 +13,10 @@
   NODE_ENV = "development"
   NODE_VERSION = "22"
 
+# Angular ya genera las rutas y los archivos que verifica el service worker.
+[build.processing.html]
+  pretty_urls = false
+
 ## ================================
 ## Redirects SPA (Angular Router)
 ## ================================
@@ -28,6 +32,7 @@
   for = "/*"
   [headers.values]
 
+    # El worker recibe esta CSP: sus fetch de imágenes y fuentes usan connect-src.
     Content-Security-Policy = """
       default-src 'self';
       script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com https://apis.google.com;
@@ -36,7 +41,13 @@
       style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
       font-src 'self' https://fonts.gstatic.com data:;
       img-src 'self' data: https: blob:;
-      connect-src 'self' https://back-sport-ghxk.onrender.com https://accounts.google.com https://www.googleapis.com https://oauthaccountmanager.googleapis.com https://api.maptiler.com https://*.maptiler.com;
+      connect-src 'self'
+        https://back-sport-ghxk.onrender.com
+        https://accounts.google.com https://www.googleapis.com https://oauthaccountmanager.googleapis.com
+        https://api.maptiler.com https://*.maptiler.com
+        https://res.cloudinary.com https://http2.mlstatic.com
+        https://imgs.search.brave.com https://images.seeklogo.com https://operadorapalermo.com.mx
+        https://ui-avatars.com https://fonts.googleapis.com https://fonts.gstatic.com;
       frame-src 'self' https://accounts.google.com;
       object-src 'none';
       base-uri 'self';
@@ -66,7 +77,7 @@
     Cross-Origin-Opener-Policy = "same-origin-allow-popups"
     Cross-Origin-Resource-Policy = "cross-origin"
 
-    Cache-Control = "public, max-age=0, must-revalidate"
+    Cache-Control = "public, max-age=0, must-revalidate, no-transform"
 
 ## ================================
 ## Cache fuerte para assets
@@ -74,17 +85,17 @@
 [[headers]]
   for = "/assets/*"
   [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
+    Cache-Control = "public, max-age=31536000, immutable, no-transform"
 
 [[headers]]
   for = "/*.js"
   [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
+    Cache-Control = "public, max-age=31536000, immutable, no-transform"
 
 [[headers]]
   for = "/*.css"
   [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
+    Cache-Control = "public, max-age=31536000, immutable, no-transform"
 
 ## ================================
 ## No cachear index.html
@@ -92,20 +103,20 @@
 [[headers]]
   for = "/index.html"
   [headers.values]
-    Cache-Control = "public, max-age=0, must-revalidate"
+    Cache-Control = "public, max-age=0, must-revalidate, no-transform"
 
 [[headers]]
   for = "/*.html"
   [headers.values]
-    Cache-Control = "public, max-age=0, must-revalidate"
+    Cache-Control = "public, max-age=0, must-revalidate, no-transform"
 
 # Comprobar siempre las nuevas versiones del service worker y su índice.
 [[headers]]
   for = "/ngsw-worker.js"
   [headers.values]
-    Cache-Control = "no-cache, no-store, must-revalidate"
+    Cache-Control = "no-cache, no-store, must-revalidate, no-transform"
 
 [[headers]]
   for = "/ngsw.json"
   [headers.values]
-    Cache-Control = "no-cache, no-store, must-revalidate"
+    Cache-Control = "no-cache, no-store, must-revalidate, no-transform"
