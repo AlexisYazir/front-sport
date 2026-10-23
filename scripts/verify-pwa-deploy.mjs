@@ -13,11 +13,13 @@ async function main() {
   if (!base.pathname.endsWith('/')) base.pathname += '/';
   const cacheBust = Date.now().toString();
 
-  const download = async (file) => {
+  const download = async (file, bypass = true) => {
     const url = new URL(file, base);
     if (url.origin !== base.origin) throw new Error(`Recurso fuera del sitio: ${file}`);
-    url.searchParams.set('ngsw-bypass', 'true');
-    url.searchParams.set('pwa-check', cacheBust);
+    if (bypass) {
+      url.searchParams.set('ngsw-bypass', 'true');
+      url.searchParams.set('pwa-check', cacheBust);
+    }
     const response = await fetch(url, { cache: 'no-store', signal: AbortSignal.timeout(30_000) });
     if (!response.ok) throw new Error(`${file}: HTTP ${response.status}`);
     if (new URL(response.url).origin !== base.origin) {
@@ -50,7 +52,7 @@ async function main() {
         if (actual !== expected) {
           let hint = '';
           if (file === manifest.index && bytes.toString('utf8').includes('This site is hosted on Netlify')) {
-            hint = ' El HTML incluye un comentario añadido por el alojamiento. Comprueba Post processing > Snippet Injection y Prerendering en Netlify. Si están vacíos/desactivados, solicita a Netlify que desactive su inyección automática de HTML. No desactives las huellas del worker.';
+            hint = ' El alojamiento modificó el HTML compilado. Este proyecto lo entrega mediante la función app-shell: comprueba que el deploy ejecutó scripts/prepare-netlify-shell.mjs y publicó esa función con las redirecciones de netlify.toml. No desactives las huellas del worker.';
           }
           failures.push(`${file}: la huella no coincide.${hint}`);
         }
@@ -59,6 +61,22 @@ async function main() {
       }
     }
   }));
+
+  // También comprueba las navegaciones reales, sin parámetros que cambien la ruta de entrega.
+  // Un index correcto no basta si /home continúa sirviendo una copia transformada.
+  for (const route of ['/', '/index.html', '/home', '/home/']) {
+    try {
+      const { bytes, headers } = await download(route, false);
+      if (createHash('sha1').update(bytes).digest('hex') !== manifest.hashTable[manifest.index]) {
+        failures.push(`${route}: el HTML de navegación no coincide con el índice verificado por Angular.`);
+      }
+      if (!headers.get('content-type')?.includes('text/html')) {
+        failures.push(`${route}: la navegación no responde como HTML.`);
+      }
+    } catch (error) {
+      failures.push(error.message);
+    }
+  }
 
   const { headers } = await download('ngsw-worker.js?v=3');
   const policies = (headers.get('content-security-policy') || '').split(',').filter(Boolean);
@@ -92,6 +110,7 @@ async function main() {
     throw new Error('La publicación todavía requiere ajustes. No se modificó ningún archivo.');
   }
   console.log(`OK: ${resources.length} archivos coinciden con ngsw.json.`);
+  console.log('OK: /, /index.html, /home y /home/ entregan el mismo HTML sin modificaciones.');
   console.log('OK: el worker responde y su CSP permite los proveedores comprobados.');
   console.log('Continúa con las pruebas de imágenes, actualización y modo sin conexión en el navegador.');
 }

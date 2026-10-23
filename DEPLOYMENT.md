@@ -66,6 +66,16 @@ NODE_ENV=production
 
 ## 🔥 Despliegue en Netlify
 
+### PWA: entregar el HTML sin transformaciones
+
+Netlify añade actualmente un comentario al HTML estático de este sitio, incluso sin snippets configurados. Esto cambia la huella de `index.html` y Angular rechaza su copia offline.
+
+El comando de `netlify.toml` compila Angular y ejecuta `scripts/prepare-netlify-shell.mjs`. Ese script verifica la huella y genera la función `app-shell`, que devuelve exactamente el HTML compilado y las mismas cabeceras globales. Las navegaciones `/`, `/index.html` y las rutas de Angular usan esa función; los archivos existentes siguen sirviéndose como estáticos. No realiza peticiones al backend. Su respuesta pública se conserva en la CDN y se invalida con cada deploy de Netlify.
+
+La función se genera en `dist/ecommerce-app/functions`; no se sube `dist` a Git. Se publican el script y `netlify.toml` mediante el despliegue desde Git. No se modifica el worker oficial ni se desactivan sus huellas. La exclusión de funciones del mecanismo de snippets está documentada en [Netlify](https://docs.netlify.com/build/post-processing/snippet-injection/#limitations); la comprobación definitiva del comentario automático se realiza después del deploy con `npm run verify:pwa -- https://sport-center-sitie.netlify.app`.
+
+Prueba del generador: `node --test scripts/prepare-netlify-shell.spec.mjs`.
+
 ### Configuración
 1. [ ] Crear cuenta en [Netlify](https://netlify.com)
 2. [ ] Nuevo sitio desde Git
@@ -74,13 +84,13 @@ NODE_ENV=production
 ### Build Settings
 ```bash
 # Build command
-npm run build:prod
+npm run build:prod && node scripts/prepare-netlify-shell.mjs
 
 # Publish directory
 dist/ecommerce-app/browser
 
 # Node version
-18
+22
 ```
 
 ### ✅ Archivo `netlify.toml` (Ya creado en raíz)
@@ -102,7 +112,7 @@ El proyecto ya incluye `netlify.toml` con:
 #### 2. Configurar Build
 Netlify **detectará automáticamente** el `netlify.toml`, pero verifica:
 - Base directory: (dejar vacío)
-- Build command: `npm run build:prod`
+- Build command: `npm run build:prod && node scripts/prepare-netlify-shell.mjs`
 - Publish directory: `dist/ecommerce-app/browser`
 
 #### 3. Deploy
@@ -128,7 +138,7 @@ Netlify **detectará automáticamente** el `netlify.toml`, pero verifica:
 
 **Error: Build falla**
 - Causa: Node version incorrecta
-- Solución: Verificar `netlify.toml` tiene `NODE_VERSION = "18"`
+- Solución: Verificar `netlify.toml` tiene `NODE_VERSION = "22"`
 
 **Sesión se pierde al hacer refresh**
 - Causa: Cache mal configurado

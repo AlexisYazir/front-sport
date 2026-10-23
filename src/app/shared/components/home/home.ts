@@ -5,7 +5,6 @@ import {
   signal,
   computed,
   inject,
-  isDevMode,
   ElementRef,
   viewChild,
   DestroyRef,
@@ -42,7 +41,6 @@ export class Home implements OnInit, OnDestroy {
   private companyService = inject(CompanyService);
   private router = inject(Router);
   readonly offline = inject(PublicHomeOfflineService);
-  readonly offlineEnabled = !isDevMode();
   private readonly destroyRef = inject(DestroyRef);
   private readonly failedLoads = new Set<string>();
   private bannerIntervalId: ReturnType<typeof setInterval> | null = null;
