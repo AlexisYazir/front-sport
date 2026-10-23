@@ -39,6 +39,24 @@ async function main() {
   if (!manifest.hashTable?.[manifest.index]) {
     throw new Error('El índice de la PWA no tiene una huella de integridad válida.');
   }
+  if (!manifest.hashTable['/pwa-worker.js']) {
+    throw new Error('El deploy no incluye pwa-worker.js. Debe publicarse la nueva compilación completa.');
+  }
+  const readShell = async (bypass) => {
+    const { bytes, headers } = await download('pwa-shell.json', bypass);
+    if (!headers.get('content-type')?.includes('application/json')) {
+      throw new Error('Falta pwa-shell.json o responde como HTML. Revisa el build de producción.');
+    }
+    const payload = JSON.parse(bytes.toString('utf8'));
+    if (payload.version !== 1 || payload.encoding !== 'base64' || typeof payload.html !== 'string') {
+      throw new Error('pwa-shell.json no contiene el formato esperado.');
+    }
+    return Buffer.from(payload.html, 'base64');
+  };
+  const shellBytes = await readShell(true);
+  if (createHash('sha1').update(shellBytes).digest('hex') !== manifest.hashTable[manifest.index]) {
+    throw new Error('El HTML de pwa-shell.json no coincide con la huella de index.html.');
+  }
 
   const resources = Object.entries(manifest.hashTable);
   const failures = [];
@@ -47,14 +65,10 @@ async function main() {
     while (next < resources.length) {
       const [file, expected] = resources[next++];
       try {
-        const { bytes } = await download(file);
+        const bytes = file === manifest.index ? shellBytes : (await download(file)).bytes;
         const actual = createHash('sha1').update(bytes).digest('hex');
         if (actual !== expected) {
-          let hint = '';
-          if (file === manifest.index && bytes.toString('utf8').includes('This site is hosted on Netlify')) {
-            hint = ' El alojamiento modificó el HTML compilado. Este proyecto lo entrega mediante la función app-shell: comprueba que el deploy ejecutó scripts/prepare-netlify-shell.mjs y publicó esa función con las redirecciones de netlify.toml. No desactives las huellas del worker.';
-          }
-          failures.push(`${file}: la huella no coincide.${hint}`);
+          failures.push(`${file}: la huella no coincide.`);
         }
       } catch (error) {
         failures.push(error.message);
@@ -62,13 +76,17 @@ async function main() {
     }
   }));
 
-  // También comprueba las navegaciones reales, sin parámetros que cambien la ruta de entrega.
-  // Un index correcto no basta si /home continúa sirviendo una copia transformada.
+  // El worker obtiene el HTML de JSON y verifica su huella. La navegación inicial
+  // puede llevar comentarios del proveedor, pero debe cargar los mismos JS y CSS.
+  const startupFiles = [...shellBytes.toString('utf8').matchAll(/(?:src|href)="([^"]+\.(?:js|css))"/g)]
+    .map(match => match[1]);
+  if (!startupFiles.length) failures.push('El HTML no contiene los archivos de arranque de Angular.');
   for (const route of ['/', '/index.html', '/home', '/home/']) {
     try {
       const { bytes, headers } = await download(route, false);
-      if (createHash('sha1').update(bytes).digest('hex') !== manifest.hashTable[manifest.index]) {
-        failures.push(`${route}: el HTML de navegación no coincide con el índice verificado por Angular.`);
+      const html = bytes.toString('utf8');
+      if (!html.includes('<app-root') || startupFiles.some(file => !html.includes('"' + file + '"'))) {
+        failures.push(`${route}: el HTML online no carga los archivos de esta compilación.`);
       }
       if (!headers.get('content-type')?.includes('text/html')) {
         failures.push(`${route}: la navegación no responde como HTML.`);
@@ -77,8 +95,10 @@ async function main() {
       failures.push(error.message);
     }
   }
+  const canonicalShell = await readShell(false);
+  if (!canonicalShell.equals(shellBytes)) failures.push('pwa-shell.json cambia según los parámetros de consulta.');
 
-  const { headers } = await download('ngsw-worker.js?v=3');
+  const { headers } = await download('pwa-worker.js?v=1');
   const policies = (headers.get('content-security-policy') || '').split(',').filter(Boolean);
   // Son proveedores utilizados actualmente por imágenes y fuentes del catálogo.
   const providers = [
@@ -110,7 +130,8 @@ async function main() {
     throw new Error('La publicación todavía requiere ajustes. No se modificó ningún archivo.');
   }
   console.log(`OK: ${resources.length} archivos coinciden con ngsw.json.`);
-  console.log('OK: /, /index.html, /home y /home/ entregan el mismo HTML sin modificaciones.');
+  console.log('OK: el HTML offline de pwa-shell.json conserva la huella de index.html.');
+  console.log('OK: /, /index.html, /home y /home/ cargan los archivos de esta compilación.');
   console.log('OK: el worker responde y su CSP permite los proveedores comprobados.');
   console.log('Continúa con las pruebas de imágenes, actualización y modo sin conexión en el navegador.');
 }

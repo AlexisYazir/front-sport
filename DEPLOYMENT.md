@@ -68,13 +68,13 @@ NODE_ENV=production
 
 ### PWA: entregar el HTML sin transformaciones
 
-Netlify añade actualmente un comentario al HTML estático de este sitio, incluso sin snippets configurados. Esto cambia la huella de `index.html` y Angular rechaza su copia offline.
+Netlify añade actualmente un comentario al HTML del dominio público, incluso en respuestas de funciones y sin snippets configurados. Esto cambia la huella de `index.html` y Angular rechaza su copia offline.
 
-El comando de `netlify.toml` compila Angular y ejecuta `scripts/prepare-netlify-shell.mjs`. Ese script verifica la huella y genera la función `app-shell`, que devuelve exactamente el HTML compilado y las mismas cabeceras globales. Las navegaciones `/`, `/index.html` y las rutas de Angular usan esa función; los archivos existentes siguen sirviéndose como estáticos. No realiza peticiones al backend. Su respuesta pública se conserva en la CDN y se invalida con cada deploy de Netlify.
+`npm run build:prod` compila Angular y ejecuta `scripts/prepare-netlify-shell.mjs`. Ese script verifica la huella y genera el archivo estático `pwa-shell.json`, que transporta los bytes HTML en base64. El arranque `pwa-worker.js` importa el worker oficial de Angular y convierte únicamente su descarga de `index.html` en una descarga de ese JSON. Después de reconstruir el cuerpo, Angular comprueba su huella original antes de guardarlo. No se eliminan comentarios del HTML recibido ni se desactivan huellas.
 
-La función se genera en `dist/ecommerce-app/functions`; no se sube `dist` a Git. Se publican el script y `netlify.toml` mediante el despliegue desde Git. No se modifica el worker oficial ni se desactivan sus huellas. La exclusión de funciones del mecanismo de snippets está documentada en [Netlify](https://docs.netlify.com/build/post-processing/snippet-injection/#limitations); la comprobación definitiva del comentario automático se realiza después del deploy con `npm run verify:pwa -- https://sport-center-sitie.netlify.app`.
+Las navegaciones iniciales conservan el routing estático de Angular. No se necesitan funciones de Netlify. El verificador comprueba los bytes reconstruidos y todos los assets con `ngsw.json`; además comprueba que las navegaciones online incluyen el arranque de la misma compilación. El HTML online puede contener comentarios del proveedor. La copia offline debe conservar su huella exacta. Angular documenta el arranque con scripts personalizados en [su documentación](https://angular.dev/ecosystem/service-workers/custom-service-worker-scripts).
 
-Prueba del generador: `node --test scripts/prepare-netlify-shell.spec.mjs`.
+Pruebas del generador y del worker: `node --test scripts/prepare-netlify-shell.spec.mjs scripts/pwa-worker.spec.mjs`. Incluyen HTML alterado, primera recarga offline, recuperación desde una actualización fallida y rechazo de un JSON cuyo HTML no cumple la huella. Después del deploy: `npm run verify:pwa -- https://sport-center-sitie.netlify.app`.
 
 ### Configuración
 1. [ ] Crear cuenta en [Netlify](https://netlify.com)
@@ -84,7 +84,7 @@ Prueba del generador: `node --test scripts/prepare-netlify-shell.spec.mjs`.
 ### Build Settings
 ```bash
 # Build command
-npm run build:prod && node scripts/prepare-netlify-shell.mjs
+npm run build:prod
 
 # Publish directory
 dist/ecommerce-app/browser
@@ -112,7 +112,7 @@ El proyecto ya incluye `netlify.toml` con:
 #### 2. Configurar Build
 Netlify **detectará automáticamente** el `netlify.toml`, pero verifica:
 - Base directory: (dejar vacío)
-- Build command: `npm run build:prod && node scripts/prepare-netlify-shell.mjs`
+- Build command: `npm run build:prod`
 - Publish directory: `dist/ecommerce-app/browser`
 
 #### 3. Deploy

@@ -3,7 +3,7 @@
 
 [build]
   # Comando de compilación
-  command = "npm run build:prod && node scripts/prepare-netlify-shell.mjs"
+  command = "npm run build:prod"
 
   # Directorio generado por Angular
   publish = "dist/ecommerce-app/browser"
@@ -21,31 +21,12 @@
 [build.processing.html]
   pretty_urls = false
 
-# El HTML debe llegar intacto: Angular verifica sus bytes antes de guardarlo offline.
-# Las respuestas de funciones no usan la inyección de snippets del hosting estático.
-[functions]
-  directory = "dist/ecommerce-app/functions"
-  node_bundler = "esbuild"
-
 ## ================================
 ## Redirects SPA (Angular Router)
 ## ================================
 [[redirects]]
-  from = "/index.html"
-  to = "/.netlify/functions/app-shell"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/"
-  to = "/.netlify/functions/app-shell"
-  status = 200
-  force = true
-
-# Sin force: JS, CSS, manifest, worker e imágenes existentes se sirven como archivos.
-[[redirects]]
   from = "/*"
-  to = "/.netlify/functions/app-shell"
+  to = "/index.html"
   status = 200
 
 ## ================================
@@ -134,6 +115,16 @@
     Cache-Control = "public, max-age=0, must-revalidate, no-transform"
 
 # Comprobar siempre las nuevas versiones del service worker y su índice.
+[[headers]]
+  for = "/pwa-worker.js"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate, no-transform"
+
+[[headers]]
+  for = "/pwa-shell.json"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate, no-transform"
+
 [[headers]]
   for = "/ngsw-worker.js"
   [headers.values]
