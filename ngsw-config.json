@@ -49,7 +49,7 @@
         "timeout": "3s",
         "maxSize": 2048,
         "maxAge": "365d",
-        "cacheOpaqueResponses": true
+        "cacheOpaqueResponses": false
       }
     }
   ]

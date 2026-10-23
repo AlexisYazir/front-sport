@@ -5,16 +5,45 @@ importScripts('./ngsw-worker.js');
   const networkFetch = self.fetch.bind(self);
   const indexUrl = new URL('index.html', self.registration.scope);
   const shellUrl = new URL('pwa-shell.json', self.registration.scope);
+  const imagesCache = 'sport-center-public-images-v1';
+  const validationUrl = new URL('pwa-image-validation/', self.registration.scope);
 
-  // Solo cambia el transporte de index.html. La caché, las actualizaciones y la
-  // comprobación SHA-1 siguen siendo responsabilidad del worker oficial de Angular.
+  // Esta caché contiene solo imágenes públicas verificadas por la aplicación.
+  // No pertenece al namespace de Angular y conserva sus entradas entre versiones.
+  const fetchPublicImage = async (input, init, url) => {
+    const request = input instanceof Request && !init ? input : new Request(input, init);
+    let saved;
+    try {
+      saved = await (await self.caches.open(imagesCache)).match(url.href, { ignoreVary: true });
+    } catch { /* Sin almacenamiento, el sitio puede seguir usando la red. */ }
+    if (url.origin === validationUrl.origin && url.pathname.startsWith(validationUrl.pathname)) {
+      // Image sin crossOrigin permite probar exactamente una candidata opaca.
+      return request.mode === 'no-cors' && saved ? saved : new Response('', { status: 404 });
+    }
+    if (saved?.type === 'opaque' && request.mode !== 'no-cors') saved = undefined;
+    try {
+      const response = await networkFetch(input, init);
+      if (saved && (response.type === 'opaque' || !response.ok ||
+          !response.headers.get('Content-Type')?.toLowerCase().startsWith('image/'))) return saved;
+      return response;
+    } catch (error) {
+      if (saved) return saved;
+      throw error;
+    }
+  };
+
+  // El HTML versionado conserva la caché, las actualizaciones y la comprobación
+  // SHA-1 del worker oficial. Las imágenes públicas tienen una copia independiente.
   self.fetch = async (input, init) => {
     const isRequest = input instanceof Request;
     const url = new URL(isRequest ? input.url : input, self.registration.scope);
     const method = (init?.method || (isRequest ? input.method : 'GET')).toUpperCase();
     // No reconstruir las demás Request: podría consumir el cuerpo de un POST.
-    if (method !== 'GET' || url.origin !== indexUrl.origin || url.pathname !== indexUrl.pathname) {
+    if (method !== 'GET') {
       return networkFetch(input, init);
+    }
+    if (url.origin !== indexUrl.origin || url.pathname !== indexUrl.pathname) {
+      return fetchPublicImage(input, init, url);
     }
 
     const request = new Request(input, init);

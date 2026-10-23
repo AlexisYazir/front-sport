@@ -4,6 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Observable, Subject, defer, firstValueFrom, takeUntil, timeout } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { catalogMedia } from './public-catalog-media';
+import { PublicImageOfflineService } from './public-image-offline.service';
 
 const PATHS = [
   '/products/get-all-products', '/products/get-all-marcas', '/products/menu/sports',
@@ -15,6 +16,7 @@ const PATHS = [
 export class PublicHomeOfflineService {
   private readonly http = new HttpClient(inject(HttpBackend));
   private readonly destroyRef = inject(DestroyRef);
+  private readonly images = inject(PublicImageOfflineService);
   private readonly api = environment.apiUrl.replace(/\/$/, '');
   private readonly cacheName = 'sport-center-public-home-v1';
   private readonly requests = new Map<string, Promise<HttpResponse<unknown>>>();
@@ -94,7 +96,7 @@ export class PublicHomeOfflineService {
 
   private async refresh(): Promise<void> {
     await Promise.allSettled(PATHS.map(path => this.load(this.api + path)));
-    if (!this.destroyed) await this.prepareImages();
+    if (!this.destroyed && !isDevMode()) await this.prepareImages();
     if (!this.destroyed && navigator.onLine && !this.dataReady()) this.retryLater();
   }
 
@@ -154,18 +156,22 @@ export class PublicHomeOfflineService {
   private async prepareImages(): Promise<void> {
     if (this.warming) { this.warmAgain = true; return; }
     this.dataReady.set(PATHS.every(path => this.persisted.has(this.api + path)));
-    if (!this.dataReady() || this.destroyed || isDevMode()) return;
+    if (!this.dataReady() || this.destroyed) return;
     this.warming = true;
     this.preparing.set(true);
     try {
       const get = (path: typeof PATHS[number]) => this.copies.get(this.api + path) || [];
       const media = catalogMedia(get(PATHS[0]), get(PATHS[1]), get(PATHS[2]), get(PATHS[3]));
       this.totalImages.set(media.all.length);
-      this.savedImages.set(0);
       this.failedImages.set(0);
       const record = await (await caches.open(this.cacheName)).match(this.mediaRecordUrl);
-      this.verified = record ? (await record.json()).verified || {} : {};
+      // Un reintento no descarta el historial guardado por ejecuciones anteriores.
+      if (record) this.verified = { ...this.verified, ...(await record.json()).verified };
       const saved = new Set<string>();
+      for (const url of media.all) {
+        if (await this.images.has(url) || this.verified[url] && await caches.match(url, { ignoreVary: true })) saved.add(url);
+      }
+      this.savedImages.set(saved.size);
       // El arranque básico se descarga primero; las fotos no forman parte de su instalación.
       const controlled = navigator.onLine ? await this.waitForController() : !!navigator.serviceWorker?.controller;
       const checkHome = async () => {
@@ -174,19 +180,17 @@ export class PublicHomeOfflineService {
       };
       const prepare = async (url: string) => {
         if (this.destroyed) return;
-        let verifiedAt = this.verified[url];
-        let ok = !!verifiedAt && Date.now() - verifiedAt < 365 * 86400_000 && !!await caches.match(url, { ignoreVary: true });
-        if (!ok && navigator.onLine && controlled) {
-          for (let attempt = 0; attempt < 2 && !ok && navigator.onLine; attempt++) {
-            ok = await this.loadImage(url) && !!await caches.match(url, { ignoreVary: true });
-            if (ok) verifiedAt = Date.now();
-          }
-        }
+        const ok = await this.images.retain(url, navigator.onLine, controlled, !!this.verified[url]);
+        if (this.images.storageProblem()) this.storageProblem.set(true);
         if (ok) {
           saved.add(url);
-          this.verified[url] = verifiedAt;
-          this.savedImages.set(saved.size);
-        } else { delete this.verified[url]; this.failedImages.update(value => value + 1); }
+          this.verified[url] ||= Date.now();
+        } else {
+          // Si migrar o descargar falla, conserva una copia anterior que aún exista.
+          if (!this.verified[url] || !await caches.match(url, { ignoreVary: true })) saved.delete(url);
+          this.failedImages.update(value => value + 1);
+        }
+        this.savedImages.set(saved.size);
       };
       const batch = async (urls: string[]) => {
         let index = 0;
@@ -198,9 +202,8 @@ export class PublicHomeOfflineService {
       await checkHome();
       await batch(media.all.filter(url => !media.home.includes(url)));
       await checkHome();
-      const active = Object.fromEntries(media.all.filter(url => saved.has(url)).map(url => [url, this.verified[url]]));
       await (await caches.open(this.cacheName)).put(this.mediaRecordUrl,
-        new Response(JSON.stringify({ verified: active, pending: media.all.filter(url => !saved.has(url)) }), { headers: { 'Content-Type': 'application/json' } }));
+        new Response(JSON.stringify({ verified: this.verified, pending: media.all.filter(url => !saved.has(url)) }), { headers: { 'Content-Type': 'application/json' } }));
     } catch { this.storageProblem.set(true); }
     finally {
       this.warming = false;
@@ -231,36 +234,4 @@ export class PublicHomeOfflineService {
     });
   }
 
-  private async loadImage(url: string): Promise<boolean> {
-    // fetch fuerza una petición que puede ver el worker, aunque img ya tenga una copia
-    // en memoria de antes de activarse. Ver una foto no implica que esté guardada offline.
-    try {
-      const response = await fetch(url, { mode: 'cors', credentials: 'omit', cache: 'reload', signal: AbortSignal.timeout(25_000) });
-      if (response.ok && response.headers.get('Content-Type')?.startsWith('image/')) {
-        const objectUrl = URL.createObjectURL(await response.blob());
-        try { return await this.decodeImage(objectUrl); }
-        finally { URL.revokeObjectURL(objectUrl); }
-      }
-    } catch { /* Un proveedor sin CORS puede seguir admitiendo imágenes normales. */ }
-    if (!navigator.onLine || this.destroyed) return false;
-    try {
-      const response = await fetch(url, { mode: 'no-cors', credentials: 'omit', cache: 'reload', signal: AbortSignal.timeout(25_000) });
-      return (response.ok || response.type === 'opaque') && await this.decodeImage(url);
-    } catch { return false; }
-  }
-
-  private decodeImage(url: string): Promise<boolean> {
-    return new Promise(resolve => {
-      const image = new Image();
-      const finish = (ok: boolean) => {
-        clearTimeout(timer);
-        image.onload = image.onerror = null;
-        resolve(ok);
-      };
-      const timer = setTimeout(() => finish(false), 25_000);
-      image.onload = () => finish(image.naturalWidth > 0);
-      image.onerror = () => finish(false);
-      image.src = url;
-    });
-  }
 }

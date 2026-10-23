@@ -1,0 +1,7 @@
+{
+  "extends": "./tsconfig.spec.json",
+  "include": [
+    "src/app/core/services/public-*.spec.ts",
+    "src/app/core/services/pwa-storage.service.spec.ts"
+  ]
+}

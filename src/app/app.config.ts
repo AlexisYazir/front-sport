@@ -15,6 +15,7 @@ import { PublicInfoOfflineService } from './core/services/public-info-offline.se
 import { PwaNotificationsService } from './core/services/pwa-notifications.service';
 import { PublicHomeOfflineService } from './core/services/public-home-offline.service';
 import { publicHomeOfflineInterceptor } from './core/interceptors/public-home-offline.interceptor';
+import { PwaStorageService } from './core/services/pwa-storage.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -32,6 +33,7 @@ export const appConfig: ApplicationConfig = {
       // Inicia la descarga pública en segundo plano sin retrasar la apertura de la web.
       inject(PublicInfoOfflineService).start();
       if (!isDevMode()) {
+        inject(PwaStorageService).start();
         inject(PwaNotificationsService).start();
         inject(PublicHomeOfflineService).start();
       }
