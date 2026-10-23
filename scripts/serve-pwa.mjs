@@ -4,6 +4,10 @@ import path from 'node:path';
 import { gzipSync } from 'node:zlib';
 
 const root = path.resolve('dist/ecommerce-app/browser');
+// Reproduce la CSP de producción para detectar también sus bloqueos durante las pruebas.
+const netlifyConfig = await readFile('netlify.toml', 'utf8');
+const csp = netlifyConfig.match(/Content-Security-Policy = """([\s\S]*?)"""/)?.[1]
+  .replace(/upgrade-insecure-requests;/g, '').replace(/\s+/g, ' ').trim();
 const portIndex = process.argv.indexOf('--port');
 const port = Number(portIndex >= 0 ? process.argv[portIndex + 1] : 4200);
 if (!Number.isInteger(port) || port < 1 || port > 65535) {
@@ -59,6 +63,7 @@ const server = createServer(async (request, response) => {
       'Content-Length': body.length,
       'Cache-Control': 'no-cache',
       'Vary': 'Accept-Encoding',
+      ...(csp ? { 'Content-Security-Policy': csp } : {}),
       ...(compress ? { 'Content-Encoding': 'gzip' } : {}),
     });
     response.end(request.method === 'HEAD' ? undefined : body);

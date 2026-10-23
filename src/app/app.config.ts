@@ -13,6 +13,8 @@ import { errorInterceptor } from './core/interceptors/error-interceptor';
 import { SPORT_CENTER_ICONS } from './shared/icons/sport-center-icons';
 import { PublicInfoOfflineService } from './core/services/public-info-offline.service';
 import { PwaNotificationsService } from './core/services/pwa-notifications.service';
+import { PublicHomeOfflineService } from './core/services/public-home-offline.service';
+import { publicHomeOfflineInterceptor } from './core/interceptors/public-home-offline.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -20,16 +22,19 @@ export const appConfig: ApplicationConfig = {
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
     // Cambiar la URL renueva también la CSP que conservaba el worker instalado.
-    provideServiceWorker('ngsw-worker.js?v=2', {
+    provideServiceWorker('ngsw-worker.js?v=3', {
       enabled: !isDevMode(),
       registrationStrategy: 'registerImmediately',
       updateViaCache: 'none',
     }),
-    provideHttpClient(withInterceptors([authInterceptor, errorInterceptor])),
+    provideHttpClient(withInterceptors([publicHomeOfflineInterceptor, authInterceptor, errorInterceptor])),
     provideAppInitializer(() => {
       // Inicia la descarga pública en segundo plano sin retrasar la apertura de la web.
       inject(PublicInfoOfflineService).start();
-      if (!isDevMode()) inject(PwaNotificationsService).start();
+      if (!isDevMode()) {
+        inject(PwaNotificationsService).start();
+        inject(PublicHomeOfflineService).start();
+      }
     }),
     provideAnimations(),
     provideLucideIcons(...SPORT_CENTER_ICONS),

@@ -141,7 +141,7 @@ describe('PwaNotificationsService', () => {
     expect(title).toBe('Sport Center — Sin conexión');
     expect(options.icon).toBe('https://sport-center.example/icons/icon-192.png');
     expect(options.tag).toBe('sport-center-offline');
-    expect(options.renotify).toBeFalse();
+    expect(options.renotify).toBeTrue();
     expect(options.data.onActionClick.default.operation).toBe('focusLastFocusedOrOpen');
     changeConnection(true);
     await settle();
@@ -205,7 +205,7 @@ describe('PwaNotificationsService', () => {
     expect(showNotification).toHaveBeenCalledTimes(1);
   });
 
-  it('tolera un fallo del sistema de notificaciones sin insistir durante la misma desconexión', async () => {
+  it('espacia los reintentos si el sistema falla y no duplica el aviso al recuperar el foco', async () => {
     spyOn(console, 'warn');
     showNotification.and.rejectWith(new Error('Avisos bloqueados por el sistema'));
     service.start();
@@ -404,7 +404,7 @@ describe('PwaNotificationsService', () => {
     changeConnection(true);
     flushMicrotasks();
     const signal: AbortSignal = fetchCheck.calls.mostRecent().args[1].signal;
-    tick(5_000);
+    tick(4_000);
     expect(signal.aborted).toBeTrue();
     TestBed.resetTestingModule();
     tick(10_000);
@@ -579,4 +579,164 @@ describe('PwaNotificationsService', () => {
     expect(showNotification.calls.mostRecent().args[0]).toBe('Sport Center — Sin conexión');
     TestBed.resetTestingModule();
   }));
+
+  it('conserva una solicitud durante una interacción si la automática devuelve default', async () => {
+    requestPermission.and.resolveTo('default');
+    service.start();
+    await settle();
+    requestPermission.and.callFake(async () => permission = 'granted');
+    await (service as any).requestPermissionOnOpen(true);
+    expect(requestPermission).toHaveBeenCalledTimes(2);
+    changeConnection(false);
+    await settle();
+    expect(showNotification).toHaveBeenCalledTimes(1);
+  });
+
+  it('la marca de la versión anterior no bloquea la solicitud mediante interacción', async () => {
+    browser.sessionStorage.setItem('sc_pwa_notification_permission_handled', '1');
+    service.start();
+    await settle();
+    expect(requestPermission).not.toHaveBeenCalled();
+    await (service as any).requestPermissionOnOpen(true);
+    expect(requestPermission).toHaveBeenCalledTimes(1);
+  });
+
+  it('respeta un diálogo descartado durante una interacción también después de recargar', async () => {
+    requestPermission.and.resolveTo('default');
+    service.start();
+    await settle();
+    await (service as any).requestPermissionOnOpen(true);
+    TestBed.resetTestingModule();
+    boot();
+    service.start();
+    await settle();
+    await (service as any).requestPermissionOnOpen(true);
+    expect(requestPermission).toHaveBeenCalledTimes(2);
+  });
+
+  it('no repite permisos denegados aunque haya interacción', async () => {
+    permission = 'denied';
+    service.start();
+    await (service as any).requestPermissionOnOpen(true);
+    expect(requestPermission).not.toHaveBeenCalled();
+  });
+
+  it('muestra el aviso aunque getNotifications no esté disponible', async () => {
+    Reflect.deleteProperty(registration, 'getNotifications');
+    service.start();
+    await settle();
+    changeConnection(false);
+    await settle();
+    expect(showNotification).toHaveBeenCalledTimes(1);
+  });
+
+  it('un fallo al limpiar los avisos anteriores no impide mostrar el nuevo', async () => {
+    getNotifications.and.rejectWith(new Error('Consulta no disponible'));
+    service.start();
+    await settle();
+    changeConnection(false);
+    await settle();
+    expect(showNotification).toHaveBeenCalledTimes(1);
+  });
+
+  it('reintenta un aviso fallido sin necesitar otro cambio de red', fakeAsync(() => {
+    spyOn(console, 'warn');
+    showNotification.and.rejectWith(new Error('Worker ocupado'));
+    service.start();
+    flushMicrotasks();
+    changeConnection(false);
+    flushMicrotasks();
+    showNotification.and.resolveTo();
+    tick(3_000);
+    flushMicrotasks();
+    expect(showNotification).toHaveBeenCalledTimes(2);
+    browser.dispatchEvent(new Event('focus'));
+    flushMicrotasks();
+    expect(showNotification).toHaveBeenCalledTimes(2);
+    TestBed.resetTestingModule();
+  }));
+
+  it('limita los reintentos de un fallo permanente y los limpia al destruirse', fakeAsync(() => {
+    spyOn(console, 'warn');
+    showNotification.and.rejectWith(new Error('Sistema no disponible'));
+    service.start();
+    flushMicrotasks();
+    changeConnection(false);
+    flushMicrotasks();
+    tick(60_000);
+    expect(showNotification).toHaveBeenCalledTimes(3);
+    TestBed.resetTestingModule();
+    tick(60_000);
+    expect(showNotification).toHaveBeenCalledTimes(3);
+  }));
+
+  it('descarta el reintento offline si ya se recuperó la conexión', fakeAsync(() => {
+    spyOn(console, 'warn');
+    showNotification.and.rejectWith(new Error('Fallo temporal'));
+    service.start();
+    flushMicrotasks();
+    changeConnection(false);
+    flushMicrotasks();
+    showNotification.and.resolveTo();
+    changeConnection(true);
+    flushMicrotasks();
+    tick(3_000);
+    expect(showNotification.calls.allArgs().map(args => args[0]))
+      .toEqual(['Sport Center — Sin conexión', 'Sport Center — Conexión restablecida']);
+    TestBed.resetTestingModule();
+  }));
+
+  it('no duplica un aviso pendiente aunque coincidan foco y señales de red', async () => {
+    let complete!: () => void;
+    showNotification.and.returnValue(new Promise<void>(resolve => complete = resolve));
+    service.start();
+    await settle();
+    changeConnection(false);
+    await settle();
+    changeConnection(false);
+    browser.dispatchEvent(new Event('focus'));
+    await settle();
+    expect(showNotification).toHaveBeenCalledTimes(1);
+    complete();
+    await settle();
+    changeConnection(false);
+    expect(showNotification).toHaveBeenCalledTimes(1);
+  });
+
+  it('detecta dos timeouts del propio sitio incluso desde la primera comprobación', fakeAsync(() => {
+    fetchCheck.and.callFake((_address: string, options: RequestInit) => new Promise((_resolve, reject) => {
+      options.signal!.addEventListener('abort', () => reject(new DOMException('Timeout', 'AbortError')));
+    }));
+    service.start();
+    flushMicrotasks();
+    tick(10_000);
+    tick(4_000);
+    tick(1_000);
+    tick(4_000);
+    expect(showNotification.calls.mostRecent().args[0]).toBe('Sport Center — Sin conexión');
+    TestBed.resetTestingModule();
+  }));
+
+  it('recupera los avisos al volver desde el historial y conceder el permiso en ajustes', async () => {
+    permission = 'denied';
+    service.start();
+    await settle();
+    changeConnection(false);
+    permission = 'granted';
+    browser.dispatchEvent(new Event('pageshow'));
+    await settle();
+    expect(showNotification).toHaveBeenCalledTimes(1);
+  });
+
+  it('distingue la ventana instalada de una pestaña sin cambiar el sitio ni los permisos', () => {
+    expect(service.displayMode).toBe('browser');
+    Object.assign(browser, { matchMedia: () => ({ matches: true }) });
+    expect(service.displayMode).toBe('standalone');
+    expect(requestPermission).not.toHaveBeenCalled();
+  });
+
+  it('reconoce el modo de inicio de Safari sin depender de APIs de Chrome', () => {
+    Object.assign(browser.navigator, { standalone: true });
+    expect(service.displayMode).toBe('standalone');
+  });
 });

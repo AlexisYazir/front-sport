@@ -50,7 +50,7 @@ async function main() {
         if (actual !== expected) {
           let hint = '';
           if (file === manifest.index && bytes.toString('utf8').includes('This site is hosted on Netlify')) {
-            hint = ' El HTML incluye un comentario añadido por el alojamiento. Revisa la inyección de HTML en Netlify.';
+            hint = ' El HTML incluye un comentario añadido por el alojamiento. Comprueba Post processing > Snippet Injection y Prerendering en Netlify. Si están vacíos/desactivados, solicita a Netlify que desactive su inyección automática de HTML. No desactives las huellas del worker.';
           }
           failures.push(`${file}: la huella no coincide.${hint}`);
         }
@@ -60,11 +60,11 @@ async function main() {
     }
   }));
 
-  const { headers } = await download('ngsw-worker.js?v=2');
+  const { headers } = await download('ngsw-worker.js?v=3');
   const policies = (headers.get('content-security-policy') || '').split(',').filter(Boolean);
   // Son proveedores utilizados actualmente por imágenes y fuentes del catálogo.
   const providers = [
-    'https://res.cloudinary.com', 'https://http2.mlstatic.com',
+    'https://res.cloudinary.com', 'https://http2.mlstatic.com', 'https://m.media-amazon.com',
     'https://imgs.search.brave.com', 'https://images.seeklogo.com',
     'https://operadorapalermo.com.mx', 'https://ui-avatars.com',
     'https://fonts.googleapis.com', 'https://fonts.gstatic.com',
@@ -80,6 +80,11 @@ async function main() {
       !connections.includes(provider) && !connections.includes('https:') && !connections.includes('*'),
     );
     if (missing.length) failures.push(`La CSP del worker bloquea estos proveedores: ${missing.join(', ')}`);
+  }
+
+  const images = manifest.dataGroups?.find(group => group.name === 'public-catalog-images');
+  if (!images || !images.maxSize || !images.patterns?.length) {
+    failures.push('Falta la configuración para conservar las imágenes públicas sin conexión.');
   }
 
   if (failures.length) {

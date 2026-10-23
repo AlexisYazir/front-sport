@@ -3,11 +3,12 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { provideLucideIcons } from '@lucide/angular';
 import { ToastrService } from 'ngx-toastr';
-import { of } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { CartService } from '../../../core/services/cart.service';
 import { CompanyService } from '../../../core/services/company.service';
 import { ProductService } from '../../../core/services/product.service';
 import { Product } from '../../../core/models/product.model';
+import { PublicHomeOfflineService } from '../../../core/services/public-home-offline.service';
 import { Home } from './home';
 import { SPORT_CENTER_ICONS } from '../../icons/sport-center-icons';
 
@@ -22,6 +23,7 @@ describe('Inicio: imágenes de productos', () => {
     await TestBed.configureTestingModule({
       imports: [Home],
       providers: [
+        { provide: PublicHomeOfflineService, useValue: { statusMessage: () => '', dataUpdated: new Subject<string>() } },
         provideRouter([]),
         provideLucideIcons(...SPORT_CENTER_ICONS),
         { provide: ProductService, useValue: {
@@ -57,5 +59,32 @@ describe('Inicio: imágenes de productos', () => {
     const setter = spyOnProperty(image, 'src', 'set').and.callThrough();
     image.dispatchEvent(new Event('error'));
     expect(setter).not.toHaveBeenCalled();
+  });
+
+  it('repone los productos tras una carga fallida cuando el preparador recupera sus datos', () => {
+    const products = TestBed.inject(ProductService);
+    const load = spyOn(products, 'getProducts').and.returnValue(throwError(() => Error('Sin red')));
+    fixture.componentInstance.loadProducts();
+    load.and.returnValue(of([{ ...product, nombre: 'Producto recuperado' }]));
+    TestBed.inject(PublicHomeOfflineService).dataUpdated.next('https://api.example/products/get-all-products');
+    fixture.detectChanges();
+    expect(load).toHaveBeenCalledTimes(2);
+    expect(fixture.componentInstance.featuredProducts()[0].nombre).toBe('Producto recuperado');
+    expect(fixture.componentInstance.loading()).toBeFalse();
+  });
+
+  it('una actualización del preparador no repite cargas que ya terminaron correctamente', () => {
+    const load = spyOn(TestBed.inject(ProductService), 'getProducts');
+    TestBed.inject(PublicHomeOfflineService).dataUpdated.next('https://api.example/products/get-all-products');
+    expect(load).not.toHaveBeenCalled();
+  });
+
+  it('deja de reponer secciones al abandonar el inicio', () => {
+    const service = TestBed.inject(PublicHomeOfflineService);
+    const load = spyOn(TestBed.inject(ProductService), 'getProducts').and.returnValue(throwError(() => Error('Sin red')));
+    fixture.componentInstance.loadProducts();
+    fixture.destroy();
+    service.dataUpdated.next('https://api.example/products/get-all-products');
+    expect(load).toHaveBeenCalledTimes(1);
   });
 });

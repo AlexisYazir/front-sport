@@ -13,7 +13,11 @@
   NODE_ENV = "development"
   NODE_VERSION = "22"
 
-# Angular ya genera las rutas y los archivos que verifica el service worker.
+# Angular ya genera y optimiza los archivos que verifica el service worker.
+# No se deben reescribir después de generar ngsw.json.
+[build.processing]
+  skip_processing = true
+
 [build.processing.html]
   pretty_urls = false
 
@@ -45,7 +49,7 @@
         https://back-sport-ghxk.onrender.com
         https://accounts.google.com https://www.googleapis.com https://oauthaccountmanager.googleapis.com
         https://api.maptiler.com https://*.maptiler.com
-        https://res.cloudinary.com https://http2.mlstatic.com
+        https://res.cloudinary.com https://http2.mlstatic.com https://m.media-amazon.com
         https://imgs.search.brave.com https://images.seeklogo.com https://operadorapalermo.com.mx
         https://ui-avatars.com https://fonts.googleapis.com https://fonts.gstatic.com;
       frame-src 'self' https://accounts.google.com;
