@@ -5,9 +5,12 @@ import {
   signal,
   computed,
   inject,
+  isDevMode,
   ElementRef,
   viewChild,
+  DestroyRef,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
@@ -15,7 +18,8 @@ import { ProductService } from '../../../core/services/product.service';
 import { CartService } from '../../../core/services/cart.service';
 import { CompanyService, HomeBannerImage } from '../../../core/services/company.service';
 import { Product, Marca, Sport } from '../../../core/models/product.model';
-import { environment } from '../../../../environments/environment';
+import { PublicHomeOfflineService } from '../../../core/services/public-home-offline.service';
+import { SPORT_IMAGES, marcaImageUrl } from '../../../core/services/public-catalog-media';
 import { IconModule } from '../../icons/icon.module';
 
 
@@ -37,7 +41,10 @@ export class Home implements OnInit, OnDestroy {
   private cartService = inject(CartService);
   private companyService = inject(CompanyService);
   private router = inject(Router);
-  private readonly apiUrl = environment.apiUrl.replace(/\/$/, '');
+  readonly offline = inject(PublicHomeOfflineService);
+  readonly offlineEnabled = !isDevMode();
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly failedLoads = new Set<string>();
   private bannerIntervalId: ReturnType<typeof setInterval> | null = null;
   
   products: Product[] = [];
@@ -80,22 +87,26 @@ export class Home implements OnInit, OnDestroy {
     },
   ];
 
-  private readonly sportImages: Record<string, string> = {
-    futbol: 'https://res.cloudinary.com/dcktzxrmw/image/upload/v1784798726/futbol_mbm6ls.jpg',
-    football: 'https://res.cloudinary.com/dcktzxrmw/image/upload/v1784798726/futbol_mbm6ls.jpg',
-    basketbol: 'https://res.cloudinary.com/dcktzxrmw/image/upload/v1784798722/basketbol_uankb2.png',
-    basketball: 'https://res.cloudinary.com/dcktzxrmw/image/upload/v1784798722/basketbol_uankb2.png',
-    basquetbol: 'https://res.cloudinary.com/dcktzxrmw/image/upload/v1784798722/basketbol_uankb2.png',
-    gym: 'https://res.cloudinary.com/dcktzxrmw/image/upload/v1784798725/gym_uo2qv6.jpg',
-    gimnasio: 'https://res.cloudinary.com/dcktzxrmw/image/upload/v1784798725/gym_uo2qv6.jpg',
-    ciclismo: 'https://res.cloudinary.com/dcktzxrmw/image/upload/v1784798722/ciclismo_s3huyx.jpg',
-    running: 'https://res.cloudinary.com/dcktzxrmw/image/upload/v1784798722/running_za35oe.jpg',
-  };
+  private readonly sportImages = SPORT_IMAGES;
 
   // Computed para el contador del carrito
   cartCount = computed(() => this.cartService.cartItems().length);
 
   ngOnInit() {
+    // Si una primera carga falla y el preparador recupera sus datos, rellena esa
+    // sección sin obligar al usuario a recargar toda la página.
+    this.offline.dataUpdated.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(url => {
+      const reloads: Record<string, () => void> = {
+        '/products/get-all-products': () => this.loadProducts(),
+        '/products/get-all-marcas': () => this.loadMarcas(),
+        '/products/menu/sports': () => this.loadSports(),
+        '/company/banner': () => this.loadBannerImages(),
+        '/products/shipping-methods': () => this.loadShippingPromo(),
+      };
+      for (const [path, reload] of Object.entries(reloads)) {
+        if (url.endsWith(path) && this.failedLoads.delete(path)) reload();
+      }
+    });
     this.loadBannerImages();
     this.loadShippingPromo();
     this.loadProducts();
@@ -110,12 +121,14 @@ export class Home implements OnInit, OnDestroy {
   loadBannerImages() {
     this.companyService.getActiveBannerImages().subscribe({
       next: (images) => {
+        this.failedLoads.delete('/company/banner');
         const activeImages = (images || []).filter((image) => image.activo && image.url_imagen);
         this.bannerImages.set(activeImages);
         this.currentBannerIndex.set(0);
         this.startBannerCarousel();
       },
       error: () => {
+        this.failedLoads.add('/company/banner');
         this.bannerImages.set([]);
         this.currentBannerIndex.set(0);
         this.startBannerCarousel();
@@ -126,6 +139,7 @@ export class Home implements OnInit, OnDestroy {
   loadShippingPromo() {
     this.productService.getActiveShippingMethods().subscribe({
       next: (methods) => {
+        this.failedLoads.delete('/products/shipping-methods');
         const thresholds = (methods || [])
           .filter((method) => method.activo && Number(method.envio_gratis_desde) > 0)
           .map((method) => Number(method.envio_gratis_desde));
@@ -133,6 +147,7 @@ export class Home implements OnInit, OnDestroy {
         this.freeShippingThreshold.set(thresholds.length ? Math.min(...thresholds) : null);
       },
       error: () => {
+        this.failedLoads.add('/products/shipping-methods');
         this.freeShippingThreshold.set(null);
       },
     });
@@ -142,11 +157,13 @@ export class Home implements OnInit, OnDestroy {
     this.loading.set(true);
     this.productService.getProducts().subscribe({
       next: (data: Product[]) => {
+        this.failedLoads.delete('/products/get-all-products');
         this.products = data;
         this.featuredProducts.set(data.slice(0, 8));
         this.loading.set(false);
       },
       error: (error) => {
+        this.failedLoads.add('/products/get-all-products');
         this.toastr.error('Error al cargar los productos', 'Error');
         this.loading.set(false);
       }
@@ -157,10 +174,12 @@ export class Home implements OnInit, OnDestroy {
     this.loadingMarcas.set(true);
     this.productService.getMarcas().subscribe({
       next: (data: Marca[]) => {
+        this.failedLoads.delete('/products/get-all-marcas');
         this.marcas = data;
         this.loadingMarcas.set(false);
       },
       error: (error) => {
+        this.failedLoads.add('/products/get-all-marcas');
         this.toastr.error('Error al cargar las marcas', 'Error');
         this.loadingMarcas.set(false);
       }
@@ -171,6 +190,7 @@ export class Home implements OnInit, OnDestroy {
     this.loadingSports.set(true);
     this.productService.getSports().subscribe({
       next: (sports: Sport[]) => {
+        this.failedLoads.delete('/products/menu/sports');
         this.sports.set(
           (sports || []).map((sport) => {
             const slug = this.productService.generateSlug(sport.nombre);
@@ -184,6 +204,7 @@ export class Home implements OnInit, OnDestroy {
         this.loadingSports.set(false);
       },
       error: () => {
+        this.failedLoads.add('/products/menu/sports');
         this.sports.set([]);
         this.loadingSports.set(false);
         this.toastr.error('Error al cargar los deportes', 'Error');
@@ -192,13 +213,7 @@ export class Home implements OnInit, OnDestroy {
   }
 
   getMarcaImageUrl(marca: Marca): string {
-    if (marca.imagen && marca.imagen !== 'null' && marca.imagen !== '') {
-      if (marca.imagen.startsWith('http')) {
-        return marca.imagen;
-      }
-      return `${this.apiUrl}/${marca.imagen.replace(/^\/+/, '')}`;
-    }
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(marca.nombre)}&background=0367A6&color=fff&size=128`;
+    return marcaImageUrl(marca);
   }
 
   onProductImageError(event: Event): void {

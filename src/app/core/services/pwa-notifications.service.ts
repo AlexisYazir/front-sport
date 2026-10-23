@@ -21,15 +21,37 @@ export class PwaNotificationsService {
   private permissionPending = false;
   private permissionHandled = false;
   private permissionAttempts = 0;
+  private automaticPermissionHandled = false;
+  private interactionPermissionAttempted = false;
   private offline = false;
   private wasOffline = false;
   private connectionCycle = 0;
   private notifiedCycle: number | null = null;
+  private notificationPendingCycle: number | null = null;
+  private notificationAttempts = 0;
+  private notificationRetry: number | null = null;
   private connectionCheck: AbortController | null = null;
   private checkTimeout: number | null = null;
   private monitorTimer: number | null = null;
   private failedChecks = 0;
   private receivedRemoteResponse = false;
+
+  // Describe esta ventana; una app instalada también puede abrirse en una pestaña.
+  get displayMode(): 'standalone' | 'browser' {
+    const navigator = this.browser.navigator as Navigator & { standalone?: boolean };
+    return navigator.standalone || this.browser.matchMedia?.(
+      '(display-mode: standalone), (display-mode: minimal-ui), (display-mode: window-controls-overlay)',
+    ).matches ? 'standalone' : 'browser';
+  }
+
+  private readonly onPermissionInteraction = (event: Event) => {
+    // Algunos navegadores solo admiten el diálogo durante una acción real del usuario.
+    if (!event.isTrusted || this.interactionPermissionAttempted) return;
+    if (event instanceof KeyboardEvent && !['Enter', ' '].includes(event.key)) return;
+    // No compite con formularios, pagos, micrófono ni ubicación dentro de sus botones.
+    if (event.target instanceof Element && event.target.closest('button,input,textarea,select,[contenteditable]')) return;
+    void this.requestPermissionOnOpen(true);
+  };
 
   private readonly onConnectionChange = () => {
     if (!this.browser.navigator.onLine) {
@@ -69,6 +91,9 @@ export class PwaNotificationsService {
       this.browser.removeEventListener('offline', this.onConnectionChange);
       this.browser.removeEventListener('focus', this.onWindowReady);
       this.browser.document.removeEventListener('visibilitychange', this.onWindowReady);
+      this.browser.removeEventListener('pageshow', this.onWindowReady);
+      this.removePermissionListeners();
+      if (this.notificationRetry !== null) this.browser.clearTimeout(this.notificationRetry);
       this.networkInfo?.removeEventListener('change', this.onNetworkInfoChange);
     });
   }
@@ -83,6 +108,9 @@ export class PwaNotificationsService {
     this.browser.addEventListener('offline', this.onConnectionChange);
     this.browser.addEventListener('focus', this.onWindowReady);
     this.browser.document.addEventListener('visibilitychange', this.onWindowReady);
+    this.browser.addEventListener('pageshow', this.onWindowReady);
+    this.browser.document.addEventListener('click', this.onPermissionInteraction);
+    this.browser.document.addEventListener('keydown', this.onPermissionInteraction);
     this.networkInfo?.addEventListener('change', this.onNetworkInfoChange);
     void this.prepareWorker();
     this.onWindowReady();
@@ -100,26 +128,42 @@ export class PwaNotificationsService {
     }
   }
 
-  private async requestPermissionOnOpen(): Promise<void> {
+  private removePermissionListeners(): void {
+    this.browser.document.removeEventListener('click', this.onPermissionInteraction);
+    this.browser.document.removeEventListener('keydown', this.onPermissionInteraction);
+  }
+
+  private async requestPermissionOnOpen(fromInteraction = false): Promise<void> {
     if (this.destroyed || this.browser.document.visibilityState !== 'visible' ||
       !this.browser.document.hasFocus()) return;
     const notifications = this.browser.Notification;
-    if (notifications.permission === 'default' && !this.permissionHandled &&
-      !this.permissionPending && this.permissionAttempts < 2) {
+    if (notifications.permission !== 'default') this.removePermissionListeners();
+    if (notifications.permission === 'default' && !this.permissionHandled && !this.permissionPending) {
       try {
-        if (this.browser.sessionStorage.getItem(this.permissionHandledKey)) {
+        const stored = this.browser.sessionStorage.getItem(this.permissionHandledKey);
+        if (stored === 'dismissed') {
           this.permissionHandled = true;
+          this.removePermissionListeners();
           return;
         }
+        this.automaticPermissionHandled ||= !!stored;
       } catch {
         // El control en memoria también funciona con el almacenamiento bloqueado.
       }
+      if (fromInteraction ? this.interactionPermissionAttempted :
+        this.automaticPermissionHandled || this.permissionAttempts >= 2) return;
       this.permissionPending = true;
-      this.permissionAttempts++;
+      if (fromInteraction) this.interactionPermissionAttempted = true;
+      else this.permissionAttempts++;
       try {
-        await notifications.requestPermission();
-        this.permissionHandled = true;
-        try { this.browser.sessionStorage.setItem(this.permissionHandledKey, '1'); } catch {}
+        const result = await notifications.requestPermission();
+        this.automaticPermissionHandled = true;
+        this.permissionHandled = result !== 'default' || fromInteraction;
+        if (this.permissionHandled) this.removePermissionListeners();
+        // Un resultado automático "default" puede significar que no se mostró el diálogo.
+        // Conserva una oportunidad durante una interacción, incluso con la marca antigua "1".
+        try { this.browser.sessionStorage.setItem(this.permissionHandledKey,
+          result === 'default' && fromInteraction ? 'dismissed' : 'auto'); } catch {}
       } catch {
         if (!this.destroyed) console.warn('El navegador no permitió solicitar notificaciones al abrir Sport Center.');
       } finally {
@@ -137,13 +181,17 @@ export class PwaNotificationsService {
       this.offline = offline;
       this.wasOffline ||= offline;
       this.connectionCycle++;
+      this.notificationAttempts = 0;
+      if (this.notificationRetry !== null) this.browser.clearTimeout(this.notificationRetry);
+      this.notificationRetry = null;
     }
     this.notifyCurrentConnection();
   }
 
   private notifyCurrentConnection(): void {
     if (this.destroyed || !this.registration || this.browser.Notification.permission !== 'granted' ||
-      this.notifiedCycle === this.connectionCycle) return;
+      this.notifiedCycle === this.connectionCycle || this.notificationPendingCycle === this.connectionCycle ||
+      this.notificationAttempts >= 3 || this.notificationRetry !== null) return;
     if ((this.offline && (!this.browser.navigator.onLine || this.failedChecks >= 2)) ||
       (!this.offline && this.wasOffline)) {
       void this.showConnectionNotification(this.offline, this.connectionCycle);
@@ -186,13 +234,14 @@ export class PwaNotificationsService {
     this.connectionCheck = controller;
     let timedOut = false;
     let receivedResponse = false;
+    let local = false;
     this.checkTimeout = this.browser.setTimeout(() => {
       timedOut = true;
       controller.abort();
     }, 4_000);
     try {
       const scope = new URL(this.registration.scope);
-      const local = scope.hostname === 'localhost' || scope.hostname.endsWith('.localhost') ||
+      local = scope.hostname === 'localhost' || scope.hostname.endsWith('.localhost') ||
         scope.hostname.startsWith('127.') || scope.hostname === '[::1]';
       // localhost sigue respondiendo sin Wi-Fi: allí se consulta el GET público existente mediante HEAD.
       const url = local
@@ -218,7 +267,7 @@ export class PwaNotificationsService {
     } catch {
       if (this.connectionCheck === controller && !this.destroyed && !receivedResponse) {
         // El primer arranque lento de Render no se presenta como falta de internet.
-        if (!timedOut || this.receivedRemoteResponse) this.failedChecks++;
+        if (!timedOut || !local || this.receivedRemoteResponse) this.failedChecks++;
         if (this.failedChecks >= 2) this.setOffline(true);
       }
     } finally {
@@ -238,21 +287,28 @@ export class PwaNotificationsService {
   }
 
   private async showConnectionNotification(offline: boolean, cycle: number): Promise<void> {
-    if (!this.registration || !this.isCurrentCycle(offline, cycle) || this.notifiedCycle === cycle) return;
-    this.notifiedCycle = cycle;
+    if (!this.registration || !this.isCurrentCycle(offline, cycle) || this.notifiedCycle === cycle ||
+      this.notificationPendingCycle === cycle) return;
+    this.notificationPendingCycle = cycle;
+    this.notificationAttempts++;
     const tag = offline ? 'sport-center-offline' : 'sport-center-online';
     const previousTag = offline ? 'sport-center-online' : 'sport-center-offline';
     try {
-      const previous = await this.registration.getNotifications({ tag: previousTag });
+      // La limpieza es opcional: su falta de soporte no debe impedir el aviso nuevo.
+      try {
+        const previous = await this.registration.getNotifications?.({ tag: previousTag });
+        if (!this.isCurrentCycle(offline, cycle)) return;
+        previous?.forEach(notification => notification.close());
+      } catch { /* Continúa con showNotification aunque no se puedan consultar avisos. */ }
       if (!this.isCurrentCycle(offline, cycle)) return;
-      previous.forEach(notification => notification.close());
       const options: NotificationOptions & { renotify: boolean } = {
         body: offline
           ? 'Puedes consultar las páginas que ya estén guardadas en este dispositivo.'
           : 'La conexión con Sport Center se ha restablecido.',
         icon: new URL('icons/icon-192.png', this.registration.scope).href,
-        lang: 'es-MX', tag, renotify: false,
+        lang: 'es-MX', tag, renotify: true,
         data: {
+          displayMode: this.displayMode,
           onActionClick: {
             default: {
               operation: 'focusLastFocusedOrOpen',
@@ -264,8 +320,17 @@ export class PwaNotificationsService {
       await this.registration.showNotification(
         offline ? 'Sport Center — Sin conexión' : 'Sport Center — Conexión restablecida', options,
       );
+      if (this.connectionCycle === cycle) this.notifiedCycle = cycle;
     } catch {
       if (!this.destroyed) console.warn('El dispositivo no permitió mostrar el aviso de conexión.');
+      if (this.isCurrentCycle(offline, cycle) && this.notificationAttempts < 3) {
+        this.notificationRetry = this.browser.setTimeout(() => {
+          this.notificationRetry = null;
+          this.notifyCurrentConnection();
+        }, 3_000);
+      }
+    } finally {
+      if (this.notificationPendingCycle === cycle) this.notificationPendingCycle = null;
     }
   }
 }
