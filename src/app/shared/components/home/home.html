@@ -1,11 +1,6 @@
 <!-- Home — Sport Center · Estilo Adidas · Tailwind + minimal CSS -->
 <div class="home-page min-h-screen bg-white">
 
-  <div *ngIf="offlineEnabled" role="status" aria-live="polite"
-       class="bg-[#EEF6FD] px-4 py-2 text-center text-xs text-[#025486]">
-    {{ offline.statusMessage() }}
-  </div>
-
   <!-- ═══════════════════════════════ HERO -->
   <section class="relative overflow-hidden bg-[#0367A6] text-white min-h-[430px] sm:min-h-[520px]">
     <div *ngIf="bannerImages().length > 0" class="absolute inset-0">
