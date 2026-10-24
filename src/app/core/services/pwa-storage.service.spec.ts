@@ -139,6 +139,14 @@ describe('PwaStorageService', () => {
     expect(await service.hasCapacity(0)).toBeFalse();
   });
 
+  it('limita el almacenamiento offline a 64 MiB aunque el navegador conceda varios GiB', async () => {
+    estimate.and.resolveTo({ quota: 8 * 1024 * MiB, usage: 50 * MiB });
+    expect(await service.hasCapacity(6 * MiB)).toBeTrue();
+    expect(await service.hasCapacity(6 * MiB + 1)).toBeFalse();
+    estimate.and.resolveTo({ quota: 8 * 1024 * MiB, usage: 64 * MiB });
+    expect(await service.hasCapacity(0)).toBeFalse();
+  });
+
   it('permite continuar cuando la estimación no está disponible o falla', async () => {
     storage.estimate = undefined;
     expect(await service.hasCapacity(10 * MiB)).toBeTrue();

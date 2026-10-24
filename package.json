@@ -8,13 +8,13 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
-    "build:prod": "ng build --configuration production && node scripts/prepare-netlify-shell.mjs",
+    "build:prod": "ng build --configuration production --stats-json && node scripts/prepare-netlify-shell.mjs",
     "preview:pwa": "node scripts/serve-pwa.mjs",
     "verify:pwa": "node scripts/verify-pwa-deploy.mjs",
     "build:dev": "ng build --configuration development",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "test:pwa": "node --test scripts/pwa-worker.spec.mjs scripts/pwa-storage-worker.spec.mjs scripts/prepare-netlify-shell.spec.mjs && ng test --watch=false --browsers=ChromeHeadless --ts-config=tsconfig.pwa.spec.json --include=src/app/core/services/public-*.spec.ts --include=src/app/core/services/pwa-storage.service.spec.ts",
+    "test:pwa": "node --test scripts/pwa-worker.spec.mjs scripts/pwa-storage-worker.spec.mjs scripts/prepare-netlify-shell.spec.mjs scripts/prepare-offline-manifest.spec.mjs && ng test --watch=false --browsers=ChromeHeadless --ts-config=tsconfig.pwa.spec.json --include=src/app/core/services/public-*.spec.ts --include=src/app/core/services/pwa-storage.service.spec.ts",
     "lint": "ng lint"
   },
   "prettier": {

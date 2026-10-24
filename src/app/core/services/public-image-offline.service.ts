@@ -1,4 +1,4 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { DestroyRef, Injectable, inject, signal } from '@angular/core';
 import { PwaStorageService } from './pwa-storage.service';
 
 const CACHE_NAME = 'sport-center-public-images-v1';
@@ -12,7 +12,33 @@ export class PublicImageOfflineService {
   private readonly pending = new Map<string, Promise<boolean>>();
   private saving: Promise<void> = Promise.resolve();
   private cleanupAttempt: Promise<void> | null = null;
+  private catalog = new Set<string>();
+  private observing = false;
+  private budgetBlocked = false;
   readonly storageProblem = signal(false);
+
+  private readonly imageLoaded = (event: Event) => {
+    if (event.target instanceof HTMLImageElement) this.retainDisplayed(event.target);
+  };
+
+  constructor() {
+    inject(DestroyRef).onDestroy(() => document.removeEventListener('load', this.imageLoaded, true));
+  }
+
+  trackCatalog(urls: readonly string[]): void {
+    this.catalog = new Set(urls.map(url => new URL(url, document.baseURI).href));
+    if (!this.observing) {
+      this.observing = true;
+      document.addEventListener('load', this.imageLoaded, true);
+    }
+    for (const image of Array.from(document.images)) this.retainDisplayed(image);
+  }
+
+  private retainDisplayed(image: HTMLImageElement): void {
+    const url = image.currentSrc || image.src;
+    if (!image.complete || image.naturalWidth < 1 || !this.catalog.has(url)) return;
+    void this.retain(url, navigator.onLine, !!navigator.serviceWorker?.controller, false);
+  }
 
   async has(url: string): Promise<boolean> {
     try {
@@ -43,13 +69,19 @@ export class PublicImageOfflineService {
         const previous = await caches.match(url, { ignoreVary: true });
         if (previous && await this.save(cache, url, previous, controlled)) return true;
       }
-      if (!allowNetwork) return false;
+      if (!allowNetwork || this.budgetBlocked) return false;
+      if (!await this.storage.hasCapacity(0)) {
+        this.budgetBlocked = true;
+        this.storageProblem.set(true);
+        return false;
+      }
       for (const mode of ['cors', 'no-cors'] as const) {
         try {
           const response = await fetch(url, {
             mode, credentials: 'omit', cache: 'reload', signal: AbortSignal.timeout(25_000),
           });
           if (await this.save(cache, url, response, controlled)) return true;
+          if (this.budgetBlocked) break;
         } catch { /* Un proveedor sin CORS puede admitir una imagen normal. */ }
       }
       return false;
@@ -96,6 +128,7 @@ export class PublicImageOfflineService {
   }
 
   private async saveOnce(cache: Cache, url: string, response: Response, controlled: boolean): Promise<boolean> {
+    if (this.budgetBlocked) return false;
     if (!this.usable(response)) return false;
     let temporary: string | null = null;
     let objectUrl: string | null = null;
@@ -103,6 +136,7 @@ export class PublicImageOfflineService {
       if (response.type === 'opaque') {
         if (!controlled) return false;
         if (!await this.storage.hasCapacity(OPAQUE_COPY_BYTES)) {
+          this.budgetBlocked = true;
           this.storageProblem.set(true);
           return false;
         }
@@ -115,6 +149,7 @@ export class PublicImageOfflineService {
       } else {
         const blob = await response.clone().blob();
         if (!await this.storage.hasCapacity(blob.size)) {
+          this.budgetBlocked = true;
           this.storageProblem.set(true);
           return false;
         }
@@ -123,7 +158,8 @@ export class PublicImageOfflineService {
       }
       await cache.put(url, response.clone());
       return true;
-    } catch {
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'QuotaExceededError') this.budgetBlocked = true;
       this.storageProblem.set(true);
       return false;
     } finally {

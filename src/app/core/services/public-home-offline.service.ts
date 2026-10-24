@@ -162,53 +162,57 @@ export class PublicHomeOfflineService {
     try {
       const get = (path: typeof PATHS[number]) => this.copies.get(this.api + path) || [];
       const media = catalogMedia(get(PATHS[0]), get(PATHS[1]), get(PATHS[2]), get(PATHS[3]));
-      this.totalImages.set(media.all.length);
+      this.totalImages.set(media.home.length);
       this.failedImages.set(0);
       const record = await (await caches.open(this.cacheName)).match(this.mediaRecordUrl);
       // Un reintento no descarta el historial guardado por ejecuciones anteriores.
       if (record) this.verified = { ...this.verified, ...(await record.json()).verified };
       const saved = new Set<string>();
-      for (const url of media.all) {
+      for (const url of media.home) {
         if (await this.images.has(url) || this.verified[url] && await caches.match(url, { ignoreVary: true })) saved.add(url);
       }
       this.savedImages.set(saved.size);
       // El arranque básico se descarga primero; las fotos no forman parte de su instalación.
       const controlled = navigator.onLine ? await this.waitForController() : !!navigator.serviceWorker?.controller;
+      this.images.trackCatalog(media.all);
       const checkHome = async () => {
         const shell = await caches.match(new URL('index.html', document.baseURI).href, { ignoreVary: true });
         this.homeReady.set(controlled && !!shell && media.home.every(url => saved.has(url)));
       };
-      const prepare = async (url: string) => {
+      const prepare = async (url: string, allowNetwork: boolean) => {
         if (this.destroyed) return;
-        const ok = await this.images.retain(url, navigator.onLine, controlled, !!this.verified[url]);
+        const ok = await this.images.retain(url, allowNetwork, controlled, !!this.verified[url]);
         if (this.images.storageProblem()) this.storageProblem.set(true);
         if (ok) {
-          saved.add(url);
+          if (media.home.includes(url)) saved.add(url);
           this.verified[url] ||= Date.now();
         } else {
           // Si migrar o descargar falla, conserva una copia anterior que aún exista.
           if (!this.verified[url] || !await caches.match(url, { ignoreVary: true })) saved.delete(url);
-          this.failedImages.update(value => value + 1);
+          if (media.home.includes(url)) this.failedImages.update(value => value + 1);
         }
         this.savedImages.set(saved.size);
       };
-      const batch = async (urls: string[]) => {
+      const batch = async (urls: string[], allowNetwork: boolean) => {
         let index = 0;
         await Promise.all(Array.from({ length: Math.min(3, urls.length) }, async () => {
-          while (index < urls.length && !this.destroyed) await prepare(urls[index++]);
+          while (index < urls.length && !this.destroyed) await prepare(urls[index++], allowNetwork);
         }));
       };
-      await batch(media.home);
+      await batch(media.home, navigator.onLine);
       await checkHome();
-      await batch(media.all.filter(url => !media.home.includes(url)));
+      // Migra descargas antiguas que ya existan; no descarga galerías sin abrirlas.
+      for (const url of Object.keys(this.verified).filter(url => !media.home.includes(url))) {
+        if (!await this.images.has(url) && await caches.match(url, { ignoreVary: true })) await prepare(url, false);
+      }
       await checkHome();
       await (await caches.open(this.cacheName)).put(this.mediaRecordUrl,
-        new Response(JSON.stringify({ verified: this.verified, pending: media.all.filter(url => !saved.has(url)) }), { headers: { 'Content-Type': 'application/json' } }));
+        new Response(JSON.stringify({ verified: this.verified, pending: media.home.filter(url => !saved.has(url)) }), { headers: { 'Content-Type': 'application/json' } }));
     } catch { this.storageProblem.set(true); }
     finally {
       this.warming = false;
       this.preparing.set(false);
-      if (!this.destroyed && navigator.onLine && (this.failedImages() || this.warmAgain || !this.homeReady())) {
+      if (!this.destroyed && navigator.onLine && !this.storageProblem() && (this.failedImages() || this.warmAgain || !this.homeReady())) {
         this.warmAgain = false;
         this.retryLater();
       }
