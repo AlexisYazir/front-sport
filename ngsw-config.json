@@ -11,19 +11,24 @@
           "/index.html",
           "/manifest.webmanifest",
           "/*.css$",
-          "/*.js$",
-          "/icons/*.png$",
-          "/assets/images/**",
-          "/*.ico$"
+          "/main-*.js$", "/polyfills-*.js$", "/pwa-worker.js$",
+          "/icons/icon-192.png$", "/icons/icon-512.png$", "/icons/icon-maskable-512.png$",
+          "/assets/images/logo_sportcenter.png$", "/assets/images/no_imagen.webp$", "/favicon.ico$"
         ]
       }
+    },
+    {
+      "name": "features",
+      "installMode": "lazy",
+      "updateMode": "prefetch",
+      "resources": { "files": ["/*.js$"] }
     },
     {
       "name": "assets",
       "installMode": "lazy",
       "updateMode": "lazy",
       "resources": {
-        "files": ["/assets/**", "/favicon.ico"],
+        "files": ["/assets/**", "/icons/**", "/*.ico$"],
         "urls": [
           "https://fonts.googleapis.com/**",
           "https://fonts.gstatic.com/**"
@@ -31,26 +36,5 @@
       }
     }
   ],
-  "dataGroups": [
-    {
-      "name": "public-catalog-images",
-      "urls": [
-        "^https://res.cloudinary.com/**",
-        "^https://http2.mlstatic.com/**",
-        "^https://m.media-amazon.com/**",
-        "^https://imgs.search.brave.com/**",
-        "^https://images.seeklogo.com/**",
-        "^https://operadorapalermo.com.mx/**",
-        "^https://ui-avatars.com/**",
-        "^https://back-sport-ghxk.onrender.com/uploads/**"
-      ],
-      "cacheConfig": {
-        "strategy": "freshness",
-        "timeout": "3s",
-        "maxSize": 2048,
-        "maxAge": "365d",
-        "cacheOpaqueResponses": false
-      }
-    }
-  ]
+  "dataGroups": []
 }

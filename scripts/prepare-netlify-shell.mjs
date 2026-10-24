@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { readFile, writeFile, rm } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { prepareOfflineManifest } from './prepare-offline-manifest.mjs';
 
 export async function prepareNetlifyShell(root = process.cwd()) {
   const output = path.join(root, 'dist/ecommerce-app');
@@ -23,7 +24,10 @@ export async function prepareNetlifyShell(root = process.cwd()) {
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
-  prepareNetlifyShell().then(result => {
+  prepareOfflineManifest().then(summary => {
+    console.log(`Inicio offline: ${summary.prefetchedFiles} archivos; ${summary.lazyJs} módulos se guardarán al utilizarlos.`);
+    return prepareNetlifyShell();
+  }).then(result => {
     console.log(`HTML offline preparado en pwa-shell.json: ${result.bytes} bytes; SHA-1 ${result.hash}.`);
   }).catch(error => {
     console.error(error.message);

@@ -18,7 +18,6 @@ const testWorker = official.replace(boot,
   'self.testClasses = { DataGroup }; self.testDriver = ' + boot);
 const wrapper = readFileSync(new URL('../public/pwa-worker.js', import.meta.url), 'utf8');
 const config = JSON.parse(readFileSync(new URL('../ngsw-config.json', import.meta.url), 'utf8'));
-const configuredImages = config.dataGroups.find(group => group.name === 'public-catalog-images');
 const sha1 = value => createHash('sha1').update(value).digest('hex');
 const html = version => `<!doctype html><app-root>Sport Center ${version}</app-root>`;
 
@@ -64,16 +63,16 @@ class MemoryStorage {
   }
 }
 const imageResponse = body => new Response(body, { headers: { 'Content-Type': 'image/jpeg' } });
-function manifest(version) {
+function manifest(version, legacyImages = true) {
   return {
     configVersion: 1, timestamp: version, index: '/index.html',
     assetGroups: [{ name: 'app', installMode: 'prefetch', updateMode: 'prefetch',
       urls: ['/index.html'], patterns: [], cacheQueryOptions: { ignoreVary: true } }],
     // Capacidad/edad reducidas para ejercitar los mecanismos reales sin miles de fotos.
-    dataGroups: [{ name: 'public-catalog-images', version: 1, strategy: 'freshness',
+    dataGroups: legacyImages ? [{ name: 'public-catalog-images', version: 1, strategy: 'freshness',
       patterns: ['^https://res\\.cloudinary\\.com/catalogo/'], maxSize: 2, maxAge: 1_000,
-      timeoutMs: 3_000, cacheOpaqueResponses: configuredImages.cacheConfig.cacheOpaqueResponses,
-      cacheQueryOptions: { ignoreVary: true } }],
+      timeoutMs: 3_000, cacheOpaqueResponses: false,
+      cacheQueryOptions: { ignoreVary: true } }] : [],
     hashTable: { '/index.html': sha1(html(version)) },
     navigationUrls: [{ positive: true, regex: '^\\/.*$' }], navigationRequestStrategy: 'performance',
   };
@@ -89,7 +88,7 @@ function runtime(storage, network, wrapped = true) {
       const url = new URL(request.url);
       requests.push(request.url);
       if (!network.online) throw new TypeError('Red desconectada en el ensayo');
-      if (url.pathname === '/ngsw.json') return new Response(JSON.stringify(manifest(network.version)));
+      if (url.pathname === '/ngsw.json') return new Response(JSON.stringify(manifest(network.version, network.legacyImages !== false)));
       if (url.pathname === '/pwa-shell.json') return new Response(JSON.stringify({
         version: 1, encoding: 'base64', html: Buffer.from(html(network.version)).toString('base64'),
       }), { headers: { 'Content-Type': 'application/json' } });
@@ -184,12 +183,13 @@ test('validación opaca entrega exactamente la candidata sin red y rechaza solic
   assert.deepEqual(instance.requests, []);
 });
 
-test('caídas HTTP, HTML y respuestas opacas nuevas conservan y sirven la imagen verificada', async () => {
+test('una imagen verificada responde de caché sin esperar ni volver a pedir la red', async () => {
   const storage = new MemoryStorage(), state = network();
   const own = await storage.open(imagesCache);
   await own.put(imageA, imageResponse('imagen verificada conservada'));
   const instance = runtime(storage, state);
   await instance.initialize();
+  instance.requests.length = 0;
   for (const kind of ['http-error', 'html', 'opaque']) {
     state.imageKind = kind;
     const result = await instance.fetch(imageA);
@@ -197,20 +197,22 @@ test('caídas HTTP, HTML y respuestas opacas nuevas conservan y sirven la imagen
     assert.equal(await result.text(), 'imagen verificada conservada', kind);
     assert.equal(await (await own.match(imageA)).text(), 'imagen verificada conservada', kind);
   }
+  assert.deepEqual(instance.requests, []);
 });
 
-test('la configuración impide duplicar respuestas opacas en la caché de Angular', async () => {
-  assert.equal(configuredImages.cacheConfig.cacheOpaqueResponses, false);
+test('la configuración conserva una sola copia de las imágenes públicas, sin duplicarlas en Angular', async () => {
+  assert.equal(config.dataGroups.some(group => group.name === 'public-catalog-images'), false);
   const storage = new MemoryStorage(), state = network();
   const own = await storage.open(imagesCache);
   await own.put(imageA, new OpaqueResponse('opaca previamente validada'));
   state.imageKind = 'opaque';
+  state.legacyImages = false;
   const instance = runtime(storage, state);
   await instance.initialize();
   const response = await instance.fetch(imageA);
   assert.equal(response.type, 'opaque');
   assert.equal(await response.text(), 'opaca previamente validada');
-  assert.equal(await (await instance.group().cache).match(imageA), undefined);
+  assert.equal(instance.driver.versions.get(instance.driver.latestHash).dataGroups.length, 0);
   assert.equal((await own.keys()).length, 1);
 });
 
@@ -228,16 +230,21 @@ test('actualizar y limpiar Angular elimina versiones antiguas sin borrar las tre
   const names = ['sport-center-public-home-v1', 'sport-center-public-info-v1', imagesCache];
   for (const name of names) await (await storage.open(name)).put(origin + '/saved', new Response(name));
   await instance.initialize();
+  await instance.fetch(imageA);
+  const legacy = (await storage.keys()).filter(name => name.includes('data:public-catalog-images'));
+  assert.ok(legacy.length > 0);
   const previousHash = instance.driver.latestHash;
   const obsolete = await instance.driver.adapter.caches.open('unused-version:assets:old:cache');
   await obsolete.put(new TestRequest(origin + '/old'), new Response('versión antigua'));
   state.version = 2;
+  state.legacyImages = false;
   assert.equal(await instance.driver.checkForUpdate(), true);
   assert.notEqual(instance.driver.latestHash, previousHash);
   instance.clients.clear();
   await instance.driver.cleanupCaches();
   assert.equal(instance.driver.versions.has(previousHash), false);
   assert.equal(await instance.driver.adapter.caches.has('unused-version:assets:old:cache'), false);
+  for (const name of legacy) assert.equal(await storage.has(name), false, 'Sólo se elimina la caché duplicada de Angular.');
   for (const name of names) {
     assert.equal(await storage.has(name), true);
     assert.equal(await (await (await storage.open(name)).match(origin + '/saved')).text(), name);

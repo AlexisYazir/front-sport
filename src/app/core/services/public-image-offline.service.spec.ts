@@ -197,7 +197,7 @@ describe('Copias duraderas de imágenes públicas', () => {
     expect(service.storageProblem()).toBeTrue();
     expect(saved.size).toBe(1);
     expect(await saved.get(other)!.text()).toBe('conservar');
-    expect(deletes.length).toBe(2);
+    expect(deletes.length).toBe(1);
     expect(deletes.every(key => key.includes('/pwa-image-validation/'))).toBeTrue();
   });
 
@@ -216,9 +216,9 @@ describe('Copias duraderas de imágenes públicas', () => {
     spyOn<any>(service, 'decodeImage').and.callFake((key: string) => new Promise<boolean>(resolve => {
       validations.push({ url: key, finish: resolve });
     }));
-    storage.hasCapacity.and.callFake(async () => {
+    storage.hasCapacity.and.callFake(async bytes => {
       // La candidata anterior debe haberse eliminado antes de estimar la siguiente.
-      expect([...saved.keys()].filter(key => key.includes('/pwa-image-validation/'))).toEqual([]);
+      if (bytes > 0) expect([...saved.keys()].filter(key => key.includes('/pwa-image-validation/'))).toEqual([]);
       return true;
     });
     network.and.callFake(async (key: string, options: RequestInit) => {
@@ -235,12 +235,12 @@ describe('Copias duraderas de imágenes públicas', () => {
     const first = service.retain(url, true, true, false);
     const second = service.retain(other, true, true, false);
     await waitFor(() => validations.length === 1 && network.calls.count() === 4);
-    expect(storage.hasCapacity).toHaveBeenCalledTimes(1);
+    expect(storage.hasCapacity.calls.allArgs().filter(args => args[0] > 0).length).toBe(1);
     expect([...saved.keys()]).toEqual([validations[0].url]);
     validations[0].finish(true);
     expect(await first).toBeTrue();
     await waitFor(() => validations.length === 2);
-    expect(storage.hasCapacity).toHaveBeenCalledTimes(2);
+    expect(storage.hasCapacity.calls.allArgs().filter(args => args[0] > 0).length).toBe(2);
     expect(saved.has(url)).toBeTrue();
     expect(saved.has(validations[0].url)).toBeFalse();
     expect([...saved.keys()].filter(key => key.includes('/pwa-image-validation/'))).toEqual([validations[1].url]);
@@ -304,6 +304,40 @@ describe('Copias duraderas de imágenes públicas', () => {
     expect(scans).toBe(1);
     expect(saved.has(addedLater.href)).toBeTrue();
     expect(deletes).toEqual([]);
+  });
+
+  it('detiene nuevas descargas al alcanzar el presupuesto y sigue leyendo las anteriores', async () => {
+    saved.set(url, image('conservar'));
+    storage.hasCapacity.and.resolveTo(false);
+    expect(await service.retain(url + '?nueva', true, true, false)).toBeFalse();
+    expect(await service.retain(url + '?otra', true, true, false)).toBeFalse();
+    expect(network).not.toHaveBeenCalled();
+    expect(await service.retain(url, false, true, false)).toBeTrue();
+    expect(await saved.get(url)!.text()).toBe('conservar');
+    expect(deletes).toEqual([]);
+  });
+
+  it('guarda imágenes del catálogo al mostrarlas y omite galerías sin abrir y fotos privadas', () => {
+    const photo = document.createElement('img');
+    const gallery = url + '?galeria';
+    Object.defineProperties(photo, { currentSrc: { configurable: true, value: url },
+      complete: { value: true }, naturalWidth: { value: 64 } });
+    document.body.append(photo);
+    const retain = spyOn(service, 'retain').and.resolveTo(true);
+    try {
+      service.trackCatalog([url, gallery]);
+      expect(retain).toHaveBeenCalledTimes(1);
+      expect(retain.calls.mostRecent().args[0]).toBe(url);
+      Object.defineProperty(photo, 'currentSrc', { value: 'https://example.com/private-profile.jpg', configurable: true });
+      photo.dispatchEvent(new Event('load'));
+      expect(retain).toHaveBeenCalledTimes(1);
+      Object.defineProperty(photo, 'currentSrc', { value: gallery });
+      photo.dispatchEvent(new Event('load'));
+      expect(retain.calls.mostRecent().args[0]).toBe(gallery);
+      TestBed.resetTestingModule();
+      photo.dispatchEvent(new Event('load'));
+      expect(retain).toHaveBeenCalledTimes(2);
+    } finally { photo.remove(); }
   });
 
   it('no guarda páginas ni errores HTTP aunque respondan a una URL de imagen', async () => {

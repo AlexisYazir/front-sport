@@ -1,6 +1,8 @@
 import { DestroyRef, Injectable, inject } from '@angular/core';
 
 const RESERVED_BYTES = 8 * 1024 * 1024;
+// Un catálogo no debe crecer hasta agotar la cuota que pueda conceder el navegador.
+const MAX_OFFLINE_BYTES = 64 * 1024 * 1024;
 
 /** Protege las copias offline sin borrar recursos ni bloquear el inicio. */
 @Injectable({ providedIn: 'root' })
@@ -48,7 +50,7 @@ export class PwaStorageService {
       if (typeof quota !== 'number' || !Number.isFinite(quota) || quota < 0 ||
           typeof usage !== 'number' || !Number.isFinite(usage) || usage < 0) return true;
       const downloadBytes = Number.isFinite(additionalBytes) ? Math.max(0, additionalBytes) : 0;
-      return quota - usage >= downloadBytes + RESERVED_BYTES;
+      return Math.min(quota, MAX_OFFLINE_BYTES) - usage >= downloadBytes + RESERVED_BYTES;
     } catch {
       // La escritura sigue teniendo que capturar errores de cuota si no hay estimación.
       return true;
