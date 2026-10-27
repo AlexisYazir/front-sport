@@ -98,7 +98,7 @@ async function main() {
   const canonicalShell = await readShell(false);
   if (!canonicalShell.equals(shellBytes)) failures.push('pwa-shell.json cambia según los parámetros de consulta.');
 
-  const { headers } = await download('pwa-worker.js?v=1');
+  const { bytes: workerBytes, headers } = await download('pwa-worker.js?v=1');
   const policies = (headers.get('content-security-policy') || '').split(',').filter(Boolean);
   // Son proveedores utilizados actualmente por imágenes y fuentes del catálogo.
   const providers = [
@@ -120,9 +120,16 @@ async function main() {
     if (missing.length) failures.push(`La CSP del worker bloquea estos proveedores: ${missing.join(', ')}`);
   }
 
-  const images = manifest.dataGroups?.find(group => group.name === 'public-catalog-images');
-  if (!images || !images.maxSize || !images.patterns?.length) {
-    failures.push('Falta la configuración para conservar las imágenes públicas sin conexión.');
+  if (manifest.dataGroups?.some(group => group.name === 'public-catalog-images')) {
+    failures.push('La publicación todavía duplica las imágenes públicas en la caché de Angular.');
+  }
+  const workerCode = workerBytes.toString('utf8');
+  if (!workerCode.includes("const imagesCache = 'sport-center-public-images-v1'") ||
+      !workerCode.includes('pwa-image-validation/')) failures.push('Falta la caché estable de imágenes verificadas.');
+  const app = manifest.assetGroups?.find(group => group.name === 'app');
+  const features = manifest.assetGroups?.find(group => group.name === 'features');
+  if (!app?.urls.includes(manifest.index) || features?.installMode !== 'lazy') {
+    failures.push('Falta la política de descarga del inicio y las pantallas bajo demanda.');
   }
 
   if (failures.length) {

@@ -20,7 +20,7 @@ describe('Conservación del registro de descargas del inicio', () => {
   beforeEach(() => {
     online = false;
     saved = new Map([[recordUrl, new Response(JSON.stringify({ verified: { [image]: oldDate, [previous]: oldDate } }))]]);
-    images = jasmine.createSpyObj('PublicImageOfflineService', ['has', 'retain'], { storageProblem: signal(false) });
+    images = jasmine.createSpyObj('PublicImageOfflineService', ['has', 'retain', 'trackCatalog'], { storageProblem: signal(false) });
     images.has.and.resolveTo(true);
     images.retain.and.resolveTo(true);
     spyOnProperty(navigator, 'onLine', 'get').and.callFake(() => online);
@@ -88,5 +88,27 @@ describe('Conservación del registro de descargas del inicio', () => {
     await (service as any).prepareImages();
     expect(await saved.get(recordUrl)!.text()).toBe(before);
     expect(service.storageProblem()).toBeTrue();
+  });
+
+  it('descarga sólo las imágenes del inicio y deja las galerías para cuando se muestran', async () => {
+    const gallery = 'https://res.cloudinary.com/catalogo/galeria-sin-abrir.jpg';
+    const internal = service as any;
+    internal.copies.set(api + '/products/get-all-products', [{ id_producto: 1, producto: 'Tenis',
+      variantes: [{ imagenes: [image, gallery] }] }]);
+    online = true;
+    spyOn<any>(service, 'waitForController').and.resolveTo(true);
+    await internal.prepareImages();
+    expect(images.retain).toHaveBeenCalledWith(image, true, true, true);
+    expect(images.retain.calls.allArgs().some(args => args[0] === gallery)).toBeFalse();
+    expect(images.trackCatalog).toHaveBeenCalledWith([image, gallery]);
+    expect(service.totalImages()).toBe(1);
+  });
+
+  it('migra galerías previamente descargadas sin pedirlas de nuevo a la red', async () => {
+    images.has.and.callFake(async url => url === image);
+    saved.set(previous, new Response('galería guardada'));
+    await (service as any).prepareImages();
+    expect(images.retain).toHaveBeenCalledWith(previous, false, jasmine.any(Boolean), true);
+    expect(await saved.get(previous)!.text()).toBe('galería guardada');
   });
 });

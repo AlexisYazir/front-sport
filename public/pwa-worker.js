@@ -21,15 +21,10 @@ importScripts('./ngsw-worker.js');
       return request.mode === 'no-cors' && saved ? saved : new Response('', { status: 404 });
     }
     if (saved?.type === 'opaque' && request.mode !== 'no-cors') saved = undefined;
-    try {
-      const response = await networkFetch(input, init);
-      if (saved && (response.type === 'opaque' || !response.ok ||
-          !response.headers.get('Content-Type')?.toLowerCase().startsWith('image/'))) return saved;
-      return response;
-    } catch (error) {
-      if (saved) return saved;
-      throw error;
-    }
+    // Las copias fueron decodificadas antes de guardarse. No esperan una red caída
+    // ni se vuelven a descargar en cada navegación.
+    if (saved) return saved;
+    return networkFetch(input, init);
   };
 
   // El HTML versionado conserva la caché, las actualizaciones y la comprobación
