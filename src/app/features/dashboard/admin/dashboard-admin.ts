@@ -10,6 +10,7 @@ import { formatMexicoDate } from '../../../core/utils/date-time.util';
 import { DashboardPreferencesService } from '../../../core/services/dashboard-preferences.service';
 import { DashboardNavigationLoadingService } from '../../../core/services/dashboard-navigation-loading.service';
 import { DashboardRouteSkeleton } from '../shared/dashboard-route-skeleton/dashboard-route-skeleton';
+import type { InventoryProduct } from '../../../core/models/product.model';
 import { IconModule } from '../../../shared/icons/icon.module';
 
 
@@ -76,7 +77,7 @@ export class DashboardAdmin implements OnInit {
   // Lista de usuarios RECIENTES desde la API
   recentUsers: RecentUserCreated[] = [];
 
-  constructor(public router: Router) {}
+  public router = inject(Router);
 
   @HostListener('window:scroll', [])
   onWindowScroll() {
@@ -110,7 +111,7 @@ export class DashboardAdmin implements OnInit {
       next: (users: RecentUserCreated[]) => {
         this.recentUsers = users;
       },
-      error: (error) => {
+      error: () => {
       }
     });
   }
@@ -118,7 +119,7 @@ export class DashboardAdmin implements OnInit {
   loadUserStats() {
     // Usar getUsers() en lugar de getRecentUsers() para obtener TODOS los usuarios
     this.authService.getUsers().subscribe({
-      next: (users: any[]) => {
+      next: (users) => {
         this.stats.totalUsuarios = users.length;
         
         // Contar activos (activo === 1)
@@ -129,14 +130,14 @@ export class DashboardAdmin implements OnInit {
         this.stats.administradores = users.filter(u => u.rol === 3).length;
         
       },
-      error: (error) => {
+      error: () => {
       }
     });
   }
 
   loadProductStats() {
     this.productService.getInventoryProducts().subscribe({
-      next: (products: any[]) => {
+      next: (products) => {
         this.stats.totalProductos = products.length;
         this.stats.productosAgotados = products.filter(p => {
           const stock = p.stock ? Number(p.stock) : 0;
@@ -149,36 +150,36 @@ export class DashboardAdmin implements OnInit {
           return stock > 0 && stock <= 5;
         }).length;
       },
-      error: (error) => {
+      error: () => {
       }
     });
 
     // Productos incompletos (sin atributos)
     this.productService.getProductsWithoutVariantsAttributes().subscribe({
-      next: (products: any[]) => {
+      next: (products) => {
         this.stats.productosIncompletos = products.length;
       },
-      error: (error) => {
+      error: () => {
       }
     });
   }
 
   loadCategoryStats() {
     this.productService.getCategorias().subscribe({
-      next: (categories: any[]) => {
+      next: (categories) => {
         this.stats.categorias = categories.length;
       },
-      error: (error) => {
+      error: () => {
       }
     });
   }
 
   loadBrandStats() {
     this.productService.getMarcas().subscribe({
-      next: (brands: any[]) => {
+      next: (brands) => {
         this.stats.marcas = brands.length;
       },
-      error: (error) => {
+      error: () => {
       }
     });
   }
@@ -239,7 +240,7 @@ export class DashboardAdmin implements OnInit {
   // En tu dashboard-admin.ts, agrega:
 
 // Propiedades que faltan
-recentProducts: any[] = []; // O crea una interfaz Producto
+recentProducts: InventoryProduct[] = []; // O crea una interfaz Producto
 
 // Métodos que faltan
 getStockClass(stock: number): string {

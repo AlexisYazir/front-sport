@@ -6,6 +6,7 @@ import { CompanyInfo, CompanyService } from '../../../core/services/company.serv
 import { GeolocationService, getGeolocationErrorMessage } from '../../../core/services/geolocation.service';
 import { environment } from '../../../../environments/environment';
 import { IconModule } from '../../../shared/icons/icon.module';
+import { MapStylesService } from '../../../core/services/map-styles.service';
 
 export const LOCATION_MAP_API = new InjectionToken<typeof maplibregl>('Location map API', {
   providedIn: 'root',
@@ -32,6 +33,7 @@ export class Ubicacion implements AfterViewInit, OnDestroy {
   private readonly companyService = inject(CompanyService);
   private readonly geolocation = inject(GeolocationService);
   private readonly mapApi = inject(LOCATION_MAP_API);
+  private readonly mapStyles = inject(MapStylesService);
   @ViewChild('mapContainer', { static: true }) private mapContainer!: ElementRef<HTMLElement>;
   private map?: maplibregl.Map;
   private companySubscription?: Subscription;
@@ -40,6 +42,15 @@ export class Ubicacion implements AfterViewInit, OnDestroy {
   private resizeFrame?: number;
   private resizeTimeout?: ReturnType<typeof setTimeout>;
   private destroyed = false;
+  private mapInitializing = false;
+
+  get mapLoading(): boolean {
+    return this.mapInitializing;
+  }
+
+  retryMap(): void {
+    void this.initializeMap();
+  }
 
   companyInfo: CompanyInfo | null = null;
   locating = false;
@@ -65,11 +76,11 @@ export class Ubicacion implements AfterViewInit, OnDestroy {
         const configuredLocation = this.parseLocation(info?.mapa_ubicacion);
         this.storeLocationConfigured = configuredLocation !== null;
         this.locationData = configuredLocation ?? this.locationData;
-        this.initializeMap();
+        void this.initializeMap();
       },
       error: () => {
         if (this.destroyed) return;
-        this.initializeMap();
+        void this.initializeMap();
       },
     });
   }
@@ -135,13 +146,16 @@ export class Ubicacion implements AfterViewInit, OnDestroy {
     return url.toString();
   }
 
-  private initializeMap(): void {
-    if (this.destroyed || this.map) return;
+  private async initializeMap(): Promise<void> {
+    if (this.destroyed || this.map || this.mapInitializing) return;
+    this.mapInitializing = true;
     const style = environment.maptilerApiKey
       ? `https://api.maptiler.com/maps/streets/style.json?key=${environment.maptilerApiKey}`
       : 'https://demotiles.maplibre.org/style.json';
 
     try {
+      await this.mapStyles.ensureLoaded();
+      if (this.destroyed || this.map) return;
       // El worker de MapLibre 6 se sirve desde el propio sitio; la versión evita reutilizar uno anterior.
       maplibregl.setWorkerUrl(new URL(
         `assets/maplibre/maplibre-gl-worker.mjs?v=${maplibregl.getVersion()}`, document.baseURI,
@@ -198,12 +212,16 @@ export class Ubicacion implements AfterViewInit, OnDestroy {
         if (!this.destroyed && this.map === map) marker.togglePopup();
       });
       this.showUserMarker();
+      this.mapUnavailable = false;
     } catch {
+      if (this.destroyed) return;
       this.userMarker?.remove();
       this.storeMarker?.remove();
       this.map?.remove();
       this.map = undefined;
       this.mapUnavailable = true;
+    } finally {
+      this.mapInitializing = false;
     }
   }
 

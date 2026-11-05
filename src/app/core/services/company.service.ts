@@ -1,4 +1,5 @@
-import { Injectable, signal } from '@angular/core';
+import type { UploadImageResponse, MessageResponse, ContactInput, ContactMessage, ContactUpdate } from './api-contracts';
+import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map, finalize } from 'rxjs/operators';
@@ -67,10 +68,8 @@ export class CompanyService {
   private readonly CACHE_TTL = 60_000;
   isLoading = signal<boolean>(false);
 
-  constructor(
-    private http: HttpClient,
-    private cache: RequestCacheService,
-  ) {}
+  private readonly http = inject(HttpClient);
+  private readonly cache = inject(RequestCacheService);
 
   // ========== COMPANY INFO ==========
   
@@ -110,12 +109,12 @@ export class CompanyService {
     );
   }
 
-  uploadCompanyLogo(file: File, folder = 'sport-center/company'): Observable<any> {
+  uploadCompanyLogo(file: File, folder = 'sport-center/company'): Observable<UploadImageResponse> {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('folder', folder);
 
-    return this.http.post(`${this.API_URL}/products/upload-image`, formData);
+    return this.http.post<UploadImageResponse>(`${this.API_URL}/products/upload-image`, formData);
   }
 
   // ========== HOME BANNER ==========
@@ -149,8 +148,8 @@ export class CompanyService {
     );
   }
 
-  deleteBannerImage(id: number): Observable<any> {
-    return this.http.delete(`${this.API_URL}/company/banner/${id}`).pipe(
+  deleteBannerImage(id: number): Observable<MessageResponse> {
+    return this.http.delete<MessageResponse>(`${this.API_URL}/company/banner/${id}`).pipe(
       map((res) => {
         this.cache.invalidate('company:banner:');
         return res;
@@ -158,18 +157,18 @@ export class CompanyService {
     );
   }
 
-  uploadBannerImage(file: File, folder = 'banner'): Observable<any> {
+  uploadBannerImage(file: File, folder = 'banner'): Observable<UploadImageResponse> {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('folder', folder);
 
-    return this.http.post(`${this.API_URL}/products/upload-image`, formData);
+    return this.http.post<UploadImageResponse>(`${this.API_URL}/products/upload-image`, formData);
   }
 
   // ========== FAQS ==========
 
   // Obtener todas las FAQs (con filtro opcional por activo)
-  getAllFaqs(activo?: boolean): Observable<any> {
+  getAllFaqs(activo?: boolean): Observable<CompanyFaq[]> {
     this.isLoading.set(true);
     let url = `${this.API_URL}/company/faqs`;
     if (activo !== undefined) {
@@ -189,9 +188,9 @@ export class CompanyService {
   }
 
   // Obtener FAQs destacadas
-  getFaqsDestacadas(): Observable<any> {
+  getFaqsDestacadas(): Observable<CompanyFaq[]> {
     this.isLoading.set(true);
-    return this.http.get(`${this.API_URL}/company/faqs/destacadas`).pipe(
+    return this.http.get<CompanyFaq[]>(`${this.API_URL}/company/faqs/destacadas`).pipe(
       map(res => {
         this.isLoading.set(false);
         return res;
@@ -200,9 +199,9 @@ export class CompanyService {
   }
 
   // Obtener FAQs por sección
-  getFaqsBySeccion(seccion: string): Observable<any> {
+  getFaqsBySeccion(seccion: string): Observable<CompanyFaq[]> {
     this.isLoading.set(true);
-    return this.http.get(`${this.API_URL}/company/faqs/seccion/${seccion}`).pipe(
+    return this.http.get<CompanyFaq[]>(`${this.API_URL}/company/faqs/seccion/${seccion}`).pipe(
       map(res => {
         this.isLoading.set(false);
         return res;
@@ -211,9 +210,9 @@ export class CompanyService {
   }
 
   // Obtener FAQ por ID
-  getFaqById(id: number): Observable<any> {
+  getFaqById(id: number): Observable<CompanyFaq> {
     this.isLoading.set(true);
-    return this.http.get(`${this.API_URL}/company/faqs/${id}`).pipe(
+    return this.http.get<CompanyFaq>(`${this.API_URL}/company/faqs/${id}`).pipe(
       map(res => {
         this.isLoading.set(false);
         return res;
@@ -222,9 +221,9 @@ export class CompanyService {
   }
 
   // Crear nueva FAQ (solo admin)
-  createFaq(data: any): Observable<any> {
+  createFaq(data: Partial<CompanyFaq>): Observable<CompanyFaq> {
     this.isLoading.set(true);
-    return this.http.post(`${this.API_URL}/company/faqs`, data).pipe(
+    return this.http.post<CompanyFaq>(`${this.API_URL}/company/faqs`, data).pipe(
       map(res => {
         this.cache.invalidate('company:faqs:');
         this.isLoading.set(false);
@@ -234,9 +233,9 @@ export class CompanyService {
   }
 
   // Actualizar FAQ (solo admin)
-  updateFaq(id: number, data: any): Observable<any> {
+  updateFaq(id: number, data: Partial<CompanyFaq>): Observable<CompanyFaq> {
     this.isLoading.set(true);
-    return this.http.patch(`${this.API_URL}/company/faqs/${id}`, data).pipe(
+    return this.http.patch<CompanyFaq>(`${this.API_URL}/company/faqs/${id}`, data).pipe(
       map(res => {
         this.cache.invalidate('company:faqs:');
         this.isLoading.set(false);
@@ -246,9 +245,9 @@ export class CompanyService {
   }
 
   // Eliminar FAQ (solo admin)
-  deleteFaq(id: number): Observable<any> {
+  deleteFaq(id: number): Observable<MessageResponse> {
     this.isLoading.set(true);
-    return this.http.delete(`${this.API_URL}/company/faqs/${id}`).pipe(
+    return this.http.delete<MessageResponse>(`${this.API_URL}/company/faqs/${id}`).pipe(
       map(res => {
         this.cache.invalidate('company:faqs:');
         this.isLoading.set(false);
@@ -258,9 +257,9 @@ export class CompanyService {
   }
 
   // Marcar FAQ como útil (público)
-  marcarFaqComoUtil(id: number): Observable<any> {
+  marcarFaqComoUtil(id: number): Observable<MessageResponse> {
     this.isLoading.set(true);
-    return this.http.post(`${this.API_URL}/company/faqs/${id}/util`, {}).pipe(
+    return this.http.post<MessageResponse>(`${this.API_URL}/company/faqs/${id}/util`, {}).pipe(
       map(res => {
         this.isLoading.set(false);
         return res;
@@ -271,9 +270,9 @@ export class CompanyService {
   // ========== CONTACT MESSAGES ==========
 
   // Enviar mensaje de contacto (público)
-  sendContactMessage(data: any): Observable<any> {
+  sendContactMessage(data: ContactInput): Observable<ContactMessage> {
     this.isLoading.set(true);
-    return this.http.post(`${this.API_URL}/company/contact`, data).pipe(
+    return this.http.post<ContactMessage>(`${this.API_URL}/company/contact`, data).pipe(
       map(res => {
         this.isLoading.set(false);
         return res;
@@ -282,13 +281,13 @@ export class CompanyService {
   }
 
   // Obtener todos los mensajes de contacto (solo admin)
-  getAllContactMessages(leido?: boolean): Observable<any> {
+  getAllContactMessages(leido?: boolean): Observable<ContactMessage[]> {
     this.isLoading.set(true);
     let url = `${this.API_URL}/company/contact`;
     if (leido !== undefined) {
       url += `?leido=${leido}`;
     }
-    return this.http.get(url).pipe(
+    return this.http.get<ContactMessage[]>(url).pipe(
       map(res => {
         this.isLoading.set(false);
         return res;
@@ -297,9 +296,9 @@ export class CompanyService {
   }
 
   // Obtener mensaje de contacto por ID (solo admin)
-  getContactMessageById(id: number): Observable<any> {
+  getContactMessageById(id: number): Observable<ContactMessage> {
     this.isLoading.set(true);
-    return this.http.get(`${this.API_URL}/company/contact/${id}`).pipe(
+    return this.http.get<ContactMessage>(`${this.API_URL}/company/contact/${id}`).pipe(
       map(res => {
         this.isLoading.set(false);
         return res;
@@ -308,9 +307,9 @@ export class CompanyService {
   }
 
   // Actualizar mensaje de contacto (marcar leído/respondido) (solo admin)
-  updateContactMessage(id: number, data: any): Observable<any> {
+  updateContactMessage(id: number, data: ContactUpdate): Observable<ContactMessage> {
     this.isLoading.set(true);
-    return this.http.patch(`${this.API_URL}/company/contact/${id}`, data).pipe(
+    return this.http.patch<ContactMessage>(`${this.API_URL}/company/contact/${id}`, data).pipe(
       map(res => {
         this.isLoading.set(false);
         return res;
@@ -319,9 +318,9 @@ export class CompanyService {
   }
 
   // Eliminar mensaje de contacto (solo admin)
-  deleteContactMessage(id: number): Observable<any> {
+  deleteContactMessage(id: number): Observable<MessageResponse> {
     this.isLoading.set(true);
-    return this.http.delete(`${this.API_URL}/company/contact/${id}`).pipe(
+    return this.http.delete<MessageResponse>(`${this.API_URL}/company/contact/${id}`).pipe(
       map(res => {
         this.isLoading.set(false);
         return res;
@@ -330,15 +329,13 @@ export class CompanyService {
   }
 
   // Marcar mensaje como leído (método de conveniencia)
-  markMessageAsRead(id: number): Observable<any> {
+  markMessageAsRead(id: number): Observable<ContactMessage> {
     return this.updateContactMessage(id, { leido: true });
   }
 
   // Marcar mensaje como respondido
-  markMessageAsReplied(id: number, usuarioId: number): Observable<any> {
-    return this.updateContactMessage(id, { 
-      respondido: true,
-      id_usuario_responde: usuarioId 
-    });
+  markMessageAsReplied(id: number, usuarioId: number): Observable<ContactMessage> {
+    void usuarioId; // El servidor determina la cuenta que responde.
+    return this.updateContactMessage(id, { respondido: true });
   }
 }

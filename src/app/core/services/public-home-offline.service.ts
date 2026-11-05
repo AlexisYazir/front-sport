@@ -3,7 +3,7 @@ import { HttpBackend, HttpClient, HttpErrorResponse, HttpEvent, HttpRequest, Htt
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Observable, Subject, defer, firstValueFrom, takeUntil, timeout } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { catalogMedia } from './public-catalog-media';
+import { catalogMedia, isPublicRecord } from './public-catalog-media';
 import { PublicImageOfflineService } from './public-image-offline.service';
 
 const PATHS = [
@@ -20,7 +20,7 @@ export class PublicHomeOfflineService {
   private readonly api = environment.apiUrl.replace(/\/$/, '');
   private readonly cacheName = 'sport-center-public-home-v1';
   private readonly requests = new Map<string, Promise<HttpResponse<unknown>>>();
-  private readonly copies = new Map<string, any[]>();
+  private readonly copies = new Map<string, Record<string, unknown>[]>();
   private readonly persisted = new Set<string>();
   private readonly offlineRequests = new Subject<void>();
   readonly dataUpdated = new Subject<string>();
@@ -110,13 +110,13 @@ export class PublicHomeOfflineService {
 
   private async loadOnce(url: string): Promise<HttpResponse<unknown>> {
     // La última respuesta válida también protege una pestaña abierta si falla CacheStorage.
-    let stored: any[] | null = this.copies.get(url) ?? null;
+    let stored = this.copies.get(url) ?? null;
     try {
       const response = await (await caches.open(this.cacheName)).match(url);
-      const record = response ? await response.json() : null;
-      if (record?.schema === 1 && this.valid(url, record.data)) {
-        stored = record.data;
-        this.copies.set(url, stored!);
+      const record: unknown = response ? await response.json() : null;
+      if (isPublicRecord(record) && record['schema'] === 1 && this.valid(url, record['data'])) {
+        stored = record['data'];
+        this.copies.set(url, stored);
         this.persisted.add(url);
       }
     } catch { /* El sitio sigue funcionando aunque el almacenamiento esté deshabilitado. */ }
@@ -128,7 +128,7 @@ export class PublicHomeOfflineService {
       const response = await firstValueFrom(this.http.get<unknown>(url, { observe: 'response', withCredentials: false })
         .pipe(timeout(stored ? 3_000 : 60_000), takeUntil(this.offlineRequests), takeUntilDestroyed(this.destroyRef)));
       if (!this.valid(url, response.body)) throw new Error('Contenido público inválido');
-      this.copies.set(url, response.body as any[]);
+      this.copies.set(url, response.body);
       try {
         await (await caches.open(this.cacheName)).put(url, new Response(JSON.stringify({
           schema: 1, savedAt: Date.now(), data: response.body,
@@ -144,12 +144,12 @@ export class PublicHomeOfflineService {
     }
   }
 
-  private valid(url: string, value: unknown): value is any[] {
+  private valid(url: string, value: unknown): value is Record<string, unknown>[] {
     if (!Array.isArray(value)) return false;
-    return value.every(item => item && typeof item === 'object' && (
-      url.endsWith('/get-all-products') ? Number.isInteger(item.id_producto) && typeof item.producto === 'string' && Array.isArray(item.variantes) :
-      url.endsWith('/get-all-marcas') || url.endsWith('/sports') ? typeof item.nombre === 'string' :
-      url.endsWith('/banner') ? typeof item.url_imagen === 'string' && typeof item.activo === 'boolean' : true
+    return value.every(item => isPublicRecord(item) && (
+      url.endsWith('/get-all-products') ? Number.isInteger(item['id_producto']) && typeof item['producto'] === 'string' && Array.isArray(item['variantes']) :
+      url.endsWith('/get-all-marcas') || url.endsWith('/sports') ? typeof item['nombre'] === 'string' :
+      url.endsWith('/banner') ? typeof item['url_imagen'] === 'string' && typeof item['activo'] === 'boolean' : true
     ));
   }
 
@@ -166,7 +166,14 @@ export class PublicHomeOfflineService {
       this.failedImages.set(0);
       const record = await (await caches.open(this.cacheName)).match(this.mediaRecordUrl);
       // Un reintento no descarta el historial guardado por ejecuciones anteriores.
-      if (record) this.verified = { ...this.verified, ...(await record.json()).verified };
+      if (record) {
+        const saved: unknown = await record.json();
+        if (isPublicRecord(saved) && isPublicRecord(saved['verified'])) {
+          for (const [url, timestamp] of Object.entries(saved['verified'])) {
+            if (typeof timestamp === 'number' && Number.isFinite(timestamp)) this.verified[url] = timestamp;
+          }
+        }
+      }
       const saved = new Set<string>();
       for (const url of media.home) {
         if (await this.images.has(url) || this.verified[url] && await caches.match(url, { ignoreVary: true })) saved.add(url);

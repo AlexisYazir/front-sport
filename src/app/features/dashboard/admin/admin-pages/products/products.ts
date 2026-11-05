@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { ProductService } from '../../../../../core/services/product.service';
-import { Product, CreateProductDto, Categorie, Marca, Attibute, RecientProduct, Sport } from '../../../../../core/models/product.model';
+import { ProductVariant, Product, CreateProductDto, Categorie, Marca, Attibute, RecientProduct, Sport } from '../../../../../core/models/product.model';
 import { IconModule } from '../../../../../shared/icons/icon.module';
 
 
@@ -18,7 +18,7 @@ interface ExistingVariant {
   imagenes: string[];
   selected?: boolean;
   expanded?: boolean;
-  atributos?: Record<string, any>;
+  atributos?: Record<string, string>;
 }
 
 // Interfaz para atributos en edición
@@ -38,7 +38,7 @@ interface EditVariantData {
   sku: string;
   precio: number;
   imagenes: string[];
-  atributos: Record<string, any>;
+  atributos: Record<string, string>;
 }
 
 @Component({
@@ -175,7 +175,7 @@ export class Products implements OnInit {
         this.updateDynamicFilterOptions();
         this.applyFilters();
       },
-      error: (error) => {
+      error: () => {
         this.toastr.error('Error al cargar productos', 'Error');
       }
     });
@@ -186,7 +186,7 @@ export class Products implements OnInit {
       next: (data: RecientProduct[]) => {
         this.newProductsCount = data.length;
       },
-      error: (error) => {
+      error: () => {
       }
     });
   }
@@ -259,8 +259,10 @@ export class Products implements OnInit {
     this.updatePaginatedProducts();
   }
 
-  onFilterEstadoChange(event: any) {
-    this.filterEstado = event.target.value;
+  onFilterEstadoChange(event: Event) {
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement || target instanceof HTMLSelectElement)) return;
+    this.filterEstado = target.value;
     this.applyFilters();
   }
 
@@ -272,14 +274,16 @@ export class Products implements OnInit {
         this.ensureSelectedCategoryStillExists();
         this.applyFilters();
       },
-      error: (error) => {
+      error: () => {
         this.toastr.error('Error al cargar categorías', 'Error');
       }
     });
   }
 
-  onCategoriaPadreChange(event: any) {
-    const padreId = parseInt(event.target.value);
+  onCategoriaPadreChange(event: Event) {
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement || target instanceof HTMLSelectElement)) return;
+    const padreId = parseInt(target.value);
     if (padreId) {
       this.subcategorias = this.categorias.filter(c => c.id_padre === padreId);
       this.nuevoProducto.id_categoria = 0;
@@ -294,7 +298,7 @@ export class Products implements OnInit {
       next: (data: Marca[]) => {
         this.marcas = data;
       },
-      error: (error) => {
+      error: () => {
         this.toastr.error('Error al cargar marcas', 'Error');
       }
     });
@@ -306,7 +310,7 @@ export class Products implements OnInit {
         this.sports = data;
         this.updateDynamicFilterOptions();
       },
-      error: (error) => {
+      error: () => {
         this.toastr.error('Error al cargar deportes', 'Error');
       }
     });
@@ -332,7 +336,7 @@ export class Products implements OnInit {
         });
         this.updateDynamicFilterOptions();
       },
-      error: (error) => {
+      error: () => {
         this.toastr.error('Error al cargar atributos', 'Error');
       }
     });
@@ -346,8 +350,10 @@ export class Products implements OnInit {
     this.currentPage = Math.floor(this.first / this.rowsPerPage) + 1;
   }
 
-  onSearch(event: any) {
-    this.searchValue = event.target.value;
+  onSearch(event: Event) {
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement || target instanceof HTMLSelectElement)) return;
+    this.searchValue = target.value;
     this.applyFilters();
   }
 
@@ -566,7 +572,7 @@ export class Products implements OnInit {
     this.toastr.success('Datos actualizados correctamente', 'Actualización');
   }
 
-  deleteProduct(product: Product) {
+  deleteProduct() {
   }
 
   openCreateModal() {
@@ -701,7 +707,7 @@ export class Products implements OnInit {
   loadProductVariants(productId: number) {
     this.loadingVariants = true;
     this.productService.getProductVariants(productId).subscribe({
-      next: (variants: any[]) => {
+      next: (variants) => {
         
         this.productVariants = variants.map(v => ({
           id_variante: v.id_variante,
@@ -715,7 +721,7 @@ export class Products implements OnInit {
         
         this.loadingVariants = false;
       },
-      error: (err) => {
+      error: () => {
         this.loadingVariants = false;
         this.toastr.error('Error al cargar las variantes', 'Error');
       }
@@ -1048,7 +1054,7 @@ export class Products implements OnInit {
 
   actualizarAtributosVariante() {
     // Construir objeto de atributos para enviar al backend
-    const atributosObj: Record<string, any> = {};
+    const atributosObj: Record<string, string> = {};
     
     this.variantAttributes.forEach(attr => {
       // Solo incluir atributos no eliminados y completos
@@ -1210,7 +1216,7 @@ export class Products implements OnInit {
   // ===== PROPIEDADES PARA MODAL DE VISUALIZACIÓN =====
   showViewModal: boolean = false;
   viewProductData: Product | null = null;
-  viewProductVariants: any[] = [];
+  viewProductVariants: ProductVariant[] = [];
   loadingViewVariants: boolean = false;
 
   viewProduct(product: Product) {
@@ -1222,11 +1228,11 @@ export class Products implements OnInit {
     
     if (productId) {
       this.productService.getProductVariants(productId).subscribe({
-        next: (variants: any[]) => {
+        next: (variants) => {
           this.viewProductVariants = variants;
           this.loadingViewVariants = false;
         },
-        error: (err) => {
+        error: () => {
           this.toastr.error('Error al cargar variantes', 'Error');
           this.viewProductVariants = [];
           this.loadingViewVariants = false;
@@ -1250,11 +1256,11 @@ export class Products implements OnInit {
     return precioNum.toFixed(2);
   }
 
-  getObjectKeys(obj: any): string[] {
+  getObjectKeys(obj: object | null | undefined): string[] {
     return obj ? Object.keys(obj) : [];
   }
 
-  getVariantAttributes(variant: any): { key: string, value: any }[] {
+  getVariantAttributes(variant: Pick<ProductVariant, 'atributos'> | null | undefined): { key: string, value: string }[] {
     if (!variant || !variant.atributos) return [];
     
     return Object.keys(variant.atributos).map(key => ({

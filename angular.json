@@ -34,16 +34,21 @@
       "ignore": ["maplibre-gl.mjs", "**/*-dev.mjs"],
       "input": "node_modules/maplibre-gl/dist",
       "output": "/assets/maplibre"
+    },
+    {
+      "glob": "maplibre-gl.css",
+      "input": "node_modules/maplibre-gl/dist",
+      "output": "/assets/maplibre/6.15.0"
     }
   ],
   "styles": [
     "src/custom-theme.scss",
-    "node_modules/maplibre-gl/dist/maplibre-gl.css",
     "src/styles.css"
   ]
 },
           "configurations": {
             "production": {
+              "externalDependencies": ["canvg", "html2canvas", "dompurify"],
               "fileReplacements": [
                 {
                   "replace": "src/environments/environment.ts",
@@ -89,6 +94,13 @@
         },
         "extract-i18n": {
           "builder": "@angular/build:extract-i18n"
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": ["src/**/*.ts", "src/**/*.html", "tests/**/*.ts"],
+            "maxWarnings": 0
+          }
         },
         "test": {
           "builder": "@angular/build:karma",

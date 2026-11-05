@@ -48,7 +48,7 @@ export class VerifyAccountComponent implements OnInit, OnDestroy {
   rateLimitMessage = '';
   remainingAttempts = RATE_LIMIT_CONFIG.maxAttempts;
   
-  private cooldownRef: any = null;
+  private cooldownRef: ReturnType<typeof setTimeout> | null | undefined = null;
   private routeSub: Subscription | null = null;
   private rateLimitKey = '';
 
@@ -102,7 +102,7 @@ export class VerifyAccountComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         this.loading = false;
-        this.error = err?.error?.message || 'Código inválido o expirado.';
+        this.error = this.verificationError(err, 'Código inválido o expirado.');
       },
     });
   }
@@ -126,8 +126,8 @@ export class VerifyAccountComponent implements OnInit, OnDestroy {
 
     this.loading = true;
     const resend$ =
-      typeof (this.auth as any).requestResendCode === 'function'
-        ? (this.auth as any).requestResendCode(this.email)
+      typeof this.auth.requestResendCode === 'function'
+        ? this.auth.requestResendCode(this.email)
         : this.auth.requestPasswordReset(this.email);
 
     resend$.subscribe({
@@ -140,9 +140,9 @@ export class VerifyAccountComponent implements OnInit, OnDestroy {
         const cooldown = this.calculateCooldown(state.attempts);
         this.startCooldown(cooldown);
       },
-      error: (err: any) => {
+      error: (err: unknown) => {
         this.loading = false;
-        this.error = err?.error?.message || 'No se pudo reenviar el código.';
+        this.error = this.verificationError(err, 'No se pudo reenviar el código.');
       },
     });
   }
@@ -248,8 +248,7 @@ export class VerifyAccountComponent implements OnInit, OnDestroy {
       if (stored) {
         return JSON.parse(stored);
       }
-    } catch (e) {
-    }
+    } catch { return { attempts: 0, firstAttempt: 0, lockedUntil: null }; }
     
     return {
       attempts: 0,
@@ -264,8 +263,7 @@ export class VerifyAccountComponent implements OnInit, OnDestroy {
   private saveRateLimitState(state: RateLimitState): void {
     try {
       localStorage.setItem(this.rateLimitKey, JSON.stringify(state));
-    } catch (e) {
-    }
+    } catch { return; }
   }
 
   /**
@@ -274,8 +272,7 @@ export class VerifyAccountComponent implements OnInit, OnDestroy {
   private clearRateLimit(): void {
     try {
       localStorage.removeItem(this.rateLimitKey);
-    } catch (e) {
-    }
+    } catch { this.isRateLimited = false; }
     
     this.isRateLimited = false;
     this.remainingAttempts = RATE_LIMIT_CONFIG.maxAttempts;
@@ -340,8 +337,8 @@ export class VerifyAccountComponent implements OnInit, OnDestroy {
     }
 
     const resend$ =
-      typeof (this.auth as any).requestResendCode === 'function'
-        ? (this.auth as any).requestResendCode(this.email)
+      typeof this.auth.requestResendCode === 'function'
+        ? this.auth.requestResendCode(this.email)
         : this.auth.requestPasswordReset(this.email);
 
     this.loading = true;
@@ -355,11 +352,16 @@ export class VerifyAccountComponent implements OnInit, OnDestroy {
         const cooldown = this.calculateCooldown(state.attempts);
         this.startCooldown(cooldown);
       },
-      error: (err: any) => {
+      error: (err: unknown) => {
         this.loading = false;
-        this.error = err?.error?.message || 'No fue posible enviar el código automáticamente.';
+        this.error = this.verificationError(err, 'No fue posible enviar el código automáticamente.');
       },
     });
+  }
+
+  private verificationError(error: unknown, fallback: string): string {
+    const payload = error && typeof error === 'object' && 'error' in error ? error.error : null;
+    return payload && typeof payload === 'object' && 'message' in payload && typeof payload.message === 'string' ? payload.message : fallback;
   }
 
   startCooldown(seconds: number) {

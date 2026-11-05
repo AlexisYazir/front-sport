@@ -87,7 +87,6 @@ export class Register implements OnInit {
           text: 'signup_with'
         });
       }, 300);
-    } else {
     }
   }
 
@@ -198,14 +197,14 @@ export class Register implements OnInit {
     this.isLoading = true;
 
     this.authService.register(this.userData).subscribe({
-      next: (response) => {
+      next: () => {
         this.isLoading = false;
         // Navegar a la vista separada de verificación con query params
       this.router.navigate(['/auth/verify-account'], {
         queryParams: { email: this.userData.email, from: 'register' }
       });
       },
-      error: (error) => {
+      error: () => {
         this.isLoading = false;
       }
     });

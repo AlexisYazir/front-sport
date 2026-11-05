@@ -1,3 +1,4 @@
+import type { DbConnection, DbLock, DbBlockingLock, DbQueryStats, DbTableSize, DbIndex, DbScanStats } from '../../../../../core/services/api-contracts';
 import {
   Chart,
   BarController,
@@ -101,13 +102,13 @@ export class DbPage implements OnInit, OnDestroy {
   vacuumLogs = signal<VacuumLogInfo[]>([]);
   vacuumSchedules = signal<VacuumSchedule[]>([]);
 
-  connections = signal<any[]>([]);
-  locks = signal<any[]>([]);
-  blockingLocks = signal<any[]>([]);
-  mostQueried = signal<any[]>([]);
-  tableSizes = signal<any[]>([]);
-  indexInfo = signal<any[]>([]);
-  scanStats = signal<any[]>([]);
+   connections = signal<DbConnection[]>([]);
+   locks = signal<DbLock[]>([]);
+   blockingLocks = signal<DbBlockingLock[]>([]);
+   mostQueried = signal<DbQueryStats[]>([]);
+   tableSizes = signal<DbTableSize[]>([]);
+   indexInfo = signal<DbIndex[]>([]);
+   scanStats = signal<DbScanStats[]>([]);
 
   searchBackups = '';
   searchVacuums = '';
@@ -894,7 +895,7 @@ export class DbPage implements OnInit, OnDestroy {
     return mode;
   }
 
-  connectionStatusLabel(state: string): string {
+  connectionStatusLabel(state: string | null): string {
     if (state === 'active') return 'Activa';
     if (state === 'idle') return 'Inactiva';
     if (state === 'idle in transaction') return 'En espera';

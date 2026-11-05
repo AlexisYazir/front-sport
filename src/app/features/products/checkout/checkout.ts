@@ -1,3 +1,4 @@
+import { apiErrorMessage } from '../../../core/services/api-contracts';
 import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -5,6 +6,8 @@ import { Router, RouterModule } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import {
   CheckoutAddress,
+  CheckoutCartItem,
+  UserPaymentMethod,
   CheckoutCardInput,
   CheckoutSummaryResponse,
   ConfirmCheckoutRequest,
@@ -15,6 +18,21 @@ import { GeolocationService, getGeolocationErrorMessage } from '../../../core/se
 import { environment } from '../../../../environments/environment';
 import { IconModule } from '../../../shared/icons/icon.module';
 
+
+interface GeocodingFeature { address?: string | number; text?: string; place_name?: string; context: { id: string; text: string }[]; }
+function geocodingRecord(value: unknown): value is Record<string, unknown> { return !!value && typeof value === 'object' && !Array.isArray(value); }
+function parseGeocodingFeature(value: unknown): GeocodingFeature | null {
+  if (!geocodingRecord(value) || !Array.isArray(value['features'])) return null;
+  const feature: unknown = value['features'][0];
+  if (!geocodingRecord(feature)) return null;
+  const rawContext = feature['context'];
+  return {
+    address: typeof feature['address'] === 'string' || typeof feature['address'] === 'number' ? feature['address'] : undefined,
+    text: typeof feature['text'] === 'string' ? feature['text'] : undefined,
+    place_name: typeof feature['place_name'] === 'string' ? feature['place_name'] : undefined,
+    context: Array.isArray(rawContext) ? rawContext.flatMap((item: unknown) => geocodingRecord(item) && typeof item['id'] === 'string' && typeof item['text'] === 'string' ? [{ id: item['id'], text: item['text'] }] : []) : []
+  };
+}
 
 type AddressMode = 'existing' | 'new';
 type PaymentMode = 'saved' | 'new';
@@ -301,13 +319,13 @@ export class Checkout implements OnInit {
         `?key=${environment.maptilerApiKey}&language=es&limit=1`;
       const response = await fetch(url, { signal: lookup.signal });
       if (!response.ok) throw new Error('No fue posible consultar la dirección');
-      const data = await response.json();
+      const data: unknown = await response.json();
       if (this.destroyRef.destroyed) return;
-      const feature = data?.features?.[0];
+      const feature = parseGeocodingFeature(data);
       if (!feature) throw new Error('No se encontró una dirección para esta ubicación');
       const context = Array.isArray(feature.context) ? feature.context : [];
       const contextValue = (prefix: string) =>
-        context.find((item: any) => String(item?.id || '').startsWith(prefix))?.text || '';
+        context.find((item) => String(item?.id || '').startsWith(prefix))?.text || '';
       const postcode = contextValue('postcode');
       const city = contextValue('place') || contextValue('municipality') || contextValue('locality');
       const state = contextValue('region');
@@ -343,7 +361,7 @@ export class Checkout implements OnInit {
     this.cardForm.numero = number.replace(/(\d{4})(?=\d)/g, '$1 ').trim();
   }
 
-  getCardLabel(method: any): string {
+  getCardLabel(method: UserPaymentMethod): string {
     return `${method.marca || 'Tarjeta'} terminada en ${method.ultimos4}`;
   }
 
@@ -366,9 +384,9 @@ export class Checkout implements OnInit {
       .join(', ');
   }
 
-  getVariantInfo(item: any): string {
+  getVariantInfo(item: CheckoutCartItem): string {
     const atributos = item.atributos || {};
-    const values = [atributos.Talla, atributos.Color].filter(Boolean);
+    const values = [atributos['Talla'], atributos['Color']].filter(Boolean);
     return values.join(' · ');
   }
 
@@ -510,12 +528,5 @@ export class Checkout implements OnInit {
     return 'Tarjeta';
   }
 
-  private getBackendMessage(error: any, fallback: string): string {
-    const message = error?.error?.message;
-    if (Array.isArray(message)) {
-      return message.join(', ');
-    }
-
-    return message || error?.error?.error || fallback;
-  }
+  private getBackendMessage(error: unknown, fallback: string): string { return apiErrorMessage(error, fallback); }
 }

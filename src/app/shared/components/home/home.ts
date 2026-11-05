@@ -160,7 +160,7 @@ export class Home implements OnInit, OnDestroy {
         this.featuredProducts.set(data.slice(0, 8));
         this.loading.set(false);
       },
-      error: (error) => {
+      error: () => {
         this.failedLoads.add('/products/get-all-products');
         this.toastr.error('Error al cargar los productos', 'Error');
         this.loading.set(false);
@@ -176,7 +176,7 @@ export class Home implements OnInit, OnDestroy {
         this.marcas = data;
         this.loadingMarcas.set(false);
       },
-      error: (error) => {
+      error: () => {
         this.failedLoads.add('/products/get-all-marcas');
         this.toastr.error('Error al cargar las marcas', 'Error');
         this.loadingMarcas.set(false);

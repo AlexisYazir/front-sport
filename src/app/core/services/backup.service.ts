@@ -1,4 +1,5 @@
-import { Injectable, signal } from '@angular/core';
+import type { BackupOperationResponse, DbConnection, DbLock, DbBlockingLock, DbLongQuery, DbQueryStats, DbTableSize, DbIndex, DbTableLock, DbScanStats } from './api-contracts';
+import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
@@ -108,10 +109,8 @@ export class BackupService {
   private readonly CACHE_TTL = 20_000;
   isLoading = signal<boolean>(false);
 
-  constructor(
-    private http: HttpClient,
-    private cache: RequestCacheService,
-  ) {}
+  private readonly http = inject(HttpClient);
+  private readonly cache = inject(RequestCacheService);
 
   private withLoading<T>(observable: Observable<T>): Observable<T> {
     this.isLoading.set(true);
@@ -123,17 +122,17 @@ export class BackupService {
     );
   }
 
-  createBackupFull(): Observable<any> {
+  createBackupFull(): Observable<BackupOperationResponse> {
     return this.withLoading(
-      this.http.post(`${this.API_URL}/backup/create`, {}).pipe(
+      this.http.post<BackupOperationResponse>(`${this.API_URL}/backup/create`, {}).pipe(
         tap(() => this.invalidateBackupCaches()),
       ),
     );
   }
 
-  createCriticalTablesBackup(): Observable<any> {
+  createCriticalTablesBackup(): Observable<BackupOperationResponse> {
     return this.withLoading(
-      this.http.post(`${this.API_URL}/backup/create-critical`, {}).pipe(
+      this.http.post<BackupOperationResponse>(`${this.API_URL}/backup/create-critical`, {}).pipe(
         tap(() => this.invalidateBackupCaches()),
       ),
     );
@@ -163,17 +162,17 @@ export class BackupService {
     );
   }
 
-  deleteBackup(folderKey: string): Observable<any> {
+  deleteBackup(folderKey: string): Observable<BackupOperationResponse> {
     return this.withLoading(
-      this.http.delete(`${this.API_URL}/backup/delete/${encodeURIComponent(folderKey)}`).pipe(
+      this.http.delete<BackupOperationResponse>(`${this.API_URL}/backup/delete/${encodeURIComponent(folderKey)}`).pipe(
         tap(() => this.invalidateBackupCaches()),
       ),
     );
   }
 
-  cleanupOldBackups(days: number = 30): Observable<any> {
+  cleanupOldBackups(days: number = 30): Observable<BackupOperationResponse> {
     return this.withLoading(
-      this.http.post(`${this.API_URL}/backup/cleanup/${days}`, {}).pipe(
+      this.http.post<BackupOperationResponse>(`${this.API_URL}/backup/cleanup/${days}`, {}).pipe(
         tap(() => this.invalidateBackupCaches()),
       ),
     );
@@ -195,9 +194,9 @@ export class BackupService {
     );
   }
 
-  deleteBackupSchedule(name: string): Observable<any> {
+  deleteBackupSchedule(name: string): Observable<BackupOperationResponse> {
     return this.withLoading(
-      this.http.delete(`${this.API_URL}/backup/schedules/${name}`).pipe(
+      this.http.delete<BackupOperationResponse>(`${this.API_URL}/backup/schedules/${name}`).pipe(
         tap(() => this.invalidateBackupScheduleCaches()),
       ),
     );
@@ -222,53 +221,53 @@ export class BackupService {
     );
   }
 
-  deleteRetentionPolicy(name: string): Observable<any> {
+  deleteRetentionPolicy(name: string): Observable<BackupOperationResponse> {
     return this.withLoading(
-      this.http.delete(`${this.API_URL}/backup/retention-policies/${name}`).pipe(
+      this.http.delete<BackupOperationResponse>(`${this.API_URL}/backup/retention-policies/${name}`).pipe(
         tap(() => this.invalidateRetentionPolicyCaches()),
       ),
     );
   }
 
-  getActiveConnections(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.API_URL}/db-monitoring/connections`);
+  getActiveConnections(): Observable<DbConnection[]> {
+    return this.http.get<DbConnection[]>(`${this.API_URL}/db-monitoring/connections`);
   }
 
-  getDetailedLocks(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.API_URL}/db-monitoring/locks`);
+  getDetailedLocks(): Observable<DbLock[]> {
+    return this.http.get<DbLock[]>(`${this.API_URL}/db-monitoring/locks`);
   }
 
-  getBlockLocks(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.API_URL}/db-monitoring/blocking-locks`);
+  getBlockLocks(): Observable<DbBlockingLock[]> {
+    return this.http.get<DbBlockingLock[]>(`${this.API_URL}/db-monitoring/blocking-locks`);
   }
 
-  getLongQueries(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.API_URL}/db-monitoring/long-queries`);
+  getLongQueries(): Observable<DbLongQuery[]> {
+    return this.http.get<DbLongQuery[]>(`${this.API_URL}/db-monitoring/long-queries`);
   }
 
-  getMostQueriedTables(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.API_URL}/db-monitoring/stats/most-queried`);
+  getMostQueriedTables(): Observable<DbQueryStats[]> {
+    return this.http.get<DbQueryStats[]>(`${this.API_URL}/db-monitoring/stats/most-queried`);
   }
 
-  getTableSizes(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.API_URL}/db-monitoring/stats/table-sizes`);
+  getTableSizes(): Observable<DbTableSize[]> {
+    return this.http.get<DbTableSize[]>(`${this.API_URL}/db-monitoring/stats/table-sizes`);
   }
 
-  getIndexInfo(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.API_URL}/db-monitoring/stats/index-info`);
+  getIndexInfo(): Observable<DbIndex[]> {
+    return this.http.get<DbIndex[]>(`${this.API_URL}/db-monitoring/stats/index-info`);
   }
 
-  getTableLockStats(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.API_URL}/db-monitoring/stats/lock-stats`);
+  getTableLockStats(): Observable<DbTableLock[]> {
+    return this.http.get<DbTableLock[]>(`${this.API_URL}/db-monitoring/stats/lock-stats`);
   }
 
-  getTableScanStats(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.API_URL}/db-monitoring/stats/scan-stats`);
+  getTableScanStats(): Observable<DbScanStats[]> {
+    return this.http.get<DbScanStats[]>(`${this.API_URL}/db-monitoring/stats/scan-stats`);
   }
 
-  runVacuumAnalyze(): Observable<any> {
+  runVacuumAnalyze(): Observable<BackupOperationResponse> {
     return this.withLoading(
-      this.http.post(`${this.API_URL}/db-maintenance/vacuum`, {}).pipe(
+      this.http.post<BackupOperationResponse>(`${this.API_URL}/db-maintenance/vacuum`, {}).pipe(
         tap(() => this.invalidateVacuumCaches()),
       ),
     );
@@ -312,9 +311,9 @@ export class BackupService {
     );
   }
 
-  deleteVacuumSchedule(name: string): Observable<any> {
+  deleteVacuumSchedule(name: string): Observable<BackupOperationResponse> {
     return this.withLoading(
-      this.http.delete(`${this.API_URL}/db-maintenance/vacuum/schedules/${name}`).pipe(
+      this.http.delete<BackupOperationResponse>(`${this.API_URL}/db-maintenance/vacuum/schedules/${name}`).pipe(
         tap(() => this.invalidateVacuumScheduleCaches()),
       ),
     );

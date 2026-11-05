@@ -149,13 +149,17 @@ export class Prediction implements OnInit {
     this.updatePaginatedProducts();
   }
 
-  onSearch(event: any): void {
-    this.searchValue = event.target.value;
+  onSearch(event: Event): void {
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement || target instanceof HTMLSelectElement)) return;
+    this.searchValue = target.value;
     this.applyFilters();
   }
 
-  onFilterTipoChange(event: any): void {
-    this.filterTipo = event.target.value;
+  onFilterTipoChange(event: Event): void {
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement || target instanceof HTMLSelectElement)) return;
+    this.filterTipo = target.value;
     this.applyFilters();
   }
 
@@ -298,7 +302,7 @@ export class Prediction implements OnInit {
     const seenVariants = new Set<number>();
 
     const products = (report.products ?? [])
-      .map((product: any) => {
+      .map((product: DemandProduct & { predicted_units?: number; image?: string; imagen_variante?: string }) => {
         const idProducto = this.toNumber(product.id_producto);
         const idVariante = this.toNumber(product.id_variante);
         const nombreProducto = String(product.nombre_producto ?? '').trim();
@@ -342,7 +346,7 @@ export class Prediction implements OnInit {
 
     return {
       ...report,
-      trend: (report.trend ?? []).map((point: any) => ({
+      trend: (report.trend ?? []).map((point) => ({
         month: String(point.month ?? ''),
         actual: this.toNumber(point.actual),
         records: this.toNumber(point.records),

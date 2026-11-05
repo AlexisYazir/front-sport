@@ -1,3 +1,4 @@
+import { apiErrorMessage } from './api-contracts';
 import { Injectable, computed, effect, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
@@ -651,12 +652,7 @@ export class CartService {
     return !user || user.rol === UserRole.USUARIO;
   }
 
-  private getBackendMessage(error: any, fallback: string): string {
-    const message = error?.error?.message;
-    if (Array.isArray(message)) {
-      return message.join(', ');
-    }
-
-    return message || error?.error?.error || fallback;
+  private getBackendMessage(error: unknown, fallback: string): string {
+    return apiErrorMessage(error, fallback);
   }
 }

@@ -46,7 +46,7 @@ export class NewProducts implements OnInit {
   paginatedProducts: RecientProduct[] = [];
   
   searchValue: string = '';
-  activeTab: 'recientes' = 'recientes'; // Solo una pestaña ahora
+  activeTab = 'recientes' as const; // Solo una pestaña ahora
   
   // Paginación
   rowsPerPage: number = 10;
@@ -104,7 +104,7 @@ export class NewProducts implements OnInit {
         this.applyFilters();
         this.isLoading.set(false);
       },
-      error: (error) => {
+      error: () => {
         this.isLoading.set(false);
         this.toastr.error('Error al cargar productos recientes', 'Error');
       }
@@ -134,7 +134,7 @@ export class NewProducts implements OnInit {
         
         this.loadingAttributes = false;
       },
-      error: (err) => {
+      error: () => {
         this.loadingAttributes = false;
         this.toastr.error('Error al cargar atributos', 'Error');
       }
@@ -177,8 +177,10 @@ export class NewProducts implements OnInit {
     this.currentPage = Math.floor(this.first / this.rowsPerPage) + 1;
   }
 
-  onSearch(event: any) {
-    this.searchValue = event.target.value;
+  onSearch(event: Event) {
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement || target instanceof HTMLSelectElement)) return;
+    this.searchValue = target.value;
     this.applyFilters();
   }
 
@@ -403,7 +405,7 @@ export class NewProducts implements OnInit {
           } else {
             failed.push(file.name);
           }
-        } catch (error) {
+        } catch  {
           failed.push(file.name);
         }
       }
@@ -653,7 +655,7 @@ export class NewProducts implements OnInit {
     
     let completadas = 0;
     let exitosas = 0;
-    let errores: string[] = [];
+    const errores: string[] = [];
     
     this.variantes.forEach(variante => {
       const variantData = {
@@ -666,7 +668,7 @@ export class NewProducts implements OnInit {
       
       
       this.productService.createProductVariant(variantData).subscribe({
-        next: (res) => {
+        next: () => {
           completadas++;
           exitosas++;
           
@@ -702,7 +704,7 @@ export class NewProducts implements OnInit {
   }
 
   // Método auxiliar para verificar si un objeto de atributos tiene propiedades
-  hasAtributos(atributos: any): boolean {
-    return atributos && Object.keys(atributos).length > 0;
+  hasAtributos(atributos: Record<string, string> | null | undefined): boolean {
+    return !!atributos && Object.keys(atributos).length > 0;
   }
 }

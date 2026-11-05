@@ -6,10 +6,107 @@
       </div>
       <div>
         <h2 class="text-2xl font-bold text-[#202020]">Reseñas de Productos</h2>
-        <p class="text-sm text-[#666666] mt-0.5">Consulta las calificaciones y comentarios publicados</p>
+        <p class="text-sm text-[#666666] mt-0.5">Revisa reportes y registra decisiones sobre las reseñas</p>
       </div>
     </div>
   </div>
+
+  <section aria-labelledby="reports-title" class="moderation-section">
+    <div class="moderation-toolbar">
+      <div>
+        <h3 id="reports-title">Reportes de reseñas</h3>
+        <p>La atención registra una decisión; no envía una respuesta por correo.</p>
+      </div>
+      <div class="moderation-filters">
+        <label for="report-state">Atención</label>
+        <select id="report-state" [ngModel]="reportFilter()" (ngModelChange)="changeReportFilter($event)" [disabled]="isSaving()">
+          <option value="pendiente">Pendientes</option>
+          <option value="atendido">Atendidos</option>
+          <option value="todos">Todos</option>
+        </select>
+        <button type="button" class="moderation-secondary" (click)="loadReports()" [disabled]="reportsLoading() || isSaving()">Actualizar reportes</button>
+      </div>
+    </div>
+    <p *ngIf="reportsLoading()" role="status">Cargando reportes…</p>
+    <p *ngIf="reportsError()" role="alert" class="moderation-error">{{ reportsError() }}</p>
+    <p *ngIf="!reportsLoading() && !reportsError() && reports().length === 0">No hay reportes en esta página.</p>
+    <div class="report-grid" *ngIf="!reportsLoading()">
+      <article *ngFor="let report of reports()" class="report-card">
+        <div class="moderation-toolbar">
+          <h4>Folio #{{ report.id_mensaje }}</h4>
+          <span>{{ report.estado_atencion === 'atendido' ? 'Atendido' : 'Pendiente' }}</span>
+        </div>
+        <p>{{ report.asunto || 'Reporte de reseña' }}</p>
+        <p class="report-message">{{ report.mensaje }}</p>
+        <p class="moderation-meta">{{ report.nombre }} · {{ report.email }}</p>
+        <p class="moderation-meta">{{ formatDate(report.created_at) }}</p>
+        <p *ngIf="!report.referencia_valida" class="moderation-error">Referencia no válida. No se puede asociar una decisión a este reporte.</p>
+        <button type="button" class="moderation-secondary" (click)="openReport(report)" [disabled]="!report.referencia_valida || isSaving()">
+          Revisar folio #{{ report.id_mensaje }}
+        </button>
+      </article>
+    </div>
+    <nav class="moderation-pagination" aria-label="Páginas de reportes" *ngIf="reportTotal() > 0">
+      <button type="button" class="moderation-secondary" (click)="loadReports(reportPage() - 1)" [disabled]="reportPage() === 1 || reportsLoading() || isSaving()">Reportes anteriores</button>
+      <span>Página {{ reportPage() }} de {{ reportPages() }} · {{ reportTotal() }} reportes</span>
+      <button type="button" class="moderation-secondary" (click)="loadReports(reportPage() + 1)" [disabled]="reportPage() >= reportPages() || reportsLoading() || isSaving()">Reportes siguientes</button>
+    </nav>
+  </section>
+
+  <section *ngIf="moderation() || moderationLoading() || moderationError()" aria-labelledby="moderation-title" class="moderation-section moderation-detail">
+    <div class="moderation-toolbar">
+      <h3 id="moderation-title">Revisión y decisión</h3>
+      <div class="moderation-filters">
+        <button type="button" class="moderation-secondary" (click)="reloadModeration()" [disabled]="moderationLoading() || isSaving()">Actualizar detalle</button>
+        <button type="button" class="moderation-secondary" (click)="closeModeration()" [disabled]="isSaving()">Cerrar revisión</button>
+      </div>
+    </div>
+    <p *ngIf="moderationLoading()" role="status">Cargando detalle e historial…</p>
+    <p *ngIf="moderationError()" role="alert" class="moderation-error">{{ moderationError() }}</p>
+    <ng-container *ngIf="moderation() as detail">
+      <p class="moderation-visibility" role="status">Reseña #{{ detail.review.id_review }} · {{ detail.review.retirada ? 'Retirada de la vista pública' : 'Visible' }} · Revisión {{ detail.review.revision }}</p>
+      <p><strong>{{ detail.review.producto || 'Producto #' + detail.review.id_producto }}</strong> · {{ detail.review.usuario || 'Usuario' }}</p>
+      <p class="report-message">{{ detail.review.comentario }}</p>
+      <form (ngSubmit)="saveModeration()" class="decision-form">
+        <div>
+          <label for="decision-report">Folio relacionado</label>
+          <select id="decision-report" name="report" [ngModel]="selectedReportId()" (ngModelChange)="selectedReportId.set($event)" [disabled]="isSaving() || decisionNeedsReload()">
+            <option [ngValue]="null">Sin folio relacionado</option>
+            <ng-container *ngFor="let report of detail.reports">
+              <option *ngIf="report.referencia_valida" [ngValue]="report.id_mensaje">Folio #{{ report.id_mensaje }} · {{ report.estado_atencion }}</option>
+            </ng-container>
+          </select>
+        </div>
+        <div>
+          <label for="decision-action">Decisión</label>
+          <select id="decision-action" name="action" [ngModel]="decisionAction()" (ngModelChange)="decisionAction.set($event)" [disabled]="isSaving() || decisionNeedsReload()" aria-describedby="decision-meaning">
+            <option value="conservar">Conservar el estado actual</option>
+            <option value="retirar" [disabled]="detail.review.retirada">Retirar de la vista pública</option>
+            <option value="restaurar" [disabled]="!detail.review.retirada">Restaurar en la vista pública</option>
+          </select>
+          <p id="decision-meaning" class="moderation-meta">Conservar mantiene la visibilidad actual. Para volver a publicar una reseña retirada, elige Restaurar.</p>
+        </div>
+        <div class="decision-reason">
+          <label for="decision-reason">Motivo de la decisión</label>
+          <textarea id="decision-reason" name="reason" required maxlength="1000" rows="3" [ngModel]="decisionReason()" (ngModelChange)="decisionReason.set($event)" [disabled]="isSaving() || decisionNeedsReload()" aria-describedby="reason-help"></textarea>
+          <p id="reason-help" class="moderation-meta">Obligatorio, hasta 1000 caracteres. Describe la revisión sin copiar datos personales innecesarios.</p>
+        </div>
+        <button type="submit" class="moderation-primary" [disabled]="!canSave()">{{ isSaving() ? 'Guardando decisión…' : 'Guardar decisión' }}</button>
+      </form>
+      <h4 class="history-title">Historial de decisiones</h4>
+      <p *ngIf="detail.history.length === 0">Esta reseña todavía no tiene decisiones registradas.</p>
+      <ol class="history-list">
+        <li *ngFor="let event of detail.history">
+          <p><strong>{{ event.accion }} · revisión {{ event.revision }}</strong> · {{ formatDate(event.fecha) }}</p>
+          <p>Administrador #{{ event.id_administrador }}<span *ngIf="event.id_mensaje"> · Folio #{{ event.id_mensaje }}</span></p>
+          <p>{{ event.retirada_anterior ? 'Retirada' : 'Visible' }} → {{ event.retirada_nueva ? 'Retirada' : 'Visible' }}</p>
+          <p class="report-message">{{ event.motivo }}</p>
+        </li>
+      </ol>
+    </ng-container>
+  </section>
+
+  <p *ngIf="loadError()" role="alert" class="moderation-error">{{ loadError() }}</p>
 
   <div *ngIf="isLoading()" class="flex flex-col items-center justify-center py-16">
     <div class="relative">
@@ -29,6 +126,7 @@
             <svg lucideIcon="search" class="lucide-icon text-lg"></svg>
           </span>
           <input
+            aria-label="Buscar reseñas"
             type="text"
             [ngModel]="searchTerm()"
             (ngModelChange)="searchTerm.set($event); onFiltersChange()"
@@ -38,6 +136,7 @@
             *ngIf="searchTerm()"
             type="button"
             (click)="clearFilters()"
+            aria-label="Limpiar búsqueda de reseñas"
             class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#0367A6] transition-colors">
             <svg lucideIcon="close" class="lucide-icon text-lg"></svg>
           </button>
@@ -60,8 +159,9 @@
 
       <div class="flex flex-wrap gap-3 items-center">
         <div class="flex items-center gap-2">
-          <label class="text-sm font-medium text-[#666666]">Calificación:</label>
+          <label for="review-rating" class="text-sm font-medium text-[#666666]">Calificación:</label>
           <select
+            id="review-rating"
             [ngModel]="selectedRating()"
             (ngModelChange)="selectedRating.set($event); onFiltersChange()"
             class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none">
@@ -75,8 +175,9 @@
         </div>
 
         <div class="flex items-center gap-2">
-          <label class="text-sm font-medium text-[#666666]">Producto:</label>
+          <label for="review-product" class="text-sm font-medium text-[#666666]">Producto:</label>
           <select
+            id="review-product"
             [ngModel]="selectedProductId()"
             (ngModelChange)="selectedProductId.set($event); onFiltersChange()"
             class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:border-[#0367A6] focus:ring-2 focus:ring-[#0367A6]/20 outline-none max-w-[260px]">
@@ -107,6 +208,7 @@
             <th class="px-4 py-4 text-left font-semibold text-[#202020]">Calificación</th>
             <th class="px-4 py-4 text-left font-semibold text-[#202020]">Comentario</th>
             <th class="px-4 py-4 text-left font-semibold text-[#202020]">Fecha</th>
+            <th class="px-4 py-4 text-left font-semibold text-[#202020]">Moderación</th>
           </tr>
         </thead>
         <tbody>
@@ -139,10 +241,14 @@
             <td class="px-4 py-4 text-[#666666] whitespace-nowrap">
               {{ formatDate(review.fecha) }}
             </td>
+            <td class="px-4 py-4">
+              <p>{{ review.retirada === true ? 'Retirada' : review.retirada === false ? 'Visible' : 'Consultar detalle' }}</p>
+              <button type="button" class="moderation-secondary" (click)="openModeration(review.id_review)" [disabled]="isSaving()">Revisar reseña #{{ review.id_review }}</button>
+            </td>
           </tr>
 
           <tr *ngIf="filteredReviews().length === 0">
-            <td colspan="5" class="text-center py-12">
+            <td colspan="6" class="text-center py-12">
               <div class="flex flex-col items-center gap-3">
                 <svg lucideIcon="search" class="lucide-icon text-5xl text-gray-300"></svg>
                 <span class="text-[#666666] text-lg font-medium">No se encontraron reseñas</span>

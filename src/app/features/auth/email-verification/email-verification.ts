@@ -23,7 +23,7 @@ export class EmailVerificationComponent implements OnInit {
   status = signal<VerificationStatus>('loading');
   message = signal<string>('Verificando tu cuenta...');
   redirectCountdown = signal<number>(3);
-  private redirectInterval: any;
+  private redirectInterval: ReturnType<typeof setTimeout> | null | undefined;
 
   ngOnInit() {
     // Capturar parámetros de la URL
@@ -79,7 +79,7 @@ export class EmailVerificationComponent implements OnInit {
       this.redirectCountdown.set(seconds);
 
       if (seconds <= 0) {
-        clearInterval(this.redirectInterval);
+        if (this.redirectInterval != null) clearInterval(this.redirectInterval);
         this.router.navigate(['/auth/login']);
       }
     }, 1000);
@@ -90,7 +90,7 @@ export class EmailVerificationComponent implements OnInit {
    */
   goToLogin() {
     if (this.redirectInterval) {
-      clearInterval(this.redirectInterval);
+      if (this.redirectInterval != null) clearInterval(this.redirectInterval);
     }
     this.router.navigate(['/auth/login']);
   }
@@ -100,7 +100,7 @@ export class EmailVerificationComponent implements OnInit {
    */
   goToRegister() {
     if (this.redirectInterval) {
-      clearInterval(this.redirectInterval);
+      if (this.redirectInterval != null) clearInterval(this.redirectInterval);
     }
     this.router.navigate(['/auth/register']);
   }

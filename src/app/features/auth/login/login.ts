@@ -76,7 +76,6 @@ export class Login implements OnInit {
           text: 'signin_with',
         });
       }, 300);
-    } else {
     }
   }
 

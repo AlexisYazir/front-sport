@@ -6,7 +6,7 @@ import { ToastrService } from 'ngx-toastr';
 /**
  * Guard para proteger rutas que requieren autenticación
  */
-export const authGuard: CanActivateFn = (route, state) => {
+export const authGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
   const router = inject(Router);
   const toastr = inject(ToastrService);
@@ -29,7 +29,7 @@ export const authGuard: CanActivateFn = (route, state) => {
 /**
  * Guard para redirigir usuarios autenticados fuera de páginas de auth
  */
-export const guestGuard: CanActivateFn = (route, state) => {
+export const guestGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
