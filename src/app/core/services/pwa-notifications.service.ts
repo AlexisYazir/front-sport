@@ -163,7 +163,9 @@ export class PwaNotificationsService {
         // Un resultado automático "default" puede significar que no se mostró el diálogo.
         // Conserva una oportunidad durante una interacción, incluso con la marca antigua "1".
         try { this.browser.sessionStorage.setItem(this.permissionHandledKey,
-          result === 'default' && fromInteraction ? 'dismissed' : 'auto'); } catch {}
+          result === 'default' && fromInteraction ? 'dismissed' : 'auto'); } catch {
+          // La marca en memoria evita repetir el aviso si sessionStorage no está disponible.
+        }
       } catch {
         if (!this.destroyed) console.warn('El navegador no permitió solicitar notificaciones al abrir Sport Center.');
       } finally {

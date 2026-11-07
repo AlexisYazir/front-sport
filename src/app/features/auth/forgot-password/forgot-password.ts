@@ -40,9 +40,9 @@ export class ForgotPassword implements OnDestroy {
   private authService = inject(AuthService);
   private toastr = inject(ToastrService);
   private router = inject(Router);
-  private codeExpiryInterval: any;
-  private resendCooldownInterval: any;
-  private lockCountdownInterval: any;
+  private codeExpiryInterval: ReturnType<typeof setTimeout> | null | undefined;
+  private resendCooldownInterval: ReturnType<typeof setTimeout> | null | undefined;
+  private lockCountdownInterval: ReturnType<typeof setTimeout> | null | undefined;
 
   // Estados
   currentStep = signal<ForgotPasswordStep>('email');
@@ -364,8 +364,7 @@ export class ForgotPassword implements OnDestroy {
       if (stored) {
         return JSON.parse(stored);
       }
-    } catch (e) {
-    }
+    } catch { return { attempts: 0, firstAttempt: 0, lockedUntil: null, lastAttemptTime: 0 }; }
     
     return {
       attempts: 0,
@@ -381,8 +380,7 @@ export class ForgotPassword implements OnDestroy {
   private saveRateLimitState(state: RateLimitState): void {
     try {
       localStorage.setItem(this.rateLimitKey, JSON.stringify(state));
-    } catch (e) {
-    }
+    } catch { return; }
   }
 
   /**
@@ -393,8 +391,7 @@ export class ForgotPassword implements OnDestroy {
       if (this.rateLimitKey) {
         localStorage.removeItem(this.rateLimitKey);
       }
-    } catch (e) {
-    }
+    } catch { this.isRateLimited.set(false); }
     
     this.isRateLimited.set(false);
     this.remainingAttempts.set(RATE_LIMIT_CONFIG.maxAttempts);
@@ -402,7 +399,7 @@ export class ForgotPassword implements OnDestroy {
     this.lockTimeRemaining.set('');
     
     if (this.lockCountdownInterval) {
-      clearInterval(this.lockCountdownInterval);
+      if (this.lockCountdownInterval != null) clearInterval(this.lockCountdownInterval);
       this.lockCountdownInterval = null;
     }
   }
@@ -412,7 +409,7 @@ export class ForgotPassword implements OnDestroy {
    */
   private startLockCountdown(lockUntil: number): void {
     if (this.lockCountdownInterval) {
-      clearInterval(this.lockCountdownInterval);
+      if (this.lockCountdownInterval != null) clearInterval(this.lockCountdownInterval);
     }
     
     const updateCountdown = () => {
@@ -450,7 +447,7 @@ export class ForgotPassword implements OnDestroy {
       this.codeExpiry.set(seconds);
 
       if (seconds <= 0) {
-        clearInterval(this.codeExpiryInterval);
+        if (this.codeExpiryInterval != null) clearInterval(this.codeExpiryInterval);
       }
     }, 1000);
   }
@@ -465,7 +462,7 @@ export class ForgotPassword implements OnDestroy {
       this.resendCooldown.set(seconds);
 
       if (seconds <= 0) {
-        clearInterval(this.resendCooldownInterval);
+        if (this.resendCooldownInterval != null) clearInterval(this.resendCooldownInterval);
         this.canResendCode.set(true);
         this.resendCooldown.set(0);
       }
@@ -498,9 +495,9 @@ export class ForgotPassword implements OnDestroy {
   }
 
   private cleanupIntervals() {
-    if (this.codeExpiryInterval) clearInterval(this.codeExpiryInterval);
-    if (this.resendCooldownInterval) clearInterval(this.resendCooldownInterval);
-    if (this.lockCountdownInterval) clearInterval(this.lockCountdownInterval);
+    if (this.codeExpiryInterval) if (this.codeExpiryInterval != null) clearInterval(this.codeExpiryInterval);
+    if (this.resendCooldownInterval) if (this.resendCooldownInterval != null) clearInterval(this.resendCooldownInterval);
+    if (this.lockCountdownInterval) if (this.lockCountdownInterval != null) clearInterval(this.lockCountdownInterval);
   }
 
   goBack() {

@@ -38,6 +38,8 @@
   </div>
 
   <p *ngIf="mapUnavailable" class="location-error">El mapa no pudo cargarse. Puedes consultar las indicaciones en Google Maps.</p>
+  <button *ngIf="mapUnavailable" type="button" (click)="retryMap()" [disabled]="mapLoading"
+    class="location-button">{{ mapLoading ? 'Cargando mapa…' : 'Reintentar mapa' }}</button>
   <div #mapContainer id="map" class="map-container" role="region" aria-label="Mapa de Sport Center y tu ubicación aproximada"></div>
 
   <div class="map-footer">

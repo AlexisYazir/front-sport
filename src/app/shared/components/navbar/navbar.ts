@@ -1,4 +1,5 @@
-import { Component, DestroyRef, inject, signal, computed, HostListener } from '@angular/core';
+import type { CompleteMenu, MenuCategory } from '../../../core/services/api-contracts';
+import { Component, DestroyRef, inject, signal, computed, HostListener, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router, NavigationStart } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -31,7 +32,7 @@ interface NavbarNotification {
   templateUrl: './navbar.html',
   styleUrl: './navbar.css',
 })
-export class Navbar {
+export class Navbar implements OnInit {
   logo = './assets/images/logo_sportcenter.png';
   
   private authService = inject(AuthService);
@@ -40,9 +41,9 @@ export class Navbar {
   private productService = inject(ProductService);
   public preferences = inject(DashboardPreferencesService);
   readonly voiceSearch = inject(VoiceSearchService);
-  private closeTimeout: any;
-  private infoTimeout: any;
-  private supportTimeout: any;
+  private closeTimeout: ReturnType<typeof setTimeout> | null | undefined;
+  private infoTimeout: ReturnType<typeof setTimeout> | null | undefined;
+  private supportTimeout: ReturnType<typeof setTimeout> | null | undefined;
   private isMobile = window.innerWidth < 768;
 
   constructor() {
@@ -696,7 +697,7 @@ export class Navbar {
     }
     this.closeAllMenus();
   }
-  menuData = signal<any>(null);
+  menuData = signal<CompleteMenu | null>(null);
 menuProducts = signal<Product[]>([]);
 menuLoading = signal<boolean>(false);
 
@@ -709,12 +710,12 @@ deportesHovered = false;
 marcasHovered = false;
 
 // Estados para los timeouts de cierre
-private hombresTimeout: any;
-private mujeresTimeout: any;
-private ninosTimeout: any;
-private accesoriosTimeout: any;
-private deportesTimeout: any;
-private marcasTimeout: any;
+private hombresTimeout: ReturnType<typeof setTimeout> | null | undefined;
+private mujeresTimeout: ReturnType<typeof setTimeout> | null | undefined;
+private ninosTimeout: ReturnType<typeof setTimeout> | null | undefined;
+private accesoriosTimeout: ReturnType<typeof setTimeout> | null | undefined;
+private deportesTimeout: ReturnType<typeof setTimeout> | null | undefined;
+private marcasTimeout: ReturnType<typeof setTimeout> | null | undefined;
 
 // Getters para mostrar submenús
 shouldShowHombresMenu(): boolean {
@@ -775,12 +776,7 @@ onMenuMouseEnter(menu: 'hombres' | 'mujeres' | 'ninos' | 'accesorios' | 'deporte
 }
 
 onMenuMouseLeave(menu: 'hombres' | 'mujeres' | 'ninos' | 'accesorios' | 'deportes' | 'marcas') {
-  const timeoutSetter = (setter: any, clear: any) => {
-    const timeout = setTimeout(() => {
-      setter(false);
-    }, 300);
-    return timeout;
-  };
+
   
   switch(menu) {
     case 'hombres':
@@ -845,7 +841,7 @@ ngOnInit() {
   });
 }
 
-getAudienceMenuItems(genero: 'hombres' | 'mujeres' | 'ninos', group: 'clothing' | 'accessories'): any[] {
+getAudienceMenuItems(genero: 'hombres' | 'mujeres' | 'ninos', group: 'clothing' | 'accessories'): MenuCategory[] {
   const items = this.menuData()?.[group] || [];
   const products = this.menuProducts();
 
@@ -855,7 +851,7 @@ getAudienceMenuItems(genero: 'hombres' | 'mujeres' | 'ninos', group: 'clothing' 
 
   const parentSlug = group === 'clothing' ? 'ropa' : 'accesorios';
 
-  return items.filter((item: any) => {
+  return items.filter((item) => {
     const itemSlug = this.productService.generateSlug(item.nombre || '');
     return products.some(product => {
       const productCategorySlug = this.productService.generateSlug(product.categoria || '');

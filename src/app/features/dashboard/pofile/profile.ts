@@ -2,9 +2,11 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
-import { User, UserRole, getRoleName } from '../../../core/models/user.model';
+import { UserRole, getRoleName } from '../../../core/models/user.model';
 import { ToastrService } from 'ngx-toastr';
 import { UpdateProfileData } from '../../../core/models/user.model';
+import type { UserProfile } from '../../../core/services/api-contracts';
+type ProfileUser = Pick<UserProfile, 'nombre' | 'aPaterno' | 'aMaterno' | 'email' | 'telefono' | 'rol'> & { activo?: number; fecha_creacion?: string };
 import { IconModule } from '../../../shared/icons/icon.module';
 
 import { 
@@ -25,7 +27,7 @@ export class Profile implements OnInit {
   private toastr = inject(ToastrService);
   
   // Usuario obtenido del getProfile
-  user = signal<User | null>(null);
+  user = signal<ProfileUser | null>(null);
   isLoading = signal<boolean>(false);
   isEditing = signal<boolean>(false);
   isChangingPassword = signal<boolean>(false);
@@ -98,7 +100,7 @@ export class Profile implements OnInit {
         
         this.isLoading.set(false);
       },
-      error: (error) => {
+      error: () => {
         this.isLoading.set(false);
         this.toastr.error('Error al cargar el perfil', 'Error');
       }
@@ -184,7 +186,7 @@ export class Profile implements OnInit {
   
   onNameChange(field: 'nombre' | 'aPaterno' | 'aMaterno', value: string) {
     const trimmedValue = (value || '').trim();
-    (this.profileForm as any)[field] = trimmedValue;
+    this.profileForm[field] = trimmedValue;
     
     if (!trimmedValue) {
       if (field === 'nombre') this.nombreError.set('');
@@ -214,7 +216,7 @@ export class Profile implements OnInit {
       hasUpper: /[A-Z]/.test(password),
       hasLower: /[a-z]/.test(password),
       hasNumber: /[0-9]/.test(password),
-      hasSpecial: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)
+      hasSpecial: /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)
     };
   }
   

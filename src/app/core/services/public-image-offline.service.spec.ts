@@ -2,6 +2,11 @@ import { TestBed } from '@angular/core/testing';
 import { PublicImageOfflineService } from './public-image-offline.service';
 import { PwaStorageService } from './pwa-storage.service';
 
+interface ImageOfflineTestState {
+  decodeImage(url: string): Promise<boolean>;
+  saveOnce(cache: Cache, url: string, response: Response, controlled: boolean): Promise<boolean>;
+}
+
 describe('Copias duraderas de imágenes públicas', () => {
   const cacheName = 'sport-center-public-images-v1';
   const url = 'https://res.cloudinary.com/catalogo/producto.jpg';
@@ -213,7 +218,7 @@ describe('Copias duraderas de imágenes públicas', () => {
   it('serializa estimación y validación opaca sin impedir las descargas paralelas', async () => {
     const other = url + '?segunda=1';
     const validations: { url: string; finish: (valid: boolean) => void }[] = [];
-    spyOn<any>(service, 'decodeImage').and.callFake((key: string) => new Promise<boolean>(resolve => {
+    spyOn(service as unknown as ImageOfflineTestState, 'decodeImage').and.callFake((key: string) => new Promise<boolean>(resolve => {
       validations.push({ url: key, finish: resolve });
     }));
     storage.hasCapacity.and.callFake(async bytes => {
@@ -251,8 +256,9 @@ describe('Copias duraderas de imágenes públicas', () => {
 
   it('continúa la cola de escrituras después de un error inesperado', async () => {
     const other = url + '?segunda=1';
-    const original = (service as any).saveOnce.bind(service);
-    spyOn<any>(service, 'saveOnce').and.callFake(async (...args: unknown[]) => {
+    const internal = service as unknown as ImageOfflineTestState;
+    const original = internal.saveOnce.bind(service);
+    spyOn(internal, 'saveOnce').and.callFake(async (...args: Parameters<ImageOfflineTestState['saveOnce']>) => {
       if (args[1] === url) throw new Error('Operación interrumpida');
       return original(...args);
     });

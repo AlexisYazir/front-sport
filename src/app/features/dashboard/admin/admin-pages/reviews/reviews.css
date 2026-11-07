@@ -13,6 +13,42 @@ table {
   border-collapse: collapse;
 }
 
+.moderation-section { margin-bottom: 1.5rem; border: 1px solid #dbe4ec; border-radius: .75rem; padding: 1rem; color: #202020; }
+.moderation-section h3 { font-weight: 700; font-size: 1.15rem; }
+.moderation-section h4 { font-weight: 600; }
+.moderation-toolbar, .moderation-filters, .moderation-pagination { display: flex; align-items: center; justify-content: space-between; gap: .75rem; flex-wrap: wrap; }
+.moderation-toolbar { margin-bottom: 1rem; }
+.moderation-filters { justify-content: flex-start; }
+.moderation-meta, .moderation-toolbar p { font-size: .85rem; color: #555; margin-top: .35rem; }
+.moderation-section select, .moderation-section textarea { border: 1px solid #9ca3af; border-radius: .5rem; padding: .6rem; background: white; max-width: 100%; }
+.moderation-section label { display: block; font-weight: 600; margin-bottom: .4rem; }
+.moderation-section textarea { width: 100%; }
+.moderation-primary, .moderation-secondary { border-radius: .5rem; padding: .6rem .85rem; font-size: .9rem; min-height: 2.75rem; }
+.moderation-primary { background: #0367a6; color: white; border: 1px solid #0367a6; }
+.moderation-secondary { border: 1px solid #9ca3af; color: #174f73; background: white; }
+.moderation-primary:disabled, .moderation-secondary:disabled { opacity: .55; }
+button:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px solid #0367a6; outline-offset: 3px; }
+.report-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 1rem; }
+.report-card { border: 1px solid #dbe4ec; border-radius: .6rem; padding: 1rem; min-width: 0; }
+.report-card > p { margin-bottom: .5rem; overflow-wrap: anywhere; }
+.report-message { white-space: pre-wrap; overflow-wrap: anywhere; }
+.moderation-error { color: #9f1239; border-left: 3px solid #9f1239; padding: .5rem .75rem; margin: .6rem 0; }
+.moderation-visibility { background: #eff6ff; padding: .75rem; border-radius: .5rem; margin-bottom: .75rem; }
+.decision-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin-top: 1rem; }
+.decision-form select { width: 100%; }
+.decision-reason { grid-column: 1 / -1; }
+.decision-form button { justify-self: start; }
+.history-title { margin-top: 1.5rem; }
+.history-list { padding-left: 1.5rem; list-style: decimal; }
+.history-list li { padding: .75rem 0; border-bottom: 1px solid #e5e7eb; }
+.history-list li p { margin-bottom: .3rem; }
+.moderation-pagination { margin-top: 1rem; font-size: .85rem; }
+@media (max-width: 640px) {
+  .decision-form { grid-template-columns: minmax(0, 1fr); }
+  .moderation-filters, .moderation-filters select { width: 100%; }
+  .moderation-detail { padding: .75rem; }
+}
+
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;

@@ -133,7 +133,7 @@ export class Marcas implements OnInit {
         this.applyMarcasFilters();
         this.isLoading.set(false);
       },
-      error: (error) => {
+      error: () => {
         this.toastr.error('Error al cargar marcas', 'Error');
         this.isLoading.set(false);
       }
@@ -158,8 +158,10 @@ export class Marcas implements OnInit {
     this.updatePaginatedMarcas();
   }
 
-  onMarcasSearch(event: any) {
-    this.searchMarcasValue = event.target.value;
+  onMarcasSearch(event: Event) {
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement || target instanceof HTMLSelectElement)) return;
+    this.searchMarcasValue = target.value;
     this.applyMarcasFilters();
   }
 
@@ -389,7 +391,7 @@ export class Marcas implements OnInit {
         this.applyCategoriasFilters();
         this.isLoading.set(false);
       },
-      error: (error) => {
+      error: () => {
         this.toastr.error('Error al cargar categorías', 'Error');
         this.isLoading.set(false);
       }
@@ -419,13 +421,17 @@ export class Marcas implements OnInit {
     this.updatePaginatedCategorias();
   }
 
-  onFilterTipoChange(event: any) {
-    this.filterTipo = event.target.value;
+  onFilterTipoChange(event: Event) {
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement || target instanceof HTMLSelectElement)) return;
+    this.filterTipo = target.value;
     this.applyCategoriasFilters();
   }
 
-  onCategoriasSearch(event: any) {
-    this.searchCategoriasValue = event.target.value;
+  onCategoriasSearch(event: Event) {
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement || target instanceof HTMLSelectElement)) return;
+    this.searchCategoriasValue = target.value;
     this.applyCategoriasFilters();
   }
 

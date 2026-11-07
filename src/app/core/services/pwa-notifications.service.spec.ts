@@ -19,6 +19,9 @@ describe('PwaNotificationsService', () => {
   let registrationReady: Promise<ServiceWorkerRegistration>;
   let registration: ServiceWorkerRegistration;
   const settle = () => new Promise<void>(resolve => setTimeout(resolve, 0));
+  const requestOnInteraction = () => (service as unknown as {
+    requestPermissionOnOpen(fromInteraction: boolean): Promise<void>;
+  }).requestPermissionOnOpen(true);
 
   function boot() {
     TestBed.configureTestingModule({ providers: [{ provide: PWA_NOTIFICATION_WINDOW, useValue: browser }] });
@@ -585,7 +588,7 @@ describe('PwaNotificationsService', () => {
     service.start();
     await settle();
     requestPermission.and.callFake(async () => permission = 'granted');
-    await (service as any).requestPermissionOnOpen(true);
+    await requestOnInteraction();
     expect(requestPermission).toHaveBeenCalledTimes(2);
     changeConnection(false);
     await settle();
@@ -597,7 +600,7 @@ describe('PwaNotificationsService', () => {
     service.start();
     await settle();
     expect(requestPermission).not.toHaveBeenCalled();
-    await (service as any).requestPermissionOnOpen(true);
+    await requestOnInteraction();
     expect(requestPermission).toHaveBeenCalledTimes(1);
   });
 
@@ -605,19 +608,19 @@ describe('PwaNotificationsService', () => {
     requestPermission.and.resolveTo('default');
     service.start();
     await settle();
-    await (service as any).requestPermissionOnOpen(true);
+    await requestOnInteraction();
     TestBed.resetTestingModule();
     boot();
     service.start();
     await settle();
-    await (service as any).requestPermissionOnOpen(true);
+    await requestOnInteraction();
     expect(requestPermission).toHaveBeenCalledTimes(2);
   });
 
   it('no repite permisos denegados aunque haya interacción', async () => {
     permission = 'denied';
     service.start();
-    await (service as any).requestPermissionOnOpen(true);
+    await requestOnInteraction();
     expect(requestPermission).not.toHaveBeenCalled();
   });
 

@@ -1,3 +1,5 @@
+import type { EmployeeOrderItem } from '../../../../../core/models/product.model';
+type OrderItemView = EmployeeOrderItem & { nombre?: string; descripcion?: string };
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -352,19 +354,19 @@ export class EmployeeOrders implements OnInit {
     return this.getPrimaryOrderItem(order)?.imagen || 'assets/images/no-image.jpg';
   }
 
-  getPrimaryOrderItem(order: EmployeeOrder): any {
+  getPrimaryOrderItem(order: EmployeeOrder): OrderItemView | null {
     return order.items?.[0] || null;
   }
 
-  getItemName(item: any): string {
+  getItemName(item: OrderItemView | null | undefined): string {
     return item?.producto || item?.nombre || 'Producto';
   }
 
-  getItemDescription(item: any): string {
+  getItemDescription(item: OrderItemView | null | undefined): string {
     return item?.descripcion || [item?.marca, item?.categoria].filter(Boolean).join(' · ') || 'Producto de Sport Center';
   }
 
-  getItemAttributes(item: any): string {
+  getItemAttributes(item: OrderItemView | null | undefined): string {
     const attrs = this.getVariantInfo(item);
     return attrs || [item?.marca, item?.categoria].filter(Boolean).join(' · ');
   }
@@ -526,9 +528,9 @@ export class EmployeeOrders implements OnInit {
     }).format(new Date(date));
   }
 
-  getVariantInfo(item: any): string {
+  getVariantInfo(item: OrderItemView | null | undefined): string {
     const atributos = item?.atributos || {};
-    const values = [atributos.Talla, atributos.talla, atributos.Color, atributos.color]
+    const values = [atributos['Talla'], atributos['talla'], atributos['Color'], atributos['color']]
       .filter(Boolean);
     return values.join(' · ');
   }
@@ -554,12 +556,12 @@ export class EmployeeOrders implements OnInit {
   }
 
   private async openDeliveryCodePdf(order: EmployeeOrder, code: string): Promise<void> {
+    let releasePreview: (() => void) | undefined;
     try {
       const safeCode = String(code || '').replace(/[^A-Z0-9]/g, '');
       const filename = `codigo-entrega-${order.id_orden}.pdf`;
       const pdfBlob = await this.buildDeliveryCodePdf(order, safeCode);
       const pdfFile = new File([pdfBlob], filename, { type: 'application/pdf' });
-      const pdfUrl = URL.createObjectURL(pdfFile);
       const preview = window.open('', '_blank', 'width=1100,height=760');
 
       if (!preview) {
@@ -567,6 +569,22 @@ export class EmployeeOrders implements OnInit {
         this.toastr.info('Se descargó el PDF porque el navegador bloqueó la vista previa', 'Entrega');
         return;
       }
+
+      const pdfUrl = URL.createObjectURL(pdfFile);
+      let released = false;
+      const release = () => {
+        if (released) return;
+        released = true;
+        window.clearInterval(closeCheck);
+        window.removeEventListener('pagehide', release);
+        URL.revokeObjectURL(pdfUrl);
+      };
+      const closeCheck = window.setInterval(() => {
+        if (preview.closed) release();
+      }, 1000);
+      releasePreview = release;
+      preview.addEventListener('pagehide', release, { once: true });
+      window.addEventListener('pagehide', release, { once: true });
 
       preview.document.write(`
         <!doctype html>
@@ -630,12 +648,14 @@ export class EmployeeOrders implements OnInit {
         </html>
       `);
       preview.document.close();
-    } catch (error) {
+    } catch  {
+      releasePreview?.();
       this.toastr.error('No fue posible generar el PDF', 'Entrega');
     }
   }
 
   private async buildDeliveryCodePdf(order: EmployeeOrder, code: string): Promise<Blob> {
+    // Este documento usa texto y PNG. El build excluye los complementos opcionales de HTML/SVG.
     const { jsPDF } = await import('jspdf');
     const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'letter' });
     const pageWidth = pdf.internal.pageSize.getWidth();

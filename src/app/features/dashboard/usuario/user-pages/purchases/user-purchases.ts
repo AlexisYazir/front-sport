@@ -1,3 +1,5 @@
+import type { UserOrderItem, ShipmentEvent } from '../../../../../core/models/product.model';
+type OrderItemView = UserOrderItem & { nombre?: string; descripcion?: string };
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -184,24 +186,24 @@ export class UserPurchases implements OnInit {
     return this.getPrimaryOrderItem(order)?.imagen || 'assets/images/no-image.jpg';
   }
 
-  getPrimaryOrderItem(order: UserOrder): any {
+  getPrimaryOrderItem(order: UserOrder): OrderItemView | null {
     return order.items?.[0] || null;
   }
 
-  getItemName(item: any): string {
+  getItemName(item: OrderItemView | null | undefined): string {
     return item?.producto || item?.nombre || 'Producto';
   }
 
-  getItemDescription(item: any): string {
+  getItemDescription(item: OrderItemView | null | undefined): string {
     return item?.descripcion || [item?.marca, item?.categoria].filter(Boolean).join(' · ') || 'Producto de Sport Center';
   }
 
-  getItemAttributes(item: any): string {
+  getItemAttributes(item: OrderItemView | null | undefined): string {
     const attrs = this.getVariantInfo(item);
     return attrs || [item?.marca, item?.categoria].filter(Boolean).join(' · ');
   }
 
-  getOrderEvents(order: UserOrder): any[] {
+  getOrderEvents(order: UserOrder): ShipmentEvent[] {
     return order.eventos_envio || [];
   }
 
@@ -237,9 +239,9 @@ export class UserPurchases implements OnInit {
     return 'bg-yellow-100 text-yellow-700 border-yellow-200';
   }
 
-  getVariantInfo(item: any): string {
+  getVariantInfo(item: OrderItemView | null | undefined): string {
     const atributos = item?.atributos || {};
-    const values = [atributos.Talla, atributos.talla, atributos.Color, atributos.color]
+    const values = [atributos['Talla'], atributos['talla'], atributos['Color'], atributos['color']]
       .filter(Boolean);
     return values.join(' · ');
   }

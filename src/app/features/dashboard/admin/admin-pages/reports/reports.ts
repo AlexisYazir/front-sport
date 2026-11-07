@@ -475,7 +475,8 @@ export class Reports implements OnInit, OnDestroy {
     this.reportRequest?.unsubscribe();
     const hasCurrentReport = this.report() !== null;
     this.errorMessage.set('');
-    hasCurrentReport ? this.isRefreshing.set(true) : this.isLoading.set(true);
+    if (hasCurrentReport) this.isRefreshing.set(true);
+    else this.isLoading.set(true);
     this.syncFiltersToUrl();
 
     this.reportRequest = this.reportsService

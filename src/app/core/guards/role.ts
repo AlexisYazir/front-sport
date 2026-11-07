@@ -1,5 +1,5 @@
 import { inject } from '@angular/core';
-import { Router, CanActivateFn, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
+import { Router, CanActivateFn } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { UserRole } from '../models/user.model';
 
@@ -13,7 +13,7 @@ import { UserRole } from '../models/user.model';
  * }
  */
 export const roleGuard = (allowedRoles: UserRole[]): CanActivateFn => {
-  return (route: ActivatedRouteSnapshot, state: RouterStateSnapshot) => {
+  return () => {
     const authService = inject(AuthService);
     const router = inject(Router);
 
@@ -42,10 +42,7 @@ export const roleGuard = (allowedRoles: UserRole[]): CanActivateFn => {
 /**
  * Guard que solo verifica autenticación (sin verificar roles)
  */
-export const authGuard: CanActivateFn = (
-  route: ActivatedRouteSnapshot,
-  state: RouterStateSnapshot
-) => {
+export const authGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
   const router = inject(Router);
 

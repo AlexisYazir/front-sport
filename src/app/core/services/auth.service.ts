@@ -1,3 +1,4 @@
+import type { RegistrationReceipt, MessageResponse, UserProfile } from './api-contracts';
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
@@ -491,14 +492,14 @@ export class AuthService {
     return this.tokenService.isAccessTokenExpired(this.TOKEN_BUFFER_SECONDS);
   }
 
-  register(userData: RegisterRequest): Observable<any> {
+  register(userData: RegisterRequest): Observable<RegistrationReceipt> {
     const registerData = {
       ...userData,
       rol: UserRole.USUARIO,
       activo: 1,
     };
 
-    return this.http.post<any>(`${this.API_URL}/users/create-user`, registerData).pipe(
+    return this.http.post<RegistrationReceipt>(`${this.API_URL}/users/create-user`, registerData).pipe(
       tap((response) => {
         if (response && response.id_usuario) {
           this.toastr.success('Tu cuenta ha sido creada exitosamente.', 'Registro Exitoso');
@@ -517,8 +518,8 @@ export class AuthService {
     );
   }
 
-  requestPasswordReset(email: string): Observable<any> {
-    return this.http.post<any>(`${this.API_URL}/users/verify-user-email`, { email }).pipe(
+  requestPasswordReset(email: string): Observable<MessageResponse> {
+    return this.http.post<MessageResponse>(`${this.API_URL}/users/verify-user-email`, { email }).pipe(
       tap(() => {
         this.toastr.success('Código enviado a tu email', 'Código Enviado');
       }),
@@ -531,8 +532,8 @@ export class AuthService {
     );
   }
 
-  verifyRecoveryCode(email: string, token: string): Observable<any> {
-    return this.http.post<any>(`${this.API_URL}/users/verify-email`, { email, token }).pipe(
+  verifyRecoveryCode(email: string, token: string): Observable<MessageResponse> {
+    return this.http.post<MessageResponse>(`${this.API_URL}/users/verify-email`, { email, token }).pipe(
       tap(() => {
         this.toastr.success('Código verificado correctamente', 'Verificación exitosa');
       }),
@@ -544,8 +545,8 @@ export class AuthService {
     );
   }
 
-  resetPassword(email: string, newPassword: string, token: string): Observable<any> {
-    return this.http.post<any>(`${this.API_URL}/users/reset-psw`, {
+  resetPassword(email: string, newPassword: string, token: string): Observable<MessageResponse> {
+    return this.http.post<MessageResponse>(`${this.API_URL}/users/reset-psw`, {
       email,
       psw: newPassword,
       token,
@@ -564,9 +565,9 @@ export class AuthService {
     );
   }
 
-  requestResendCode(email: string): Observable<any> {
+  requestResendCode(email: string): Observable<MessageResponse> {
     const base = this.API_URL?.replace(/\/+$/, '');
-    return this.http.post<any>(`${base}/users/resend-code`, { email }).pipe(
+    return this.http.post<MessageResponse>(`${base}/users/resend-code`, { email }).pipe(
       tap(() => {
         this.toastr.success('Código reenviado. Revisa tu bandeja de entrada.', 'Enviado');
       }),
@@ -615,7 +616,7 @@ export class AuthService {
       );
   }
 
-  private mapRecentUserCreatedFromApi(u: any): RecentUserCreated {
+  private mapRecentUserCreatedFromApi(u: RecentUserCreated): RecentUserCreated {
     return {
       id: u.id,
       nombre: u.nombre,
@@ -626,7 +627,7 @@ export class AuthService {
     };
   }
 
-  private mapUsersAdminFromApi(u: any): UsersAdmin {
+  private mapUsersAdminFromApi(u: UsersAdmin): UsersAdmin {
     return {
       id_usuario: u.id_usuario,
       nombre: u.nombre,
@@ -637,7 +638,7 @@ export class AuthService {
     };
   }
 
-  private mapRolesFromApi(r: any): Roles {
+  private mapRolesFromApi(r: Roles): Roles {
     return {
       id_rol: r.id_rol,
       rol: r.rol,
@@ -647,7 +648,7 @@ export class AuthService {
   getRecentUsers(): Observable<RecentUserCreated[]> {
     this.isLoading.set(true);
 
-    return this.http.get<any[]>(`${this.API_URL}/users/get-recent-users-created`).pipe(
+    return this.http.get<RecentUserCreated[]>(`${this.API_URL}/users/get-recent-users-created`).pipe(
       map((response) => response.map((u) => this.mapRecentUserCreatedFromApi(u))),
       finalize(() => this.isLoading.set(false)),
     );
@@ -656,7 +657,7 @@ export class AuthService {
   getUsers(): Observable<UsersAdmin[]> {
     this.isLoading.set(true);
 
-    return this.http.get<any[]>(`${this.API_URL}/users/get-users`).pipe(
+    return this.http.get<UsersAdmin[]>(`${this.API_URL}/users/get-users`).pipe(
       map((response) => response.map((u) => this.mapUsersAdminFromApi(u))),
       finalize(() => this.isLoading.set(false)),
     );
@@ -665,14 +666,14 @@ export class AuthService {
   getRoles(): Observable<Roles[]> {
     this.isLoading.set(true);
 
-    return this.http.get<any[]>(`${this.API_URL}/users/get-roles`).pipe(
+    return this.http.get<Roles[]>(`${this.API_URL}/users/get-roles`).pipe(
       map((response) => response.map((u) => this.mapRolesFromApi(u))),
       finalize(() => this.isLoading.set(false)),
     );
   }
 
-  getProfile(): Observable<any> {
-    return this.http.get(`${this.API_URL}/users/profile`);
+  getProfile(): Observable<UserProfile> {
+    return this.http.get<UserProfile>(`${this.API_URL}/users/profile`);
   }
 
   updateProfile(data: UpdateProfileData): Observable<UpdateProfileResponse> {
@@ -689,10 +690,10 @@ export class AuthService {
     );
   }
 
-  updateUserFromAdmin(data: { id_usuario: number; activo: number; rol: number }): Observable<any> {
+  updateUserFromAdmin(data: { id_usuario: number; activo: number; rol: number }): Observable<UsersAdmin> {
     this.isLoading.set(true);
 
-    return this.http.patch(`${this.API_URL}/users/update-user`, data).pipe(
+    return this.http.patch<UsersAdmin>(`${this.API_URL}/users/update-user`, data).pipe(
       finalize(() => this.isLoading.set(false)),
     );
   }

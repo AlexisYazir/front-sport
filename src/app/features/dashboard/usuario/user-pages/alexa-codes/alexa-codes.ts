@@ -14,7 +14,7 @@ import { IconModule } from '../../../../../shared/icons/icon.module';
   templateUrl: './alexa-codes.html',
   styleUrl: './alexa-codes.css',
 })
-export class AlexaCodes {
+export class AlexaCodes implements OnInit, OnDestroy {
   private readonly authService = inject(AuthService);
   private readonly toastr = inject(ToastrService);
 

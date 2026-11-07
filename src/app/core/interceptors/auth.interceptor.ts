@@ -5,6 +5,7 @@ import { ToastrService } from 'ngx-toastr';
 import { catchError, switchMap, throwError } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 import { TokenService } from '../services/token.service';
+import { SKIP_AUTH_RETRY } from './auth-request-context';
 
 const AUTH_EXCLUDED_URLS = [
   '/users/login-user',
@@ -52,7 +53,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const sendRequest = (token: string | null) =>
     next(cloneWithToken(token)).pipe(
       catchError((error: HttpErrorResponse) => {
-        const canRetry = !req.headers.has('X-Auth-Retry');
+        const canRetry = !req.context.get(SKIP_AUTH_RETRY) && !req.headers.has('X-Auth-Retry');
 
         if (error.status === 401 && canRetry && authService.isLoggedIn()) {
           return authService.refreshAccessToken().pipe(
@@ -97,12 +98,12 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const token = tokenService.getAccessToken();
   if (token && authService.shouldRefreshSoon()) {
     return authService.refreshAccessToken().pipe(
-      switchMap((newToken) => sendRequest(newToken)),
       catchError(() => {
         authService.logout(false);
         router.navigate(['/auth/login']);
         return throwError(() => new Error('Unable to refresh session'));
       }),
+      switchMap((newToken) => sendRequest(newToken)),
     );
   }
 

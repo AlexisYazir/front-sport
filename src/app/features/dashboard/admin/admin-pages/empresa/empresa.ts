@@ -1,11 +1,16 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, InjectionToken, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import * as maplibregl from 'maplibre-gl';
 import { ToastrService } from 'ngx-toastr';
 import { CompanyFaq, CompanyInfo, CompanyService } from '../../../../../core/services/company.service';
 import { environment } from '../../../../../../environments/environment';
 import { IconModule } from '../../../../../shared/icons/icon.module';
+import { MapStylesService } from '../../../../../core/services/map-styles.service';
+
+export const COMPANY_MAP_API = new InjectionToken<typeof maplibregl>('Company map API', {
+  providedIn: 'root', factory: () => maplibregl,
+});
 
 
 type CompanyModal = 'general' | 'contacto' | 'historia' | 'ubicacion' | 'faq' | null;
@@ -29,6 +34,8 @@ interface CompanyLocationData {
 export class Empresa implements OnInit, OnDestroy {
   private readonly companyService = inject(CompanyService);
   private readonly toastr = inject(ToastrService);
+  private readonly mapApi = inject(COMPANY_MAP_API);
+  private readonly mapStyles = inject(MapStylesService);
 
   companyInfo: CompanyInfo | null = null;
   faqs: CompanyFaq[] = [];
@@ -89,6 +96,11 @@ export class Empresa implements OnInit, OnDestroy {
 
   private map: maplibregl.Map | null = null;
   private locationMarker: maplibregl.Marker | null = null;
+  private destroyed = false;
+  private mapGeneration = 0;
+  private mapOpenTimer?: ReturnType<typeof setTimeout>;
+  private mapResizeTimer?: ReturnType<typeof setTimeout>;
+  private mapResizeFrame?: number;
 
   ngOnInit(): void {
     this.loadCompanyInfo();
@@ -96,6 +108,7 @@ export class Empresa implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.destroyed = true;
     this.destroyMap();
   }
 
@@ -114,6 +127,8 @@ export class Empresa implements OnInit, OnDestroy {
   }
 
   openModal(modal: Exclude<CompanyModal, null>): void {
+    if (this.destroyed) return;
+    this.destroyMap();
     this.activeModal = modal;
 
     if (modal === 'general') {
@@ -152,7 +167,11 @@ export class Empresa implements OnInit, OnDestroy {
 
     if (modal === 'ubicacion') {
       this.ubicacionForm = this.parseLocation(this.companyInfo?.mapa_ubicacion) ?? this.getDefaultLocation();
-      setTimeout(() => this.initializeLocationMap(), 0);
+      const generation = this.mapGeneration;
+      this.mapOpenTimer = setTimeout(() => {
+        this.mapOpenTimer = undefined;
+        void this.initializeLocationMap(generation);
+      }, 0);
     }
 
     if (modal === 'faq') {
@@ -232,7 +251,7 @@ export class Empresa implements OnInit, OnDestroy {
 
     this.companyService.uploadCompanyLogo(file).subscribe({
       next: (response) => {
-        const uploadedUrl = response?.secure_url || response?.url || response?.imageUrl || null;
+        const uploadedUrl = response?.secure_url || response?.url || null;
         if (!uploadedUrl) {
           this.toastr.error('No se pudo obtener la URL del logo subido.', 'Perfil de empresa');
           return;
@@ -618,8 +637,20 @@ export class Empresa implements OnInit, OnDestroy {
     this.removedFaqKeywordsHistory = [];
   }
 
-  private initializeLocationMap(): void {
-    this.destroyMap();
+  private async initializeLocationMap(generation: number): Promise<void> {
+    if (this.destroyed || this.activeModal !== 'ubicacion' || generation !== this.mapGeneration) return;
+    try {
+      await this.mapStyles.ensureLoaded();
+      if (this.destroyed || this.activeModal !== 'ubicacion' || generation !== this.mapGeneration) return;
+      this.createLocationMap();
+    } catch {
+      if (this.destroyed || this.activeModal !== 'ubicacion' || generation !== this.mapGeneration) return;
+      this.destroyMap();
+      this.toastr.error('No fue posible cargar el mapa. Intenta abrir la ubicación nuevamente.', 'Ubicación');
+    }
+  }
+
+  private createLocationMap(): void {
 
     maplibregl.setWorkerUrl(new URL(
       `assets/maplibre/maplibre-gl-worker.mjs?v=${maplibregl.getVersion()}`, document.baseURI,
@@ -629,7 +660,7 @@ export class Empresa implements OnInit, OnDestroy {
       ? `https://api.maptiler.com/maps/streets/style.json?key=${environment.maptilerApiKey}`
       : 'https://demotiles.maplibre.org/style.json';
 
-    this.map = new maplibregl.Map({
+    this.map = new this.mapApi.Map({
       container: 'company-location-map',
       style,
       center: [this.ubicacionForm.lng, this.ubicacionForm.lat],
@@ -638,10 +669,12 @@ export class Empresa implements OnInit, OnDestroy {
       attributionControl: false,
     });
 
-    this.map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
+    const map = this.map;
+    this.map.addControl(new this.mapApi.NavigationControl({ showCompass: false }), 'top-right');
     this.map.dragRotate.disable();
 
     this.map.on('click', (event) => {
+      if (this.destroyed || this.map !== map) return;
       const { lng, lat } = event.lngLat;
       this.ubicacionForm = {
         ...this.ubicacionForm,
@@ -652,7 +685,7 @@ export class Empresa implements OnInit, OnDestroy {
     });
 
     this.map.on('zoomend', () => {
-      if (!this.map) {
+      if (this.destroyed || this.map !== map) {
         return;
       }
 
@@ -663,28 +696,34 @@ export class Empresa implements OnInit, OnDestroy {
     });
 
     this.map.on('load', () => {
+      if (this.destroyed || this.map !== map) return;
       this.refreshMapViewport();
       this.setLocationMarker(this.ubicacionForm.lng, this.ubicacionForm.lat);
     });
 
-    requestAnimationFrame(() => this.refreshMapViewport());
-    setTimeout(() => this.refreshMapViewport(), 120);
+    this.mapResizeFrame = requestAnimationFrame(() => {
+      if (!this.destroyed && this.map === map) this.refreshMapViewport();
+    });
+    this.mapResizeTimer = setTimeout(() => {
+      if (!this.destroyed && this.map === map) this.refreshMapViewport();
+    }, 120);
   }
 
   private setLocationMarker(lng: number, lat: number): void {
-    if (!this.map) {
+    if (this.destroyed || !this.map) {
       return;
     }
 
     if (!this.locationMarker) {
-      const popup = new maplibregl.Popup({
+      const map = this.map;
+      const popup = new this.mapApi.Popup({
         offset: 14,
         closeButton: true,
         closeOnClick: false,
         className: 'company-location-popup',
       }).setHTML(this.getPopupHtml());
 
-      this.locationMarker = new maplibregl.Marker({
+      this.locationMarker = new this.mapApi.Marker({
         color: '#0367A6',
         draggable: true,
         anchor: 'bottom',
@@ -693,8 +732,10 @@ export class Empresa implements OnInit, OnDestroy {
         .setPopup(popup)
         .addTo(this.map);
 
+      const marker = this.locationMarker;
       this.locationMarker.on('dragend', () => {
-        const markerPosition = this.locationMarker?.getLngLat();
+        if (this.destroyed || this.map !== map || this.locationMarker !== marker) return;
+        const markerPosition = marker.getLngLat();
         if (!markerPosition) {
           return;
         }
@@ -707,7 +748,9 @@ export class Empresa implements OnInit, OnDestroy {
         this.refreshMarkerPopup();
       });
 
-      this.map.once('idle', () => this.openMarkerPopup());
+      this.map.once('idle', () => {
+        if (!this.destroyed && this.map === map) this.openMarkerPopup();
+      });
 
       return;
     }
@@ -744,6 +787,13 @@ export class Empresa implements OnInit, OnDestroy {
   }
 
   private destroyMap(): void {
+    this.mapGeneration += 1;
+    if (this.mapOpenTimer !== undefined) clearTimeout(this.mapOpenTimer);
+    if (this.mapResizeTimer !== undefined) clearTimeout(this.mapResizeTimer);
+    if (this.mapResizeFrame !== undefined) cancelAnimationFrame(this.mapResizeFrame);
+    this.mapOpenTimer = undefined;
+    this.mapResizeTimer = undefined;
+    this.mapResizeFrame = undefined;
     this.locationMarker?.remove();
     this.locationMarker = null;
     this.map?.remove();

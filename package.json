@@ -15,7 +15,9 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "test:pwa": "node --test scripts/pwa-worker.spec.mjs scripts/pwa-storage-worker.spec.mjs scripts/prepare-netlify-shell.spec.mjs scripts/prepare-offline-manifest.spec.mjs && ng test --watch=false --browsers=ChromeHeadless --ts-config=tsconfig.pwa.spec.json --include=src/app/core/services/public-*.spec.ts --include=src/app/core/services/pwa-storage.service.spec.ts",
-    "lint": "ng lint"
+    "lint": "ng lint",
+    "typecheck": "ngc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.spec.json",
+    "test:moderation": "ng test --watch=false --browsers=ChromeHeadless --ts-config=tsconfig.moderation.spec.json --include=src/app/core/services/product-moderation.spec.ts --include=src/app/features/dashboard/admin/admin-pages/reviews/reviews.spec.ts"
   },
   "prettier": {
     "printWidth": 100,
@@ -64,9 +66,12 @@
     "@angular/build": "20.3.40",
     "@angular/cli": "20.3.40",
     "@angular/compiler-cli": "20.3.34",
+    "@eslint/js": "9.39.4",
     "@types/jasmine": "~5.1.0",
     "@types/leaflet": "^1.9.21",
     "@types/maplibre-gl": "^1.13.2",
+    "angular-eslint": "20.7.0",
+    "eslint": "9.39.4",
     "eslint-plugin-security": "^4.0.0",
     "jasmine-core": "~5.9.0",
     "karma": "~6.4.0",
@@ -74,6 +79,7 @@
     "karma-coverage": "~2.2.0",
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
-    "typescript": "~5.9.2"
+    "typescript": "~5.9.2",
+    "typescript-eslint": "8.57.1"
   }
 }

@@ -1,9 +1,14 @@
 import { TestBed, fakeAsync, flushMicrotasks, tick } from '@angular/core/testing';
-import { HttpRequest, provideHttpClient, withInterceptors } from '@angular/common/http';
+import { HttpEvent, HttpRequest, HttpResponse, provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { firstValueFrom } from 'rxjs';
 import { PublicHomeOfflineService } from './public-home-offline.service';
 import { environment } from '../../../environments/environment';
+
+function responseBody(event: HttpEvent<unknown> | undefined): unknown {
+  if (!(event instanceof HttpResponse)) throw new Error('La lectura debe completar una respuesta HTTP');
+  return event.body;
+}
 
 describe('Copia pública del inicio', () => {
   let service: PublicHomeOfflineService;
@@ -50,7 +55,8 @@ describe('Copia pública del inicio', () => {
   it('solo admite los cinco GET públicos exactos, excluyendo sesiones, pedidos, escrituras y consultas', () => {
     expect(service.handles(request())).toBeTrue();
     expect(service.handles(new HttpRequest('GET', api + '/company/banner'))).toBeTrue();
-    for (const path of ['/users/session', '/orders', '/company/banner/admin', '/products/get-all-products?private=true']) {
+    for (const path of ['/users/session', '/orders', '/company/banner/admin', '/products/get-all-products?private=true',
+      '/products/reviews/admin/reports', '/products/reviews/admin/7/moderation', '/products/reviews/admin/all']) {
       expect(service.handles(new HttpRequest('GET', api + path))).toBeFalse();
     }
     expect(service.handles(new HttpRequest('POST', url, {}))).toBeFalse();
@@ -73,8 +79,8 @@ describe('Copia pública del inicio', () => {
     TestBed.resetTestingModule();
     online = false;
     boot();
-    const response: any = await firstValueFrom(service.intercept(request()));
-    expect(response.body).toEqual(products);
+    const response = await firstValueFrom(service.intercept(request()));
+    expect(responseBody(response)).toEqual(products);
     http.expectNone(url);
   });
 
@@ -82,7 +88,7 @@ describe('Copia pública del inicio', () => {
     saved.set(url, new Response(JSON.stringify({ schema: 1, data: products })));
     const response = firstValueFrom(service.intercept(request()));
     (await pendingRequest()).error(new ProgressEvent('error'));
-    expect((await response as any).body).toEqual(products);
+    expect(responseBody(await response)).toEqual(products);
     expect((await saved.get(url)!.json()).data).toEqual(products);
   });
 
@@ -90,7 +96,7 @@ describe('Copia pública del inicio', () => {
     saved.set(url, new Response(JSON.stringify({ schema: 1, data: products })));
     const response = firstValueFrom(service.intercept(request()));
     (await pendingRequest()).flush({ session: 'no guardar' });
-    expect((await response as any).body).toEqual(products);
+    expect(responseBody(await response)).toEqual(products);
     expect((await saved.get(url)!.json()).data).toEqual(products);
   });
 
@@ -98,7 +104,7 @@ describe('Copia pública del inicio', () => {
     (caches.open as jasmine.Spy).and.rejectWith(Error('Cuota agotada'));
     const response = firstValueFrom(service.intercept(request()));
     (await pendingRequest()).flush(products);
-    expect((await response as any).body).toEqual(products);
+    expect(responseBody(await response)).toEqual(products);
     expect(service.storageProblem()).toBeTrue();
     expect(service.homeReady()).toBeFalse();
   });
@@ -123,8 +129,8 @@ describe('Copia pública del inicio', () => {
     (await pendingRequest()).flush(products);
     await first;
     online = false;
-    const response: any = await firstValueFrom(service.intercept(request()));
-    expect(response.body).toEqual(products);
+    const response = await firstValueFrom(service.intercept(request()));
+    expect(responseBody(response)).toEqual(products);
     http.expectNone(url);
     expect(service.homeReady()).toBeFalse();
   });
@@ -137,21 +143,21 @@ describe('Copia pública del inicio', () => {
     http.match(() => true);
     online = false;
     window.dispatchEvent(new Event('offline'));
-    const response: any = await result;
-    expect(response.body).toEqual(products);
+    const response = await result;
+    expect(responseBody(response)).toEqual(products);
     expect(pending.cancelled).toBeTrue();
   });
 
   it('recurre a la copia tras tres segundos si onLine no detecta la caída de red', fakeAsync(() => {
     // Cache sin streams para controlar exactamente los microtasks de este caso.
     (caches.open as jasmine.Spy).and.resolveTo({ match: async () => ({ json: async () => ({ schema: 1, data: products }) }) });
-    let result: any;
+    let result: HttpEvent<unknown> | undefined;
     firstValueFrom(service.intercept(request())).then(value => result = value);
     flushMicrotasks();
     const pending = http.expectOne(url);
     tick(3_000);
     flushMicrotasks();
-    expect(result.body).toEqual(products);
+    expect(responseBody(result)).toEqual(products);
     expect(pending.cancelled).toBeTrue();
   }));
 

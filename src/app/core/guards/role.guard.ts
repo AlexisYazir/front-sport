@@ -9,7 +9,7 @@ import { ToastrService } from 'ngx-toastr';
  * Uso: canActivate: [roleGuard([UserRole.ADMIN])]
  */
 export function roleGuard(allowedRoles: UserRole[]): CanActivateFn {
-  return (route, state) => {
+  return () => {
     const authService = inject(AuthService);
     const router = inject(Router);
     const toastr = inject(ToastrService);

@@ -1,5 +1,6 @@
+import type { ApiProduct, ApiInventoryProduct, ProductEntityResponse, ProductSportsResponse, UploadImageResponse, VariantAttributeValueResponse, InventoryMovement, BulkInventoryResponse, InventoryMovementSkuInput, InventoryMovementVariant, CompleteMenu, OrderDetailRow, OrderTracking } from './api-contracts';
 import { Injectable, inject, signal } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpParams } from '@angular/common/http';
 import { Observable, BehaviorSubject, of } from 'rxjs';
 import { map, catchError, finalize } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
@@ -14,6 +15,8 @@ import {
 } from '../models/cart.model';
 import { RequestCacheService } from './request-cache.service';
 import { frontendLogger } from './frontend-logger.service';
+import { ReviewModerationDetail, ReviewModerationRequest, ReviewReportFilter, ReviewReportPage } from '../models/product.model';
+import { SKIP_AUTH_RETRY } from '../interceptors/auth-request-context';
 
 @Injectable({
   providedIn: 'root'
@@ -44,7 +47,7 @@ export class ProductService {
      MAPEO DE RESPUESTA BACKEND → MODELO FRONTEND
   ====================================================== */
 
-  private mapProductFromApi(p: any): Product {
+  private mapProductFromApi(p: ApiProduct): Product {
     const firstVariant = p.variantes?.[0];
 
     return {
@@ -71,7 +74,7 @@ export class ProductService {
     };
   }
 
-    private mapMarcaFromApi(m: any): Marca {
+    private mapMarcaFromApi(m: Marca): Marca {
     return {
       id_marca: m.id_marca,
       nombre: m.nombre,
@@ -79,7 +82,7 @@ export class ProductService {
     };
   }
 
-    private mapCategoriaFromApi(c: any): Categorie {
+    private mapCategoriaFromApi(c: Categorie): Categorie {
     return {
       id_categoria: c.id_categoria,
       nombre: c.nombre,
@@ -87,7 +90,7 @@ export class ProductService {
     };
   }
 
-  private mapOrdersEmployeeFromApi(c: any): Orders {
+  private mapOrdersEmployeeFromApi(c: Orders): Orders {
     return {
         id_orden: c.id_orden,
         id_usuario: c.id_usuario,
@@ -104,7 +107,7 @@ export class ProductService {
     };
   }
 
-  private mapInventoryProductFromApi(p: any): InventoryProduct {
+  private mapInventoryProductFromApi(p: ApiInventoryProduct): InventoryProduct {
     return {
       id_producto: p.id_producto,
       producto: p.producto,
@@ -112,13 +115,13 @@ export class ProductService {
       precio: p.precio,
       stock: p.stock,
       marca: p.marca,
-      imagen: p.imagen_producto || p.imagen,
+      imagen: p.imagen_producto || p.imagen || '',
       imagen_marca: p.imagen_marca || p.imagen,
       fecha_creacion: p.fecha_creacion
     }
   }
 
-  private mapAttributeFromApi(a: any): Attibute {
+  private mapAttributeFromApi(a: Attibute): Attibute {
     return {
       id_atributo: a.id_atributo,
       nombre: a.nombre,
@@ -126,7 +129,7 @@ export class ProductService {
     };
   }
 
-  private mapRecentProductCreatedFromApi(p: any): RecientProduct {
+  private mapRecentProductCreatedFromApi(p: RecientProduct): RecientProduct {
     return {
       id_producto: p.id_producto,
       nombre: p.nombre,
@@ -136,7 +139,7 @@ export class ProductService {
     }
   }
 
-  private mapProductVariantFromApi(v: any): ProductVariant {
+  private mapProductVariantFromApi(v: ProductVariant): ProductVariant {
     return {
       id_variante: v.id_variante,
       id_producto: v.id_producto,
@@ -164,7 +167,7 @@ export class ProductService {
     return this.cache
       .getOrSet(
         'products:list',
-        () => this.http.get<any[]>(`${this.API_URL}/products/get-all-products`),
+        () => this.http.get<ApiProduct[]>(`${this.API_URL}/products/get-all-products`),
         this.CACHE_TTL,
       )
       .pipe(
@@ -190,7 +193,7 @@ export class ProductService {
     return this.cache
       .getOrSet(
         'products:marcas',
-        () => this.http.get<any[]>(`${this.API_URL}/products/get-all-marcas`),
+        () => this.http.get<Marca[]>(`${this.API_URL}/products/get-all-marcas`),
         this.CACHE_TTL,
       )
       .pipe(
@@ -215,7 +218,7 @@ export class ProductService {
     return this.cache
       .getOrSet(
         'products:categorias',
-        () => this.http.get<any[]>(`${this.API_URL}/products/get-all-categories`),
+        () => this.http.get<Categorie[]>(`${this.API_URL}/products/get-all-categories`),
         this.CACHE_TTL,
       )
       .pipe(
@@ -233,7 +236,7 @@ export class ProductService {
     return this.cache
       .getOrSet(
         'products:attributes',
-        () => this.http.get<any[]>(`${this.API_URL}/products/get-all-attributes`),
+        () => this.http.get<Attibute[]>(`${this.API_URL}/products/get-all-attributes`),
         this.CACHE_TTL,
       )
       .pipe(
@@ -252,7 +255,7 @@ export class ProductService {
     return this.cache
       .getOrSet(
         'products:inventory',
-        () => this.http.get<any[]>(`${this.API_URL}/products/get-inventory-products`),
+        () => this.http.get<ApiInventoryProduct[]>(`${this.API_URL}/products/get-inventory-products`),
         this.SHORT_CACHE_TTL,
       )
       .pipe(
@@ -267,7 +270,7 @@ getProductVariants(id_producto: number): Observable<ProductVariant[]> {
   this.isLoading.set(true);
   return this.cache.getOrSet(
     `products:variants:${id_producto}`,
-    () => this.http.get<any[]>(`${this.API_URL}/products/get-variants-by-product/${id_producto}`),
+    () => this.http.get<ProductVariant[]>(`${this.API_URL}/products/get-variants-by-product/${id_producto}`),
     this.SHORT_CACHE_TTL,
   ).pipe(
     map(response => {
@@ -277,13 +280,13 @@ getProductVariants(id_producto: number): Observable<ProductVariant[]> {
   );
 }
 
-    getReceientProducts(): Observable<any[]> {
+    getReceientProducts(): Observable<RecientProduct[]> {
         this.isLoading.set(true);
     
         return this.cache
           .getOrSet(
             'products:recent',
-            () => this.http.get<any[]>(`${this.API_URL}/products/get-recient-products`),
+            () => this.http.get<RecientProduct[]>(`${this.API_URL}/products/get-recient-products`),
             this.SHORT_CACHE_TTL,
           )
           .pipe(
@@ -295,13 +298,13 @@ getProductVariants(id_producto: number): Observable<ProductVariant[]> {
           );
       }
 
-  getProductsWithoutVariantsAttributes(): Observable<any[]> {
+  getProductsWithoutVariantsAttributes(): Observable<RecientProduct[]> {
     this.isLoading.set(true);
 
     return this.cache
       .getOrSet(
         'products:without-variants-attributes',
-        () => this.http.get<any[]>(`${this.API_URL}/products/get-products-without-variants-attributes`),
+        () => this.http.get<RecientProduct[]>(`${this.API_URL}/products/get-products-without-variants-attributes`),
         this.SHORT_CACHE_TTL,
       )
       .pipe(
@@ -313,13 +316,13 @@ getProductVariants(id_producto: number): Observable<ProductVariant[]> {
       );
   }
 
-  getOrdersEmployee(): Observable<any[]> {
+  getOrdersEmployee(): Observable<Orders[]> {
     this.isLoading.set(true);
 
     return this.cache
       .getOrSet(
         'products:orders',
-        () => this.http.get<any[]>(`${this.API_URL}/products/get-all-orders`),
+        () => this.http.get<Orders[]>(`${this.API_URL}/products/get-all-orders`),
         this.SHORT_CACHE_TTL,
       )
       .pipe(
@@ -346,7 +349,7 @@ getProductById(id: number): Observable<Product | null> {
   return this.cache
     .getOrSet(
       `products:detail:${id}`,
-      () => this.http.get<any>(`${this.API_URL}/products/get-product-details/${id}`),
+      () => this.http.get<ApiProduct[] | ApiProduct>(`${this.API_URL}/products/get-product-details/${id}`),
       this.SHORT_CACHE_TTL,
     )
     .pipe(
@@ -357,7 +360,7 @@ getProductById(id: number): Observable<Product | null> {
           return this.isPublicProductAvailable(product) ? product : null;
         }
         // Si devuelve un objeto directamente
-        else if (response && typeof response === 'object') {
+        else if (response && !Array.isArray(response) && typeof response === 'object') {
           const product = this.mapProductFromApi(response);
           return this.isPublicProductAvailable(product) ? product : null;
         }
@@ -453,9 +456,9 @@ buildProductDetailRoute(product: Pick<Product, 'id' | 'id_producto' | 'nombre' |
  * PASO 1: Crear la base del producto
  * POST: /products/create-product
  */
-createBaseProduct(data: { nombre: string, descripcion: string, id_marca: number, id_categoria: number }): Observable<any> {
+createBaseProduct(data: { nombre: string, descripcion: string, id_marca: number, id_categoria: number }): Observable<ProductEntityResponse> {
   this.isLoading.set(true);
-  return this.http.post(`${this.API_URL}/products/create-product`, data).pipe(
+  return this.http.post<ProductEntityResponse>(`${this.API_URL}/products/create-product`, data).pipe(
     map(res => {
       this.invalidateProductCaches();
       return res; // Retorna el objeto que contiene el id_producto creado
@@ -464,9 +467,9 @@ createBaseProduct(data: { nombre: string, descripcion: string, id_marca: number,
   );
 }
 
-assignProductSports(data: { id_producto: number, ids_deportes: number[] }): Observable<any> {
+assignProductSports(data: { id_producto: number, ids_deportes: number[] }): Observable<ProductSportsResponse> {
   this.isLoading.set(true);
-  return this.http.post(`${this.API_URL}/products/assign-product-sports`, data).pipe(
+  return this.http.post<ProductSportsResponse>(`${this.API_URL}/products/assign-product-sports`, data).pipe(
     map(res => {
       this.invalidateProductCaches(data.id_producto);
       return res;
@@ -479,10 +482,10 @@ assignProductSports(data: { id_producto: number, ids_deportes: number[] }): Obse
  * PASO 2: Crear la variante del producto
  * POST: /products/create-product-variant
  */
-createProductVariant(data: {id_producto: number, sku: string, precio: number, imagenes: string[], atributos: Record<string, any> }): Observable<any> {
+createProductVariant(data: {id_producto: number, sku: string, precio: number, imagenes: string[], atributos: Record<string, string> }): Observable<ProductVariant> {
   this.isLoading.set(true);
   return this.http
-    .post(`${this.API_URL}/products/create-product-variant`, data)
+    .post<ProductVariant>(`${this.API_URL}/products/create-product-variant`, data)
     .pipe(
       map((res) => {
         this.invalidateProductCaches(data.id_producto);
@@ -492,18 +495,18 @@ createProductVariant(data: {id_producto: number, sku: string, precio: number, im
     );
 }
 
-uploadProductImage(file: File, folder = 'sport-center/products'): Observable<any> {
+uploadProductImage(file: File, folder = 'sport-center/products'): Observable<UploadImageResponse> {
   const formData = new FormData();
   formData.append('file', file);
   formData.append('folder', folder);
 
-  return this.http.post(`${this.API_URL}/products/upload-image`, formData);
+  return this.http.post<UploadImageResponse>(`${this.API_URL}/products/upload-image`, formData);
 }
 
 
-createProductVariantValues(data: { id_variante: number, id_atributo: number, valor: string }): Observable<any> {
+createProductVariantValues(data: { id_variante: number, id_atributo: number, valor: string }): Observable<VariantAttributeValueResponse> {
   this.isLoading.set(true);
-  return this.http.post(`${this.API_URL}/products/create-variant-attribute-values`, data).pipe(
+  return this.http.post<VariantAttributeValueResponse>(`${this.API_URL}/products/create-variant-attribute-values`, data).pipe(
     map(res => {
       this.cache.invalidate(`products:variants:`);
       return res; // Retorna el objeto creado
@@ -519,11 +522,11 @@ createInventoryMovement(data: {
   costo_unitario: number;
   referencia_tipo: string;
   referencia_id: number;
-}): Observable<any> {
+}): Observable<InventoryMovement> {
 
   this.isLoading.set(true);
 
-  return this.http.post(`${this.API_URL}/products/create-inventory-movement`, data).pipe(
+  return this.http.post<InventoryMovement>(`${this.API_URL}/products/create-inventory-movement`, data).pipe(
     map(res => {
       this.invalidateInventoryCaches();
       return res;
@@ -533,9 +536,9 @@ createInventoryMovement(data: {
 }
 
 // Importación masiva desde Excel
-bulkCreateInventoryMovements(movements: any[]): Observable<any> {
+bulkCreateInventoryMovements(movements: InventoryMovementSkuInput[]): Observable<BulkInventoryResponse> {
   this.isLoading.set(true);
-  return this.http.post(`${this.API_URL}/products/inventory-movements/bulk`, { movements }).pipe(
+  return this.http.post<BulkInventoryResponse>(`${this.API_URL}/products/inventory-movements/bulk`, { movements }).pipe(
     map(res => {
       this.invalidateInventoryCaches();
       return res;
@@ -545,13 +548,13 @@ bulkCreateInventoryMovements(movements: any[]): Observable<any> {
 }
 
 
-getInventoryMovements(): Observable<any> {
+getInventoryMovements(): Observable<InventoryMovement[]> {
   this.isLoading.set(true);
 
     return this.cache
       .getOrSet(
         'products:inventory-movements',
-        () => this.http.get(`${this.API_URL}/products/inventory-movements`),
+        () => this.http.get<InventoryMovement[]>(`${this.API_URL}/products/inventory-movements`),
         this.SHORT_CACHE_TTL,
       )
       .pipe(
@@ -562,18 +565,18 @@ getInventoryMovements(): Observable<any> {
       );
 }
 
-getVariantsForInventoryMovement(): Observable<any[]> {
+getVariantsForInventoryMovement(): Observable<InventoryMovementVariant[]> {
   return this.cache.getOrSet(
     'products:inventory-movement-variants',
-    () => this.http.get<any[]>(`${this.API_URL}/products/inventory-movements/variants`),
+    () => this.http.get<InventoryMovementVariant[]>(`${this.API_URL}/products/inventory-movements/variants`),
     this.SHORT_CACHE_TTL,
   );
 }
 
-createCatetorie(data: { nombre: string, id_padre: number | null }): Observable<any> {
+createCatetorie(data: { nombre: string, id_padre: number | null }): Observable<Categorie> {
   this.isLoading.set(true);
   //
-  return this.http.post(`${this.API_URL}/products/create-categorie`, data).pipe(
+  return this.http.post<Categorie>(`${this.API_URL}/products/create-categorie`, data).pipe(
     map(res => {
       this.invalidateCategoryCaches();
       return res;
@@ -582,10 +585,10 @@ createCatetorie(data: { nombre: string, id_padre: number | null }): Observable<a
   );
 }
 
-updateCatetorie(data: { id_categoria: number, nombre: string, id_padre: number | null }): Observable<any> {
+updateCatetorie(data: { id_categoria: number, nombre: string, id_padre: number | null }): Observable<Categorie> {
   this.isLoading.set(true);
   //
-  return this.http.put(`${this.API_URL}/products/update-categorie`, data).pipe(
+  return this.http.put<Categorie>(`${this.API_URL}/products/update-categorie`, data).pipe(
     map(res => {
       this.invalidateCategoryCaches();
       return res;
@@ -594,10 +597,10 @@ updateCatetorie(data: { id_categoria: number, nombre: string, id_padre: number |
   );
 }
 
-updateProductInv(data: { id_producto: number, estado: boolean }): Observable<any> {
+updateProductInv(data: { id_producto: number, estado: boolean }): Observable<ProductEntityResponse> {
   this.isLoading.set(true);
   //
-  return this.http.put(`${this.API_URL}/products/update-product-inventory`, data).pipe(
+  return this.http.put<ProductEntityResponse>(`${this.API_URL}/products/update-product-inventory`, data).pipe(
     map(res => {
       this.invalidateProductCaches(data.id_producto);
       this.invalidateInventoryCaches();
@@ -607,10 +610,10 @@ updateProductInv(data: { id_producto: number, estado: boolean }): Observable<any
   );
 }
 
-updateProductFull(data: { id_producto: number, id_marca: number, id_categoria: number, nombre: string, descripcion: string}): Observable<any> {
+updateProductFull(data: { id_producto: number, id_marca: number, id_categoria: number, nombre: string, descripcion: string}): Observable<ProductEntityResponse> {
   this.isLoading.set(true);
   //
-  return this.http.put(`${this.API_URL}/products/update-product-full`, data).pipe(
+  return this.http.put<ProductEntityResponse>(`${this.API_URL}/products/update-product-full`, data).pipe(
     map(res => {
       this.invalidateProductCaches(data.id_producto);
       return res;
@@ -625,11 +628,11 @@ updateProductVariant(data: {
   sku: string;
   precio: number;
   imagenes: string[];
-  atributos: Record<string, any>;
-}): Observable<any> {
+  atributos: Record<string, string>;
+}): Observable<ProductVariant> {
   this.isLoading.set(true);
   
-  return this.http.put(`${this.API_URL}/products/update-product-variant`, data).pipe(
+  return this.http.put<ProductVariant>(`${this.API_URL}/products/update-product-variant`, data).pipe(
     map(res => {
       this.invalidateProductCaches(data.id_producto);
       return res;
@@ -639,10 +642,10 @@ updateProductVariant(data: {
 }
 
 
-createMarca(data: { nombre: string, imagen: string }): Observable<any> {
+createMarca(data: { nombre: string, imagen: string }): Observable<Marca> {
   this.isLoading.set(true);
   
-  return this.http.post(`${this.API_URL}/products/create-marca`, data).pipe(
+  return this.http.post<Marca>(`${this.API_URL}/products/create-marca`, data).pipe(
     map(res => {
       this.invalidateBrandCaches();
       return res;
@@ -651,10 +654,10 @@ createMarca(data: { nombre: string, imagen: string }): Observable<any> {
   );
 }
 
-updateMarca(data: { id_marca: number, nombre: string, imagen: string }): Observable<any> {
+updateMarca(data: { id_marca: number, nombre: string, imagen: string }): Observable<Marca> {
   this.isLoading.set(true);
   
-  return this.http.post(`${this.API_URL}/products/update-marca`, data).pipe(
+  return this.http.post<Marca>(`${this.API_URL}/products/update-marca`, data).pipe(
     map(res => {
       this.invalidateBrandCaches();
       return res;
@@ -667,8 +670,8 @@ updateMarca(data: { id_marca: number, nombre: string, imagen: string }): Observa
  * PASO 3: Asignar atributos a la variante
  * POST: /products/create-variant-attribute-values
  */
-createVariantAttributeValue(data: { id_variante: number, id_atributo: number, valor: string }): Observable<any> {
-  return this.http.post(`${this.API_URL}/products/create-variant-attribute-values`, data);
+createVariantAttributeValue(data: { id_variante: number, id_atributo: number, valor: string }): Observable<VariantAttributeValueResponse> {
+  return this.http.post<VariantAttributeValueResponse>(`${this.API_URL}/products/create-variant-attribute-values`, data);
 }
 
 /**
@@ -676,7 +679,7 @@ createVariantAttributeValue(data: { id_variante: number, id_atributo: number, va
  * POST: /products/create-attribute
  */
   createAttribute(nombre: string): Observable<Attibute> {
-  return this.http.post<any>(`${this.API_URL}/products/create-attribute`, { nombre }).pipe(
+  return this.http.post<Attibute>(`${this.API_URL}/products/create-attribute`, { nombre }).pipe(
     map(res => {
       this.cache.invalidate('products:attributes');
       return this.mapAttributeFromApi(res);
@@ -701,7 +704,7 @@ createVariantAttributeValue(data: { id_variante: number, id_atributo: number, va
     };
 
     return this.http
-      .put<any>(`${this.API_URL}/products/update-product/${id}`, apiProduct)
+      .put<ApiProduct>(`${this.API_URL}/products/update-product/${id}`, apiProduct)
       .pipe(
         map(response => {
           this.invalidateProductCaches(id);
@@ -750,7 +753,7 @@ createVariantAttributeValue(data: { id_variante: number, id_atributo: number, va
     this.activeFilters.set(filters);
 
     return this.http
-      .get<any[]>(`${this.API_URL}/products/get-all-products`)
+      .get<ApiProduct[]>(`${this.API_URL}/products/get-all-products`)
       .pipe(
         map(response => {
           let products = response.map(p => this.mapProductFromApi(p));
@@ -879,7 +882,7 @@ createVariantAttributeValue(data: { id_variante: number, id_atributo: number, va
    */
   getCategories(): Observable<Category[]> {
     return this.http
-      .get<any[]>(`${this.API_URL}/products/get-all-products`)
+      .get<ApiProduct[]>(`${this.API_URL}/products/get-all-products`)
       .pipe(
         map(products => {
           const uniqueCats = [...new Set(products.map(p => p.categoria))];
@@ -901,7 +904,7 @@ createVariantAttributeValue(data: { id_variante: number, id_atributo: number, va
    */
   getBrands(): Observable<string[]> {
     return this.http
-      .get<any[]>(`${this.API_URL}/products/get-all-products`)
+      .get<ApiProduct[]>(`${this.API_URL}/products/get-all-products`)
       .pipe(
         map(products =>
           [...new Set(products.map(p => p.marca).filter(Boolean))]
@@ -953,26 +956,26 @@ getSports(): Observable<Sport[]> {
 }
 
 // Obtener menú completo
-getCompleteMenu(): Observable<any> {
+getCompleteMenu(): Observable<CompleteMenu> {
   return this.cache.getOrSet(
     'products:menu:complete',
-    () => this.http.get(`${this.API_URL}/products/menu/complete-menu`),
+    () => this.http.get<CompleteMenu>(`${this.API_URL}/products/menu/complete-menu`),
     this.CACHE_TTL,
   );
 }
 
-getAllOrders(): Observable<any[]> {
+getAllOrders(): Observable<Orders[]> {
   return this.cache.getOrSet(
     'products:orders',
-    () => this.http.get<any[]>(`${this.API_URL}/products/get-all-orders`),
+    () => this.http.get<Orders[]>(`${this.API_URL}/products/get-all-orders`),
     this.SHORT_CACHE_TTL,
   );
 }
 
-getOrdersById(id: number): Observable<any> {
+getOrdersById(id: number): Observable<OrderDetailRow[]> {
   return this.cache.getOrSet(
     `products:order-detail:${id}`,
-    () => this.http.get<any[]>(`${this.API_URL}/products/get-order-details/${id}`),
+    () => this.http.get<OrderDetailRow[]>(`${this.API_URL}/products/get-order-details/${id}`),
     this.SHORT_CACHE_TTL,
   );
 }
@@ -1082,12 +1085,12 @@ updateEmployeeOrderStatus(
     );
 }
 
-getOrderTracking(idOrden: number): Observable<any> {
-  return this.http.get<any>(`${this.API_URL}/products/orders/${idOrden}/tracking`);
+getOrderTracking(idOrden: number): Observable<OrderTracking> {
+  return this.http.get<OrderTracking>(`${this.API_URL}/products/orders/${idOrden}/tracking`);
 }
 
-getStaffOrderTracking(idOrden: number): Observable<any> {
-  return this.http.get<any>(
+getStaffOrderTracking(idOrden: number): Observable<OrderTracking> {
+  return this.http.get<OrderTracking>(
     `${this.API_URL}/products/orders/${idOrden}/tracking/staff`,
   );
 }
@@ -1095,9 +1098,9 @@ getStaffOrderTracking(idOrden: number): Observable<any> {
 updateOrderShipment(
   idOrden: number,
   data: UpdateShipmentRequest,
-): Observable<{ message: string; tracking: any }> {
+): Observable<{ message: string; tracking: OrderTracking }> {
   return this.http
-    .put<{ message: string; tracking: any }>(
+    .put<{ message: string; tracking: OrderTracking }>(
       `${this.API_URL}/products/orders/${idOrden}/shipment`,
       data,
     )
@@ -1113,9 +1116,9 @@ updateOrderShipment(
 
 generateDeliveryConfirmationCode(
   idOrden: number,
-): Observable<{ message: string; code: string; tracking: any }> {
+): Observable<{ message: string; code: string; tracking: OrderTracking }> {
   return this.http
-    .post<{ message: string; code: string; tracking: any }>(
+    .post<{ message: string; code: string; tracking: OrderTracking }>(
       `${this.API_URL}/products/orders/${idOrden}/delivery-code`,
       {},
     )
@@ -1132,9 +1135,9 @@ generateDeliveryConfirmationCode(
 confirmDeliveryCode(
   idOrden: number,
   codigo: string,
-): Observable<{ message: string; tracking: any }> {
+): Observable<{ message: string; tracking: OrderTracking }> {
   return this.http
-    .post<{ message: string; tracking: any }>(
+    .post<{ message: string; tracking: OrderTracking }>(
       `${this.API_URL}/products/orders/${idOrden}/confirm-delivery`,
       { codigo },
     )
@@ -1243,11 +1246,34 @@ createProductReview(data: CreateProductReviewRequest): Observable<ProductReview>
 }
 
 getAllReviewsAdmin(): Observable<ProductReviewAdmin[]> {
-  return this.cache.getOrSet(
-    'products:reviews:admin',
-    () => this.http.get<ProductReviewAdmin[]>(`${this.API_URL}/products/reviews/admin/all`),
-    this.SHORT_CACHE_TTL,
-  );
+  return this.http.get<ProductReviewAdmin[]>(`${this.API_URL}/products/reviews/admin/all`);
+}
+
+getReviewReports(estado: ReviewReportFilter = 'pendiente', page = 1, limit = 20): Observable<ReviewReportPage> {
+  // La cola privada se consulta de nuevo; no se guarda en las copias públicas/offline.
+  const params = new HttpParams().set('estado', estado).set('page', page).set('limit', limit);
+  return this.http.get<ReviewReportPage>(`${this.API_URL}/products/reviews/admin/reports`, { params });
+}
+
+getReviewModeration(id: number): Observable<ReviewModerationDetail> {
+  return this.http.get<ReviewModerationDetail>(`${this.API_URL}/products/reviews/admin/${id}/moderation`);
+}
+
+moderateReview(id: number, decision: ReviewModerationRequest): Observable<ReviewModerationDetail> {
+  // El actor y la fecha son del servidor. No se reintenta una decisión automáticamente.
+  const body: ReviewModerationRequest = {
+    accion: decision.accion,
+    motivo: decision.motivo.trim(),
+    revision_esperada: decision.revision_esperada,
+  };
+  if (decision.id_mensaje !== undefined) body.id_mensaje = decision.id_mensaje;
+  return this.http.post<ReviewModerationDetail>(
+    `${this.API_URL}/products/reviews/admin/${id}/moderation`, body,
+    { context: new HttpContext().set(SKIP_AUTH_RETRY, true) },
+  ).pipe(map((detail) => {
+    this.cache.invalidate('products:reviews:');
+    return detail;
+  }));
 }
 
   clearRequestCache(): void {

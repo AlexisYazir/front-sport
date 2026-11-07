@@ -1,4 +1,4 @@
-import { Injectable, inject, signal, effect } from '@angular/core';
+import { Injectable, OnDestroy, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { frontendLogger } from './frontend-logger.service';
@@ -9,7 +9,7 @@ import { frontendLogger } from './frontend-logger.service';
 @Injectable({
   providedIn: 'root'
 })
-export class SessionService {
+export class SessionService implements OnDestroy {
   private router = inject(Router);
 
   // Configuración de sesión

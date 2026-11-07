@@ -1,3 +1,4 @@
+import type { PublicFaq } from '../../../core/services/public-info-offline.service';
 import { Component, OnInit, computed, effect, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -20,8 +21,8 @@ export class Faqs implements OnInit {
   private toastr = inject(ToastrService);
   private readonly publicInfo = inject(PublicInfoOfflineService);
   
-  faqs: any[] = [];
-  filteredFaqs: any[] = [];
+  faqs: PublicFaq[] = [];
+  filteredFaqs: PublicFaq[] = [];
   searchTerm: string = '';
   selectedSeccion: string = 'todas';
   
@@ -38,7 +39,7 @@ export class Faqs implements OnInit {
   
   // Obtener todas las secciones disponibles para el filtro
   get secciones(): string[] {
-    const secciones = this.faqs.map(f => f.seccion).filter(Boolean);
+    const secciones = this.faqs.map(f => f.seccion).filter((section): section is string => typeof section === 'string' && section.length > 0);
     return ['todas', ...new Set(secciones)];
   }
 
@@ -72,8 +73,10 @@ export class Faqs implements OnInit {
     this.filteredFaqs = filtered;
   }
 
-  onSearch(event: any) {
-    this.searchTerm = event.target.value;
+  onSearch(event: Event) {
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement || target instanceof HTMLSelectElement)) return;
+    this.searchTerm = target.value;
     this.applyFilters();
   }
 
@@ -99,17 +102,17 @@ export class Faqs implements OnInit {
           faq.contador_util = (faq.contador_util || 0) + 1;
         }
       },
-      error: (error) => {
+      error: () => {
         this.toastr.error('No se pudo registrar tu voto', 'Error');
       }
     });
   }
 
-  trackByFaqId(index: number, faq: any): number {
+  trackByFaqId(index: number, faq: PublicFaq): number {
     return faq.id_faq;
   }
 
-  getFaqsBySeccion(seccion: string): any[] {
+  getFaqsBySeccion(seccion: string): PublicFaq[] {
     return this.faqs.filter(faq => faq.seccion === seccion);
   }
 }

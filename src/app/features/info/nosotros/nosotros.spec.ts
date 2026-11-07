@@ -1,17 +1,21 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { signal } from '@angular/core';
+import { signal, WritableSignal } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideLucideIcons } from '@lucide/angular';
 import { SPORT_CENTER_ICONS } from '../../../shared/icons/sport-center-icons';
 import { PublicInfoOfflineService } from '../../../core/services/public-info-offline.service';
 import { Nosotros } from './nosotros';
+import { CompanyInfo } from '../../../core/services/company.service';
 
 describe('Nosotros sin conexión', () => {
   let fixture: ComponentFixture<Nosotros>;
-  let publicInfo: any;
+  let publicInfo: {
+    company: { data: WritableSignal<CompanyInfo | null>; loading: WritableSignal<boolean>; error: WritableSignal<string> };
+    start: jasmine.Spy; refreshCompany: jasmine.Spy;
+  };
 
   beforeEach(async () => {
-    publicInfo = { company: { data: signal(null), loading: signal(false), error: signal('offline-empty') },
+    publicInfo = { company: { data: signal<CompanyInfo | null>(null), loading: signal(false), error: signal('offline-empty') },
       start: jasmine.createSpy('start'), refreshCompany: jasmine.createSpy('refreshCompany') };
     await TestBed.configureTestingModule({ imports: [Nosotros], providers: [
       provideRouter([]), provideLucideIcons(...SPORT_CENTER_ICONS),

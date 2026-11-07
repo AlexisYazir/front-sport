@@ -182,7 +182,7 @@ export class LogsPage implements OnInit, OnDestroy {
     }
 
     let start = Math.max(1, this.currentPage - 2);
-    let end = Math.min(total, start + 4);
+    const end = Math.min(total, start + 4);
 
     if (end - start < 4) {
       start = Math.max(1, end - 4);

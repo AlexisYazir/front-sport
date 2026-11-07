@@ -1,23 +1,26 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { signal } from '@angular/core';
+import { signal, WritableSignal } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideLucideIcons } from '@lucide/angular';
 import { of } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 import { SPORT_CENTER_ICONS } from '../../../shared/icons/sport-center-icons';
 import { PublicInfoOfflineService } from '../../../core/services/public-info-offline.service';
-import { CompanyService } from '../../../core/services/company.service';
+import { CompanyFaq, CompanyService } from '../../../core/services/company.service';
 import { Faqs } from './faqs';
 
 describe('Preguntas frecuentes sin conexión', () => {
   let fixture: ComponentFixture<Faqs>;
-  let publicInfo: any;
+  let publicInfo: {
+    faqs: { data: WritableSignal<CompanyFaq[] | null>; loading: WritableSignal<boolean>; error: WritableSignal<string> };
+    start: jasmine.Spy; refreshFaqs: jasmine.Spy;
+  };
   let votes: jasmine.Spy;
   const question = { id_faq: 1, pregunta: '¿Cómo comprar?', respuesta: 'Desde la tienda.',
     activo: true, seccion: 'Compras', palabras_clave: ['pedido'], contador_util: 2 };
 
   beforeEach(async () => {
-    publicInfo = { faqs: { data: signal(null), loading: signal(false), error: signal('offline-empty') },
+    publicInfo = { faqs: { data: signal<CompanyFaq[] | null>(null), loading: signal(false), error: signal('offline-empty') },
       start: jasmine.createSpy('start'), refreshFaqs: jasmine.createSpy('refreshFaqs') };
     votes = jasmine.createSpy('vote').and.returnValue(of({}));
     await TestBed.configureTestingModule({ imports: [Faqs], providers: [
@@ -65,6 +68,6 @@ describe('Preguntas frecuentes sin conexión', () => {
     fixture.componentInstance.marcarComoUtil(1);
     expect(votes).toHaveBeenCalledOnceWith(1);
     expect(fixture.componentInstance.faqs[0].contador_util).toBe(3);
-    expect(publicInfo.faqs.data()[0].contador_util).toBe(2);
+    expect(publicInfo.faqs.data()?.[0].contador_util).toBe(2);
   });
 });

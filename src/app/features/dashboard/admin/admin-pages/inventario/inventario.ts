@@ -3,11 +3,13 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
 import { ProductService } from '../../../../../core/services/product.service';
-import { InventoryProduct, ProductVariant } from '../../../../../core/models/product.model';
+import { InventoryProduct } from '../../../../../core/models/product.model';
 import * as XLSX from 'xlsx';
 import { formatMexicoDateTime, parseApiDate } from '../../../../../core/utils/date-time.util';
 import { IconModule } from '../../../../../shared/icons/icon.module';
 
+
+function isMovementRecord(value: unknown): value is Record<string, unknown> { return !!value && typeof value === 'object' && !Array.isArray(value); }
 
 // Interfaz para variantes existentes (SOLO VISUALIZACIÓN)
 interface ExistingVariant {
@@ -60,6 +62,7 @@ interface VariantSearchItem {
 }
 
 // ===== NUEVAS INTERFACES PARA EXCEL =====
+type ExcelCell = string | number | boolean | Date | null | undefined;
 interface ExcelRow {
   sku: string;
   tipo: string;
@@ -75,22 +78,12 @@ interface ExcelImportPreview {
     row: number;
     sku: string;
     tipo: string;
-    cantidad: any;
+    cantidad: ExcelCell;
     error: string;
   }>;
   totalRows: number;
 }
 
-interface ExcelImportResult {
-  success: number;
-  errors: Array<{
-    row: number;
-    sku: string;
-    error: string;
-    data: any;
-  }>;
-  total: number;
-}
 
 @Component({
   selector: 'app-inventario',
@@ -193,7 +186,7 @@ export class Inventario implements OnInit {
         this.applyFilters();
         this.isLoading.set(false);
       },
-      error: (error) => {
+      error: () => {
         this.toastr.error('Error al cargar el inventario', 'Error');
         this.isLoading.set(false);
       }
@@ -245,18 +238,24 @@ export class Inventario implements OnInit {
   }
 
   // MÉTODOS PARA FILTROS
-  onFilterEstadoChange(event: any) {
-    this.filterEstado = event.target.value;
+  onFilterEstadoChange(event: Event) {
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement || target instanceof HTMLSelectElement)) return;
+    this.filterEstado = target.value;
     this.applyFilters();
   }
 
-  onFilterStockChange(event: any) {
-    this.filterStock = event.target.value;
+  onFilterStockChange(event: Event) {
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement || target instanceof HTMLSelectElement)) return;
+    this.filterStock = target.value;
     this.applyFilters();
   }
 
-  onSearch(event: any) {
-    this.searchValue = event.target.value;
+  onSearch(event: Event) {
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement || target instanceof HTMLSelectElement)) return;
+    this.searchValue = target.value;
     this.applyFilters();
   }
 
@@ -393,7 +392,7 @@ export class Inventario implements OnInit {
           'Éxito'
         );
       },
-      error: (err) => {
+      error: () => {
         product.activo = previousState;
         this.togglingActive[productId] = false;
         this.toastr.error('Error al cambiar el estado del producto', 'Error');
@@ -408,7 +407,7 @@ export class Inventario implements OnInit {
     this.showVariantsModal = true;
     
     this.productService.getProductVariants(product.id_producto).subscribe({
-      next: (variants: any[]) => {
+      next: (variants) => {
         this.productVariants = variants.map(v => ({
           id_variante: v.id_variante,
           id_producto: v.id_producto,
@@ -419,7 +418,7 @@ export class Inventario implements OnInit {
         }));
         this.loadingVariants = false;
       },
-      error: (err) => {
+      error: () => {
         this.loadingVariants = false;
         this.toastr.error('Error al cargar las variantes', 'Error');
         this.closeVariantsModal();
@@ -511,12 +510,12 @@ export class Inventario implements OnInit {
 loadMovements() {
   this.loadingMovements = true;
   this.productService.getInventoryMovements().subscribe({
-    next: (response: any) => {
+    next: (response) => {
       this.movements = this.normalizeMovementsResponse(response);
       this.applyMovementsFilters();
       this.loadingMovements = false;
     },
-    error: (error) => {
+    error: () => {
       this.toastr.error('Error al cargar movimientos', 'Error');
       this.movements = [];
       this.loadingMovements = false;
@@ -577,13 +576,17 @@ if (this.searchMovementValue) {
 }
 
   // Filtros de movimientos
-  onMovementTipoChange(event: any) {
-    this.filterTipo = event.target.value;
+  onMovementTipoChange(event: Event) {
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement || target instanceof HTMLSelectElement)) return;
+    this.filterTipo = target.value;
     this.applyMovementsFilters();
   }
 
-  onMovementSearch(event: any) {
-    this.searchMovementValue = event.target.value;
+  onMovementSearch(event: Event) {
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement || target instanceof HTMLSelectElement)) return;
+    this.searchMovementValue = target.value;
     this.applyMovementsFilters();
   }
 
@@ -671,55 +674,50 @@ onFechaFinChange(value: string) {  // Cambiado de event a value
   }
 
   // Utilidades para movimientos
-  private normalizeMovementsResponse(response: any): InventoryMovement[] {
-    const rows = Array.isArray(response)
-      ? response
-      : Array.isArray(response?.data)
-        ? response.data
-        : Array.isArray(response?.movements)
-          ? response.movements
-          : Array.isArray(response?.movimientos)
-            ? response.movimientos
-            : [];
-
+  private normalizeMovementsResponse(response: unknown): InventoryMovement[] {
+    const source: Record<string, unknown> = isMovementRecord(response) ? response : {};
+    const candidate = Array.isArray(response) ? response : [source['data'], source['movements'], source['movimientos']].find(value => Array.isArray(value));
+    const rows: unknown[] = Array.isArray(candidate) ? candidate : [];
     const seenMovements = new Set<number>();
 
     return rows
-      .map((movement: any) => {
-        const idMovimiento = this.toNumber(movement?.id_movimiento);
-        const idVariante = this.toNumber(movement?.id_variante);
-        const sku = String(movement?.sku ?? '').trim() || `Variante #${idVariante}`;
+      .map((entry): InventoryMovement | null => {
+        if (!isMovementRecord(entry)) return null;
+        const movement = entry;
+        const idMovimiento = this.toNumber(movement['id_movimiento']);
+        const idVariante = this.toNumber(movement['id_variante']);
+        const sku = String(movement['sku'] ?? '').trim() || `Variante #${idVariante}`;
         const imagenesVariante = this.normalizeImageList(
-          movement?.imagenes_variante ?? movement?.imagenes ?? movement?.imagenes_producto,
+          movement['imagenes_variante'] ?? movement['imagenes'] ?? movement['imagenes_producto'],
         );
         const imagenVariante = this.normalizeMovementImage(
-          movement?.imagen_variante ?? movement?.image ?? movement?.imagen ?? imagenesVariante[0],
+          movement['imagen_variante'] ?? movement['image'] ?? movement['imagen'] ?? imagenesVariante[0],
         );
         const normalizedImages = imagenVariante
           ? [imagenVariante, ...imagenesVariante.filter((image) => image !== imagenVariante)]
           : imagenesVariante;
-        const referenciaId = movement?.referencia_id === null || movement?.referencia_id === undefined
+        const referenciaId = movement['referencia_id'] === null || movement['referencia_id'] === undefined
           ? null
-          : this.toNumber(movement?.referencia_id);
+          : this.toNumber(movement['referencia_id']);
 
         return {
           ...movement,
           id_movimiento: idMovimiento,
           id_variante: idVariante,
           sku,
-          producto: String(movement?.producto ?? movement?.nombre_producto ?? '').trim() || sku,
-          marca: String(movement?.marca ?? '').trim(),
+          producto: String(movement['producto'] ?? movement['nombre_producto'] ?? '').trim() || sku,
+          marca: String(movement['marca'] ?? '').trim(),
           imagen_variante: imagenVariante,
           imagenes_variante: normalizedImages,
-          tipo: this.normalizeMovementType(movement?.tipo),
-          cantidad: this.toNumber(movement?.cantidad),
-          costo_unitario: this.toNumber(movement?.costo_unitario),
-          referencia_tipo: String(movement?.referencia_tipo ?? 'N/A').trim(),
+          tipo: this.normalizeMovementType(movement['tipo']),
+          cantidad: this.toNumber(movement['cantidad']),
+          costo_unitario: this.toNumber(movement['costo_unitario']),
+          referencia_tipo: String(movement['referencia_tipo'] ?? 'N/A').trim(),
           referencia_id: referenciaId,
-          fecha: String(movement?.fecha ?? ''),
+          fecha: String(movement['fecha'] ?? ''),
         } as InventoryMovement;
       })
-      .filter((movement: InventoryMovement) => this.isValidMovement(movement))
+      .filter((movement): movement is InventoryMovement => movement !== null && this.isValidMovement(movement))
       .filter((movement: InventoryMovement) => {
         if (seenMovements.has(movement.id_movimiento)) return false;
         seenMovements.add(movement.id_movimiento);
@@ -728,17 +726,17 @@ onFechaFinChange(value: string) {  // Cambiado de event a value
   }
 
   private isValidMovement(movement: InventoryMovement): boolean {
-    const fechaMovimiento = parseApiDate(movement?.fecha);
-    const idMovimiento = Number(movement?.id_movimiento);
-    const idVariante = Number(movement?.id_variante);
-    const cantidad = Number(movement?.cantidad);
+    const fechaMovimiento = parseApiDate(movement['fecha']);
+    const idMovimiento = Number(movement['id_movimiento']);
+    const idVariante = Number(movement['id_variante']);
+    const cantidad = Number(movement['cantidad']);
 
     return Number.isFinite(idMovimiento)
       && idMovimiento > 0
       && Number.isFinite(idVariante)
       && idVariante > 0
-      && Boolean(String(movement?.producto ?? movement?.sku ?? '').trim())
-      && ['entrada', 'salida', 'ajuste'].includes(String(movement?.tipo ?? '').toLowerCase())
+      && Boolean(String(movement['producto'] ?? movement['sku'] ?? '').trim())
+      && ['entrada', 'salida', 'ajuste'].includes(String(movement['tipo'] ?? '').toLowerCase())
       && Number.isFinite(cantidad)
       && Math.abs(cantidad) > 0
       && Boolean(fechaMovimiento);
@@ -882,7 +880,7 @@ onFechaFinChange(value: string) {  // Cambiado de event a value
         this.filterVariantsForMovement();
         this.loadingVariantsForSearch = false;
       },
-      error: (error) => {
+      error: () => {
         this.toastr.error('Error al cargar variantes', 'Error');
         this.loadingVariantsForSearch = false;
       }
@@ -959,7 +957,7 @@ onFechaFinChange(value: string) {  // Cambiado de event a value
     };
     
     this.productService.createInventoryMovement(movementData).subscribe({
-      next: (response) => {
+      next: () => {
         this.savingMovement = false;
         this.toastr.success('Movimiento registrado correctamente', 'Éxito');
         this.closeMovementModal();
@@ -1028,8 +1026,10 @@ onFechaFinChange(value: string) {  // Cambiado de event a value
   }
 
   // Manejar selección de archivo
-  onFileSelected(event: any) {
-    const file = event.target.files[0];
+  onFileSelected(event: Event) {
+    const input = event.target;
+    if (!(input instanceof HTMLInputElement)) return;
+    const file = input.files?.[0];
     if (!file) return;
 
     // Validar tipo de archivo
@@ -1053,15 +1053,19 @@ onFechaFinChange(value: string) {  // Cambiado de event a value
   previewExcelFile(file: File) {
     const reader = new FileReader();
     
-    reader.onload = (e: any) => {
+    reader.onload = () => {
       try {
-        const data = new Uint8Array(e.target.result);
+        if (!(reader.result instanceof ArrayBuffer)) {
+          this.toastr.error('No fue posible leer el archivo Excel', 'Error');
+          return;
+        }
+        const data = new Uint8Array(reader.result);
         const workbook = XLSX.read(data, { type: 'array' });
         const sheetName = workbook.SheetNames[0];
         const sheet = workbook.Sheets[sheetName];
         
         // Convertir a JSON (array de arrays)
-        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 }) as any[][];
+        const rows = XLSX.utils.sheet_to_json<ExcelCell[]>(sheet, { header: 1 });
         
         if (rows.length < 2) {
           this.toastr.error('El archivo está vacío', 'Error');
@@ -1094,7 +1098,7 @@ onFechaFinChange(value: string) {  // Cambiado de event a value
           if (!row || row.length === 0 || !row[0]) continue;
 
           // Crear objeto con los valores
-          const rowData: any = {};
+          const rowData: Record<string, ExcelCell> = {};
           headers.forEach((header, index) => {
             rowData[header] = row[index];
           });
@@ -1103,19 +1107,19 @@ onFechaFinChange(value: string) {  // Cambiado de event a value
           const errors: string[] = [];
           
           // Validar SKU
-          if (!rowData.sku) {
+          if (!rowData['sku']) {
             errors.push('SKU requerido');
           }
           
           // Validar tipo
-          if (!rowData.tipo) {
+          if (!rowData['tipo']) {
             errors.push('Tipo requerido');
-          } else if (!['entrada', 'salida', 'ajuste'].includes(String(rowData.tipo).toLowerCase())) {
+          } else if (!['entrada', 'salida', 'ajuste'].includes(String(rowData['tipo']).toLowerCase())) {
             errors.push('Tipo debe ser entrada, salida o ajuste');
           }
           
           // Validar cantidad
-          const cantidad = Number(rowData.cantidad);
+          const cantidad = Number(rowData['cantidad']);
           if (isNaN(cantidad) || cantidad <= 0) {
             errors.push('Cantidad debe ser un número mayor a 0');
           }
@@ -1123,19 +1127,19 @@ onFechaFinChange(value: string) {  // Cambiado de event a value
           if (errors.length > 0) {
             preview.invalidRows.push({
               row: i + 1,
-              sku: rowData.sku || 'N/A',
-              tipo: rowData.tipo || 'N/A',
-              cantidad: rowData.cantidad,
+              sku: String(rowData['sku'] || 'N/A'),
+              tipo: String(rowData['tipo'] || 'N/A'),
+              cantidad: rowData['cantidad'],
               error: errors.join(', ')
             });
           } else {
             preview.validRows.push({
-              sku: String(rowData.sku).trim(),
-              tipo: String(rowData.tipo).toLowerCase().trim() as any,
+              sku: String(rowData['sku']).trim(),
+              tipo: String(rowData['tipo']).toLowerCase().trim(),
               cantidad: cantidad,
-              costo_unitario: rowData.costo_unitario ? Number(rowData.costo_unitario) : undefined,
-              referencia_tipo: rowData.referencia_tipo ? String(rowData.referencia_tipo).trim() : undefined,
-              referencia_id: rowData.referencia_id ? Number(rowData.referencia_id) : undefined
+              costo_unitario: rowData['costo_unitario'] ? Number(rowData['costo_unitario']) : undefined,
+              referencia_tipo: rowData['referencia_tipo'] ? String(rowData['referencia_tipo']).trim() : undefined,
+              referencia_id: rowData['referencia_id'] ? Number(rowData['referencia_id']) : undefined
             });
           }
         }
@@ -1148,7 +1152,7 @@ onFechaFinChange(value: string) {  // Cambiado de event a value
           this.toastr.success(`${preview.validRows.length} filas válidas para importar`, 'Listo');
         }
 
-      } catch (error) {
+      } catch  {
         this.toastr.error('Error al leer el archivo Excel', 'Error');
       }
     };
@@ -1164,14 +1168,15 @@ onFechaFinChange(value: string) {  // Cambiado de event a value
     }
 
     this.importing = true;
+    const totalRows = this.importPreview.validRows.length;
 
     this.productService.bulkCreateInventoryMovements(this.importPreview.validRows).subscribe({
-      next: (result: ExcelImportResult) => {
+      next: (result) => {
         this.importing = false;
         
         if (result.success > 0) {
           this.toastr.success(
-            `Importación completada: ${result.success} de ${result.total} exitosos`,
+            `Importación completada: ${result.success} de ${totalRows} exitosos`,
             'Éxito'
           );
         }
@@ -1220,7 +1225,7 @@ exportFilteredMovements() {
 }
 
 // Método genérico para exportar a Excel
-private exportToExcel(data: any[], filename: string) {
+private exportToExcel(data: InventoryMovement[], filename: string) {
   try {
     // Preparar los datos para Excel
     const excelData = data.map(m => ({
@@ -1263,7 +1268,7 @@ private exportToExcel(data: any[], filename: string) {
     XLSX.writeFile(wb, fileName);
     
     this.toastr.success(`Exportados ${data.length} movimientos`, 'Éxito');
-  } catch (error) {
+  } catch  {
     this.toastr.error('Error al exportar los datos', 'Error');
   }
 }

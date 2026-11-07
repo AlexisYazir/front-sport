@@ -18,10 +18,6 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const method = req.method.toUpperCase();
   const isNavigationGet = method === 'GET'; // regla simple; si usas resolvers/guards, casi siempre es GET
 
-  const hasValidationDetails =
-    !!(req && (false)) || // placeholder
-    false;
-
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
       const hasBackendValidation =

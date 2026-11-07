@@ -108,7 +108,7 @@ export class ContactPage implements OnInit {
     this.isLoading.set(true);
 
     this.companyService.sendContactMessage(this.form).subscribe({
-      next: (response) => {
+      next: () => {
         this.isLoading.set(false);
         this.submitted = true;
         this.toastr.success('Mensaje enviado correctamente', '¡Gracias por contactarnos!');

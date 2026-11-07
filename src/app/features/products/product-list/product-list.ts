@@ -1,3 +1,5 @@
+type ProductSort = NonNullable<ProductFilters['ordenarPor']>;
+function isProductSort(value: unknown): value is ProductSort { return value === 'precio-asc' || value === 'precio-desc' || value === 'nombre' || value === 'fecha'; }
 import { Component, inject, OnInit, signal, computed, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -30,7 +32,7 @@ export class ProductList implements OnInit {
   selectedBrand = signal<string>('');
   minPrice = signal<number | null>(null);
   maxPrice = signal<number | null>(null);
-  sortBy = signal<string>('');
+  sortBy = signal<ProductSort | ''>('');
   routeGenero = signal<string>('');
   routeCategoriaPadre = signal<string>('');
   routeSubcategoria = signal<string>('');
@@ -146,13 +148,13 @@ export class ProductList implements OnInit {
     return items;
   });
 
-  @HostListener('window:resize', ['$event'])
-  onResize(event: any) {
-    const mobile = event.target.innerWidth < 768;
+  @HostListener('window:resize')
+  onResize() {
+    const mobile = window.innerWidth < 768;
     this.isMobile.set(mobile);
     
     // Ajustar items por página según tamaño de pantalla
-    this.itemsPerPage.set(event.target.innerWidth < 640 ? 6 : 12);
+    this.itemsPerPage.set(window.innerWidth < 640 ? 6 : 12);
     
     if (mobile && this.showFilters()) {
       this.showFilters.set(false);
@@ -178,7 +180,7 @@ export class ProductList implements OnInit {
       next: (products) => {
         this.allProducts.set(products);
       },
-      error: (error) => {
+      error: () => {
       }
     });
     
@@ -186,7 +188,7 @@ export class ProductList implements OnInit {
       next: (categories) => {
         this.categories.set(categories);
       },
-      error: (error) => {
+      error: () => {
         this.toastr.error('Error al cargar categorías', 'Error');
       }
     });
@@ -195,7 +197,7 @@ export class ProductList implements OnInit {
       next: (brands) => {
         this.brands.set(brands);
       },
-      error: (error) => {
+      error: () => {
         this.toastr.error('Error al cargar marcas', 'Error');
       }
     });
@@ -241,7 +243,7 @@ export class ProductList implements OnInit {
     return false;
   }
 
-  private parseQueryParams(params: Record<string, any>): boolean {
+  private parseQueryParams(params: Record<string, unknown>): boolean {
     this.searchTerm.set('');
     this.selectedCategory.set('');
     this.selectedBrand.set('');
@@ -258,7 +260,7 @@ export class ProductList implements OnInit {
     const min = params['minPrice'];
     const max = params['maxPrice'];
 
-    const toNumber = (v: any) => {
+    const toNumber = (v: unknown) => {
       const n = Number(v);
       return Number.isFinite(n) ? n : null;
     };
@@ -288,8 +290,7 @@ export class ProductList implements OnInit {
     }
 
     if (params['sort']) {
-      const allowed = ['precio-asc', 'precio-desc', 'nombre', 'fecha'];
-      if (!allowed.includes(params['sort'])) {
+      if (!isProductSort(params['sort'])) {
         this.toastr.error('sort no es válido', 'Parámetro inválido');
         return false;
       }
@@ -320,7 +321,7 @@ export class ProductList implements OnInit {
       genero: this.routeGenero() || undefined,
       precioMin: this.minPrice() || undefined,
       precioMax: this.maxPrice() || undefined,
-      ordenarPor: this.sortBy() as any
+      ordenarPor: this.sortBy() || undefined
     };
 
     this.isLoading.set(true);
@@ -333,7 +334,7 @@ export class ProductList implements OnInit {
           this.currentPage.set(1);
         }
       },
-      error: (error) => {
+      error: () => {
         this.toastr.error('Error al buscar productos', 'Error');
         this.isLoading.set(false);
       }

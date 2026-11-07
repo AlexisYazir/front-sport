@@ -35,7 +35,11 @@ export function sportImageUrl(nombre: string): string {
 
 export interface CatalogMedia { home: string[]; all: string[]; }
 
-export function catalogMedia(products: any[], marcas: any[], sports: any[], banners: any[]): CatalogMedia {
+export function isPublicRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+export function catalogMedia(products: readonly unknown[], marcas: readonly unknown[], sports: readonly unknown[], banners: readonly unknown[]): CatalogMedia {
   const home = new Set<string>();
   const all = new Set<string>();
   const add = (value: unknown, featured = false) => {
@@ -43,15 +47,23 @@ export function catalogMedia(products: any[], marcas: any[], sports: any[], bann
     if (url) { all.add(url); if (featured) home.add(url); }
   };
   for (const [index, product] of products.entries()) {
-    const variants = Array.isArray(product.variantes) ? product.variantes : [];
-    add(variants[0]?.imagenes?.[0] || 'assets/images/no_imagen.webp', index < 8);
+    if (!isPublicRecord(product)) continue;
+    const variants = Array.isArray(product['variantes']) ? product['variantes'] : [];
+    const first = variants[0];
+    const images = isPublicRecord(first) && Array.isArray(first['imagenes']) ? first['imagenes'] : [];
+    add(images[0] || 'assets/images/no_imagen.webp', index < 8);
     for (const variant of variants) {
-      for (const image of Array.isArray(variant.imagenes) ? variant.imagenes : []) add(image);
+      if (!isPublicRecord(variant)) continue;
+      for (const image of Array.isArray(variant['imagenes']) ? variant['imagenes'] : []) add(image);
     }
-    add(product.imagen_marca);
+    add(product['imagen_marca']);
   }
-  for (const marca of marcas) add(marcaImageUrl(marca), true);
-  for (const sport of sports) add(sportImageUrl(sport.nombre), true);
-  for (const banner of banners) if (banner.activo && banner.url_imagen) add(banner.url_imagen, true);
+  for (const marca of marcas) {
+    if (isPublicRecord(marca) && typeof marca['nombre'] === 'string') {
+      add(marcaImageUrl({ nombre: marca['nombre'], imagen: typeof marca['imagen'] === 'string' ? marca['imagen'] : undefined }), true);
+    }
+  }
+  for (const sport of sports) if (isPublicRecord(sport) && typeof sport['nombre'] === 'string') add(sportImageUrl(sport['nombre']), true);
+  for (const banner of banners) if (isPublicRecord(banner) && banner['activo'] && banner['url_imagen']) add(banner['url_imagen'], true);
   return { home: [...home], all: [...home, ...[...all].filter(url => !home.has(url))] };
 }

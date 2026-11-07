@@ -685,7 +685,7 @@ existsSizeForColor(size: string): boolean {
   getAtributosArray(atributos: { Color?: string; Talla?: string; [key: string]: string | undefined } | undefined): {key: string, value: string}[] {
     if (!atributos) return [];
     return Object.entries(atributos)
-      .filter(([_, value]) => value !== undefined && value !== '')
+      .filter(([, value]) => value !== undefined && value !== '')
       .map(([key, value]) => ({ key, value: value as string }));
   }
 

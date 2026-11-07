@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
@@ -39,7 +39,7 @@ export interface LogsResponse {
 export class LogsService {
   private readonly API_URL = environment.apiUrl;
 
-  constructor(private readonly http: HttpClient) {}
+  private readonly http = inject(HttpClient);
 
   getDates(): Observable<string[]> {
     return this.http.get<string[]>(`${this.API_URL}/logs/dates`);

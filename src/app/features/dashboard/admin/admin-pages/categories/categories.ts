@@ -84,7 +84,7 @@ export class Categories implements OnInit {
         this.applyFilters();
         this.isLoading.set(false);
       },
-      error: (error) => {
+      error: () => {
         this.toastr.error('Error al cargar categorías', 'Error');
         this.isLoading.set(false);
       }
@@ -115,13 +115,17 @@ export class Categories implements OnInit {
     this.updatePaginatedCategorias();
   }
 
-  onFilterTipoChange(event: any) {
-    this.filterTipo = event.target.value;
+  onFilterTipoChange(event: Event) {
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement || target instanceof HTMLSelectElement)) return;
+    this.filterTipo = target.value;
     this.applyFilters();
   }
 
-  onSearch(event: any) {
-    this.searchValue = event.target.value;
+  onSearch(event: Event) {
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement || target instanceof HTMLSelectElement)) return;
+    this.searchValue = target.value;
     this.applyFilters();
   }
 
@@ -353,7 +357,7 @@ export class Categories implements OnInit {
     this.toastr.success('Datos actualizados correctamente', 'Actualización');
   }
 
-  viewDetails(categoria: Categorie) {
+  viewDetails() {
   }
 
   editCategoria(categoria: Categorie) {

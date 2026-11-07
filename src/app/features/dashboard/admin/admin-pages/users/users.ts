@@ -88,7 +88,7 @@ export class Users implements OnInit {
         this.applyFilters();
         this.isLoading.set(false);
       },
-      error: (error) => {
+      error: () => {
         this.toastr.error('Error al cargar usuarios', 'Error');
         this.isLoading.set(false);
       }
@@ -109,7 +109,7 @@ export class Users implements OnInit {
       next: (roles: Roles[]) => {
         this.roles = roles;
       },
-      error: (error) => {
+      error: () => {
         this.toastr.error('Error al cargar roles', 'Error');
       }
     });
@@ -144,18 +144,24 @@ export class Users implements OnInit {
     this.updatePaginatedUsers();
   }
 
-  onFilterRolChange(event: any) {
-    this.filterRol = event.target.value;
+  onFilterRolChange(event: Event) {
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement || target instanceof HTMLSelectElement)) return;
+    this.filterRol = target.value;
     this.applyFilters();
   }
 
-  onFilterEstadoChange(event: any) {
-    this.filterEstado = event.target.value;
+  onFilterEstadoChange(event: Event) {
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement || target instanceof HTMLSelectElement)) return;
+    this.filterEstado = target.value;
     this.applyFilters();
   }
 
-  onSearch(event: any) {
-    this.searchValue = event.target.value;
+  onSearch(event: Event) {
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement || target instanceof HTMLSelectElement)) return;
+    this.searchValue = target.value;
     this.applyFilters();
   }
 
@@ -257,7 +263,7 @@ export class Users implements OnInit {
         this.toastr.success(`Estado de ${user.email} actualizado a ${newState === 1 ? 'activo' : 'inactivo'}`, 'Éxito');
         this.calcularContadores();
       },
-      error: (err) => {
+      error: () => {
         user.activo = previousState;
         this.togglingActive[user.id_usuario] = false;
         this.toastr.error('Error al actualizar el estado', 'Error');

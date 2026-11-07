@@ -1,5 +1,5 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
@@ -116,7 +116,7 @@ export interface SalesReportFilters {
 export class ReportsService {
   private readonly apiUrl = `${environment.apiUrl}/reports`;
 
-  constructor(private readonly http: HttpClient) {}
+  private readonly http = inject(HttpClient);
 
   getSalesReport(filters: SalesReportFilters): Observable<SalesReport> {
     let params = new HttpParams()

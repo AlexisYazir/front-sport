@@ -25,6 +25,16 @@ export const VALIDATOR_CONFIG = {
   }
 };
 
+function hasControlCharacters(value: string, includeC1 = false): boolean {
+  for (let index = 0; index < value.length; index++) {
+    const code = value.charCodeAt(index);
+    if (code <= 0x1f || code === 0x7f || (includeC1 && code >= 0x80 && code <= 0x9f)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 // ============================================================================
 // EMAIL VALIDATION
 // ============================================================================
@@ -39,9 +49,9 @@ export function emailFormatValidator(): ValidatorFn {
       return { invalidEmailFormat: { value: email } };
     }
 
-    const emailRegex = /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+    const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
     
-    if (!emailRegex.test(email) || email.includes('..') || /[\x00-\x1F\x7F]/.test(email)) {
+    if (!emailRegex.test(email) || email.includes('..') || hasControlCharacters(email)) {
       return { invalidEmailFormat: { value: email } };
     }
 
@@ -73,7 +83,7 @@ export function passwordComplexityValidator(): ValidatorFn {
     if (!/[A-Z]/.test(password)) errors.push('uppercase');
     if (!/[a-z]/.test(password)) errors.push('lowercase');
     if (!/[0-9]/.test(password)) errors.push('digit');
-    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/.test(password)) errors.push('special-char');
+    if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]/.test(password)) errors.push('special-char');
 
     // NO PERMITIR: Espacios en blanco
     if (/\s/.test(password)) errors.push('no-spaces');
@@ -123,7 +133,7 @@ export function evaluatePasswordStrength(password: string): PasswordStrength {
   if (/[0-9]/.test(password)) score += 1;
   else errors.push('Agrega números');
 
-  if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/.test(password)) score += 1;
+  if (/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]/.test(password)) score += 1;
   else errors.push('Agrega caracteres especiales');
 
   // Penalizar repeticiones y secuencias
@@ -168,7 +178,7 @@ export function nameValidator(): ValidatorFn {
     }
 
     // Sin caracteres de control
-    if (/[\x00-\x1F\x7F-\x9F]/.test(name)) {
+    if (hasControlCharacters(name, true)) {
       return { invalidName: ['control-chars'] };
     }
 
@@ -198,7 +208,7 @@ export function xssPatternDetector(): ValidatorFn {
       /\\[ux][0-9a-f]{2,4}/gi
     ];
 
-    if (xssPatterns.some(p => p.test(input)) || /[\x00-\x1F\x7F]/.test(input)) {
+    if (xssPatterns.some(p => p.test(input)) || hasControlCharacters(input)) {
       return { xssDetected: { value: input.substring(0, 50) } };
     }
 
@@ -289,9 +299,9 @@ export function validateEmail(email: string): boolean {
   const trimmed = email.trim();
   if (trimmed.length < VALIDATOR_CONFIG.email.minLength || trimmed.length > VALIDATOR_CONFIG.email.maxLength) return false;
   
-  const emailRegex = /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+  const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
   
-  return emailRegex.test(trimmed) && !trimmed.includes('..') && !/[\x00-\x1F\x7F]/.test(trimmed);
+  return emailRegex.test(trimmed) && !trimmed.includes('..') && !hasControlCharacters(trimmed);
 }
 
 export function validatePasswordComplexity(password: string): boolean {
@@ -301,7 +311,7 @@ export function validatePasswordComplexity(password: string): boolean {
   if (!/[A-Z]/.test(password)) return false;
   if (!/[a-z]/.test(password)) return false;
   if (!/[0-9]/.test(password)) return false;
-  if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/.test(password)) return false;
+  if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]/.test(password)) return false;
 
   // SIN espacios
   if (/\s/.test(password)) return false;
@@ -327,7 +337,7 @@ export function validateName(name: string): boolean {
   
   if (trimmed.length < VALIDATOR_CONFIG.name.minLength || trimmed.length > VALIDATOR_CONFIG.name.maxLength) return false;
   if (!/^[\p{L}\p{M}]+(?:[\s\-'][\p{L}\p{M}]+)*$/u.test(trimmed)) return false;
-  if (/[\x00-\x1F\x7F-\x9F]/.test(trimmed)) return false;
+  if (hasControlCharacters(trimmed, true)) return false;
 
   return true;
 }
@@ -342,7 +352,7 @@ export function detectXSS(input: string): boolean {
     /<!--/, /<\?/, /<%/, /\${/, /&#x?[0-9a-f]+;/gi
   ];
 
-  return xssPatterns.some(p => p.test(input)) || /[\x00-\x1F\x7F]/.test(input);
+  return xssPatterns.some(p => p.test(input)) || hasControlCharacters(input);
 }
 
 export function detectSQLInjection(input: string): boolean {

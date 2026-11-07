@@ -5,7 +5,7 @@ describe('Imágenes públicas para uso sin conexión', () => {
     const first = 'https://m.media-amazon.com/first.jpg';
     const second = 'https://http2.mlstatic.com/second.webp';
     const extra = 'https://http2.mlstatic.com/extra.webp';
-    const products = Array.from({ length: 9 }, (_, index) => ({ variantes: [
+    const products = Array.from({ length: 9 }, () => ({ variantes: [
       { imagenes: [first, second] }, { imagenes: [extra, first] },
     ] }));
     const media = catalogMedia(products, [{ nombre: 'Marca', imagen: 'https://images.seeklogo.com/a.png' }],

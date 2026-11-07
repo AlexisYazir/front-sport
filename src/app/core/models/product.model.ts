@@ -68,7 +68,7 @@ export interface ProductSearchResult {
 export interface Categorie {
   id_categoria: number;
   nombre: string;
-  id_padre: number;
+  id_padre: number | null;
 }
 
 export interface Marca {
@@ -126,7 +126,7 @@ export interface ProductVariant {
   precio: number;
   stock: number;
   imagenes: string[];
-  atributos: Record<string, any>; // ← Esto es un objeto, no un array
+  atributos: Record<string, string>;
 }
 
 export interface Orders {
@@ -155,7 +155,7 @@ export interface EmployeeOrderItem {
   id_producto?: number;
   producto?: string;
   imagen?: string;
-  atributos?: Record<string, any>;
+  atributos?: Record<string, string>;
   marca?: string;
   categoria?: string;
 }
@@ -216,7 +216,7 @@ export interface EmployeeOrder {
 
 export type UserOrderStatus = EmployeeOrderStatus | string;
 
-export interface UserOrderItem extends EmployeeOrderItem {}
+export type UserOrderItem = EmployeeOrderItem;
 
 export interface UserOrder {
   id_orden: number;
@@ -325,6 +325,59 @@ export interface ProductReview {
 export interface ProductReviewAdmin extends ProductReview {
   producto?: string;
   email?: string;
+  retirada?: boolean;
+  revision?: number;
+}
+
+export type ReviewModerationAction = 'conservar' | 'retirar' | 'restaurar';
+export type ReviewReportFilter = 'pendiente' | 'atendido' | 'todos';
+
+export interface ReviewReport {
+  id_mensaje: number;
+  nombre: string;
+  email: string;
+  asunto: string | null;
+  mensaje: string;
+  created_at: string;
+  leido: boolean;
+  respondido: boolean;
+  id_review: number | null;
+  id_producto: number | null;
+  referencia_valida: boolean;
+  estado_atencion: 'pendiente' | 'atendido';
+}
+
+export interface ReviewReportPage {
+  items: ReviewReport[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface ReviewModerationEvent {
+  id_evento: number;
+  id_review: number;
+  id_mensaje: number | null;
+  accion: ReviewModerationAction;
+  motivo: string;
+  id_administrador: number;
+  fecha: string;
+  retirada_anterior: boolean;
+  retirada_nueva: boolean;
+  revision: number;
+}
+
+export interface ReviewModerationDetail {
+  review: ProductReviewAdmin & { retirada: boolean; revision: number };
+  reports: ReviewReport[];
+  history: ReviewModerationEvent[];
+}
+
+export interface ReviewModerationRequest {
+  accion: ReviewModerationAction;
+  motivo: string;
+  revision_esperada: number;
+  id_mensaje?: number;
 }
 
 export interface ProductReviewSummary {

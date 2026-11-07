@@ -4,7 +4,7 @@ import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { NgxPaginationModule } from 'ngx-pagination';
 import { ProductService } from '../../../core/services/product.service';
-import { Product, ProductFilters } from '../../../core/models/product.model';
+import { Product } from '../../../core/models/product.model';
 import { ToastrService } from 'ngx-toastr';
 import { Breadcrumbs, BreadcrumbItem } from '../../../shared/components/breadcrumbs/breadcrumbs';
 import { IconModule } from '../../../shared/icons/icon.module';
@@ -128,11 +128,11 @@ export class ProductMarca implements OnInit {
     });
   }
 
-  @HostListener('window:resize', ['$event'])
-  onResize(event: any) {
-    const mobile = event.target.innerWidth < 768;
+  @HostListener('window:resize')
+  onResize() {
+    const mobile = window.innerWidth < 768;
     this.isMobile.set(mobile);
-    this.itemsPerPage.set(event.target.innerWidth < 640 ? 6 : 12);
+    this.itemsPerPage.set(window.innerWidth < 640 ? 6 : 12);
     
     if (mobile && this.showFilters()) {
       this.showFilters.set(false);
@@ -173,7 +173,7 @@ export class ProductMarca implements OnInit {
         
         this.loading.set(false);
       },
-      error: (error) => {
+      error: () => {
         this.error.set('Error al cargar los productos');
         this.toastr.error('Error al cargar los productos', 'Error');
         this.loading.set(false);
