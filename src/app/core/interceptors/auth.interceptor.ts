@@ -98,12 +98,12 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const token = tokenService.getAccessToken();
   if (token && authService.shouldRefreshSoon()) {
     return authService.refreshAccessToken().pipe(
-      switchMap((newToken) => sendRequest(newToken)),
       catchError(() => {
         authService.logout(false);
         router.navigate(['/auth/login']);
         return throwError(() => new Error('Unable to refresh session'));
       }),
+      switchMap((newToken) => sendRequest(newToken)),
     );
   }
 

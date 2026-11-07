@@ -1,9 +1,9 @@
-import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
-import { of } from 'rxjs';
+import { map, of } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { authInterceptor } from '../interceptors/auth.interceptor';
 import { SKIP_AUTH_RETRY } from '../interceptors/auth-request-context';
@@ -90,20 +90,84 @@ describe('Moderación: integración con el interceptor de sesión', () => {
   let service: ProductService;
   let http: HttpTestingController;
   let auth: jasmine.SpyObj<AuthService>;
+  let navigate: jasmine.Spy;
   beforeEach(() => {
     auth = jasmine.createSpyObj<AuthService>('AuthService', ['isLoggedIn', 'shouldRefreshSoon', 'refreshAccessToken', 'logout']);
     auth.isLoggedIn.and.returnValue(true); auth.shouldRefreshSoon.and.returnValue(false);
     auth.refreshAccessToken.and.returnValue(of('token-renovado-qa'));
+    navigate = jasmine.createSpy('navigate');
     TestBed.configureTestingModule({ providers: [
       provideHttpClient(withInterceptors([authInterceptor])), provideHttpClientTesting(),
       { provide: AuthService, useValue: auth },
       { provide: TokenService, useValue: { getAccessToken: () => 'token-inicial-qa' } },
-      { provide: Router, useValue: { navigate: jasmine.createSpy('navigate') } },
+      { provide: Router, useValue: { navigate } },
       { provide: ToastrService, useValue: { error: jasmine.createSpy('error') } },
     ] });
     service = TestBed.inject(ProductService); http = TestBed.inject(HttpTestingController);
   });
   afterEach(() => http.verify());
+
+  function usePreemptiveHttpRefresh(): void {
+    auth.shouldRefreshSoon.and.returnValue(true);
+    auth.refreshAccessToken.and.callFake(() => TestBed.inject(HttpClient)
+      .post<{ accessToken: string }>(environment.apiUrl + '/users/refresh-token', {}, { withCredentials: true })
+      .pipe(map(response => response.accessToken)));
+  }
+
+  it('conserva el conflicto del único POST después de renovar antes del envío', () => {
+    usePreemptiveHttpRefresh();
+    let received: HttpErrorResponse | undefined;
+    service.moderateReview(7, { accion: 'retirar', motivo: 'Motivo QA', revision_esperada: 0 })
+      .subscribe({ error: (error: HttpErrorResponse) => { received = error; } });
+    http.expectNone(base + '/admin/7/moderation');
+    http.expectOne(environment.apiUrl + '/users/refresh-token').flush({ accessToken: 'token-renovado-qa' });
+    const decision = http.expectOne(base + '/admin/7/moderation');
+    expect(decision.request.method).toBe('POST');
+    expect(decision.request.headers.get('Authorization')).toBe('Bearer token-renovado-qa');
+    const conflict = { message: 'La reseña cambió durante la revisión.' };
+    decision.flush(conflict, { status: 409, statusText: 'Conflict' });
+    expect(received instanceof HttpErrorResponse).toBeTrue();
+    expect(received?.status).toBe(409);
+    expect(received?.error).toBe(conflict);
+    expect(auth.refreshAccessToken).toHaveBeenCalledTimes(1);
+    expect(auth.logout).not.toHaveBeenCalled();
+    expect(navigate).not.toHaveBeenCalled();
+    http.expectNone(base + '/admin/7/moderation');
+  });
+
+  it('conserva el fallo de red del único POST después de renovar antes del envío', () => {
+    usePreemptiveHttpRefresh();
+    let received: HttpErrorResponse | undefined;
+    service.moderateReview(7, { accion: 'retirar', motivo: 'Motivo QA', revision_esperada: 0 })
+      .subscribe({ error: (error: HttpErrorResponse) => { received = error; } });
+    http.expectNone(base + '/admin/7/moderation');
+    http.expectOne(environment.apiUrl + '/users/refresh-token').flush({ accessToken: 'token-renovado-qa' });
+    const decision = http.expectOne(base + '/admin/7/moderation');
+    expect(decision.request.method).toBe('POST');
+    const networkFailure = new ProgressEvent('error');
+    decision.error(networkFailure);
+    expect(received instanceof HttpErrorResponse).toBeTrue();
+    expect(received?.status).toBe(0);
+    expect(received?.error).toBe(networkFailure);
+    expect(auth.refreshAccessToken).toHaveBeenCalledTimes(1);
+    expect(auth.logout).not.toHaveBeenCalled();
+    expect(navigate).not.toHaveBeenCalled();
+    http.expectNone(base + '/admin/7/moderation');
+  });
+
+  it('mantiene el cierre de sesión si la renovación previa falla y no envía la decisión', () => {
+    usePreemptiveHttpRefresh();
+    let received: Error | undefined;
+    service.moderateReview(7, { accion: 'retirar', motivo: 'Motivo QA', revision_esperada: 0 })
+      .subscribe({ error: (error: Error) => { received = error; } });
+    http.expectOne(environment.apiUrl + '/users/refresh-token')
+      .flush({}, { status: 503, statusText: 'Service Unavailable' });
+    expect(received?.message).toBe('Unable to refresh session');
+    expect(auth.refreshAccessToken).toHaveBeenCalledTimes(1);
+    expect(auth.logout).toHaveBeenCalledOnceWith(false);
+    expect(navigate).toHaveBeenCalledOnceWith(['/auth/login']);
+    http.expectNone(base + '/admin/7/moderation');
+  });
 
   it('no renueva ni repite el POST de moderación si responde 401', () => {
     let status = 0;
