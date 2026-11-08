@@ -92,6 +92,10 @@ export const routes: Routes = [
     canActivate: [authGuard, customerGuard],
   },
   {
+    path: 'account/delete',
+    loadComponent: () => import('./features/account-deletion/account-deletion').then((m) => m.AccountDeletionComponent),
+  },
+  {
     path: 'auth/login',
     loadComponent: () => import('./features/auth/login/login').then((m) => m.Login),
     canActivate: [guestGuard],

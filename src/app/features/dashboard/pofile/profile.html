@@ -311,6 +311,12 @@
       </div>
     </div>
 
+    <section class="mt-6 rounded-xl border border-red-200 p-5" aria-labelledby="delete-account-title">
+      <h3 id="delete-account-title" class="font-semibold text-[#202020]">Eliminar cuenta</h3>
+      <p class="mt-2 text-sm text-[#666666]">Revisa las consecuencias y verifica tu identidad antes de confirmar la eliminación de tu cuenta y sus datos asociados.</p>
+      <a routerLink="/account/delete" class="mt-3 inline-block rounded-lg border border-red-700 px-4 py-3 font-medium text-red-800 hover:bg-red-50">Eliminar cuenta</a>
+    </section>
+
     <!-- Nota informativa -->
     <div *ngIf="isEditing()" class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-2">
       <svg lucideIcon="info" class="lucide-icon text-blue-500 text-sm"></svg>

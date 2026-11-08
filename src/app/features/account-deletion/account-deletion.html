@@ -1,0 +1,138 @@
+<main class="deletion-page">
+  <section class="deletion-card" aria-labelledby="deletion-title" [attr.aria-busy]="api.busy()">
+    <header class="deletion-header">
+      <a routerLink="/home" class="brand-link">Sport Center</a>
+      <h1 id="deletion-title">Eliminar mi cuenta</h1>
+      <p>Verifica tu identidad y revisa las consecuencias antes de confirmar.</p>
+    </header>
+
+    <ol class="steps" aria-label="Pasos para eliminar la cuenta">
+      <li [attr.aria-current]="api.stage() === 'start' ? 'step' : null"><span>1</span> Solicitud</li>
+      <li [attr.aria-current]="api.stage() === 'code' ? 'step' : null"><span>2</span> Verificación</li>
+      <li [attr.aria-current]="api.stage() === 'review' ? 'step' : null"><span>3</span> Confirmación</li>
+      <li [attr.aria-current]="api.stage() === 'result' ? 'step' : null"><span>4</span> Resultado</li>
+    </ol>
+
+    <div class="deletion-content">
+      <p *ngIf="api.error() as error" class="notice notice-error" role="alert">{{ error }}</p>
+      <p *ngIf="api.busy() && api.stage() === 'review' && !api.verification()" class="notice notice-info" role="status">Procesando tu solicitud. Espera mientras confirmamos el resultado.</p>
+
+      <ng-container *ngIf="api.stage() === 'start'">
+        <ng-container *ngIf="api.canStart(); else unavailableStart">
+          <h2>Primero, confirma que eres tú</h2>
+          <p>Enviaremos un código al correo verificado que protege la eliminación de tu cuenta. Si cambiaste el correo de tu perfil, puede ser el correo anterior.</p>
+          <p>Enviar o verificar el código todavía no elimina tu cuenta. Podrás revisar las consecuencias y volver sin eliminarla.</p>
+          <div class="actions">
+            <button type="button" class="button button-primary" [disabled]="api.busy()" (click)="start()">
+              {{ api.busy() ? 'Enviando código…' : 'Enviar código de verificación' }}
+            </button>
+          </div>
+        </ng-container>
+        <ng-template #unavailableStart>
+          <ng-container *ngIf="!api.signedIn(); else teamAccount">
+            <h2>Inicia sesión para comenzar</h2>
+            <p>La solicitud debe estar vinculada a tu propia cuenta. Después de iniciar sesión podrás recibir el código de verificación.</p>
+            <a class="button button-primary" routerLink="/auth/login" [queryParams]="{ returnUrl: '/account/delete' }">Iniciar sesión</a>
+          </ng-container>
+          <ng-template #teamAccount>
+            <h2>Atención para cuentas del equipo</h2>
+            <p>Las cuentas con permisos de trabajo o administración requieren atención específica para proteger las operaciones del negocio.</p>
+            <a class="text-link" [href]="'mailto:' + supportEmail">Contactar al equipo de Sport Center</a>
+          </ng-template>
+        </ng-template>
+      </ng-container>
+
+      <section *ngIf="api.stage() === 'code'" aria-labelledby="verification-title">
+        <h2 id="verification-title">Revisa tu correo</h2>
+        <p>Escribe el código de seis dígitos que te enviamos. Usa el código más reciente y no lo compartas con otras personas.</p>
+        <p *ngIf="api.challengeExpiresAt() as expiry" class="muted">El código vence a las {{ expiry | date:'HH:mm' }}, según la hora de tu dispositivo.</p>
+        <form [formGroup]="codeForm" (ngSubmit)="verifyCode()" novalidate>
+          <label for="deletion-code">Código de verificación</label>
+          <input id="deletion-code" type="text" inputmode="numeric" autocomplete="one-time-code"
+            formControlName="code" maxlength="6" pattern="[0-9]{6}" placeholder="000000"
+            [readOnly]="api.busy()" [attr.aria-invalid]="codeForm.controls.code.touched && codeForm.controls.code.invalid"
+            [attr.aria-describedby]="codeForm.controls.code.touched && codeForm.controls.code.invalid ? 'code-help code-error' : 'code-help'"
+            class="code-input">
+          <p id="code-help" class="muted">Incluye los seis dígitos, aunque el primero sea cero.</p>
+          <p *ngIf="codeForm.controls.code.touched && codeForm.controls.code.invalid" id="code-error" class="field-error" role="alert">Ingresa un código de seis dígitos.</p>
+          <div class="actions">
+            <button type="submit" class="button button-primary" [disabled]="api.busy()">{{ api.busy() ? 'Verificando…' : 'Verificar código' }}</button>
+            <button type="button" class="button button-secondary" [disabled]="api.busy()" (click)="start()">Solicitar otro código</button>
+          </div>
+        </form>
+        <button type="button" class="text-button" [disabled]="api.busy()" (click)="cancel()">Volver sin eliminar</button>
+      </section>
+
+      <section *ngIf="api.stage() === 'review'" aria-labelledby="review-title">
+        <ng-container *ngIf="api.verification() as verification">
+          <h2 id="review-title">Revisa lo que ocurrirá</h2>
+          <div class="notice notice-warning">
+            <strong>La eliminación es irreversible.</strong>
+            <ul>
+              <li>Se cerrarán tus sesiones y perderás acceso a esta cuenta.</li>
+              <li>Se eliminarán o anonimizarán los datos personales que ya no deban conservarse.</li>
+              <li>Un registro futuro creará una cuenta nueva, sin recuperar el historial ni los datos eliminados.</li>
+              <li>Los registros de pedidos y pagos exigidos por ley permanecerán protegidos y con acceso restringido durante el plazo aplicable.</li>
+            </ul>
+          </div>
+          <p>Esta solicitud no cancela automáticamente pedidos ni solicita reembolsos.</p>
+          <div *ngIf="verification.consequences.retainedCategories.length" class="retention-box">
+            <h3>Información que debe conservarse</h3>
+            <ul><li *ngFor="let category of categories(verification.consequences.retainedCategories)">{{ category }}</li></ul>
+            <ng-container *ngIf="verification.consequences.retentionPolicy as policy">
+              <p><strong>Motivo:</strong> {{ policy.basis }}</p>
+              <p><strong>Plazo aplicable:</strong> {{ policy.days }} días.</p>
+            </ng-container>
+          </div>
+          <p *ngIf="verification.consequences.requiresAttention" class="notice notice-info">{{ reasonText(verification.consequences.reason) }} Puedes confirmar la solicitud; su resultado indicará si se necesita atención adicional.</p>
+          <p class="muted">La autorización vence a las {{ verification.expiresAt | date:'HH:mm' }}, según la hora de tu dispositivo. Si vence, deberás verificar de nuevo tu identidad.</p>
+          <form [formGroup]="confirmationForm" (ngSubmit)="confirmDeletion()" novalidate>
+            <label class="confirmation-label" for="deletion-confirmed">
+              <input id="deletion-confirmed" type="checkbox" formControlName="confirmed" [attr.aria-describedby]="confirmationForm.controls.confirmed.touched && confirmationForm.controls.confirmed.invalid ? 'confirmation-error' : null">
+              <span>Comprendo las consecuencias y quiero eliminar mi cuenta.</span>
+            </label>
+            <p *ngIf="confirmationForm.controls.confirmed.touched && confirmationForm.controls.confirmed.invalid" id="confirmation-error" class="field-error" role="alert">Confirma la casilla si deseas continuar.</p>
+            <div class="actions">
+              <button type="submit" class="button button-danger" [disabled]="api.busy() || confirmationForm.invalid">{{ api.busy() ? 'Procesando solicitud…' : 'Eliminar mi cuenta' }}</button>
+              <button type="button" class="button button-secondary" [disabled]="api.busy()" (click)="cancel()">Volver sin eliminar</button>
+            </div>
+          </form>
+        </ng-container>
+      </section>
+
+      <section *ngIf="api.stage() === 'result'" aria-labelledby="result-title" aria-live="polite" aria-atomic="true">
+        <h2 id="result-title">{{ resultTitle() }}</h2>
+        <p>{{ resultDescription() }}</p>
+        <div *ngIf="api.receiptUnavailable()" class="notice notice-info">
+          <p>Este comprobante ya no está disponible. Cerrar el seguimiento no cancela una solicitud ni acredita que la cuenta se haya eliminado. Puedes iniciar sesión para revisar tu cuenta o contactar a soporte.</p>
+          <button type="button" class="button button-secondary" [disabled]="api.busy()" (click)="discardUnavailableReceipt()">Cerrar este seguimiento</button>
+        </div>
+        <ng-container *ngIf="api.result() as result">
+          <p class="folio"><strong>Folio:</strong> {{ result.requestId }}</p>
+          <p *ngIf="result.reason" class="notice notice-info">{{ reasonText(result.reason) }}</p>
+          <div *ngIf="result.retainedCategories.length" class="retention-box">
+            <h3>Registros conservados</h3>
+            <ul><li *ngFor="let category of categories(result.retainedCategories)">{{ category }}</li></ul>
+            <ng-container *ngIf="result.retention as retention">
+              <p><strong>Motivo:</strong> {{ retention.basis }}</p>
+              <p *ngIf="!retention.identifiersExpired"><strong>Conservación hasta:</strong> {{ retention.until | date:'dd/MM/yyyy' }}.</p>
+              <p *ngIf="retention.identifiersExpired">Se completó la eliminación de los identificadores que estaban sujetos a conservación.</p>
+            </ng-container>
+          </div>
+          <p *ngIf="notificationText(result.notification) as notification" class="muted">{{ notification }}</p>
+        </ng-container>
+        <div *ngIf="api.hasReceipt(); else missingReceipt" class="actions">
+          <p class="receipt-help muted">Conserva esta pestaña para consultar el seguimiento. Puedes recargarla si tu navegador permite guardar el comprobante; al cerrarla podrías perderlo.</p>
+          <button type="button" class="button button-primary" [disabled]="api.busy()" (click)="api.refreshResult()">{{ api.busy() ? 'Consultando…' : 'Consultar estado' }}</button>
+          <button *ngIf="!api.outcomeUnknown() && (api.result()?.status === 'received' || api.result()?.status === 'identity_verified')" type="button" class="button button-secondary" [disabled]="api.busy()" (click)="restartUnconfirmed()">Iniciar una nueva solicitud</button>
+        </div>
+        <ng-template #missingReceipt><p class="notice notice-info">No encontramos el comprobante de seguimiento en esta pestaña. Contacta al equipo de atención para conocer el resultado.</p></ng-template>
+      </section>
+    </div>
+
+    <footer class="deletion-footer">
+      <p>¿Necesitas ayuda? <a [href]="'mailto:' + supportEmail">{{ supportEmail }}</a></p>
+      <a routerLink="/legal/privacy">Aviso de privacidad</a>
+    </footer>
+  </section>
+</main>

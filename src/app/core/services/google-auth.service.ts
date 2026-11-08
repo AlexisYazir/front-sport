@@ -83,28 +83,35 @@ export class GoogleAuthService {
   }
 
   loginWithGoogle(idToken: string): void {
+    const epoch = this.authService.beginAuthenticationAttempt();
     this.authService.setAuthenticationInProgress(true);
 
     this.http.post<LoginResponse>(
       `${this.API_URL}/users/auth/google-login`,
       { idToken, deviceName: this.getDeviceName() },
     ).subscribe({
-      next: (response) => this.handleLoginSuccess(response),
-      error: (error) => this.handleLoginError(error),
+      next: (response) => {
+        if (this.authService.isCurrentAuthenticationAttempt(epoch)) this.handleLoginSuccess(response, epoch);
+      },
+      error: (error) => {
+        if (this.authService.isCurrentAuthenticationAttempt(epoch)) this.handleLoginError(error);
+      },
     });
   }
 
-  private handleLoginSuccess(response: LoginResponse): void {
+  private handleLoginSuccess(response: LoginResponse, epoch: number): void {
     try {
       this.authService.handleAuthenticationResponse(response, {
         navigate: true,
         successMessage: '¡Bienvenido! Autenticación exitosa',
+        expectedEpoch: epoch,
       });
     } catch (error) {
+      if (!this.authService.isCurrentAuthenticationAttempt(epoch)) return;
       frontendLogger.error('Error procesando respuesta de Google', error);
       this.toastr.error('Error al procesar autenticación', 'Error');
     } finally {
-      this.authService.setAuthenticationInProgress(false);
+      if (this.authService.isCurrentAuthenticationAttempt(epoch)) this.authService.setAuthenticationInProgress(false);
     }
   }
 

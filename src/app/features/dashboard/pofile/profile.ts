@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { UserRole, getRoleName } from '../../../core/models/user.model';
 import { ToastrService } from 'ngx-toastr';
@@ -18,7 +19,7 @@ import {
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [IconModule, CommonModule, FormsModule], // Quitamos PasswordStrengthComponent
+  imports: [IconModule, CommonModule, FormsModule, RouterLink], // Quitamos PasswordStrengthComponent
   templateUrl: './profile.html',
   styleUrls: ['./profile.css']
 })

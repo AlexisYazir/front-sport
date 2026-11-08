@@ -1,11 +1,13 @@
 import type { RegistrationReceipt, MessageResponse, UserProfile } from './api-contracts';
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, OnDestroy, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import {
   Observable,
+  Subscription,
   BehaviorSubject,
   catchError,
+  defer,
   finalize,
   map,
   of,
@@ -47,10 +49,32 @@ interface JwtPayload {
   sessionId?: string;
 }
 
+export interface AuthSessionSnapshot {
+  readonly userId: number;
+  readonly sessionId: string | null;
+  readonly epoch: number;
+}
+
+interface AuthOperationSnapshot {
+  epoch: number;
+  userId: number | null;
+  sessionId: string | null;
+  storedUserId: number | null;
+  storedSessionId: string | null;
+}
+
+export class AuthSessionChangedError extends Error {
+  readonly code = 'AUTH_SESSION_CHANGED';
+  constructor() {
+    super('La sesión cambió durante la operación');
+    this.name = 'AuthSessionChangedError';
+  }
+}
+
 @Injectable({
   providedIn: 'root',
 })
-export class AuthService {
+export class AuthService implements OnDestroy {
   private http = inject(HttpClient);
   private router = inject(Router);
   private toastr = inject(ToastrService);
@@ -76,6 +100,11 @@ export class AuthService {
   private authenticationInProgress = false;
   private navigationInProgress = false;
   private refreshRequest$?: Observable<string>;
+  private sessionEpoch = 0;
+  private authenticationAttempt?: AuthOperationSnapshot;
+  private readonly accountEmails = new Set<string>();
+  private storageSyncListener?: (event: StorageEvent) => void;
+  private cookieRestore?: Subscription;
 
   constructor() {
     this.loadAuthState();
@@ -85,6 +114,77 @@ export class AuthService {
 
   currentUser$(): Observable<User | null> {
     return this.authState$.asObservable().pipe(map((state) => state.user));
+  }
+
+  private advanceSessionEpoch(): number {
+    this.sessionEpoch += 1;
+    this.refreshRequest$ = undefined;
+    this.authenticationAttempt = undefined;
+    this.cookieRestore?.unsubscribe();
+    this.cookieRestore = undefined;
+    return this.sessionEpoch;
+  }
+
+  private storedSessionId(): string | null {
+    return localStorage.getItem('auth:session_id') ?? sessionStorage.getItem('auth:session_id');
+  }
+
+  private captureOperation(): AuthOperationSnapshot {
+    return {
+      epoch: this.sessionEpoch,
+      userId: this.currentUser()?.id ?? null,
+      sessionId: this.authState$.value.sessionId,
+      storedUserId: this.getStoredUser()?.id ?? null,
+      storedSessionId: this.storedSessionId(),
+    };
+  }
+
+  private isCurrentOperation(snapshot: AuthOperationSnapshot): boolean {
+    return snapshot.epoch === this.sessionEpoch &&
+      snapshot.userId === (this.currentUser()?.id ?? null) &&
+      snapshot.sessionId === this.authState$.value.sessionId &&
+      snapshot.storedUserId === (this.getStoredUser()?.id ?? null) &&
+      snapshot.storedSessionId === this.storedSessionId();
+  }
+
+  captureSession(): AuthSessionSnapshot | null {
+    const userId = this.currentUser()?.id;
+    if (!this.isAuthenticated() || typeof userId !== 'number' || !Number.isSafeInteger(userId) || userId <= 0) return null;
+    return Object.freeze({userId,sessionId:this.authState$.value.sessionId,epoch:this.sessionEpoch});
+  }
+
+  isCurrentSession(snapshot: AuthSessionSnapshot | null): boolean {
+    return !!snapshot && this.isAuthenticated() &&
+      snapshot.epoch === this.sessionEpoch && this.currentUser()?.id === snapshot.userId &&
+      this.authState$.value.sessionId === snapshot.sessionId &&
+      this.getStoredUser()?.id === snapshot.userId && this.storedSessionId() === snapshot.sessionId;
+  }
+
+  clearDeletedAccountSession(snapshot: AuthSessionSnapshot): void {
+    if (!this.isCurrentSession(snapshot)) return;
+    const remembered = localStorage.getItem('sc_remember_email')?.trim().toLowerCase();
+    const removeRemembered = !!remembered && this.accountEmails.has(remembered);
+    this.clearAuthState(false);
+    if (removeRemembered) {
+      localStorage.removeItem('sc_remember_email');
+      localStorage.removeItem('sc_remember_me');
+    }
+  }
+
+  beginAuthenticationAttempt(): number {
+    const epoch = this.advanceSessionEpoch();
+    this.authenticationAttempt = this.captureOperation();
+    return epoch;
+  }
+
+  isCurrentAuthenticationAttempt(epoch: number): boolean {
+    return !!this.authenticationAttempt && this.authenticationAttempt.epoch === epoch &&
+      this.isCurrentOperation(this.authenticationAttempt);
+  }
+
+  ngOnDestroy(): void {
+    this.advanceSessionEpoch();
+    if (this.storageSyncListener && typeof window !== 'undefined') window.removeEventListener('storage', this.storageSyncListener);
   }
 
   private loadAuthState(): void {
@@ -133,46 +233,54 @@ export class AuthService {
       return;
     }
 
-    window.addEventListener('storage', (event) => {
+    this.storageSyncListener = (event) => {
       const relevantKeys = new Set([
         this.USER_KEY,
         'auth:session_id',
+        'auth:access_token',
+        'auth:refresh_token',
       ]);
 
       if (!event.key || relevantKeys.has(event.key)) {
+        if (event.storageArea && event.storageArea !== localStorage) return;
+        this.advanceSessionEpoch();
+        const access = localStorage.getItem('auth:access_token');
+        const refresh = localStorage.getItem('auth:refresh_token');
+        const session = localStorage.getItem('auth:session_id');
+        this.tokenService.setAccessToken(access);
+        this.tokenService.setRefreshToken(refresh);
+        this.tokenService.setSessionId(session);
         this.loadAuthState();
       }
-    });
+    };
+    window.addEventListener('storage', this.storageSyncListener);
   }
 
   private restoreSessionFromCookies(): void {
     const token = this.tokenService.getAccessToken();
     const storedUser = this.getStoredUser();
     const storedSessionId = this.tokenService.getSessionId();
+    const operation = this.captureOperation();
 
     if (token) {
       return;
     }
 
-    this.http
+    this.cookieRestore = this.http
       .get<LoginResponse>(`${this.API_URL}/users/session`, { withCredentials: true })
       .pipe(
         tap((response) => {
-          const existingUser = storedUser ?? this.currentUser() ?? undefined;
-          this.handleAuthenticationResponse(response, { navigate: false });
-
-          if (existingUser) {
-            const refreshedUser = this.currentUser();
-            if (refreshedUser) {
-              this.storeUser({
-                ...existingUser,
-                ...refreshedUser,
-              });
-            }
+          if (!this.isCurrentOperation(operation)) throw new AuthSessionChangedError();
+          const decoded = this.decodeToken(response.accessToken);
+          if (!decoded || (operation.userId !== null && decoded.id_usuario !== operation.userId) ||
+              (operation.sessionId !== null && response.sessionId !== operation.sessionId)) {
+            this.clearAuthState(false);
+            throw new AuthSessionChangedError();
           }
+          this.applyAuthenticationResponse(response, {navigate:false});
         }),
         catchError(() => {
-          if (!storedUser && !storedSessionId) {
+          if (this.isCurrentOperation(operation) && !storedUser && !storedSessionId) {
             this.updateAuthState(false, null, null, null);
           }
           return of(null);
@@ -211,6 +319,8 @@ export class AuthService {
     accessToken: string | null,
     sessionId: string | null,
   ): void {
+    if (user?.id !== this.currentUser()?.id) this.accountEmails.clear();
+    if (user?.email) this.accountEmails.add(user.email.trim().toLowerCase());
     this.authState$.next({
       isAuthenticated: isAuth,
       user,
@@ -227,6 +337,7 @@ export class AuthService {
   }
 
   private persistAuthSession(response: LoginResponse, user: User): void {
+    if (this.currentUser()?.id !== user.id || this.authState$.value.sessionId !== response.sessionId) this.advanceSessionEpoch();
     this.tokenService.setSessionTokens(
       response.accessToken,
       response.refreshToken,
@@ -271,7 +382,16 @@ export class AuthService {
 
   handleAuthenticationResponse(
     response: LoginResponse,
-    options?: { navigate?: boolean; successMessage?: string },
+    options?: { navigate?: boolean; successMessage?: string; expectedEpoch?: number },
+  ): User {
+    const epoch = options?.expectedEpoch ?? this.beginAuthenticationAttempt();
+    if (!this.isCurrentAuthenticationAttempt(epoch)) throw new AuthSessionChangedError();
+    return this.applyAuthenticationResponse(response, options);
+  }
+
+  private applyAuthenticationResponse(
+    response: LoginResponse,
+    options?: {navigate?:boolean;successMessage?:string},
   ): User {
     const tokenData = this.decodeToken(response.accessToken);
 
@@ -279,9 +399,11 @@ export class AuthService {
       throw new Error('Token inválido');
     }
 
-    const existingUser = this.getStoredUser() ?? undefined;
+    const storedUser = this.getStoredUser();
+    const existingUser = storedUser?.id === tokenData.id_usuario ? storedUser : undefined;
     const user = this.buildUserFromToken(tokenData, existingUser);
     this.persistAuthSession(response, user);
+    this.authenticationInProgress = false;
 
     if (options?.successMessage) {
       this.toastr.success(options.successMessage, 'Login Exitoso');
@@ -294,8 +416,9 @@ export class AuthService {
         ? this.router.navigateByUrl(returnUrl)
         : this.router.navigate([getDashboardRoute(user.rol)]);
 
+      const epoch = this.sessionEpoch;
       navigation.finally(() => {
-        this.setNavigationInProgress(false);
+        if (this.sessionEpoch === epoch) this.setNavigationInProgress(false);
       });
     }
 
@@ -303,6 +426,9 @@ export class AuthService {
   }
 
   clearAuthState(redirect = false): void {
+    this.advanceSessionEpoch();
+    this.authenticationInProgress = false;
+    this.navigationInProgress = false;
     localStorage.removeItem(this.USER_KEY);
     localStorage.removeItem('auth_timestamp');
     this.tokenService.clearTokens();
@@ -333,16 +459,22 @@ export class AuthService {
       deviceName: credentials.deviceName ?? this.getDeviceName(),
     };
 
-    return this.http.post<LoginResponse>(`${this.API_URL}/users/login-user`, payload, {
+    return defer(() => {
+      const epoch = this.beginAuthenticationAttempt();
+      return this.http.post<LoginResponse>(`${this.API_URL}/users/login-user`, payload, {
       withCredentials: true,
     }).pipe(
-      tap((response) => {
+      map((response) => {
+        if (!this.isCurrentAuthenticationAttempt(epoch)) throw new AuthSessionChangedError();
         this.handleAuthenticationResponse(response, {
           navigate: true,
           successMessage: '¡Bienvenido!',
+          expectedEpoch: epoch,
         });
+        return response;
       }),
       catchError((error) => {
+        if (!this.isCurrentAuthenticationAttempt(epoch)) return throwError(() => new AuthSessionChangedError());
         this.sessionService.recordFailedAttempt(credentials.email);
 
         if (this.sessionService.checkAccountLock(credentials.email)) {
@@ -368,6 +500,7 @@ export class AuthService {
         return throwError(() => error);
       }),
     );
+    });
   }
 
   refreshAccessToken(): Observable<string> {
@@ -375,41 +508,54 @@ export class AuthService {
       return this.refreshRequest$;
     }
 
-    this.refreshRequest$ = this.http
+    const snapshot = this.captureSession();
+    if (!snapshot || !this.isCurrentSession(snapshot)) return throwError(() => new AuthSessionChangedError());
+    const shared = defer(() => {
+      if (!this.isCurrentSession(snapshot)) return throwError(() => new AuthSessionChangedError());
+      return this.http
       .post<LoginResponse>(
         `${this.API_URL}/users/refresh-token`,
         { refreshToken: this.tokenService.getRefreshToken() ?? undefined },
         { withCredentials: true },
-      )
+      );
+    })
       .pipe(
         map((response) => {
-          const user = this.currentUser() ?? this.getStoredUser();
-          if (!user) {
-            throw new Error('No user available for refreshed session');
-          }
+          if (!this.isCurrentSession(snapshot)) throw new AuthSessionChangedError();
+          const user = this.currentUser();
+          const decoded = this.decodeToken(response.accessToken);
+          if (!user || !decoded || decoded.id_usuario !== snapshot.userId ||
+              (snapshot.sessionId !== null && response.sessionId !== snapshot.sessionId)) throw new AuthSessionChangedError();
 
           this.persistAuthSession(response, user);
           return response.accessToken;
         }),
         finalize(() => {
-          this.refreshRequest$ = undefined;
+          if (this.refreshRequest$ === guarded) this.refreshRequest$ = undefined;
         }),
-        shareReplay(1),
+        shareReplay({bufferSize:1,refCount:true}),
       );
-
+    const guarded = shared.pipe(map(value => {
+      if (!this.isCurrentSession(snapshot)) throw new AuthSessionChangedError();
+      return value;
+    }));
+    this.refreshRequest$ = guarded;
     return this.refreshRequest$;
   }
 
   logout(notifyServer = true, showNotification = notifyServer): void {
+    const hadSession = !!this.tokenService.getAccessToken() || !!this.getStoredUser();
+    this.clearAuthState(false);
+    const epoch = this.sessionEpoch;
     const finalizeLogout = () => {
-      this.clearAuthState(false);
+      if (this.sessionEpoch !== epoch || this.currentUser() || this.getStoredUser()) return;
       this.router.navigate(['/home']);
       if (showNotification) {
         this.toastr.success('Tu sesión se cerró correctamente', 'Sesión cerrada');
       }
     };
 
-    if (!notifyServer || (!this.tokenService.getAccessToken() && !this.getStoredUser())) {
+    if (!notifyServer || !hadSession) {
       finalizeLogout();
       return;
     }
@@ -455,6 +601,8 @@ export class AuthService {
   }
 
   updateCurrentUser(user: User): void {
+    const snapshot = this.captureSession();
+    if (!snapshot || !this.isCurrentSession(snapshot) || user.id !== snapshot.userId) throw new AuthSessionChangedError();
     this.storeUser(user);
     this.updateAuthState(
       true,
@@ -677,13 +825,19 @@ export class AuthService {
   }
 
   updateProfile(data: UpdateProfileData): Observable<UpdateProfileResponse> {
-    return this.http.patch<UpdateProfileResponse>(`${this.API_URL}/users/update-profile`, data).pipe(
+    const snapshot = this.captureSession();
+    return defer(() => {
+      if (!snapshot || !this.isCurrentSession(snapshot)) return throwError(() => new AuthSessionChangedError());
+      return this.http.patch<UpdateProfileResponse>(`${this.API_URL}/users/update-profile`, data);
+    }).pipe(
       tap((response) => {
+        if (!snapshot || !this.isCurrentSession(snapshot)) throw new AuthSessionChangedError();
         const currentUser = this.currentUser();
         if (currentUser) {
           this.updateCurrentUser({
             ...currentUser,
             ...response.user,
+            id: snapshot.userId,
           });
         }
       }),
