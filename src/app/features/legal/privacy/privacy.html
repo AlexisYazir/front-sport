@@ -1,0 +1,105 @@
+<div class="min-h-screen bg-gradient-to-b from-[#f6f7f9] to-white p-4 sm:p-6">
+  <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg overflow-hidden">
+    <header class="px-6 py-5 border-b border-gray-100 flex flex-col sm:flex-row sm:flex-wrap items-start justify-between gap-4">
+      <div class="flex-1 min-w-0">
+        <h1 class="text-2xl sm:text-3xl font-bold text-[#0f172a]">Aviso de privacidad de {{ legal.brand }}</h1>
+        <p class="text-sm text-gray-600 mt-2">Última actualización: {{ legal.revisionLabel }}.</p>
+        <a href="/legal/privacy#eliminar-cuenta" class="print-actions mt-3 inline-block font-semibold text-[#0367A6] underline">Eliminación de cuenta y datos personales</a>
+      </div>
+      <nav aria-label="Acciones del aviso" class="print-actions flex flex-wrap gap-3 text-sm">
+        <button type="button" (click)="printNotice()" class="rounded-lg bg-[#0367A6] px-4 py-2 text-white">Imprimir</button>
+        <a routerLink="/home" class="rounded-lg border px-4 py-2 text-[#0367A6]">Inicio</a>
+      </nav>
+    </header>
+
+    <main class="px-6 py-6 sm:px-10 sm:py-8 text-sm leading-relaxed text-gray-800">
+      <article class="space-y-8">
+        <section aria-labelledby="responsable-title">
+          <h2 id="responsable-title" class="text-xl font-semibold text-[#0f172a]">1. Responsable del tratamiento</h2>
+          <p class="mt-3">{{ legal.owner }}, titular de {{ legal.brand }}, con domicilio en {{ legal.address }}, es responsable del tratamiento de los datos personales recabados para la atención a clientes, la venta de productos y la prestación de los servicios de Sport Center.</p>
+          <p class="mt-3">Para asuntos relacionados con sus datos personales, puede comunicarse con la Administración de Sport Center al correo <a [href]="contactMailto" class="text-[#0367A6] underline break-words">{{ legal.email }}</a> o al teléfono <a [href]="legal.phoneHref" class="text-[#0367A6] underline">{{ legal.phone }}</a>. El horario de atención es {{ legal.hours }}.</p>
+        </section>
+
+        <section aria-labelledby="datos-title">
+          <h2 id="datos-title" class="text-xl font-semibold text-[#0f172a]">2. Datos personales y finalidades</h2>
+          <p class="mt-3">Sport Center trata los datos necesarios para las operaciones y servicios que el cliente solicita:</p>
+          <ul class="list-disc pl-6 mt-3 space-y-2">
+            <li><strong>Identificación y contacto:</strong> nombre, apellidos, correo electrónico, teléfono e identificador de cuenta, para registrar y administrar la cuenta, identificar al cliente y atender sus comunicaciones.</li>
+            <li><strong>Acceso y seguridad:</strong> credenciales, códigos de verificación, identificadores de sesión y datos técnicos de conexión, como dirección IP e información del dispositivo, para autenticar el acceso, recuperar la cuenta y prevenir usos no autorizados.</li>
+            <li><strong>Compras y entregas:</strong> productos, cantidades, carrito, direcciones, datos del destinatario, referencias de pago, importes e historial de pedidos, para gestionar ventas, pagos, entregas, cambios, devoluciones y reclamaciones.</li>
+            <li><strong>Contenido y atención:</strong> reseñas, valoraciones, reportes, mensajes y solicitudes relacionadas con datos personales, para publicar el contenido solicitado, atender incidencias y dar seguimiento a las gestiones del cliente. Las reseñas pueden mostrar el nombre del autor junto al contenido publicado.</li>
+            <li><strong>Preferencias de uso:</strong> búsquedas, preferencias y constancias de operaciones o aceptación de documentos, para conservar las opciones elegidas y facilitar el uso de los servicios.</li>
+          </ul>
+          <p class="mt-3">Estas finalidades permiten mantener la relación con el cliente y cumplir las obligaciones derivadas de ella. La falta de los datos necesarios puede impedir la prestación del servicio solicitado.</p>
+          <p class="mt-3">Sport Center no solicita datos personales sensibles para estas finalidades. Se recomienda no incluirlos en reseñas, mensajes ni otros campos de texto libre.</p>
+          <p class="mt-3">Actualmente no se utilizan los datos personales de los clientes para campañas publicitarias. Los correos de verificación, confirmación y seguimiento son comunicaciones necesarias para la operación del servicio. Cualquier finalidad promocional posterior se informará previamente y se recabará el consentimiento que corresponda.</p>
+        </section>
+
+        <section aria-labelledby="tecnologias-title">
+          <h2 id="tecnologias-title" class="text-xl font-semibold text-[#0f172a]">3. Almacenamiento, ubicación y recursos externos</h2>
+          <p class="mt-3">Los servicios digitales utilizan cookies y almacenamiento local para mantener sesiones, recordar preferencias y búsquedas, conservar constancias y permitir la recuperación de ciertas acciones. También pueden guardar contenido público para su consulta sin conexión. Estas opciones se administran desde la configuración del navegador o dispositivo; su eliminación puede cerrar la sesión o restablecer preferencias.</p>
+          <p class="mt-3">Cuando el cliente utiliza una opción de ubicación, las coordenadas se obtienen con su autorización para facilitar la captura de direcciones, mostrar mapas o consultar indicaciones. El permiso puede rechazarse o revocarse desde la configuración correspondiente, y la dirección puede proporcionarse manualmente.</p>
+          <p class="mt-3">La carga de recursos de identidad, tipografías, imágenes y mapas genera conexiones con sus proveedores, que reciben los datos técnicos necesarios para entregarlos. Al utilizar una función de mapas o indicaciones con ubicación, también se transmiten las coordenadas necesarias para esa consulta.</p>
+        </section>
+
+        <section aria-labelledby="proveedores-title">
+          <h2 id="proveedores-title" class="text-xl font-semibold text-[#0f172a]">4. Proveedores y comunicación de datos</h2>
+          <p class="mt-3">Sport Center utiliza proveedores que intervienen en las siguientes funciones:</p>
+          <ul class="list-disc pl-6 mt-3 space-y-2">
+            <li><strong>Netlify y Render:</strong> alojamiento y operación de los servicios digitales.</li>
+            <li><strong>Neon:</strong> almacenamiento de la base de datos.</li>
+            <li><strong>Cloudflare:</strong> almacenamiento de respaldos y constancias de eliminación.</li>
+            <li><strong>Brevo:</strong> envío de correos operativos.</li>
+            <li><strong>Cloudinary:</strong> almacenamiento y entrega de imágenes.</li>
+            <li><strong>Mercado Pago:</strong> procesamiento de pagos y comunicación de referencias y estados de las operaciones. Los datos introducidos en su propio proceso de pago son tratados por ese proveedor.</li>
+            <li><strong>Google y MapTiler:</strong> servicios de identidad, tipografías, mapas e indicaciones, según el recurso o la función utilizada.</li>
+          </ul>
+          <p class="mt-3">Cada proveedor recibe los datos necesarios para su función. La información de entrega se comunica únicamente en la medida necesaria para atender el pedido. Los datos también podrán comunicarse a una autoridad cuando exista una obligación legal. Si una transferencia requiere consentimiento, éste se solicitará antes de realizarla.</p>
+          <p class="mt-3">Algunos proveedores pueden tratar información fuera de México. Su intervención se limita a los fines del servicio y a las obligaciones de protección de datos que correspondan.</p>
+        </section>
+
+        <section aria-labelledby="conservacion-title">
+          <h2 id="conservacion-title" class="text-xl font-semibold text-[#0f172a]">5. Conservación y protección</h2>
+          <p class="mt-3">Los datos de cuenta, contacto y direcciones se conservan mientras sean necesarios para la relación con el cliente. Cuando dejan de ser necesarios, se eliminan o anonimizan, salvo que deban conservarse para cumplir una obligación o atender una operación pendiente.</p>
+          <p class="mt-3">Los pedidos, pagos, devoluciones y comprobantes se conservan durante los periodos necesarios para cumplir obligaciones comerciales, fiscales y legales y atender reclamaciones. Su acceso y uso se limitan a esas finalidades. Las reseñas, mensajes y constancias de atención se eliminan o disocian cuando ya no deban conservarse.</p>
+          <p class="mt-3">Los registros de seguridad y las constancias de eliminación se utilizan para proteger el servicio, atender incidencias y evitar la reactivación de cuentas eliminadas. Los respaldos se destinan a la recuperación y continuidad del servicio; las eliminaciones confirmadas se respetan al restaurar la información.</p>
+          <p class="mt-3">Sport Center aplica controles de acceso, verificación de identidad y conexiones cifradas para proteger los datos personales. El acceso se limita al personal autorizado y a los proveedores que lo requieren para cumplir sus funciones.</p>
+        </section>
+
+        <section id="eliminar-cuenta" aria-labelledby="eliminar-title" class="scroll-mt-6 rounded-xl border-2 border-[#0367A6] bg-sky-50 p-5">
+          <h2 id="eliminar-title" class="text-xl font-semibold text-[#0f172a]">6. Eliminación de cuenta y datos personales</h2>
+          <p class="mt-3">La eliminación puede solicitarse mediante la opción <a routerLink="/account/delete" class="text-[#0367A6] underline">Eliminar mi cuenta</a>. El procedimiento requiere iniciar sesión, verificar la identidad con un código exclusivo de seis dígitos enviado al correo de la cuenta y confirmar la solicitud después de revisar sus consecuencias.</p>
+          <p class="mt-3">El proceso invalida el acceso y las sesiones de la cuenta y elimina o anonimiza los datos personales que ya no deban conservarse. Los registros sujetos a una obligación de conservación permanecen protegidos y con acceso restringido.</p>
+          <p class="mt-3">Cuando existen pedidos, pagos o devoluciones pendientes, o una situación que exige revisión, la Administración atiende el caso. El seguimiento indica si la eliminación está completada o requiere atención y el resultado se comunica por correo. Enviar o verificar el código no acredita por sí solo la eliminación.</p>
+          <p class="mt-3">La eliminación completada es irreversible respecto de la cuenta anterior. Un registro posterior crea una cuenta nueva y no recupera automáticamente los datos ni el historial eliminados. La solicitud de eliminación no cancela pedidos ni inicia reembolsos.</p>
+          <p class="mt-3">Si no puede acceder a su cuenta o necesita asistencia, puede escribir a <a [href]="deletionMailto" class="text-[#0367A6] underline break-words">{{ legal.email }}</a> con el asunto «Solicitud de eliminación de cuenta y datos». La Administración verificará la titularidad antes de tramitarla; no envíe contraseñas ni códigos de acceso.</p>
+          <a routerLink="/account/delete" class="print-actions mt-4 inline-block rounded-lg bg-[#0367A6] px-4 py-3 font-medium text-white">Solicitar eliminación de cuenta</a>
+        </section>
+
+        <section aria-labelledby="arco-title">
+          <h2 id="arco-title" class="text-xl font-semibold text-[#0f172a]">7. Derechos sobre sus datos personales</h2>
+          <p class="mt-3">El titular puede solicitar acceso, rectificación, cancelación u oposición al tratamiento de sus datos, revocar su consentimiento o limitar su uso o divulgación. La Administración de Sport Center atiende estas solicitudes en <a [href]="contactMailto" class="text-[#0367A6] underline break-words">{{ legal.email }}</a>.</p>
+          <p class="mt-3">La solicitud debe indicar nombre, medio para recibir respuesta, derecho que se desea ejercer y datos que permitan localizar la información. Para una rectificación, debe señalarse la modificación solicitada y su soporte. La Administración indicará un medio adecuado para acreditar la identidad o representación; no adjunte documentos de identidad al mensaje inicial.</p>
+          <p class="mt-3">Las solicitudes de acceso, rectificación, cancelación u oposición se resuelven en un máximo de 20 días hábiles desde su recepción. Si proceden, se hacen efectivas dentro de los 15 días hábiles siguientes a la respuesta. Los plazos pueden ampliarse una sola vez por igual periodo cuando exista justificación, que será comunicada al titular.</p>
+          <p class="mt-3">La revocación y la limitación se atienden conforme a la finalidad del tratamiento y las obligaciones aplicables. Cuando sea necesario conservar determinados registros, se informará el motivo y el criterio de conservación correspondiente.</p>
+          <p class="mt-3">Para conocer el marco aplicable, puede consultar la <a href="https://www.diputados.gob.mx/LeyesBiblio/pdf/LFPDPPP.pdf" target="_blank" rel="noopener noreferrer" class="text-[#0367A6] underline">Ley Federal de Protección de Datos Personales en Posesión de los Particulares</a>.</p>
+        </section>
+
+        <section aria-labelledby="cambios-title">
+          <h2 id="cambios-title" class="text-xl font-semibold text-[#0f172a]">8. Actualizaciones del aviso</h2>
+          <p class="mt-3">Las modificaciones se publicarán en esta misma página, identificadas con su fecha de actualización. Cuando un cambio requiera un nuevo consentimiento, éste se solicitará antes de aplicar el tratamiento correspondiente.</p>
+          <p class="mt-3">Este aviso se encuentra disponible en <a [href]="legal.website + '/legal/privacy'" class="text-[#0367A6] underline break-words">{{ legal.website }}/legal/privacy</a>.</p>
+        </section>
+      </article>
+    </main>
+
+    <footer class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex flex-wrap items-center justify-between gap-4 text-sm">
+      <span>© {{ legal.brand }}</span>
+      <nav aria-label="Enlaces relacionados" class="print-actions flex flex-wrap gap-4">
+        <a routerLink="/legal/terms" class="text-[#0367A6] underline">Términos y condiciones</a>
+        <a routerLink="/support/contact" class="text-[#0367A6] underline">Contacto</a>
+        <a [href]="contactMailto" class="text-[#0367A6] underline">Correo de atención</a>
+      </nav>
+    </footer>
+  </div>
+</div>
