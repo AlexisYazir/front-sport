@@ -2,8 +2,8 @@ import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
-import { catchError, switchMap, throwError } from 'rxjs';
-import { AuthService } from '../services/auth.service';
+import { catchError, map, switchMap, throwError } from 'rxjs';
+import { AuthService, AuthSessionChangedError } from '../services/auth.service';
 import { TokenService } from '../services/token.service';
 import { SKIP_AUTH_RETRY } from './auth-request-context';
 
@@ -21,11 +21,6 @@ const AUTH_EXCLUDED_URLS = [
 ];
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
-  const authService = inject(AuthService);
-  const tokenService = inject(TokenService);
-  const router = inject(Router);
-  const toastr = inject(ToastrService);
-
   const isExcluded = AUTH_EXCLUDED_URLS.some((url) => req.url.includes(url));
   if (isExcluded) {
     return next(
@@ -37,6 +32,13 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
       }),
     );
   }
+
+  const authService = inject(AuthService);
+  const tokenService = inject(TokenService);
+  const router = inject(Router);
+  const toastr = inject(ToastrService);
+  const snapshot = authService.captureSession();
+  const isCurrent = () => !!snapshot && authService.isCurrentSession(snapshot);
 
   const cloneWithToken = (token: string | null) => {
     const headers: Record<string, string> = {
@@ -52,21 +54,32 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   const sendRequest = (token: string | null) =>
     next(cloneWithToken(token)).pipe(
+      map(event => {
+        if (snapshot && !isCurrent()) throw new AuthSessionChangedError();
+        return event;
+      }),
       catchError((error: HttpErrorResponse) => {
+        if ((snapshot && !isCurrent()) || error instanceof AuthSessionChangedError) return throwError(() => error);
         const canRetry = !req.context.get(SKIP_AUTH_RETRY) && !req.headers.has('X-Auth-Retry');
 
-        if (error.status === 401 && canRetry && authService.isLoggedIn()) {
+        if (error.status === 401 && canRetry && isCurrent() && authService.isLoggedIn()) {
           return authService.refreshAccessToken().pipe(
-            switchMap((newToken) =>
-              next(
+            switchMap((newToken) => {
+              if (!isCurrent()) return throwError(() => new AuthSessionChangedError());
+              return next(
                 cloneWithToken(newToken).clone({
                   setHeaders: { 'X-Auth-Retry': '1' },
                 }),
-              ),
-            ),
+              ).pipe(map(event => {
+                if (!isCurrent()) throw new AuthSessionChangedError();
+                return event;
+              }));
+            }),
             catchError((refreshError) => {
-              authService.logout(false);
-              router.navigate(['/auth/login']);
+              if (isCurrent()) {
+                authService.logout(false);
+                router.navigate(['/auth/login']);
+              }
               return throwError(() => refreshError);
             }),
           );
@@ -76,7 +89,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
           return throwError(() => error);
         }
 
-        if (error.status === 401) {
+        if (error.status === 401 && isCurrent()) {
           toastr.error(
             'Tu sesión ya no es válida. Inicia sesión nuevamente.',
             'Sesión expirada',
@@ -85,7 +98,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
           router.navigate(['/auth/login']);
         }
 
-        if (error.status === 419) {
+        if (error.status === 419 && isCurrent()) {
           toastr.error('La sesión expiró. Inicia sesión nuevamente.', 'Sesión expirada');
           authService.logout(false);
           router.navigate(['/auth/login']);
@@ -96,14 +109,17 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     );
 
   const token = tokenService.getAccessToken();
-  if (token && authService.shouldRefreshSoon()) {
+  if (snapshot && !isCurrent()) return throwError(() => new AuthSessionChangedError());
+  if (token && isCurrent() && authService.shouldRefreshSoon()) {
     return authService.refreshAccessToken().pipe(
       catchError(() => {
-        authService.logout(false);
-        router.navigate(['/auth/login']);
+        if (isCurrent()) {
+          authService.logout(false);
+          router.navigate(['/auth/login']);
+        }
         return throwError(() => new Error('Unable to refresh session'));
       }),
-      switchMap((newToken) => sendRequest(newToken)),
+      switchMap((newToken) => isCurrent() ? sendRequest(newToken) : throwError(() => new AuthSessionChangedError())),
     );
   }
 

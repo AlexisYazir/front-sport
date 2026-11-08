@@ -27,4 +27,10 @@ describe('Profile', () => {
     expect(component).toBeTruthy();
     expect(fixture.nativeElement.textContent).toContain("Mi Perfil");
   });
+
+  it('ofrece la eliminación sin ejecutar una solicitud al abrir el perfil', () => {
+    const link = fixture.nativeElement.querySelector('a[href="/account/delete"]') as HTMLAnchorElement | null;
+    expect(link?.textContent).toContain('Eliminar cuenta');
+    TestBed.inject(HttpTestingController).expectNone(request => request.method !== 'GET');
+  });
 });

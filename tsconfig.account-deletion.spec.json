@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.spec.json",
+  "include": [
+    "src/app/core/services/account-deletion.spec.ts",
+    "src/app/core/services/auth-session-lifecycle.spec.ts",
+    "src/app/features/account-deletion/account-deletion.spec.ts",
+    "src/app/features/dashboard/pofile/profile.spec.ts"
+  ]
+}

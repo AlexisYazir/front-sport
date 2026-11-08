@@ -92,7 +92,9 @@ describe('Moderación: integración con el interceptor de sesión', () => {
   let auth: jasmine.SpyObj<AuthService>;
   let navigate: jasmine.Spy;
   beforeEach(() => {
-    auth = jasmine.createSpyObj<AuthService>('AuthService', ['isLoggedIn', 'shouldRefreshSoon', 'refreshAccessToken', 'logout']);
+    auth = jasmine.createSpyObj<AuthService>('AuthService', ['isLoggedIn', 'shouldRefreshSoon', 'refreshAccessToken', 'logout', 'captureSession', 'isCurrentSession']);
+    auth.captureSession.and.returnValue({userId:3,sessionId:'moderation-session',epoch:1});
+    auth.isCurrentSession.and.returnValue(true);
     auth.isLoggedIn.and.returnValue(true); auth.shouldRefreshSoon.and.returnValue(false);
     auth.refreshAccessToken.and.returnValue(of('token-renovado-qa'));
     navigate = jasmine.createSpy('navigate');
