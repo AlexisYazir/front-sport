@@ -179,6 +179,8 @@ describe('AccountDeletionComponent: explicit, accessible self-service steps', ()
     it(`does not describe ${status} as a completed deletion`, () => {
       api.stage.set('result'); api.hasReceipt.set(true); api.result.set(result(status)); fixture.detectChanges();
       expect(view().querySelector('#result-title')?.textContent).not.toContain('Tu cuenta fue eliminada');
+      expect(button('Consultar estado')).toBeDefined();
+      expect(text()).not.toContain('Volver al inicio');
       expect(api.confirm).not.toHaveBeenCalled();
     });
   }
@@ -199,6 +201,10 @@ describe('AccountDeletionComponent: explicit, accessible self-service steps', ()
     expect(view().querySelector('#result-title')?.textContent).toContain('Tu cuenta fue eliminada');
     expect(text()).toContain('notificación por correo está pendiente');
     expect(text()).toContain('Un registro futuro creará una cuenta nueva');
+    const home = view().querySelector<HTMLAnchorElement>('a.button[href="/home"]');
+    expect(home?.textContent?.trim()).toBe('Volver al inicio');
+    expect(button('Consultar estado')).toBeUndefined();
+    expect(api.refreshResult).not.toHaveBeenCalled();
   });
 
   it('shows restricted retained categories and their actual expiry rather than claiming immediate erasure', () => {
