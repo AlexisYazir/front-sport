@@ -1,120 +1,184 @@
 <div class="min-h-screen bg-gradient-to-b from-[#f6f7f9] to-white p-6">
-  <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg overflow-hidden">
-    <!-- Header -->
-    <header class="px-6 py-5 border-b border-gray-100 flex items-start justify-between gap-4">
-      <div class="flex-1">
-        <h1 class="text-2xl sm:text-3xl font-bold text-[#0f172a]">TÉRMINOS Y CONDICIONES – SPORT 2222</h1>
-        <p class="text-sm text-gray-500 mt-1">Fecha de última actualización: 25 de septiembre de 2025</p>
+  <div class="mx-auto max-w-4xl overflow-hidden rounded-2xl bg-white shadow-lg">
+    <header class="flex flex-col sm:flex-row sm:flex-wrap items-start justify-between gap-4 border-b border-gray-100 px-6 py-5">
+      <div class="min-w-0 flex-1">
+        <h1 class="text-2xl font-bold text-[#0f172a] sm:text-3xl">
+          Términos y condiciones de {{ legal.brand }}
+        </h1>
+        <p class="mt-1 text-sm text-gray-500">Versión del documento: {{ legal.revisionLabel }}</p>
       </div>
-
-      <div class="flex-shrink-0 flex flex-col items-end gap-2">
-        <nav aria-label="Acciones rápidas" class="flex gap-2">
-          <button type="button" onclick="window.print()" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-[#0367A6] text-white text-sm hover:brightness-95">
-            Imprimir
-          </button>
-          <a routerLink="/home" class="inline-flex items-center px-3 py-2 rounded-lg border text-sm text-[#0367A6] hover:bg-[#0367A6]/5">Inicio</a>
-        </nav>
-      </div>
+      <nav aria-label="Acciones del documento" class="flex flex-wrap gap-2 print:hidden">
+        <button type="button" (click)="print()"
+          class="rounded-lg bg-[#0367A6] px-3 py-2 text-sm text-white hover:brightness-95">
+          Imprimir
+        </button>
+        <a routerLink="/home" class="rounded-lg border px-3 py-2 text-sm text-[#0367A6] hover:bg-[#0367A6]/5">
+          Inicio
+        </a>
+      </nav>
     </header>
 
-    <!-- Content -->
-    <main class="px-6 py-6 sm:px-10 sm:py-8">
-      <article class="prose max-w-none text-sm leading-relaxed text-gray-800">
-        <section>
-          <h2>1. Información General sobre la Empresa</h2>
-          <p><strong>Nombre de la empresa:</strong> sport 2222</p>
-          <p><strong>Razón social:</strong> uthh20 S.A. de C.V.</p>
-          <p><strong>Domicilio fiscal:</strong> Av. Revolución #120, Col. Centro, Huejutla de Reyes, Hidalgo, México, C.P. 43000</p>
-          <p><strong>Medios de contacto:</strong></p>
-          <ul>
-            <li><strong>Correo electrónico:</strong> contacto@sport2222.com.mx</li>
-            <li><strong>Teléfono:</strong> (789) 123 4567</li>
-            <li><strong>Página web:</strong> www.sport2222.com.mx</li>
-          </ul>
-          <p><strong>Actividad comercial:</strong> Venta de ropa y accesorios deportivos a través de comercio electrónico, incluyendo servicios de carrito de compras y apartado de productos.</p>
-          <p><strong>Marco legal:</strong> Estos Términos y Condiciones se sustentan en la Ley Federal de Protección al Consumidor, Ley de Comercio Electrónico, y demás leyes mercantiles aplicables en México, supervisadas por PROFECO.</p>
-        </section>
+    <main class="space-y-7 px-6 py-6 text-sm leading-relaxed text-gray-800 sm:px-10 sm:py-8">
+      <section aria-labelledby="terms-scope" class="space-y-3">
+        <h2 id="terms-scope" class="text-lg font-semibold text-[#0f172a]">1. Alcance e identificación</h2>
+        <p>
+          Estos términos regulan las compras de productos de {{ legal.brand }}, así como el uso de
+          sus servicios y cuentas de cliente. Cada compra se rige por las condiciones informadas
+          antes de su confirmación y por la legislación mexicana aplicable.
+        </p>
+        <ul class="list-disc space-y-1 pl-5">
+          <li><strong>Marca:</strong> {{ legal.brand }}.</li>
+          <li><strong>Responsable de la venta:</strong> {{ legal.owner }}.</li>
+          <li><strong>Domicilio de contacto y reclamaciones:</strong> {{ legal.address }}.</li>
+          <li><strong>Contacto:</strong><a [href]="'mailto:' + legal.email" class="break-words text-[#0367A6] underline"> {{ legal.email }}</a>.</li>
+          <li><strong>Teléfono:</strong><a [href]="legal.phoneHref" class="text-[#0367A6] underline"> {{ legal.phone }}</a>.</li>
+          <li><strong>Horario de atención:</strong> {{ legal.hours }}.</li>
+          <li><strong>Sitio:</strong><a [href]="legal.website" class="break-words text-[#0367A6] underline"> {{ legal.website }}</a>.</li>
+        </ul>
+      </section>
 
-        <section>
-          <h2>2. Aceptación de los Términos y Condiciones</h2>
-          <p>Al realizar una compra o utilizar cualquier servicio de sport 2222, el usuario acepta estos Términos y Condiciones. La aceptación se realiza mediante clic en el botón de “Aceptar” o mediante cualquier acción de compra en la plataforma.</p>
-          <p>Los Términos y Condiciones pueden ser modificados en cualquier momento; se recomienda al usuario revisarlos periódicamente.</p>
-        </section>
+      <section aria-labelledby="terms-products" class="space-y-3">
+        <h2 id="terms-products" class="text-lg font-semibold text-[#0f172a]">2. Productos, precios y pedido</h2>
+        <p>
+          Antes de comprar, revise la descripción, talla, color, cantidad, precio y disponibilidad
+          del producto elegido. El precio y las existencias pueden variar entre presentaciones.
+          Conserve su comprobante y la información de su pedido para cualquier aclaración.
+        </p>
+        <p>
+          Antes de confirmar la compra, se informan el precio, el costo de envío y cualquier otro
+          cargo aplicable, junto con el importe total. Las promociones se sujetan a las condiciones
+          y la vigencia indicadas al ofrecerlas.
+        </p>
+        <p>
+          Los medios de pago disponibles se indican al realizar el pedido. El plazo de entrega
+          comienza a contar una vez confirmado el pago, como se explica en el apartado siguiente.
+        </p>
+      </section>
 
-        <section>
-          <h2>3. Proceso de Compra y Precios</h2>
-          <ul>
-            <li><strong>Selección de productos:</strong> El usuario elige productos desde la plataforma en línea.</li>
-            <li><strong>Carrito de compras:</strong> Se pueden agregar, modificar o eliminar productos antes de finalizar la compra.</li>
-            <li><strong>Sistema de apartado:</strong> El cliente puede apartar productos mediante un anticipo y completar el pago en el tiempo indicado.</li>
-            <li><strong>Confirmación de compra:</strong> Al completar el pago, el usuario recibe confirmación por correo electrónico.</li>
-            <li><strong>Precios:</strong> Todos los precios incluyen impuestos aplicables (IVA).</li>
-            <li><strong>Formas de pago:</strong> Tarjetas de crédito, débito, transferencia bancaria y PayPal.</li>
-            <li><strong>Promociones y descuentos:</strong> Aplican según condiciones indicadas en cada campaña, vigentes en fechas específicas.</li>
-          </ul>
-        </section>
+      <section aria-labelledby="terms-delivery" class="space-y-3">
+        <h2 id="terms-delivery" class="text-lg font-semibold text-[#0f172a]">3. Cobertura, envío y entrega</h2>
+        <p>
+          Las entregas se realizan únicamente en las zonas locales de Huejutla de Reyes, Hidalgo,
+          incluidas en nuestra cobertura. El plazo estimado es de 2 a 5 días hábiles, a partir del día hábil
+          siguiente a la confirmación del pago.
+        </p>
+        <p>
+          El costo de envío se determina de acuerdo con la ubicación de entrega y se informa antes
+          de confirmar la compra. Para consultar cobertura o atender una incidencia, escriba a
+          <a [href]="'mailto:' + legal.email" class="break-words text-[#0367A6] underline">{{ legal.email }}</a>.
+        </p>
+      </section>
 
-        <section>
-          <h2>4. Envíos y Entregas</h2>
-          <p><strong>Cobertura:</strong> Envíos nacionales dentro de México.</p>
-          <p><strong>Tiempo estimado:</strong> Entre 3 y 7 días hábiles, según la ubicación del usuario.</p>
-          <p><strong>Costos:</strong> Dependiendo del método de envío seleccionado; el detalle se muestra antes de confirmar la compra.</p>
-          <p><strong>Incidencias:</strong> Si el envío no llega o el producto llega dañado, el usuario deberá reportarlo de inmediato a soporte para gestionar reposición o reembolso.</p>
-        </section>
+      <section aria-labelledby="terms-returns" class="space-y-3">
+        <h2 id="terms-returns" class="text-lg font-semibold text-[#0f172a]">4. Cambios y devoluciones</h2>
+        <p>
+          Puede solicitar un cambio voluntario dentro de los 15 días naturales siguientes a la
+          recepción del producto. El artículo debe estar sin uso, limpio y con sus etiquetas, y
+          debe presentar el comprobante de compra.
+        </p>
+        <p>
+          Si recibe un producto defectuoso o diferente al solicitado, contáctenos para atender la
+          reclamación y aplicar la solución que corresponda conforme a la ley y a la garantía.
+          Los requisitos del cambio voluntario no limitan estos derechos.
+        </p>
+        <p>
+          Para solicitar atención, escriba a
+          <a [href]="'mailto:' + legal.email" class="break-words text-[#0367A6] underline">{{ legal.email }}</a>
+          e indique la referencia del pedido, el producto y el motivo de la solicitud.
+        </p>
+        <p>
+          Le indicaremos cómo entregar o enviar el artículo y, en su caso, los costos aplicables
+          antes de continuar el trámite, respetando los derechos que le correspondan.
+        </p>
+      </section>
 
-        <section>
-          <h2>5. Política de Devoluciones y Cambios</h2>
-          <p><strong>Plazo para solicitar devolución o cambio:</strong> 15 días naturales a partir de la fecha de entrega.</p>
-          <p><strong>Productos no sujetos a devolución:</strong> Artículos personalizados, productos de higiene o con uso evidente.</p>
-          <p><strong>Condiciones para devolución:</strong> Producto sin usar, con empaque original y etiqueta intacta.</p>
-          <p><strong>Costos:</strong> La empresa cubre el costo de devolución únicamente si el producto presenta defectos o error en el envío.</p>
-        </section>
+      <section aria-labelledby="terms-cancellation" class="space-y-3">
+        <h2 id="terms-cancellation" class="text-lg font-semibold text-[#0f172a]">5. Cancelaciones y reembolsos</h2>
+        <p>
+          Puede solicitar la cancelación de su pedido antes de su despacho a través de los medios
+          de contacto indicados en este documento. Esta opción se suma a los derechos legales de
+          cancelación, revocación y reclamación que correspondan.
+        </p>
+        <p>
+          En las ventas a distancia sujetas a este derecho, puede revocar su consentimiento dentro
+          de los 5 días hábiles siguientes a la entrega del producto o a la firma del contrato, lo que
+          ocurra después. Se reintegra el precio pagado; los gastos de flete y seguro corresponden a
+          la persona consumidora conforme a la ley. Esta regla de gastos no limita los derechos por
+          defectos, productos incorrectos o incumplimientos.
+        </p>
+        <p>
+          Los reembolsos procedentes se realizan por el medio de pago original, salvo que acepte
+          expresamente otro, y se confirman al cliente. La gestión administrativa toma hasta 5 días
+          hábiles, sin ampliar los plazos legalmente exigibles. El tiempo que el banco o proveedor
+          del medio de pago tarde en reflejar el importe es independiente de esta gestión.
+        </p>
+        <p>
+          {{ legal.brand }} no ofrece apartados.
+        </p>
+      </section>
 
-        <section>
-          <h2>6. Cancelación de Compras o Servicios</h2>
-          <p><strong>Por parte del cliente:</strong> Se puede cancelar un apartado o compra antes de que se realice el envío.</p>
-          <p><strong>Por parte de la empresa:</strong> Solo por causas justificadas, notificando al cliente.</p>
-          <p><strong>Cargos por cancelación:</strong> En caso de cancelación de apartado, el anticipo puede no ser reembolsable según condiciones aplicadas.</p>
-        </section>
+      <section aria-labelledby="terms-warranty" class="space-y-3">
+        <h2 id="terms-warranty" class="text-lg font-semibold text-[#0f172a]">6. Garantías y reclamaciones</h2>
+        <p>
+          Cuando un producto se ofrezca con garantía, su duración será de al menos 90 días desde
+          la entrega. Se respetará cualquier plazo superior ofrecido para ese producto o exigido
+          por la ley.
+        </p>
+        <p>
+          La póliza se entrega por escrito e indica su cobertura, duración, condiciones y los
+          medios y lugares de atención, sin reducir los derechos legales. Para iniciar una reclamación,
+          escriba a <a [href]="'mailto:' + legal.email" class="break-words text-[#0367A6] underline">{{ legal.email }}</a>
+          con la referencia del pedido y la descripción del problema.
+        </p>
+        <p>
+          Puede presentar su reclamación en el domicilio y los medios de contacto indicados en
+          el primer apartado, además de los lugares señalados en la póliza correspondiente.
+        </p>
+        <p>
+          Los derechos de revocación, garantía y reclamación se rigen por la
+          <a href="https://www.diputados.gob.mx/LeyesBiblio/pdf/LFPC.pdf" target="_blank" rel="noopener noreferrer"
+            class="text-[#0367A6] underline">Ley Federal de Protección al Consumidor</a>.
+        </p>
+      </section>
 
-        <section>
-          <h2>7. Garantías y Responsabilidades</h2>
-          <p><strong>Duración:</strong> 30 días naturales a partir de la entrega.</p>
-          <p><strong>Cobertura:</strong> Defectos de fabricación; no cubre daños por mal uso o accidentes.</p>
-          <p><strong>Procedimiento:</strong> Reposición, reparación o reembolso según disponibilidad del producto.</p>
-        </section>
+      <section aria-labelledby="terms-rights" class="space-y-3">
+        <h2 id="terms-rights" class="text-lg font-semibold text-[#0f172a]">7. Atención y derechos de la persona consumidora</h2>
+        <p>
+          Puede acudir a <a href="https://www.gob.mx/profeco" target="_blank" rel="noopener noreferrer"
+            class="text-[#0367A6] underline">PROFECO</a> para orientación o para presentar una reclamación.
+          Estos términos no limitan los derechos de la persona consumidora ni las responsabilidades
+          legalmente exigibles a {{ legal.brand }}.
+        </p>
+      </section>
 
-        <section>
-          <h2>8. Marco Legal</h2>
-          <p>Los derechos de los consumidores se rigen por la Ley Federal de Protección al Consumidor (LFPC).</p>
-          <p>El cliente puede presentar quejas ante PROFECO en caso de inconformidad.</p>
-          <p>En caso de conflicto, se aplicará la ley mexicana.</p>
-          <p>La empresa no se hace responsable por daños derivados del uso indebido de los productos o servicios.</p>
-        </section>
+      <section aria-labelledby="terms-account" class="space-y-3">
+        <h2 id="terms-account" class="text-lg font-semibold text-[#0f172a]">8. Cuenta de cliente y privacidad</h2>
+        <p>
+          Al utilizar una cuenta, proporcione información correcta y mantenga sus credenciales de
+          acceso bajo resguardo. Si detecta un acceso que no reconoce, comuníquese con nosotros.
+        </p>
+        <p>
+          Una vez completada, la eliminación de la cuenta es irreversible y no cancela automáticamente
+          los pedidos en curso. Para atender un pedido o solicitar su cancelación, utilice los medios de contacto
+          indicados en este documento. El tratamiento y la conservación de los datos, así como el
+          ejercicio de sus derechos, se explican en el
+          <a routerLink="/legal/privacy" class="text-[#0367A6] underline">Aviso de Privacidad</a>.
+        </p>
+      </section>
 
-        <section>
-          <h2>9. Modificaciones de los Términos y Condiciones</h2>
-          <p>Los Términos pueden modificarse y las actualizaciones se comunicarán vía correo electrónico y en la página web.</p>
-          <p><strong>Fecha de última actualización:</strong> 25 de septiembre de 2025.</p>
-        </section>
-      </article>
+      <section aria-labelledby="terms-updates" class="space-y-3">
+        <h2 id="terms-updates" class="text-lg font-semibold text-[#0f172a]">9. Actualizaciones</h2>
+        <p>
+          Las actualizaciones de estos términos se publican con su fecha de revisión. Cada compra
+          conserva las condiciones que se informaron al confirmarla; las versiones posteriores no
+          las modifican retroactivamente ni afectan los derechos reconocidos por la ley.
+        </p>
+      </section>
     </main>
 
-    <!-- Footer -->
-    <footer class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
-      <div class="text-sm text-gray-600">© Sport 2222</div>
-      <div class="text-sm">
-        <a routerLink="/auth/register" class="text-[#0367A6] hover:underline mr-4">Volver al registro</a>
-        <a routerLink="/legal/privacy" class="text-[#0367A6] hover:underline">Aviso de Privacidad</a>
-      </div>
+    <footer class="flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 bg-gray-50 px-6 py-4 text-sm">
+      <span>© {{ legal.brand }}</span>
+      <a routerLink="/legal/privacy" class="text-[#0367A6] underline">Aviso de Privacidad</a>
     </footer>
   </div>
 </div>
-
-<!-- Estilos de impresión mínimos -->
-<style>
-  @media print {
-    .prose { max-height: none !important; overflow: visible !important; }
-    button, a[routerlink], a[routerLink] { display: none !important; }
-  }
-</style>
