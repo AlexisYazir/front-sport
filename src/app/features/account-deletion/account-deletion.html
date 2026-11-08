@@ -123,7 +123,10 @@
         </ng-container>
         <div *ngIf="api.hasReceipt(); else missingReceipt" class="actions">
           <p class="receipt-help muted">Conserva esta pestaña para consultar el seguimiento. Puedes recargarla si tu navegador permite guardar el comprobante; al cerrarla podrías perderlo.</p>
-          <button type="button" class="button button-primary" [disabled]="api.busy()" (click)="api.refreshResult()">{{ api.busy() ? 'Consultando…' : 'Consultar estado' }}</button>
+          <a *ngIf="api.result()?.status === 'completed' && !api.outcomeUnknown(); else consultStatus" class="button button-primary" routerLink="/home">Volver al inicio</a>
+          <ng-template #consultStatus>
+            <button type="button" class="button button-primary" [disabled]="api.busy()" (click)="api.refreshResult()">{{ api.busy() ? 'Consultando…' : 'Consultar estado' }}</button>
+          </ng-template>
           <button *ngIf="!api.outcomeUnknown() && (api.result()?.status === 'received' || api.result()?.status === 'identity_verified')" type="button" class="button button-secondary" [disabled]="api.busy()" (click)="restartUnconfirmed()">Iniciar una nueva solicitud</button>
         </div>
         <ng-template #missingReceipt><p class="notice notice-info">No encontramos el comprobante de seguimiento en esta pestaña. Contacta al equipo de atención para conocer el resultado.</p></ng-template>
