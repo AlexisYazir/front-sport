@@ -643,7 +643,14 @@
   .session-icon-button--with-role,
   .admin-session-icon-button { padding: 0.35rem; }
   .navbar-utility-button { width: 2.35rem; height: 2.35rem; }
-  .guest-session-button { width: 2.35rem; height: 2.35rem; padding: 0; justify-content: center; }
+  .guest-session-button {
+    min-width: 3.25rem;
+    height: 2.35rem;
+    gap: 0.25rem;
+    padding-inline: 0.4rem;
+    justify-content: center;
+  }
+  .guest-session-button > svg:last-child { font-size: 0.9rem; }
   .guest-session-button > span:not(:first-child) { display: none; }
   .notification-menu { position: fixed; top: 4.4rem; right: 0.75rem; }
   .catalog-search-shell--mobile { width: 100%; }

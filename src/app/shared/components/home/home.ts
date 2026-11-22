@@ -18,7 +18,7 @@ import { CartService } from '../../../core/services/cart.service';
 import { CompanyService, HomeBannerImage } from '../../../core/services/company.service';
 import { Product, Marca, Sport } from '../../../core/models/product.model';
 import { PublicHomeOfflineService } from '../../../core/services/public-home-offline.service';
-import { SPORT_IMAGES, marcaImageUrl } from '../../../core/services/public-catalog-media';
+import { bannerImageUrl, cloudinaryImageUrl, marcaImageUrl, sportImageUrl } from '../../../core/services/public-catalog-media';
 import { IconModule } from '../../icons/icon.module';
 
 
@@ -85,7 +85,13 @@ export class Home implements OnInit, OnDestroy {
     },
   ];
 
-  private readonly sportImages = SPORT_IMAGES;
+  readonly bannerMedia = computed(() => this.bannerImages().map(banner => {
+    const src = bannerImageUrl(banner.url_imagen);
+    const srcset = src === banner.url_imagen ? null : [480, 768, 960, 1440, 1920, 2560]
+      .map(width => cloudinaryImageUrl(banner.url_imagen, width) + ' ' + width + 'w').join(', ');
+    return { src, srcset };
+  }));
+  readonly requestedBanners = signal<ReadonlySet<number>>(new Set([0]));
 
   // Computed para el contador del carrito
   cartCount = computed(() => this.cartService.cartItems().length);
@@ -123,13 +129,15 @@ export class Home implements OnInit, OnDestroy {
         const activeImages = (images || []).filter((image) => image.activo && image.url_imagen);
         this.bannerImages.set(activeImages);
         this.currentBannerIndex.set(0);
-        this.startBannerCarousel();
+        this.requestedBanners.set(new Set([0]));
+        this.stopBannerCarousel();
       },
       error: () => {
         this.failedLoads.add('/company/banner');
         this.bannerImages.set([]);
         this.currentBannerIndex.set(0);
-        this.startBannerCarousel();
+        this.requestedBanners.set(new Set([0]));
+        this.stopBannerCarousel();
       },
     });
   }
@@ -195,7 +203,7 @@ export class Home implements OnInit, OnDestroy {
             return {
               ...sport,
               slug,
-              imageUrl: this.sportImages[slug] || this.sportImages['running'],
+              imageUrl: sportImageUrl(sport.nombre),
             };
           }),
         );
@@ -285,17 +293,24 @@ export class Home implements OnInit, OnDestroy {
   setBanner(index: number): void {
     const images = this.bannerImages();
     if (!images.length) return;
-    this.currentBannerIndex.set(Math.min(Math.max(index, 0), images.length - 1));
-    this.startBannerCarousel();
+    const next = Math.min(Math.max(index, 0), images.length - 1);
+    this.currentBannerIndex.set(next);
+    if (this.requestedBanners().has(next)) {
+      this.startBannerCarousel(next);
+    } else {
+      this.stopBannerCarousel();
+      this.requestedBanners.update(requested => new Set([...requested, next]));
+    }
   }
 
-  private startBannerCarousel(): void {
+  startBannerCarousel(index: number): void {
+    if (index !== this.currentBannerIndex()) return;
     this.stopBannerCarousel();
     if (this.bannerImages().length <= 1) return;
 
     this.bannerIntervalId = setInterval(() => {
       const total = this.bannerImages().length;
-      this.currentBannerIndex.set((this.currentBannerIndex() + 1) % total);
+      this.setBanner((this.currentBannerIndex() + 1) % total);
     }, 6000);
   }
 

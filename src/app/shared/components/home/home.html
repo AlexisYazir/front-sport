@@ -4,12 +4,19 @@
   <!-- ═══════════════════════════════ HERO -->
   <section class="relative overflow-hidden bg-[#0367A6] text-white min-h-[430px] sm:min-h-[520px]">
     <div *ngIf="bannerImages().length > 0" class="absolute inset-0">
-      <img
-        *ngFor="let banner of bannerImages(); let i = index"
-        [src]="banner.url_imagen"
-        [alt]="banner.alt_text || banner.titulo || 'Banner Sport Center'"
-        class="home-hero-bg"
-        [class.home-hero-bg--active]="i === currentBannerIndex()">
+      <ng-container *ngFor="let banner of bannerImages(); let i = index">
+        <img
+          *ngIf="requestedBanners().has(i)"
+          [attr.fetchpriority]="i === 0 ? 'high' : 'auto'"
+          sizes="100vw"
+          [attr.srcset]="offline.online() ? bannerMedia()[i].srcset : null"
+          [src]="bannerMedia()[i].src"
+          [alt]="banner.alt_text || banner.titulo || 'Banner Sport Center'"
+          class="home-hero-bg"
+          [class.home-hero-bg--active]="i === currentBannerIndex()"
+          (load)="startBannerCarousel(i)"
+          (error)="startBannerCarousel(i)">
+      </ng-container>
       <div class="absolute inset-0 bg-gradient-to-r from-black/75 via-[#025486]/55 to-black/20"></div>
       <div class="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-black/15"></div>
     </div>
@@ -74,7 +81,7 @@
       </span>
       <span class="hidden sm:block h-3 w-px bg-white/20"></span>
       <a routerLink="/support/preguntas-frecuentes" class="flex items-center justify-center gap-2 text-white/85 transition-colors hover:text-white">
-        <svg lucideIcon="replay" class="lucide-icon text-[#FF7A00] text-sm"></svg>
+        <svg lucideIcon="help" class="lucide-icon text-[#FF7A00] text-sm"></svg>
         Preguntas frecuentes
       </a>
     </div>
@@ -156,6 +163,8 @@
             [src]="sport.imageUrl"
             [alt]="sport.nombre"
             loading="lazy"
+            decoding="async"
+            fetchpriority="low"
             class="sport-card__image">
           <div class="sport-card__overlay">
             <span class="sport-card__eyebrow">Explorar deporte</span>

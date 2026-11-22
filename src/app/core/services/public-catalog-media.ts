@@ -21,6 +21,15 @@ export function publicImageUrl(value: unknown, base = document.baseURI): string 
   } catch { return null; }
 }
 
+export function cloudinaryImageUrl(source: string, width: number): string {
+  const upload = /^https:\/\/res\.cloudinary\.com\/[^/?#]+\/image\/upload\/(?=v[0-9]+\/)/;
+  return source.replace(upload, prefix => prefix + "f_auto,q_auto,c_limit,w_" + width + "/");
+}
+
+export function bannerImageUrl(source: string): string {
+  return cloudinaryImageUrl(source, 960);
+}
+
 export function marcaImageUrl(marca: { nombre: string; imagen?: string }): string {
   const api = environment.apiUrl.replace(/\/$/, '');
   return publicImageUrl(marca.imagen, `${api}/`) ||
@@ -30,7 +39,7 @@ export function marcaImageUrl(marca: { nombre: string; imagen?: string }): strin
 export function sportImageUrl(nombre: string): string {
   const slug = nombre.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-  return SPORT_IMAGES[slug] || SPORT_IMAGES['running'];
+  return cloudinaryImageUrl(SPORT_IMAGES[slug] || SPORT_IMAGES['running'], 480);
 }
 
 export interface CatalogMedia { home: string[]; all: string[]; }
@@ -64,6 +73,6 @@ export function catalogMedia(products: readonly unknown[], marcas: readonly unkn
     }
   }
   for (const sport of sports) if (isPublicRecord(sport) && typeof sport['nombre'] === 'string') add(sportImageUrl(sport['nombre']), true);
-  for (const banner of banners) if (isPublicRecord(banner) && banner['activo'] && banner['url_imagen']) add(banner['url_imagen'], true);
+  for (const banner of banners) if (isPublicRecord(banner) && banner['activo'] && typeof banner['url_imagen'] === 'string' && banner['url_imagen'].trim()) add(bannerImageUrl(banner['url_imagen']), true);
   return { home: [...home], all: [...home, ...[...all].filter(url => !home.has(url))] };
 }
