@@ -1,6 +1,5 @@
 // Environment configuration for Sport Center App
 // Este archivo gestiona las variables de entorno
-//aqui trabajo en local pa conectar la api local
 
 export const environment = {
   production: false,
