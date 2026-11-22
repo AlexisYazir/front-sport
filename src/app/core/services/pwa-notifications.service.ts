@@ -1,6 +1,5 @@
 import { DestroyRef, Injectable, InjectionToken, inject } from '@angular/core';
 import { environment } from '../../../environments/environment';
-import { frontendLogger } from './frontend-logger.service';
 
 type NotificationWindow = Window & typeof globalThis;
 type ConnectivityNavigator = Navigator & { connection?: EventTarget };
@@ -125,7 +124,7 @@ export class PwaNotificationsService {
       this.notifyCurrentConnection();
       this.queueConnectionCheck(this.offline && this.browser.navigator.onLine ? 0 : 10_000);
     } catch {
-      if (!this.destroyed) frontendLogger.warn('No se pudieron preparar los avisos de conexión.');
+      if (!this.destroyed) console.warn('No se pudieron preparar los avisos de conexión.');
     }
   }
 
@@ -168,7 +167,7 @@ export class PwaNotificationsService {
           // La marca en memoria evita repetir el aviso si sessionStorage no está disponible.
         }
       } catch {
-        if (!this.destroyed) frontendLogger.warn('El navegador no permitió solicitar notificaciones al abrir Sport Center.');
+        if (!this.destroyed) console.warn('El navegador no permitió solicitar notificaciones al abrir Sport Center.');
       } finally {
         this.permissionPending = false;
       }
@@ -325,7 +324,7 @@ export class PwaNotificationsService {
       );
       if (this.connectionCycle === cycle) this.notifiedCycle = cycle;
     } catch {
-      if (!this.destroyed) frontendLogger.warn('El dispositivo no permitió mostrar el aviso de conexión.');
+      if (!this.destroyed) console.warn('El dispositivo no permitió mostrar el aviso de conexión.');
       if (this.isCurrentCycle(offline, cycle) && this.notificationAttempts < 3) {
         this.notificationRetry = this.browser.setTimeout(() => {
           this.notificationRetry = null;

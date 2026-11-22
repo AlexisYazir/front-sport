@@ -267,14 +267,10 @@ export class AuthService implements OnDestroy {
     }
 
     this.cookieRestore = this.http
-      .get<LoginResponse | null>(`${this.API_URL}/users/session`, { withCredentials: true })
+      .get<LoginResponse>(`${this.API_URL}/users/session`, { withCredentials: true })
       .pipe(
         tap((response) => {
           if (!this.isCurrentOperation(operation)) throw new AuthSessionChangedError();
-          if (response === null) {
-            if (!storedUser && !storedSessionId) this.updateAuthState(false, null, null, null);
-            return;
-          }
           const decoded = this.decodeToken(response.accessToken);
           if (!decoded || (operation.userId !== null && decoded.id_usuario !== operation.userId) ||
               (operation.sessionId !== null && response.sessionId !== operation.sessionId)) {

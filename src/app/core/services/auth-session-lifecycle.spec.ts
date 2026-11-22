@@ -61,13 +61,6 @@ describe('AuthService and active authInterceptor: session lifecycle',()=>{
     navigate.calls.reset();toast.success.calls.reset();toast.error.calls.reset();clock.recordFailedAttempt.calls.reset();
   }
 
-  it('keeps guests signed out when cookie restoration returns no content', () => {
-    init(true).flush(null, { status: 204, statusText: 'No Content' });
-    expect(auth.isAuthenticated()).toBeFalse();
-    expect(auth.currentUser()).toBeNull();
-    expect(navigate).not.toHaveBeenCalled();
-  });
-
   it('restores a cookie session normally without circular interceptor injection or navigation',()=>{
     const restore=init(true);restore.flush(session(1));
     expect(auth.currentUser()?.id).toBe(1);expect(auth.isAuthenticated()).toBeTrue();

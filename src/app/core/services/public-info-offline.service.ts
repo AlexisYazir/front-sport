@@ -4,7 +4,6 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subject, firstValueFrom, takeUntil, timeout } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import type { CompanyFaq, CompanyInfo } from './company.service';
-import { frontendLogger } from './frontend-logger.service';
 
 export type PublicCompanyInfo = Pick<CompanyInfo,
   'nombre' | 'mision' | 'vision' | 'valores' | 'email' | 'telefono' | 'sitio_web' |
@@ -172,7 +171,7 @@ export class PublicInfoOfflineService {
         headers: { 'Content-Type': 'application/json; charset=utf-8' },
       }));
     } catch {
-      frontendLogger.warn('No se pudo guardar la copia sin conexión de la información pública.');
+      console.warn('No se pudo guardar la copia sin conexión de la información pública.');
     }
   }
 }
