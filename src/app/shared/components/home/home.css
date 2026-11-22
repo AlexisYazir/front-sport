@@ -25,16 +25,24 @@
 }
 
 .home-hero-dot {
+  display: grid;
+  place-items: center;
+  min-width: 1.5rem;
+  min-height: 1.5rem;
+  cursor: pointer;
+}
+
+.home-hero-dot::before {
+  content: "";
   width: 0.75rem;
   height: 0.75rem;
   border-radius: 9999px;
   border: 1px solid rgba(255, 255, 255, 0.55);
   background: rgba(255, 255, 255, 0.35);
-  cursor: pointer;
   transition: width 180ms ease, background 180ms ease, border-color 180ms ease;
 }
 
-.home-hero-dot--active {
+.home-hero-dot--active::before {
   width: 2rem;
   background: #FF7A00;
   border-color: #FF7A00;

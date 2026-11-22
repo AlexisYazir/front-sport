@@ -77,16 +77,17 @@ export class Register implements OnInit {
     const googleClientId = '637508139644-n30pocvh0corlgsv79bmu4joagg46nrv.apps.googleusercontent.com';
 
     if (googleClientId && googleClientId.includes('.apps.googleusercontent.com')) {
-      this.googleAuthService.initializeGoogle(googleClientId);
-      
-      // Renderizar botón de Google con delay para asegurar que DOM esté listo
-      setTimeout(() => {
+      void this.googleAuthService.loadGoogleLibrary().then(() => {
+        if (!document.getElementById('google-signup-button')) return;
+        this.googleAuthService.initializeGoogle(googleClientId);
         this.googleAuthService.renderGoogleButton('google-signup-button', {
           theme: 'outline',
           size: 'large',
-          text: 'signup_with'
+          text: 'signup_with',
         });
-      }, 300);
+      }).catch(() => {
+        // El formulario con correo sigue disponible si Google no carga.
+      });
     }
   }
 

@@ -38,6 +38,26 @@ export class GoogleAuthService {
 
   private readonly API_URL = environment.apiUrl;
 
+  private googleLibrary: Promise<void> | undefined;
+
+  loadGoogleLibrary(): Promise<void> {
+    if (this.isGoogleAvailable()) return Promise.resolve();
+    return this.googleLibrary ??= new Promise<void>((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.async = true;
+      script.addEventListener('load', () => {
+        if (this.isGoogleAvailable()) resolve();
+        else reject(new Error('Google Identity Services no est\u00e1 disponible'));
+      }, { once: true });
+      script.addEventListener('error', () => reject(new Error('No se pudo cargar Google Identity Services')), { once: true });
+      document.head.appendChild(script);
+    }).catch(error => {
+      this.googleLibrary = undefined;
+      throw error;
+    });
+  }
+
   initializeGoogle(clientId: string): void {
     if (!clientId) {
       frontendLogger.error('Google Client ID no está configurado');

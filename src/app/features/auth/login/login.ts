@@ -66,16 +66,17 @@ export class Login implements OnInit {
     const googleClientId ='791356083560-kg90udkq7qdpg7hq0g3r3coot85hqrgb.apps.googleusercontent.com';
 
     if (googleClientId && googleClientId.includes('.apps.googleusercontent.com')) {
-      this.googleAuthService.initializeGoogle(googleClientId);
-
-      // Renderizar botón de Google con delay para asegurar que DOM esté listo
-      setTimeout(() => {
+      void this.googleAuthService.loadGoogleLibrary().then(() => {
+        if (!document.getElementById('google-signin-button')) return;
+        this.googleAuthService.initializeGoogle(googleClientId);
         this.googleAuthService.renderGoogleButton('google-signin-button', {
           theme: 'outline',
           size: 'large',
           text: 'signin_with',
         });
-      }, 300);
+      }).catch(() => {
+        // El formulario con correo sigue disponible si Google no carga.
+      });
     }
   }
 

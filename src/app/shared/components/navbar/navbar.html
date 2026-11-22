@@ -9,7 +9,8 @@
         <div class="flex items-center gap-3">
           <a routerLink="/" class="flex items-center group">
             <img 
-              [src]="logo" 
+              [src]="logo"
+              width="256" height="120"
               alt="SportCenter" 
               class="h-10 w-auto transition-transform duration-300 group-hover:scale-105" 
             />
@@ -465,6 +466,7 @@
           <a
             *ngIf="canUseCart()"
             routerLink="/cart"
+            aria-label="Carrito"
             routerLinkActive="text-[#0367A6]"
             class="cart-link relative p-2 text-[#666666] hover:text-[#0367A6] rounded-xl hover:bg-blue-50/80 transition-all duration-200 group flex items-center"
           >
@@ -480,7 +482,9 @@
           <!-- Mobile menu button -->
           <div class="md:hidden">
             <button 
-              (click)="toggleMobileMenu()" 
+              (click)="toggleMobileMenu()"
+              [attr.aria-label]="mobileMenuOpen() ? 'Cerrar menú' : 'Abrir menú'"
+              [attr.aria-expanded]="mobileMenuOpen()"
               class="p-2 text-[#666666] hover:text-[#0367A6] rounded-xl hover:bg-blue-50/80 transition-all duration-200"
             >
               <svg [lucideIcon]="mobileMenuOpen() ? 'close' : 'menu'" class="lucide-icon text-2xl"></svg>
@@ -501,7 +505,7 @@
         <!-- Header del menú mobile -->
         <div class="flex justify-between items-center mb-6">
           <span class="mobile-menu-title text-lg font-semibold">Menú</span>
-          <button (click)="toggleMobileMenu()" class="mobile-menu-close p-2 rounded-xl transition-colors">
+          <button (click)="toggleMobileMenu()" aria-label="Cerrar menú" class="mobile-menu-close p-2 rounded-xl transition-colors">
             <svg lucideIcon="close" class="lucide-icon"></svg>
           </button>
         </div>
@@ -719,7 +723,8 @@
         <div class="flex items-center gap-4">
           <a routerLink="/dashboard/admin" class="flex items-center group">
             <img 
-              [src]="logo" 
+              [src]="logo"
+              width="256" height="120"
               alt="SportCenter" 
               class="h-9 w-auto transition-transform duration-300 group-hover:scale-105" 
             />
@@ -838,7 +843,7 @@
       <div class="p-6">
         <div class="flex justify-between items-center mb-6">
           <span class="mobile-menu-title text-lg font-semibold">Menú</span>
-          <button (click)="toggleMobileMenu()" class="mobile-menu-close p-2 rounded-xl transition-colors">
+          <button (click)="toggleMobileMenu()" aria-label="Cerrar menú" class="mobile-menu-close p-2 rounded-xl transition-colors">
             <svg lucideIcon="close" class="lucide-icon"></svg>
           </button>
         </div>

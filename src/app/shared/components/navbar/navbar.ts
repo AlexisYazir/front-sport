@@ -33,7 +33,7 @@ interface NavbarNotification {
   styleUrl: './navbar.css',
 })
 export class Navbar implements OnInit {
-  logo = './assets/images/logo_sportcenter.png';
+  logo = './assets/images/logo-navbar.jpg';
   
   private authService = inject(AuthService);
   private cartService = inject(CartService);
