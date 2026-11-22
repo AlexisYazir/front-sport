@@ -1,7 +1,14 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
-/** Mantiene el inicio completo offline; las demás pantallas se guardan al utilizarlas. */
+const OFFLINE_ENTRY_POINTS = [
+  'src/app/shared/components/home/home.ts',
+  'src/app/features/support/contact/contact.ts',
+  'src/app/features/support/faqs/faqs.ts',
+  'src/app/features/legal/privacy/privacy.ts',
+  'src/app/features/legal/terms/terms.ts',
+];
+
 export function selectOfflineFiles(manifest, stats, html) {
   const outputs = stats.outputs;
   if (!outputs) throw new Error('Falta el mapa de dependencias de la compilación.');
@@ -10,9 +17,13 @@ export function selectOfflineFiles(manifest, stats, html) {
   if (!app || !features) throw new Error('Faltan los grupos app y features de la PWA.');
   const startup = [...html.matchAll(/(?:src|href)="([^"?#]+\.js)(?:[?#][^"]*)?"/g)]
     .map(match => match[1].replace(/^\//, ''));
-  const home = Object.keys(outputs).filter(file =>
-    outputs[file].entryPoint?.replaceAll('\\', '/') === 'src/app/shared/components/home/home.ts');
-  if (!startup.length || home.length !== 1) throw new Error('No se identificaron los archivos del arranque y del inicio.');
+  if (!startup.length) throw new Error('No se identificaron los archivos del arranque.');
+  const publicRoutes = OFFLINE_ENTRY_POINTS.map(entry => {
+    const matches = Object.keys(outputs).filter(file =>
+      outputs[file].entryPoint?.replaceAll('\\', '/') === entry);
+    if (matches.length !== 1) throw new Error('No se identificó un archivo para la ruta offline: ' + entry);
+    return matches[0];
+  });
   const needed = new Set();
   const visit = file => {
     file = file.replace(/^\//, '');
@@ -26,7 +37,7 @@ export function selectOfflineFiles(manifest, stats, html) {
       if (/\.m?js$/.test(resolved)) visit(resolved);
     }
   };
-  for (const file of [...startup, ...home]) visit(file);
+  for (const file of [...startup, ...publicRoutes]) visit(file);
   app.urls = [...new Set([...app.urls, ...needed])].sort();
   features.urls = features.urls.filter(file => !needed.has(file));
   return {

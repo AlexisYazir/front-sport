@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { selectOfflineFiles } from './prepare-offline-manifest.mjs';
 
 function fixture() {
-  const files = ['main.js', 'shared.js', 'home.js', 'home-icons.js', 'admin.js', 'charts.js'];
+  const files = ['main.js', 'shared.js', 'home.js', 'home-icons.js', 'contact.js', 'faqs.js', 'privacy.js', 'terms.js', 'legal-shared.js', 'admin.js', 'charts.js'];
   const manifest = { hashTable: Object.fromEntries(files.map(file => ['/' + file, 'hash:' + file])),
     assetGroups: [{ name: 'app', urls: ['/index.html', '/main.js'] },
       { name: 'features', urls: files.slice(1).map(file => '/' + file) }] };
@@ -14,20 +14,25 @@ function fixture() {
     'shared.js': output(undefined, [dep('./main.js')]),
     'home.js': output('src/app/shared/components/home/home.ts', [dep('./shared.js'), dep('./home-icons.js')]),
     'home-icons.js': output(),
+    'contact.js': output('src/app/features/support/contact/contact.ts', [dep('./shared.js')]),
+    'faqs.js': output('src/app/features/support/faqs/faqs.ts'),
+    'privacy.js': output('src/app/features/legal/privacy/privacy.ts', [dep('./legal-shared.js')]),
+    'terms.js': output('src/app/features/legal/terms/terms.ts', [dep('./legal-shared.js')]),
+    'legal-shared.js': output(),
     'admin.js': output('src/app/admin.ts', [dep('./charts.js')]),
     'charts.js': output(),
   } };
   return { manifest, stats, html: '<html><script src="main.js" type="module"></script></html>' };
 }
 
-test('guarda el inicio y sus dependencias compartidas sin descargar administración ni gráficas', () => {
+test('guarda el inicio y las cuatro rutas públicas con sus dependencias sin descargar administración ni gráficas', () => {
   const { manifest, stats, html } = fixture();
   const hashes = structuredClone(manifest.hashTable);
   const result = selectOfflineFiles(manifest, stats, html);
-  assert.deepEqual(manifest.assetGroups[0].urls, ['/home-icons.js', '/home.js', '/index.html', '/main.js', '/shared.js']);
+  assert.deepEqual(manifest.assetGroups[0].urls, ['/contact.js', '/faqs.js', '/home-icons.js', '/home.js', '/index.html', '/legal-shared.js', '/main.js', '/privacy.js', '/shared.js', '/terms.js']);
   assert.deepEqual(manifest.assetGroups[1].urls, ['/admin.js', '/charts.js']);
   assert.deepEqual(manifest.hashTable, hashes);
-  assert.equal(result.prefetchedJsBytes, 400);
+  assert.equal(result.prefetchedJsBytes, 900);
   assert.equal(result.lazyJsBytes, 200);
 });
 
@@ -37,11 +42,11 @@ test('rechaza dependencias que no conserva el manifiesto en vez de publicar un i
   assert.throws(() => selectOfflineFiles(manifest, stats, html), /Dependencia sin huella/);
 });
 
-test('rechaza la ausencia del mapa del inicio y no modifica los grupos existentes', () => {
+test('rechaza la ausencia de una ruta pública y no modifica los grupos existentes', () => {
   const { manifest, stats, html } = fixture();
-  delete stats.outputs['home.js'];
+  delete stats.outputs['privacy.js'];
   const before = JSON.stringify(manifest);
-  assert.throws(() => selectOfflineFiles(manifest, stats, html), /archivos del arranque y del inicio/);
+  assert.throws(() => selectOfflineFiles(manifest, stats, html), /ruta offline: .*privacy/);
   assert.equal(JSON.stringify(manifest), before);
 });
 

@@ -25,7 +25,7 @@ export async function prepareNetlifyShell(root = process.cwd()) {
 
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
   prepareOfflineManifest().then(summary => {
-    console.log(`Inicio offline: ${summary.prefetchedFiles} archivos; ${summary.lazyJs} módulos se guardarán al utilizarlos.`);
+    console.log(`Inicio y rutas públicas offline: ${summary.prefetchedFiles} archivos; ${summary.lazyJs} módulos se guardarán al utilizarlos.`);
     return prepareNetlifyShell();
   }).then(result => {
     console.log(`HTML offline preparado en pwa-shell.json: ${result.bytes} bytes; SHA-1 ${result.hash}.`);
